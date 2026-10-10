@@ -244,7 +244,9 @@ export const customers = pgTable(
     id: text("id").primaryKey(),
     name: text("name").notNull(),
     email: text("email").notNull(),
-    phone: text("phone").notNull(),
+    phone: text("phone"),
+    passwordHash: text("password_hash"),
+    isVerified: boolean("is_verified").default(true).notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
@@ -315,6 +317,14 @@ export const orders = pgTable(
     courierName: text("courier_name"),
     internalNotes: text("internal_notes"),
     secureLookupToken: text("secure_lookup_token").notNull(),
+
+    // UPI & Payment Info
+    paymentMethod: text("payment_method").default("upi").notNull(),
+    upiTransactionId: text("upi_transaction_id"),
+
+    // Cancellation
+    cancellationReason: text("cancellation_reason"),
+    cancelledAt: timestamp("cancelled_at"),
 
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -508,6 +518,9 @@ export const siteSettings = pgTable("site_settings", {
   facebookUrl: text("facebook_url").default("https://facebook.com/auraresinart"),
   pinterestUrl: text("pinterest_url").default("https://pinterest.com/auraresinart"),
   currency: text("currency").default("INR").notNull(),
+  upiId: text("upi_id").default("devangi0403@okaxis").notNull(),
+  upiQrCodeUrl: text("upi_qr_code_url").default("").notNull(),
+  accountHolderName: text("account_holder_name").default("Devangi Resin Studio").notNull(),
   defaultShippingCharge: numeric("default_shipping_charge", { precision: 10, scale: 2 }).default("79.00").notNull(),
   freeShippingThreshold: numeric("free_shipping_threshold", { precision: 10, scale: 2 }).default("999.00").notNull(),
   taxPercentage: numeric("tax_percentage", { precision: 5, scale: 2 }).default("0.00").notNull(),

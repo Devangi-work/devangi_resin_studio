@@ -79,7 +79,7 @@ export default function AdminLoginPage() {
               href="/admin/setup"
               className="inline-block mt-1 text-xs font-semibold text-[#2C332D] underline hover:text-[#B8972E]"
             >
-              Go to Initial Admin Setup &rarr;
+              Go to Initial Admin Setup →
             </Link>
           </div>
         )}

@@ -104,7 +104,7 @@ export function CartDrawer() {
             <div className="flex items-center justify-between text-xs text-[#2C332D] mb-1.5">
               {remainingForFreeShipping > 0 ? (
                 <span>
-                  Add <strong className="text-[#B8972E]">₹{remainingForFreeShipping.toFixed(0)}</strong> more for <strong>FREE Insured Shipping</strong>
+                  Add <strong className="text-[#B8972E]">₹{remainingForFreeShipping.toFixed(2)}</strong> more for <strong>FREE Insured Shipping</strong>
                 </span>
               ) : (
                 <span className="flex items-center text-[#2E7D32] font-semibold">
@@ -186,7 +186,7 @@ export function CartDrawer() {
 
                       {item.personalizationDetails?.customName && (
                         <span className="inline-block mt-1 text-[10px] bg-[#F4EBE6] text-[#B8972E] font-medium px-2 py-0.5 rounded">
-                          Name: &ldquo;{item.personalizationDetails.customName}&rdquo;
+                          Name: "{item.personalizationDetails.customName}"
                         </span>
                       )}
 
@@ -238,7 +238,7 @@ export function CartDrawer() {
                 <div className="flex items-center justify-between bg-[#E8EFE8] text-[#2E7D32] text-xs px-3 py-2 rounded-lg font-medium border border-[#C5D8C5]">
                   <div className="flex items-center space-x-1.5">
                     <CheckCircle2 className="w-4 h-4" />
-                    <span>Coupon <strong>{appliedCoupon.code}</strong> applied (-₹{appliedCoupon.discountAmount})</span>
+                    <span>Coupon <strong>{appliedCoupon.code}</strong> applied (-₹{appliedCoupon.discountAmount.toFixed(2)})</span>
                   </div>
                   <button
                     onClick={() => setAppliedCoupon(null)}

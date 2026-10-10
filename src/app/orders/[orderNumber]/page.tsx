@@ -2,6 +2,7 @@ import React from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { dbStore } from "@/lib/db";
+import { OrderCancellationCard } from "@/components/orders/OrderCancellationCard";
 import {
   CheckCircle2,
   Package,
@@ -137,6 +138,14 @@ export default async function OrderConfirmationPage({ params, searchParams }: Or
         )}
       </div>
 
+      {/* 1-Hour Cancellation Action Card */}
+      <OrderCancellationCard
+        orderNumber={order.orderNumber}
+        createdAt={order.createdAt}
+        currentStatus={order.orderStatus}
+        cancellationReason={order.cancellationReason}
+      />
+
       {/* Order Details & Summary Card */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         
@@ -168,26 +177,38 @@ export default async function OrderConfirmationPage({ params, searchParams }: Or
           </h3>
           <div className="space-y-1.5 text-xs text-[#736C66]">
             <div className="flex justify-between">
+              <span>Payment Method:</span>
+              <span className="font-bold uppercase text-[#2C332D]">UPI (Instant QR)</span>
+            </div>
+            {order.upiTransactionId && (
+              <div className="flex justify-between">
+                <span>UPI Ref / UTR:</span>
+                <span className="font-mono text-xs text-[#2C332D]">{order.upiTransactionId}</span>
+              </div>
+            )}
+            <div className="flex justify-between">
               <span>Payment Status:</span>
               <span className="font-bold uppercase text-[#2E7D32]">{order.paymentStatus}</span>
             </div>
             <div className="flex justify-between">
               <span>Subtotal:</span>
-              <span className="font-semibold text-[#2C332D]">₹{order.subtotal}</span>
+              <span className="font-semibold text-[#2C332D]">₹{Number(order.subtotal).toFixed(2)}</span>
             </div>
             {Number(order.discountAmount) > 0 && (
               <div className="flex justify-between text-[#2E7D32]">
                 <span>Discount Applied:</span>
-                <span>-₹{order.discountAmount}</span>
+                <span>-₹{Number(order.discountAmount).toFixed(2)}</span>
               </div>
             )}
             <div className="flex justify-between">
               <span>Shipping Charge:</span>
-              <span>{Number(order.shippingCharge) === 0 ? "FREE" : `₹${order.shippingCharge}`}</span>
+              <span className="font-semibold text-[#2C332D]">
+                {Number(order.shippingCharge) === 0 ? "FREE" : `₹${Number(order.shippingCharge).toFixed(2)}`}
+              </span>
             </div>
             <div className="flex justify-between text-sm font-bold text-[#2C332D] border-t border-[#E8E0D5] pt-2">
-              <span>Grand Total Paid:</span>
-              <span className="text-[#B8972E] text-base">₹{order.totalAmount}</span>
+              <span>Grand Total:</span>
+              <span className="text-[#B8972E] text-base">₹{Number(order.totalAmount).toFixed(2)}</span>
             </div>
           </div>
         </div>
@@ -206,17 +227,17 @@ export default async function OrderConfirmationPage({ params, searchParams }: Or
                 {item.variantName && <p className="text-[#736C66]">{item.variantName}</p>}
                 {item.personalizationDetails?.customName && (
                   <span className="text-[10px] bg-[#FAF4EC] text-[#B8972E] px-2 py-0.5 rounded font-medium inline-block mt-0.5">
-                    Custom Name: &ldquo;{item.personalizationDetails.customName}&rdquo;
+                    Custom Name: "{item.personalizationDetails.customName}"
                   </span>
                 )}
                 {item.giftWrapped && (
                   <span className="text-[10px] text-[#2E7D32] ml-2 font-medium">
-                    &bull; Gift Wrapped
+                    • Gift Wrapped
                   </span>
                 )}
               </div>
               <div className="text-right">
-                <p className="font-bold text-[#2C332D]">₹{item.totalPrice}</p>
+                <p className="font-bold text-[#2C332D]">₹{Number(item.totalPrice).toFixed(2)}</p>
                 <p className="text-[11px] text-[#8C7A72]">Qty: {item.quantity}</p>
               </div>
             </div>

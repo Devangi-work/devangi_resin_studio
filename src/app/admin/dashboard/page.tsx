@@ -223,7 +223,7 @@ export default function AdminDashboardPage() {
               href="/admin/inventory"
               className="text-xs font-bold text-[#2C332D] hover:text-[#B8972E]"
             >
-              Adjust & Audit Stock Movements &rarr;
+              Adjust & Audit Stock Movements →
             </Link>
           </div>
         </div>

@@ -145,7 +145,7 @@ export default function AdminSetupPage() {
 
         <div className="text-center pt-2">
           <Link href="/admin/login" className="text-xs text-[#8C7A72] hover:text-[#2C332D]">
-            Already have an account? Sign In &rarr;
+            Already have an account? Sign In →
           </Link>
         </div>
       </div>

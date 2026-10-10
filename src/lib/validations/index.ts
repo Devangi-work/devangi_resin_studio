@@ -130,6 +130,7 @@ export const checkoutSchema = z.object({
   shippingCountry: z.string().default("India"),
   orderNotes: z.string().optional().nullable(),
   couponCode: z.string().optional().nullable(),
+  upiTransactionId: z.string().min(4, "Please enter your UPI transaction reference / UTR number."),
   items: z.array(checkoutItemSchema).min(1, "Cart cannot be empty."),
 });
 

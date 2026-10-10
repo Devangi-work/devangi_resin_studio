@@ -30,7 +30,7 @@ export function ProductCard({ product }: ProductCardProps) {
   const sale = product.salePrice ? Number(product.salePrice) : null;
   const currentPrice = sale || regular;
   const hasDiscount = sale && sale < regular;
-  const discountPercent = hasDiscount ? Math.round(((regular - sale!) / regular) * 100) : 0;
+  const discountPercent = hasDiscount ? (((regular - sale!) / regular) * 100).toFixed(1).replace(/\.0$/, "") : 0;
 
   const primaryImage =
     product.images?.find((img) => img.isPrimary)?.imageUrl ||

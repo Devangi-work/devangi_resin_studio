@@ -672,7 +672,7 @@ export function ProductForm({ initialData, isEditing = false }: ProductFormProps
 
             {formData.variants.length === 0 ? (
               <div className="p-8 border border-dashed border-[#E8E0D5] rounded-2xl text-center text-xs text-[#736C66] bg-[#FAF8F5]">
-                No variants configured for this product. Click &ldquo;Add Variant&rdquo; to add options.
+                No variants configured for this product. Click "Add Variant" to add options.
               </div>
             ) : (
               <div className="space-y-3">

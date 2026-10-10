@@ -62,7 +62,7 @@ function SandboxPaymentContent() {
         <div className="bg-[#2C332D] text-white p-6 text-center space-y-1">
           <div className="inline-flex items-center space-x-1.5 text-xs text-[#D4AF37] bg-white/10 px-3 py-1 rounded-full mb-1">
             <ShieldCheck className="w-3.5 h-3.5" />
-            <span>Cashfree Payments &bull; Sandbox Mode</span>
+            <span>Direct Payment • Sandbox Mode</span>
           </div>
           <h1 className="font-serif text-xl font-bold">Complete Your Payment</h1>
           <p className="text-xs text-white/70">Order #{orderId}</p>

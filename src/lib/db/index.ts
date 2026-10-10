@@ -58,13 +58,16 @@ function getInitialStoreState(): StoreState {
       storeTagline: "Handmade Resin Elegance, Preserved Forever",
       storeDescription: "Boutique handmade resin art, bespoke jewellery, personalized gifts, keychains, and coasters crafted with passion.",
       logoUrl: null,
-      contactEmail: "hello@auraresinart.com",
+      contactEmail: "devangi0403@gmail.com",
       contactPhone: "+91 98765 43210",
       whatsappNumber: "+919876543210",
       instagramUrl: "https://instagram.com/auraresinart",
       facebookUrl: "https://facebook.com/auraresinart",
       pinterestUrl: "https://pinterest.com/auraresinart",
       currency: "INR",
+      upiId: "devangi0403@okaxis",
+      upiQrCodeUrl: "",
+      accountHolderName: "Devangi Resin Studio",
       defaultShippingCharge: "79.00",
       freeShippingThreshold: "999.00",
       taxPercentage: "0.00",
@@ -467,7 +470,65 @@ export const dbStore = {
   },
 
   async getOrderByNumber(orderNumber: string, verificationInput?: string) {
-    const ord = store.orders.find((o) => o.orderNumber === orderNumber);
+    let ord = store.orders.find((o) => o.orderNumber === orderNumber);
+
+    if (!ord && sql) {
+      try {
+        const rows = await sql`
+          SELECT 
+            id,
+            order_number as "orderNumber",
+            customer_id as "customerId",
+            customer_name as "customerName",
+            customer_email as "customerEmail",
+            customer_phone as "customerPhone",
+            shipping_address_line1 as "shippingAddressLine1",
+            shipping_address_line2 as "shippingAddressLine2",
+            shipping_city as "shippingCity",
+            shipping_state as "shippingState",
+            shipping_postal_code as "shippingPostalCode",
+            shipping_country as "shippingCountry",
+            order_notes as "orderNotes",
+            subtotal,
+            discount_amount as "discountAmount",
+            shipping_charge as "shippingCharge",
+            tax_amount as "taxAmount",
+            total_amount as "totalAmount",
+            order_status as "orderStatus",
+            payment_status as "paymentStatus",
+            payment_method as "paymentMethod",
+            upi_transaction_id as "upiTransactionId",
+            cancellation_reason as "cancellationReason",
+            cancelled_at as "cancelledAt",
+            tracking_number as "trackingNumber",
+            courier_name as "courierName",
+            internal_notes as "internalNotes",
+            secure_lookup_token as "secureLookupToken",
+            created_at as "createdAt",
+            updated_at as "updatedAt"
+          FROM orders
+          WHERE order_number = ${orderNumber}
+          LIMIT 1;
+        `;
+        if (rows && rows.length > 0) {
+          ord = rows[0];
+          const items = await sql`
+            SELECT 
+              id, product_id as "productId", variant_id as "variantId",
+              product_name as "productName", variant_name as "variantName",
+              sku, unit_price as "unitPrice", quantity, total_price as "totalPrice",
+              personalization_details as "personalizationDetails",
+              reference_image_url as "referenceImageUrl"
+            FROM order_items
+            WHERE order_id = ${ord.id};
+          `;
+          ord.items = items || [];
+        }
+      } catch (err) {
+        console.error("DB getOrderByNumber err:", err);
+      }
+    }
+
     if (!ord) return null;
 
     // Secure verification check: if input is provided, must match email, phone, or secureLookupToken
@@ -498,14 +559,61 @@ export const dbStore = {
       shippingCharge: Number(data.shippingCharge || 0).toFixed(2),
       taxAmount: Number(data.taxAmount || 0).toFixed(2),
       totalAmount: Number(data.totalAmount).toFixed(2),
-      orderStatus: data.orderStatus || "pending_payment",
-      paymentStatus: data.paymentStatus || "pending",
+      orderStatus: data.orderStatus || "confirmed",
+      paymentStatus: data.paymentStatus || "pending_verification",
+      paymentMethod: data.paymentMethod || "upi",
+      upiTransactionId: data.upiTransactionId || null,
       items: data.items || [],
       createdAt: new Date(),
       updatedAt: new Date(),
     };
 
     store.orders.unshift(newOrder);
+
+    if (sql) {
+      try {
+        await sql`
+          INSERT INTO orders (
+            id, order_number, customer_id, customer_name, customer_email, customer_phone,
+            shipping_address_line1, shipping_address_line2, shipping_city, shipping_state,
+            shipping_postal_code, shipping_country, order_notes, subtotal, discount_amount,
+            shipping_charge, tax_amount, total_amount, order_status, payment_status,
+            payment_method, upi_transaction_id, secure_lookup_token, created_at, updated_at
+          ) VALUES (
+            ${id}, ${orderNumber}, ${data.customerId || null}, ${data.customerName}, ${data.customerEmail}, ${data.customerPhone},
+            ${data.shippingAddressLine1}, ${data.shippingAddressLine2 || null}, ${data.shippingCity}, ${data.shippingState},
+            ${data.shippingPostalCode}, ${data.shippingCountry || 'India'}, ${data.orderNotes || null},
+            ${Number(data.subtotal).toFixed(2)}, ${Number(data.discountAmount || 0).toFixed(2)},
+            ${Number(data.shippingCharge || 0).toFixed(2)}, ${Number(data.taxAmount || 0).toFixed(2)},
+            ${Number(data.totalAmount).toFixed(2)}, ${newOrder.orderStatus}, ${newOrder.paymentStatus},
+            ${newOrder.paymentMethod}, ${newOrder.upiTransactionId}, ${secureLookupToken},
+            NOW(), NOW()
+          );
+        `;
+
+        if (Array.isArray(data.items)) {
+          for (const item of data.items) {
+            const itemId = item.id || `item_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+            await sql`
+              INSERT INTO order_items (
+                id, order_id, product_id, variant_id, product_name, variant_name,
+                sku, unit_price, quantity, total_price, personalization_details, reference_image_url
+              ) VALUES (
+                ${itemId}, ${id}, ${item.productId}, ${item.variantId || null},
+                ${item.productName || 'Handmade Resin Art'}, ${item.variantName || null},
+                ${item.sku || 'SKU-CUSTOM'}, ${Number(item.price || item.unitPrice || 0).toFixed(2)},
+                ${Number(item.quantity)}, ${Number((item.price || item.unitPrice || 0) * item.quantity).toFixed(2)},
+                ${item.personalizationDetails ? JSON.stringify(item.personalizationDetails) : null},
+                ${item.referenceImageUrl || null}
+              );
+            `;
+          }
+        }
+      } catch (err) {
+        console.error("[createOrder] DB insert error:", err);
+      }
+    }
+
     return newOrder;
   },
 
@@ -650,6 +758,52 @@ export const dbStore = {
 
   // ---------------- SITE SETTINGS ----------------
   async getSiteSettings() {
+    if (sql) {
+      try {
+        const rows = await sql`
+          SELECT 
+            id,
+            store_name as "storeName",
+            store_tagline as "storeTagline",
+            store_description as "storeDescription",
+            logo_url as "logoUrl",
+            contact_email as "contactEmail",
+            contact_phone as "contactPhone",
+            whatsapp_number as "whatsappNumber",
+            instagram_url as "instagramUrl",
+            facebook_url as "facebookUrl",
+            pinterest_url as "pinterestUrl",
+            currency,
+            upi_id as "upiId",
+            upi_qr_code_url as "upiQrCodeUrl",
+            account_holder_name as "accountHolderName",
+            default_shipping_charge as "defaultShippingCharge",
+            free_shipping_threshold as "freeShippingThreshold",
+            tax_percentage as "taxPercentage",
+            order_confirmation_message as "orderConfirmationMessage",
+            production_time_message as "productionTimeMessage",
+            return_policy as "returnPolicy",
+            shipping_policy as "shippingPolicy",
+            privacy_policy as "privacyPolicy",
+            terms_policy as "termsPolicy",
+            care_instructions_default as "careInstructionsDefault",
+            updated_at as "updatedAt"
+          FROM site_settings
+          WHERE id = 'default'
+          LIMIT 1;
+        `;
+        if (rows && rows.length > 0) {
+          const row = rows[0];
+          store.siteSettings = {
+            ...store.siteSettings,
+            ...row,
+          };
+          return store.siteSettings;
+        }
+      } catch (err) {
+        console.error("[getSiteSettings] DB fetch error, falling back to memory:", err);
+      }
+    }
     return { ...store.siteSettings };
   },
 
@@ -659,7 +813,244 @@ export const dbStore = {
       ...data,
       updatedAt: new Date(),
     };
+
+    if (sql) {
+      try {
+        await sql`
+          INSERT INTO site_settings (
+            id, store_name, store_tagline, store_description, contact_email,
+            contact_phone, whatsapp_number, instagram_url, facebook_url, pinterest_url,
+            default_shipping_charge, free_shipping_threshold, production_time_message,
+            shipping_policy, return_policy, privacy_policy, terms_policy, care_instructions_default,
+            upi_id, upi_qr_code_url, account_holder_name, updated_at
+          ) VALUES (
+            'default',
+            ${data.storeName ?? store.siteSettings.storeName},
+            ${data.storeTagline ?? store.siteSettings.storeTagline},
+            ${data.storeDescription ?? store.siteSettings.storeDescription},
+            ${data.contactEmail ?? store.siteSettings.contactEmail},
+            ${data.contactPhone ?? store.siteSettings.contactPhone},
+            ${data.whatsappNumber ?? store.siteSettings.whatsappNumber},
+            ${data.instagramUrl ?? store.siteSettings.instagramUrl},
+            ${data.facebookUrl ?? store.siteSettings.facebookUrl},
+            ${data.pinterestUrl ?? store.siteSettings.pinterestUrl},
+            ${data.defaultShippingCharge ?? store.siteSettings.defaultShippingCharge},
+            ${data.freeShippingThreshold ?? store.siteSettings.freeShippingThreshold},
+            ${data.productionTimeMessage ?? store.siteSettings.productionTimeMessage},
+            ${data.shippingPolicy ?? store.siteSettings.shippingPolicy},
+            ${data.returnPolicy ?? store.siteSettings.returnPolicy},
+            ${data.privacyPolicy ?? store.siteSettings.privacyPolicy},
+            ${data.termsPolicy ?? store.siteSettings.termsPolicy},
+            ${data.careInstructionsDefault ?? store.siteSettings.careInstructionsDefault},
+            ${data.upiId ?? store.siteSettings.upiId ?? 'devangi0403@okaxis'},
+            ${data.upiQrCodeUrl ?? store.siteSettings.upiQrCodeUrl ?? ''},
+            ${data.accountHolderName ?? store.siteSettings.accountHolderName ?? 'Devangi Resin Studio'},
+            NOW()
+          )
+          ON CONFLICT (id) DO UPDATE SET
+            store_name = EXCLUDED.store_name,
+            store_tagline = EXCLUDED.store_tagline,
+            store_description = EXCLUDED.store_description,
+            contact_email = EXCLUDED.contact_email,
+            contact_phone = EXCLUDED.contact_phone,
+            whatsapp_number = EXCLUDED.whatsapp_number,
+            instagram_url = EXCLUDED.instagram_url,
+            facebook_url = EXCLUDED.facebook_url,
+            pinterest_url = EXCLUDED.pinterest_url,
+            default_shipping_charge = EXCLUDED.default_shipping_charge,
+            free_shipping_threshold = EXCLUDED.free_shipping_threshold,
+            production_time_message = EXCLUDED.production_time_message,
+            shipping_policy = EXCLUDED.shipping_policy,
+            return_policy = EXCLUDED.return_policy,
+            privacy_policy = EXCLUDED.privacy_policy,
+            terms_policy = EXCLUDED.terms_policy,
+            care_instructions_default = EXCLUDED.care_instructions_default,
+            upi_id = EXCLUDED.upi_id,
+            upi_qr_code_url = EXCLUDED.upi_qr_code_url,
+            account_holder_name = EXCLUDED.account_holder_name,
+            updated_at = NOW();
+        `;
+      } catch (err) {
+        console.error("[updateSiteSettings] DB update error:", err);
+      }
+    }
+
     return store.siteSettings;
+  },
+
+  // ---------------- ORDER CANCELLATION (1-HOUR RULE) ----------------
+  async cancelOrder(orderNumberOrId: string, reason = "Customer requested cancellation within 1 hour") {
+    const ord = await this.getOrderByNumber(orderNumberOrId);
+    if (!ord) throw new Error("Order not found.");
+
+    if (ord.orderStatus === "cancelled") {
+      throw new Error("Order is already cancelled.");
+    }
+
+    const createdAt = new Date(ord.createdAt).getTime();
+    const now = Date.now();
+    const elapsedMinutes = (now - createdAt) / (1000 * 60);
+
+    if (elapsedMinutes > 60) {
+      throw new Error("Orders can only be cancelled within 1 hour of placing. Your order is already being handcrafted by our resin artists.");
+    }
+
+    ord.orderStatus = "cancelled";
+    ord.paymentStatus = "cancelled";
+    ord.cancellationReason = reason;
+    ord.cancelledAt = new Date();
+    ord.updatedAt = new Date();
+
+    // Restore inventory
+    if (ord.items && Array.isArray(ord.items)) {
+      for (const item of ord.items) {
+        if (item.productId) {
+          try {
+            await this.adjustStock(
+              item.productId,
+              item.variantId || null,
+              Number(item.quantity),
+              `Order Cancelled (${ord.orderNumber}) - Stock Restored`,
+              "customer_cancellation"
+            );
+          } catch (err) {
+            console.error("Restock on cancellation error:", err);
+          }
+        }
+      }
+    }
+
+    if (sql) {
+      try {
+        await sql`
+          UPDATE orders
+          SET 
+            order_status = 'cancelled',
+            payment_status = 'cancelled',
+            cancellation_reason = ${reason},
+            cancelled_at = NOW(),
+            updated_at = NOW()
+          WHERE order_number = ${ord.orderNumber} OR id = ${ord.id};
+        `;
+      } catch (err) {
+        console.error("[cancelOrder] DB update error:", err);
+      }
+    }
+
+    return ord;
+  },
+
+  // ---------------- CUSTOMER AUTH & ORDERS ----------------
+  async getCustomerByEmail(email: string) {
+    const cleanEmail = email.trim().toLowerCase();
+    if (sql) {
+      try {
+        const rows = await sql`
+          SELECT id, name, email, phone, password_hash as "passwordHash", is_verified as "isVerified", created_at as "createdAt"
+          FROM customers
+          WHERE LOWER(email) = ${cleanEmail}
+          LIMIT 1;
+        `;
+        if (rows && rows.length > 0) return rows[0];
+      } catch (e) {
+        console.error("DB getCustomerByEmail err:", e);
+      }
+    }
+    return null;
+  },
+
+  async getCustomerById(id: string) {
+    if (sql) {
+      try {
+        const rows = await sql`
+          SELECT id, name, email, phone, is_verified as "isVerified", created_at as "createdAt"
+          FROM customers
+          WHERE id = ${id}
+          LIMIT 1;
+        `;
+        if (rows && rows.length > 0) return rows[0];
+      } catch (e) {
+        console.error("DB getCustomerById err:", e);
+      }
+    }
+    return null;
+  },
+
+  async createCustomer(data: { name: string; email: string; phone?: string; passwordHash: string }) {
+    const id = `cust_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    const cleanEmail = data.email.trim().toLowerCase();
+    if (sql) {
+      await sql`
+        INSERT INTO customers (id, name, email, phone, password_hash, is_verified, created_at, updated_at)
+        VALUES (${id}, ${data.name.trim()}, ${cleanEmail}, ${data.phone?.trim() || null}, ${data.passwordHash}, true, NOW(), NOW());
+      `;
+    }
+    return {
+      id,
+      name: data.name.trim(),
+      email: cleanEmail,
+      phone: data.phone?.trim() || "",
+      isVerified: true,
+      createdAt: new Date(),
+    };
+  },
+
+  async getCustomerOrders(customerIdOrEmail: string) {
+    const clean = customerIdOrEmail.trim().toLowerCase();
+    const memOrders = store.orders.filter(
+      (o) => o.customerId === customerIdOrEmail || o.customerEmail?.toLowerCase() === clean
+    );
+
+    if (sql) {
+      try {
+        const rows = await sql`
+          SELECT 
+            id,
+            order_number as "orderNumber",
+            customer_id as "customerId",
+            customer_name as "customerName",
+            customer_email as "customerEmail",
+            customer_phone as "customerPhone",
+            shipping_city as "shippingCity",
+            shipping_state as "shippingState",
+            subtotal,
+            discount_amount as "discountAmount",
+            shipping_charge as "shippingCharge",
+            tax_amount as "taxAmount",
+            total_amount as "totalAmount",
+            order_status as "orderStatus",
+            payment_status as "paymentStatus",
+            payment_method as "paymentMethod",
+            upi_transaction_id as "upiTransactionId",
+            cancellation_reason as "cancellationReason",
+            cancelled_at as "cancelledAt",
+            tracking_number as "trackingNumber",
+            courier_name as "courierName",
+            created_at as "createdAt",
+            updated_at as "updatedAt"
+          FROM orders
+          WHERE customer_id = ${customerIdOrEmail} OR LOWER(customer_email) = ${clean}
+          ORDER BY created_at DESC;
+        `;
+        if (rows && rows.length > 0) {
+          for (const ord of rows) {
+            const items = await sql`
+              SELECT 
+                id, product_id as "productId", product_name as "productName",
+                variant_name as "variantName", unit_price as "unitPrice", quantity, total_price as "totalPrice"
+              FROM order_items
+              WHERE order_id = ${ord.id};
+            `;
+            ord.items = items || [];
+          }
+          return rows;
+        }
+      } catch (e) {
+        console.error("DB getCustomerOrders err:", e);
+      }
+    }
+
+    return memOrders;
   },
 
   // ---------------- DASHBOARD ANALYTICS ----------------

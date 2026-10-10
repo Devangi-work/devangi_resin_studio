@@ -194,7 +194,7 @@ export default function AdminSettingsPage() {
               <input
                 type="number"
                 step="0.01"
-                value={settings.defaultShippingCharge}
+                value={settings.defaultShippingCharge || "79.00"}
                 onChange={(e) => setSettings({ ...settings, defaultShippingCharge: e.target.value })}
                 className="w-full px-3.5 py-2 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl"
               />
@@ -207,10 +207,131 @@ export default function AdminSettingsPage() {
               <input
                 type="number"
                 step="0.01"
-                value={settings.freeShippingThreshold}
+                value={settings.freeShippingThreshold || "999.00"}
                 onChange={(e) => setSettings({ ...settings, freeShippingThreshold: e.target.value })}
                 className="w-full px-3.5 py-2 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl"
               />
+            </div>
+          </div>
+        </div>
+
+        {/* UPI Payments & QR Code Configuration */}
+        <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#E8E0D5] shadow-sm space-y-5">
+          <div className="border-b border-[#F4EBE6] pb-3 flex items-center justify-between">
+            <div>
+              <h2 className="font-serif text-base font-bold text-[#2C332D]">
+                UPI & QR Code Payment Setup
+              </h2>
+              <p className="text-xs text-[#736C66] mt-0.5">
+                Customers scan this QR code or pay to this UPI ID directly at checkout.
+              </p>
+            </div>
+            <span className="px-2.5 py-1 text-[11px] font-bold bg-[#E8EFE8] text-[#2E7D32] rounded-full">
+              Live Checkout
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs font-semibold text-[#2C332D] block mb-1">
+                UPI ID (VPA) <span className="text-[#DF4C4C]">*</span>
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. devangi0403@okaxis or 9876543210@paytm"
+                value={settings.upiId || ""}
+                onChange={(e) => setSettings({ ...settings, upiId: e.target.value })}
+                className="w-full px-3.5 py-2 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl font-mono text-[#2C332D]"
+              />
+              <p className="text-[11px] text-[#736C66] mt-1">
+                Customers can copy this UPI ID with 1 click to pay in Google Pay, PhonePe, or Paytm.
+              </p>
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-[#2C332D] block mb-1">
+                Account Holder / Display Name <span className="text-[#DF4C4C]">*</span>
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. Devangi Resin Studio"
+                value={settings.accountHolderName || ""}
+                onChange={(e) => setSettings({ ...settings, accountHolderName: e.target.value })}
+                className="w-full px-3.5 py-2 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl"
+              />
+              <p className="text-[11px] text-[#736C66] mt-1">
+                Name shown on the payment screen alongside your UPI ID.
+              </p>
+            </div>
+          </div>
+
+          {/* QR Code Upload & Preview */}
+          <div className="pt-2 border-t border-[#F4EBE6]">
+            <label className="text-xs font-semibold text-[#2C332D] block mb-2">
+              UPI Scanner QR Code Image
+            </label>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              {settings.upiQrCodeUrl ? (
+                <div className="relative group p-2 bg-[#FAF8F5] border border-[#E8E0D5] rounded-2xl">
+                  <img
+                    src={settings.upiQrCodeUrl}
+                    alt="UPI QR Code Preview"
+                    className="w-36 h-36 object-contain rounded-xl bg-white shadow-sm"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setSettings({ ...settings, upiQrCodeUrl: "" })}
+                    className="absolute -top-2 -right-2 bg-[#DF4C4C] text-white p-1 rounded-full shadow hover:bg-red-700 transition"
+                    title="Remove QR Code"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ) : (
+                <div className="w-36 h-36 border-2 border-dashed border-[#E8E0D5] rounded-2xl flex flex-col items-center justify-center text-[#736C66] text-xs p-3 text-center bg-[#FAF8F5]">
+                  <span>No QR Code Uploaded</span>
+                  <span className="text-[10px] text-[#A89F91] mt-1">PNG, JPG, or WEBP</span>
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <input
+                  type="file"
+                  id="qrUploadInput"
+                  accept="image/png, image/jpeg, image/webp"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const formData = new FormData();
+                    formData.append("file", file);
+                    try {
+                      const res = await fetch("/api/admin/upload", {
+                        method: "POST",
+                        body: formData,
+                      });
+                      const data = await res.json();
+                      if (data.url) {
+                        setSettings((prev: any) => ({ ...prev, upiQrCodeUrl: data.url }));
+                      } else {
+                        alert(data.error || "Failed to upload QR image.");
+                      }
+                    } catch {
+                      alert("Upload error.");
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => document.getElementById("qrUploadInput")?.click()}
+                  className="px-4 py-2 bg-[#2C332D] text-white text-xs font-semibold rounded-xl hover:bg-[#3D473E] transition shadow-sm"
+                >
+                  {settings.upiQrCodeUrl ? "Replace QR Code Image" : "Upload QR Code Image"}
+                </button>
+                <p className="text-[11px] text-[#736C66]">
+                  Upload your Google Pay, PhonePe, or Paytm QR code (Max 5MB). It will be saved securely to Vercel Blob and displayed directly to buyers.
+                </p>
+              </div>
             </div>
           </div>
         </div>

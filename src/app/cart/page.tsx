@@ -72,7 +72,7 @@ export default function CartPage() {
         </div>
         <h1 className="font-serif text-3xl font-bold text-[#2C332D]">Your Cart is Empty</h1>
         <p className="text-sm text-[#736C66] max-w-sm mx-auto font-light">
-          You haven&apos;t added any handmade resin wonders to your bag yet.
+          You haven't added any handmade resin wonders to your bag yet.
         </p>
         <Link
           href="/shop"
@@ -104,7 +104,7 @@ export default function CartPage() {
           <div className="bg-[#FAF4EC] border border-[#E8E0D5] p-4 rounded-2xl flex items-center justify-between text-xs text-[#2C332D]">
             {remainingForFreeShipping > 0 ? (
               <span>
-                Add <strong className="text-[#B8972E]">₹{remainingForFreeShipping.toFixed(0)}</strong> more to get <strong>Complimentary Insured Shipping</strong>
+                Add <strong className="text-[#B8972E]">₹{remainingForFreeShipping.toFixed(2)}</strong> more to get <strong>Complimentary Insured Shipping</strong>
               </span>
             ) : (
               <span className="flex items-center text-[#2E7D32] font-semibold">
@@ -139,7 +139,7 @@ export default function CartPage() {
                     )}
                     {item.personalizationDetails?.customName && (
                       <p className="text-xs text-[#B8972E] font-medium mt-0.5">
-                        Custom Name: &ldquo;{item.personalizationDetails.customName}&rdquo;
+                        Custom Name: "{item.personalizationDetails.customName}"
                       </p>
                     )}
                     {item.giftWrapped && (
@@ -210,7 +210,7 @@ export default function CartPage() {
               <div className="bg-[#E8EFE8] text-[#2E7D32] text-xs p-3 rounded-xl border border-[#C5D8C5] flex items-center justify-between font-medium">
                 <div className="flex items-center space-x-1.5">
                   <CheckCircle2 className="w-4 h-4" />
-                  <span>Coupon <strong>{appliedCoupon.code}</strong> applied (-₹{appliedCoupon.discountAmount})</span>
+                  <span>Coupon <strong>{appliedCoupon.code}</strong> applied (-₹{appliedCoupon.discountAmount.toFixed(2)})</span>
                 </div>
                 <button
                   onClick={() => setAppliedCoupon(null)}
@@ -282,7 +282,7 @@ export default function CartPage() {
 
             <div className="flex items-center justify-center space-x-2 text-[11px] text-[#8C7A72] pt-2">
               <Lock className="w-3.5 h-3.5 text-[#B8972E]" />
-              <span>Cashfree 256-bit Encrypted Checkout</span>
+              <span>100% Secure Direct UPI & QR Checkout</span>
             </div>
           </div>
         </div>

@@ -308,7 +308,7 @@ export default function AdminOrdersPage() {
                       {item.variantName && <p className="text-[#736C66]">{item.variantName}</p>}
                       {item.personalizationDetails?.customName && (
                         <p className="text-[#B8972E] font-medium">
-                          Custom Name: &ldquo;{item.personalizationDetails.customName}&rdquo;
+                          Custom Name: "{item.personalizationDetails.customName}"
                         </p>
                       )}
                       {item.referenceImageUrl && (

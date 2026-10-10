@@ -50,7 +50,7 @@ export default async function HomePage() {
             </div>
 
             <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl font-bold text-[#2C332D] leading-[1.15] tracking-tight">
-              Preserving Life&apos;s Moments in{" "}
+              Preserving Life's Moments in{" "}
               <span className="italic font-normal text-[#B8972E]">Glass-like</span> Perfection.
             </h1>
 
@@ -85,7 +85,9 @@ export default async function HomePage() {
                 <p className="text-[11px] text-[#736C66] uppercase tracking-wider">Non-Yellowing</p>
               </div>
               <div>
-                <p className="font-serif text-xl sm:text-2xl font-bold text-[#2C332D]">4.9 &starf;</p>
+                <p className="font-serif text-xl sm:text-2xl font-bold text-[#2C332D] flex items-center justify-center lg:justify-start">
+                  4.9 <Star className="w-4 h-4 fill-[#D4AF37] text-[#D4AF37] ml-1 inline" />
+                </p>
                 <p className="text-[11px] text-[#736C66] uppercase tracking-wider">Artisan Rating</p>
               </div>
             </div>
@@ -108,10 +110,10 @@ export default async function HomePage() {
                   {"★".repeat(5)}
                 </div>
                 <p className="text-xs text-[#2C332D] font-medium leading-snug">
-                  &ldquo;The ocean coasters look exactly like rolling crystal waves. Absolutely magical craftsmanship!&rdquo;
+                  "The ocean coasters look exactly like rolling crystal waves. Absolutely magical craftsmanship!"
                 </p>
                 <p className="text-[10px] text-[#8C7A72] mt-1.5 font-bold uppercase tracking-wider">
-                  &mdash; Tanya K., Verified Buyer
+                  — Tanya K., Verified Buyer
                 </p>
               </div>
 
@@ -362,7 +364,7 @@ export default async function HomePage() {
           </span>
 
           <h2 className="font-serif text-2xl sm:text-3xl font-bold text-[#2C332D] max-w-2xl mx-auto leading-snug">
-            &ldquo;We don&apos;t just pour resin &mdash; we encapsulate life&apos;s ephemeral beauty into forever keepsakes.&rdquo;
+            "We don't just pour resin — we encapsulate life's ephemeral beauty into forever keepsakes."
           </h2>
 
           <p className="text-sm text-[#736C66] max-w-2xl mx-auto leading-relaxed font-light">
@@ -374,7 +376,7 @@ export default async function HomePage() {
               href="/shop"
               className="text-xs font-semibold text-[#2C332D] border-b border-[#2C332D] pb-1 hover:text-[#B8972E] hover:border-[#B8972E] transition-colors"
             >
-              Browse Full Boutique Catalog &rarr;
+              Browse Full Boutique Catalog →
             </Link>
           </div>
         </div>
@@ -397,7 +399,7 @@ export default async function HomePage() {
               {"★".repeat(5)}
             </div>
             <p className="text-xs text-[#2C332D] leading-relaxed italic">
-              &ldquo;The custom floral photo frame with fairy lights for my sister&apos;s wedding was breathtaking! The flowers look as vivid as the day they were picked. Packaging was super safe.&rdquo;
+              "The custom floral photo frame with fairy lights for my sister's wedding was breathtaking! The flowers look as vivid as the day they were picked. Packaging was super safe."
             </p>
             <div className="pt-2 border-t border-[#F4EBE6]">
               <p className="text-xs font-bold text-[#2C332D]">Ananya Deshmukh</p>
@@ -410,7 +412,7 @@ export default async function HomePage() {
               {"★".repeat(5)}
             </div>
             <p className="text-xs text-[#2C332D] leading-relaxed italic">
-              &ldquo;I ordered the geode ocean coasters with gold rims. They are truly works of art on my coffee table. Heat-resistant and very easy to clean. Will definitely buy gifts from here again.&rdquo;
+              "I ordered the geode ocean coasters with gold rims. They are truly works of art on my coffee table. Heat-resistant and very easy to clean. Will definitely buy gifts from here again."
             </p>
             <div className="pt-2 border-t border-[#F4EBE6]">
               <p className="text-xs font-bold text-[#2C332D]">Vikram Malhotra</p>
@@ -423,7 +425,7 @@ export default async function HomePage() {
               {"★".repeat(5)}
             </div>
             <p className="text-xs text-[#2C332D] leading-relaxed italic">
-              &ldquo;The personalized letter keychain with gold flakes feels so sturdy and luxurious. The lobster clasp is heavy-duty and doesn&apos;t tarnish. Perfect birthday gift!&rdquo;
+              "The personalized letter keychain with gold flakes feels so sturdy and luxurious. The lobster clasp is heavy-duty and doesn't tarnish. Perfect birthday gift!"
             </p>
             <div className="pt-2 border-t border-[#F4EBE6]">
               <p className="text-xs font-bold text-[#2C332D]">Shruti Nair</p>

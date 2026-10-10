@@ -207,7 +207,7 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailPro
             </h1>
             <p className="text-xs text-[#736C66] flex items-center space-x-3">
               <span>SKU: <strong className="text-[#2C332D]">{selectedVariant?.sku || product.sku}</strong></span>
-              <span>&bull;</span>
+              <span>•</span>
               <span>
                 Type:{" "}
                 <strong className="text-[#2C332D] capitalize">

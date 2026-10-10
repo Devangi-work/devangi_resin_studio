@@ -18,6 +18,16 @@ export function Footer() {
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [settings, setSettings] = useState<any>(null);
+
+  React.useEffect(() => {
+    fetch("/api/settings")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && !data.error) setSettings(data);
+      })
+      .catch(() => {});
+  }, []);
 
   const handleNewsletter = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,18 +59,19 @@ export function Footer() {
           <div className="lg:col-span-2 space-y-4">
             <Link href="/" className="inline-block">
               <span className="font-serif text-2xl tracking-widest font-bold text-[#FAF8F5]">
-                AURA
+                {settings?.storeName || "AURA"}
               </span>
               <span className="block text-[9px] uppercase tracking-[0.25em] text-[#D4AF37] -mt-1 font-sans">
-                Resin Art Studio
+                {settings?.storeTagline || "Resin Art Studio"}
               </span>
             </Link>
             <p className="text-sm text-[#A69E96] leading-relaxed max-w-sm">
-              We handcraft bespoke epoxy resin art, botanical jewellery, personalized nameplates, and crystal geode homeware. Each piece is hand-poured with love, intention, and non-yellowing UV-stable resin.
+              {settings?.storeDescription ||
+                "We handcraft bespoke epoxy resin art, botanical jewellery, personalized nameplates, and crystal geode homeware. Each piece is hand-poured with love, intention, and non-yellowing UV-stable resin."}
             </p>
             <div className="flex items-center space-x-3 pt-2">
               <a
-                href="https://instagram.com/auraresinart"
+                href={settings?.instagramUrl || "https://instagram.com/auraresinart"}
                 target="_blank"
                 rel="noreferrer"
                 className="w-9 h-9 rounded-full bg-[#2C332D] flex items-center justify-center text-[#FAF8F5] hover:text-[#D4AF37] hover:bg-[#3D473E] transition-colors"
@@ -69,7 +80,7 @@ export function Footer() {
                 <Instagram className="w-4 h-4" />
               </a>
               <a
-                href="https://facebook.com/auraresinart"
+                href={settings?.facebookUrl || "https://facebook.com/auraresinart"}
                 target="_blank"
                 rel="noreferrer"
                 className="w-9 h-9 rounded-full bg-[#2C332D] flex items-center justify-center text-[#FAF8F5] hover:text-[#D4AF37] hover:bg-[#3D473E] transition-colors"
@@ -78,7 +89,7 @@ export function Footer() {
                 <Facebook className="w-4 h-4" />
               </a>
               <a
-                href="https://wa.me/919876543210?text=Hi%20Aura%20Resin%20Art,%20I%20have%20an%20inquiry%20about%20a%20custom%20order!"
+                href={`https://wa.me/${(settings?.whatsappNumber || "919876543210").replace(/[^0-9]/g, "")}?text=Hi%20${encodeURIComponent(settings?.storeName || "Aura Resin Art")},%20I%20have%20an%20inquiry%20about%20a%20custom%20order!`}
                 target="_blank"
                 rel="noreferrer"
                 className="w-9 h-9 rounded-full bg-[#25D366]/20 text-[#25D366] flex items-center justify-center hover:bg-[#25D366] hover:text-white transition-colors"
@@ -134,6 +145,11 @@ export function Footer() {
               Customer Care
             </h3>
             <ul className="space-y-2 text-sm text-[#A69E96]">
+              <li>
+                <Link href="/account" className="hover:text-white transition-colors">
+                  My Account & Order History
+                </Link>
+              </li>
               <li>
                 <Link href="/track-order" className="hover:text-white transition-colors">
                   Track Your Order
@@ -204,11 +220,11 @@ export function Footer() {
             <div className="pt-2 text-xs text-[#A69E96] space-y-1">
               <p className="flex items-center space-x-2">
                 <Mail className="w-3.5 h-3.5 text-[#D4AF37]" />
-                <span>hello@auraresinart.com</span>
+                <span>{settings?.contactEmail || "hello@auraresinart.com"}</span>
               </p>
               <p className="flex items-center space-x-2">
                 <Phone className="w-3.5 h-3.5 text-[#D4AF37]" />
-                <span>+91 98765 43210</span>
+                <span>{settings?.contactPhone || "+91 98765 43210"}</span>
               </p>
             </div>
           </div>
@@ -217,7 +233,7 @@ export function Footer() {
         {/* Bottom Trust & Copyright */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-[#736C66] space-y-4 sm:space-y-0">
           <div className="flex items-center space-x-1.5">
-            <span>&copy; {new Date().getFullYear()} Aura Resin Art Studio. Handcrafted in India.</span>
+            <span>© {new Date().getFullYear()} Aura Resin Art Studio. Handcrafted in India.</span>
           </div>
 
           {/* Secure Payment Badges */}
@@ -226,10 +242,10 @@ export function Footer() {
               <Lock className="w-3.5 h-3.5 text-[#D4AF37]" />
               <span>256-Bit SSL Encrypted</span>
             </span>
-            <span>&bull;</span>
+            <span>•</span>
             <span className="flex items-center space-x-1">
               <ShieldCheck className="w-3.5 h-3.5 text-[#66BB6A]" />
-              <span>Cashfree Verified PG</span>
+              <span>UPI & QR Instant Payment</span>
             </span>
           </div>
         </div>

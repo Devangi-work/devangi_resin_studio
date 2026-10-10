@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { dbStore } from "@/lib/db";
 import { checkoutSchema } from "@/lib/validations";
-import { createCashfreeOrder } from "@/lib/cashfree";
+import { getCustomerSession } from "@/lib/auth/customer";
+import { sendBrevoEmail } from "@/lib/email/brevo";
 
 export async function POST(request: Request) {
   try {
@@ -27,6 +28,7 @@ export async function POST(request: Request) {
       shippingCountry,
       orderNotes,
       couponCode,
+      upiTransactionId,
       items,
     } = result.data;
 
@@ -97,22 +99,22 @@ export async function POST(request: Request) {
         productName: product.name,
         sku: product.sku,
         variantName,
-        unitPrice: unitPrice.toFixed(2),
+        unitPrice: Number(unitPrice).toFixed(2),
         quantity: item.quantity,
-        totalPrice: itemTotal.toFixed(2),
+        totalPrice: Number(itemTotal).toFixed(2),
         personalizationDetails: item.personalizationDetails || null,
         referenceImageUrl: item.referenceImageUrl || null,
         giftWrapped: item.giftWrapped,
-        giftWrapCharge: giftWrapCharge.toFixed(2),
+        giftWrapCharge: Number(giftWrapCharge).toFixed(2),
       });
     }
 
-    // 2. Fetch site settings for shipping & tax policy
+    // 2. Fetch site settings for shipping & thresholds
     const settings = await dbStore.getSiteSettings();
     const freeShippingThreshold = Number(settings.freeShippingThreshold || 999);
     const defaultShippingCharge = Number(settings.defaultShippingCharge || 79);
 
-    let shippingCharge = subtotal >= freeShippingThreshold ? 0 : defaultShippingCharge;
+    const shippingCharge = subtotal >= freeShippingThreshold ? 0 : defaultShippingCharge;
 
     // 3. Coupon validation
     let discountAmount = 0;
@@ -123,13 +125,17 @@ export async function POST(request: Request) {
       }
     }
 
-    // 4. Final payable amount
+    // 4. Final payable amount (strictly no round off)
     const totalAmount = Math.max(1, subtotal - discountAmount + shippingCharge);
     const orderNumber = `RA-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-${Math.floor(1000 + Math.random() * 9000)}`;
 
-    // 5. Create Pending Order in database
+    // 5. Check if customer is logged in
+    const customerSession = await getCustomerSession();
+
+    // 6. Create Order in database
     const order = await dbStore.createOrder({
       orderNumber,
+      customerId: customerSession?.customerId || null,
       customerName,
       customerEmail,
       customerPhone,
@@ -145,36 +151,91 @@ export async function POST(request: Request) {
       shippingCharge,
       taxAmount: 0,
       totalAmount,
-      orderStatus: "pending_payment",
-      paymentStatus: "pending",
+      orderStatus: "confirmed",
+      paymentStatus: "pending_verification",
+      paymentMethod: "upi",
+      upiTransactionId,
       items: validatedItems,
     });
 
-    // 6. Initiate Cashfree Payment Session
-    const cfSession = await createCashfreeOrder({
-      orderId: order.orderNumber,
-      orderAmount: totalAmount,
-      customerDetails: {
-        customerId: `cust_${customerPhone.replace(/[^0-9]/g, "")}`,
-        customerName,
-        customerEmail,
-        customerPhone,
-      },
-      orderNote: `Resin Art Order #${order.orderNumber}`,
-    });
+    // 7. Decrement Inventory
+    for (const item of validatedItems) {
+      if (item.productId) {
+        try {
+          await dbStore.adjustStock(
+            item.productId,
+            item.variantId || null,
+            -Number(item.quantity),
+            `Order Placed via UPI (${order.orderNumber})`,
+            "checkout"
+          );
+        } catch (err) {
+          console.error("Stock adjustment error:", err);
+        }
+      }
+    }
+
+    // 8. Send Brevo Transactional Email confirmation
+    try {
+      const itemsHtml = validatedItems
+        .map(
+          (i) => `
+          <tr style="border-bottom: 1px solid #f0e6df;">
+            <td style="padding: 10px 8px; font-weight: 500; color: #2c2523;">
+              ${i.productName} ${i.variantName ? `<small>(${i.variantName})</small>` : ""}
+              ${i.personalizationDetails?.customName ? `<br><small style="color: #b37d4e;">Custom Name: "${i.personalizationDetails.customName}"</small>` : ""}
+            </td>
+            <td style="padding: 10px 8px; text-align: center;">${i.quantity}</td>
+            <td style="padding: 10px 8px; text-align: right; font-weight: 600;">₹${i.totalPrice}</td>
+          </tr>
+        `
+        )
+        .join("");
+
+      await sendBrevoEmail({
+        to: [{ email: customerEmail, name: customerName }],
+        subject: `Order Confirmed: #${order.orderNumber} - Aura Resin Art Studio`,
+        htmlContent: `
+          <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #faf7f2; padding: 24px; color: #2c2523;">
+            <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #eee4db;">
+              <div style="background: #2C332D; padding: 28px; text-align: center; color: #ffffff;">
+                <h1 style="margin: 0; font-size: 22px; letter-spacing: 1px;">AURA RESIN ART</h1>
+                <p style="margin: 6px 0 0; color: #D4AF37; font-size: 13px;">Order #${order.orderNumber} Confirmed</p>
+              </div>
+              <div style="padding: 24px;">
+                <p>Hello <strong>${customerName}</strong>,</p>
+                <p>Thank you for your order! We have received your UPI payment submission (Ref: <code>${upiTransactionId}</code>) and your handmade pieces are entering our curing queue.</p>
+                <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
+                  <thead>
+                    <tr style="background: #FAF8F5; text-align: left; font-size: 12px; color: #8C7A72;">
+                      <th style="padding: 8px;">Item</th>
+                      <th style="padding: 8px; text-align: center;">Qty</th>
+                      <th style="padding: 8px; text-align: right;">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>${itemsHtml}</tbody>
+                </table>
+                <p style="text-align: right; font-size: 15px; font-weight: bold; margin-top: 12px;">Total Paid: ₹${Number(totalAmount).toFixed(2)}</p>
+                <div style="margin-top: 20px; padding: 12px; background: #FAF4EC; border-radius: 8px; font-size: 12px; color: #8C7A72;">
+                  <strong>Cancellation Policy:</strong> You can modify or cancel this handmade order within <strong>1 hour</strong> of placement. After 1 hour, our artists begin pouring resin and orders cannot be cancelled.
+                </div>
+              </div>
+            </div>
+          </div>
+        `,
+      });
+    } catch (emailErr) {
+      console.error("[Checkout Email Notification Error]", emailErr);
+    }
 
     return NextResponse.json({
       success: true,
       orderNumber: order.orderNumber,
       secureLookupToken: order.secureLookupToken,
-      paymentSessionId: cfSession.paymentSessionId,
-      cfOrderId: cfSession.cfOrderId,
-      sandboxPaymentUrl: cfSession.sandboxPaymentUrl,
-      isMock: cfSession.isMock,
-      totalAmount,
+      totalAmount: Number(totalAmount).toFixed(2),
     });
   } catch (err: any) {
-    console.error("Create session error:", err);
+    console.error("Order creation error:", err);
     return NextResponse.json({ error: err.message || "Failed to create order" }, { status: 500 });
   }
 }

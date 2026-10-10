@@ -9,7 +9,7 @@ import {
   X,
   Search,
   Sparkles,
-  ShieldCheck,
+  User,
   Package,
 } from "lucide-react";
 
@@ -18,6 +18,16 @@ export function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [settings, setSettings] = useState<any>(null);
+
+  React.useEffect(() => {
+    fetch("/api/settings")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && !data.error) setSettings(data);
+      })
+      .catch(() => {});
+  }, []);
 
   const navLinks = [
     { name: "Shop All", href: "/shop" },
@@ -42,7 +52,12 @@ export function Navbar() {
       {/* Announcement Top Bar */}
       <div className="bg-[#2C332D] text-[#FAF8F5] text-xs py-2 px-4 text-center font-medium tracking-wide flex items-center justify-center space-x-2">
         <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />
-        <span>Handmade with Love &bull; Complimentary Insured Delivery on orders over ₹999</span>
+        <span>
+          Handmade with Love • Complimentary Insured Delivery on orders over ₹
+          {settings?.freeShippingThreshold
+            ? Number(settings.freeShippingThreshold).toFixed(2)
+            : "999.00"}
+        </span>
         <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />
       </div>
 
@@ -65,10 +80,10 @@ export function Navbar() {
           <div className="flex-1 lg:flex-none text-center lg:text-left">
             <Link href="/" className="inline-block group">
               <span className="font-serif text-2xl sm:text-3xl tracking-widest font-bold text-[#2C332D] group-hover:text-[#B8972E] transition-colors">
-                AURA
+                {settings?.storeName || "AURA"}
               </span>
               <span className="block text-[9px] uppercase tracking-[0.25em] text-[#736C66] -mt-1 font-sans">
-                Resin Art Studio
+                {settings?.storeTagline || "Resin Art Studio"}
               </span>
             </Link>
           </div>
@@ -97,13 +112,13 @@ export function Navbar() {
               <Search className="w-5 h-5" />
             </button>
 
-            {/* Admin Dashboard shortcut */}
+            {/* Customer Account / Orders */}
             <Link
-              href="/admin/dashboard"
+              href="/account"
               className="p-2 text-[#736C66] hover:text-[#2C332D] hover:bg-[#F4EBE6] rounded-full transition-colors hidden sm:inline-flex"
-              title="Admin Panel"
+              title="My Account & Orders"
             >
-              <ShieldCheck className="w-5 h-5" />
+              <User className="w-5 h-5" />
             </Link>
 
             {/* Cart Trigger Button */}
@@ -165,9 +180,9 @@ export function Navbar() {
                 <Package className="w-4 h-4" />
                 <span>Track Your Order</span>
               </Link>
-              <Link href="/admin/dashboard" className="flex items-center space-x-1.5 py-1">
-                <ShieldCheck className="w-4 h-4" />
-                <span>Admin Login</span>
+              <Link href="/account" className="flex items-center space-x-1.5 py-1">
+                <User className="w-4 h-4" />
+                <span>My Account & Orders</span>
               </Link>
             </div>
           </div>
