@@ -2,9 +2,22 @@ import { SignJWT, jwtVerify } from "jose";
 import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
 
+import { neon } from "@neondatabase/serverless";
+
 const SESSION_COOKIE_NAME = "resin_admin_token";
 const DEFAULT_SECRET = "resin-art-super-secure-admin-jwt-session-secret-key-32chars";
 const SECRET_KEY = new TextEncoder().encode(process.env.ADMIN_SESSION_SECRET || DEFAULT_SECRET);
+
+function getSql() {
+  if (
+    process.env.DATABASE_URL &&
+    !process.env.DATABASE_URL.includes("user:password@ep-sample") &&
+    process.env.DATABASE_URL.startsWith("postgres")
+  ) {
+    return neon(process.env.DATABASE_URL);
+  }
+  return null;
+}
 
 export interface AdminSessionPayload {
   userId: string;
@@ -20,7 +33,22 @@ let inMemoryAdmins: Array<{
   passwordHash: string;
   fullName: string;
   role: string;
-}> = [];
+}> = [
+  {
+    id: "adm_devangi",
+    email: "devangiresin@gmail.com",
+    passwordHash: "$2b$10$bvUvFqFVTWuAA9Lk7kaY9e7n1dJ5JX2XTPuWqK2wEaV79aR7LjTdS", // Deepa@04
+    fullName: "Devangi Resin Studio Admin",
+    role: "owner",
+  },
+  {
+    id: "admin_primary",
+    email: "admin@auraresinart.com",
+    passwordHash: "$2b$10$rK3UeUj3yO0d03zY0kEWee7Z13U0mPZpM83a2p004f2jQo0oK.85u", // AdminSecret2025!
+    fullName: "Aura Resin Studio Admin",
+    role: "owner",
+  },
+];
 
 export async function hashPassword(password: string): Promise<string> {
   const salt = await bcrypt.genSalt(12);
@@ -82,11 +110,43 @@ export async function requireAdminAuth(): Promise<AdminSessionPayload> {
 // ---------------- Admin User Management ----------------
 
 export async function hasAnyAdmin(): Promise<boolean> {
+  const sql = getSql();
+  if (sql) {
+    try {
+      const rows = await sql`SELECT COUNT(*) as count FROM admin_users;`;
+      if (rows && Number(rows[0]?.count) > 0) return true;
+    } catch {
+      // fallback
+    }
+  }
   return inMemoryAdmins.length > 0;
 }
 
 export async function findAdminByEmail(email: string) {
-  return inMemoryAdmins.find((a) => a.email.toLowerCase() === email.trim().toLowerCase()) || null;
+  const normalized = email.trim().toLowerCase();
+  const sql = getSql();
+  if (sql) {
+    try {
+      const rows = await sql`
+        SELECT id, email, full_name as "fullName", password_hash as "passwordHash", role
+        FROM admin_users
+        WHERE LOWER(email) = ${normalized}
+        LIMIT 1;
+      `;
+      if (rows && rows.length > 0) {
+        return {
+          id: rows[0].id,
+          email: rows[0].email,
+          fullName: rows[0].fullName,
+          passwordHash: rows[0].passwordHash,
+          role: rows[0].role,
+        };
+      }
+    } catch {
+      // fallback
+    }
+  }
+  return inMemoryAdmins.find((a) => a.email.toLowerCase() === normalized) || null;
 }
 
 export async function createAdminUser(data: {
