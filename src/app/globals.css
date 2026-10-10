@@ -1,0 +1,98 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --background: #FAF8F5;
+    --foreground: #222523;
+    --card: #FFFFFF;
+    --card-foreground: #222523;
+    --popover: #FFFFFF;
+    --popover-foreground: #222523;
+    --primary: #2C332D;
+    --primary-foreground: #FAF8F5;
+    --secondary: #F4EBE6;
+    --secondary-foreground: #2C332D;
+    --muted: #EFE9E2;
+    --muted-foreground: #736C66;
+    --accent: #E8DCC4;
+    --accent-foreground: #2C332D;
+    --destructive: #DF4C4C;
+    --destructive-foreground: #FFFFFF;
+    --border: #E8E0D5;
+    --input: #E8E0D5;
+    --ring: #D4AF37;
+    --radius: 0.75rem;
+
+    /* Resin Palette Custom Tokens */
+    --resin-cream: #FAF8F5;
+    --resin-blush: #F9EBEA;
+    --resin-sage: #E8EFE8;
+    --resin-lavender: #EEEBF5;
+    --resin-gold: #D4AF37;
+    --resin-gold-dark: #B8972E;
+    --resin-charcoal: #222523;
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+  }
+}
+
+/* Glassmorphism utility */
+.glass {
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.glass-dark {
+  background: rgba(34, 37, 35, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Shimmer animation for loading states */
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.animate-shimmer::after {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  transform: translateX(-100%);
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0,
+    rgba(255, 255, 255, 0.3) 20%,
+    rgba(255, 255, 255, 0.5) 60%,
+    rgba(255, 255, 255, 0)
+  );
+  animation: shimmer 2s infinite;
+  content: "";
+}
+
+/* Subtle image hover zoom */
+.product-card-image {
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.group:hover .product-card-image {
+  transform: scale(1.05);
+}
