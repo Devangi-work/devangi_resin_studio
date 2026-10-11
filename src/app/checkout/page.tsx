@@ -152,13 +152,6 @@ export default function CheckoutPage() {
     activePayeeName
   )}&am=${finalTotal.toFixed(2)}&cu=INR&tn=Test%20Payment&tr=TESTUPI001`;
 
-  // App Launcher URLs - Opens the apps directly to their Home Screen (Image 2) like tapping the app icon!
-  const phonepeAppUrl = isIOS
-    ? "phonepe://"
-    : "intent://#Intent;package=com.phonepe.app;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;end";
-  const gpayAppUrl = isIOS
-    ? "gpay://"
-    : "intent://#Intent;package=com.google.android.apps.nbu.paisa.user;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;end";
 
   // Dynamic QR Code generation if admin has not uploaded a static image
   const dynamicQrUrl = settings.upiQrCodeUrl
@@ -1094,6 +1087,7 @@ export default function CheckoutPage() {
                   Enter 12-Digit UPI Ref / UTR Number <span className="text-[#DF4C4C]">*</span>
                 </label>
                 <input
+                  id="upiTransactionId"
                   type="text"
                   required
                   placeholder="e.g. 428901234567 or UPI Txn ID"
@@ -1242,54 +1236,51 @@ export default function CheckoutPage() {
                 </button>
               </div>
 
-              {/* Guidance Box for Home Screen Transfer */}
-              <div className="bg-[#EBF3EB] border border-[#CDE1CD] rounded-xl p-3 text-[11px] text-[#204E24] leading-relaxed space-y-1">
-                <p className="font-bold flex items-center gap-1 text-[#173F1B]">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-[#2E7D32]" />
-                  <span>How to complete payment without error:</span>
+              {/* Guidance Box */}
+              <div className="bg-[#FAF4EC] border border-[#F0E6DF] rounded-xl p-3.5 text-xs text-[#2C332D] space-y-2">
+                <p className="font-bold flex items-center gap-1.5 text-[#8C6D23]">
+                  <CheckCircle2 className="w-4 h-4 text-[#B8972E] shrink-0" />
+                  <span>Choose how you want to pay:</span>
                 </p>
-                <ol className="list-decimal list-inside space-y-1 text-[10.5px] text-[#2C5731] pl-1 pt-0.5">
-                  <li>
-                    Tap <strong>Copy Phone ({activePhone})</strong> above.
-                  </li>
-                  <li>
-                    Tap <strong>Open PhonePe App</strong> or <strong>Open Google Pay</strong> below.
-                  </li>
-                  <li>
-                    In your app, tap <strong>&ldquo;To Mobile Number&rdquo;</strong>, paste <strong>{activePhone}</strong>, and send <strong>₹{finalTotal.toFixed(2)}</strong>.
-                  </li>
-                  <li>
-                    Return here and enter the 12-digit UTR number below to confirm order.
-                  </li>
-                </ol>
+                <div className="space-y-2 text-[11px] text-[#554C46] pl-0.5">
+                  <div className="flex items-start gap-2">
+                    <span className="font-bold text-[#2C332D] bg-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] shrink-0 border border-[#E8E0D5]">1</span>
+                    <p>
+                      <strong>Google Pay / GPay:</strong> Tap <strong>&ldquo;Pay via UPI App&rdquo;</strong> below &rarr; choose Google Pay. Payee name, UPI ID, and <strong>₹{finalTotal.toFixed(2)}</strong> are filled in automatically!
+                    </p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="font-bold text-[#2C332D] bg-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] shrink-0 border border-[#E8E0D5]">2</span>
+                    <p>
+                      <strong>PhonePe:</strong> Tap <strong>&ldquo;Copy Phone ({activePhone})&rdquo;</strong> above, open PhonePe, select <em>&ldquo;To Mobile Number&rdquo;</em>, and transfer <strong>₹{finalTotal.toFixed(2)}</strong> directly without any limits.
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* Footer / App Home Launchers */}
+            {/* Footer / App Launchers */}
             <div className="p-4 bg-white border-t border-[#E8E0D5] space-y-2.5">
               <a
-                href={phonepeAppUrl}
-                className="w-full py-3.5 px-4 bg-[#5f259f] hover:bg-[#4d1e82] text-white rounded-xl text-sm font-bold flex items-center justify-center space-x-2 shadow-sm transition active:scale-[0.99] cursor-pointer"
+                href={upiIntentUri}
+                className="w-full py-3.5 px-4 bg-[#2C332D] hover:bg-[#3D473E] text-white rounded-xl text-sm font-bold flex items-center justify-center space-x-2 shadow-sm transition active:scale-[0.99] cursor-pointer"
               >
-                <Smartphone className="w-4 h-4 text-white" />
-                <span>Open PhonePe App (Home Screen)</span>
-                <ExternalLink className="w-4 h-4 opacity-80" />
-              </a>
-
-              <a
-                href={gpayAppUrl}
-                className="w-full py-3 px-4 bg-white hover:bg-[#F4EBE6] text-[#2C332D] border border-[#E8E0D5] rounded-xl text-xs font-bold flex items-center justify-center space-x-2 transition active:scale-[0.99] cursor-pointer shadow-2xs"
-              >
-                <span>Open Google Pay App</span>
-                <ExternalLink className="w-3.5 h-3.5 text-[#8C7A72]" />
+                <Smartphone className="w-4 h-4 text-[#D4AF37]" />
+                <span>Pay via UPI App (Google Pay / PhonePe)</span>
+                <ExternalLink className="w-4 h-4 text-[#D4AF37]" />
               </a>
 
               <button
                 type="button"
-                onClick={() => setShowUpiModal(false)}
-                className="w-full py-1 text-xs text-[#8C7A72] hover:text-[#2C332D] text-center font-medium transition cursor-pointer"
+                onClick={() => {
+                  setShowUpiModal(false);
+                  setTimeout(() => {
+                    document.getElementById("upiTransactionId")?.focus();
+                  }, 200);
+                }}
+                className="w-full py-2.5 text-xs text-[#8C7A72] hover:text-[#2C332D] hover:bg-[#FAF8F5] rounded-xl text-center font-medium transition cursor-pointer border border-transparent hover:border-[#E8E0D5]"
               >
-                Already Paid? Enter 12-Digit UTR
+                Already Paid? Enter 12-Digit UTR / Ref Number &rarr;
               </button>
             </div>
           </div>
