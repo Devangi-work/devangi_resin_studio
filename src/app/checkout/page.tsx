@@ -180,28 +180,6 @@ export default function CheckoutPage() {
     setShowUpiModal(true);
   };
 
-  const handleLaunchUpi = (app: "phonepe" | "gpay" | "paytm") => {
-    const isAndroid = typeof navigator !== "undefined" && /android/i.test(navigator.userAgent);
-
-    if (app === "phonepe") {
-      window.location.href = "phonepe://";
-    } else if (app === "gpay") {
-      if (isAndroid) {
-        window.location.href =
-          "intent://#Intent;package=com.google.android.apps.nbu.paisa.user;scheme=tez;end";
-      } else {
-        window.location.href = "tez://";
-      }
-    } else if (app === "paytm") {
-      if (isAndroid) {
-        window.location.href =
-          "intent://#Intent;package=net.one97.paytm;scheme=paytm;end";
-      } else {
-        window.location.href = "paytm://";
-      }
-    }
-  };
-
   // Quick In-Checkout Login
   const handleQuickLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1279,9 +1257,6 @@ export default function CheckoutPage() {
                 {/* 1. PhonePe */}
                 <a
                   href="phonepe://"
-                  onClick={(e) => {
-                    handleLaunchUpi("phonepe");
-                  }}
                   className="py-3 px-2 bg-[#5f259f] hover:bg-[#4d1e82] text-white rounded-xl text-xs font-bold flex flex-col items-center justify-center space-y-1 shadow-sm transition active:scale-95 cursor-pointer text-center"
                 >
                   <Smartphone className="w-4 h-4 text-white" />
@@ -1291,11 +1266,7 @@ export default function CheckoutPage() {
 
                 {/* 2. Google Pay */}
                 <a
-                  href="intent://#Intent;package=com.google.android.apps.nbu.paisa.user;scheme=tez;end"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handleLaunchUpi("gpay");
-                  }}
+                  href="tez://"
                   className="py-3 px-2 bg-[#2C332D] hover:bg-[#3D473E] text-white rounded-xl text-xs font-bold flex flex-col items-center justify-center space-y-1 shadow-sm transition active:scale-95 cursor-pointer text-center"
                 >
                   <Smartphone className="w-4 h-4 text-[#D4AF37]" />
@@ -1305,11 +1276,7 @@ export default function CheckoutPage() {
 
                 {/* 3. Paytm */}
                 <a
-                  href="intent://#Intent;package=net.one97.paytm;scheme=paytm;end"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handleLaunchUpi("paytm");
-                  }}
+                  href="paytm://"
                   className="py-3 px-2 bg-[#002970] hover:bg-[#001f54] text-white rounded-xl text-xs font-bold flex flex-col items-center justify-center space-y-1 shadow-sm transition active:scale-95 cursor-pointer text-center"
                 >
                   <Smartphone className="w-4 h-4 text-white" />
