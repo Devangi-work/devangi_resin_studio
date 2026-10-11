@@ -180,8 +180,26 @@ export default function CheckoutPage() {
     setShowUpiModal(true);
   };
 
-  const handleProceedToApp = () => {
-    window.location.href = upiIntentUri;
+  const handleLaunchUpi = (app: "phonepe" | "gpay" | "paytm") => {
+    const isAndroid = typeof navigator !== "undefined" && /android/i.test(navigator.userAgent);
+
+    if (app === "phonepe") {
+      window.location.href = "phonepe://";
+    } else if (app === "gpay") {
+      if (isAndroid) {
+        window.location.href =
+          "intent://#Intent;package=com.google.android.apps.nbu.paisa.user;scheme=tez;end";
+      } else {
+        window.location.href = "tez://";
+      }
+    } else if (app === "paytm") {
+      if (isAndroid) {
+        window.location.href =
+          "intent://#Intent;package=net.one97.paytm;scheme=paytm;end";
+      } else {
+        window.location.href = "paytm://";
+      }
+    }
   };
 
   // Quick In-Checkout Login
@@ -1240,10 +1258,10 @@ export default function CheckoutPage() {
                     Tap <strong>Copy Phone ({activePhone})</strong> above.
                   </li>
                   <li>
-                    Tap <strong>Open PhonePe App</strong> below to open PhonePe home screen.
+                    Tap your UPI app below (<strong>PhonePe</strong>, <strong>Google Pay</strong>, or <strong>Paytm</strong>).
                   </li>
                   <li>
-                    On PhonePe home, tap <strong>&ldquo;To Mobile Number&rdquo;</strong>, paste <strong>{activePhone}</strong>, and send <strong>₹{finalTotal.toFixed(2)}</strong>.
+                    In your app, tap <strong>&ldquo;To Mobile Number&rdquo;</strong> (or Pay to Contact), paste <strong>{activePhone}</strong>, and send <strong>₹{finalTotal.toFixed(2)}</strong>.
                   </li>
                   <li>
                     Return here and enter the 12-digit UTR number below to confirm order.
@@ -1254,30 +1272,49 @@ export default function CheckoutPage() {
 
             {/* Footer / App Home Launchers */}
             <div className="p-4 bg-white border-t border-[#E8E0D5] space-y-2.5">
-              <a
-                href="phonepe://"
-                className="w-full py-3.5 px-4 bg-[#5f259f] hover:bg-[#4d1e82] text-white rounded-xl text-sm font-bold flex items-center justify-center space-x-2 shadow-sm transition active:scale-[0.99] cursor-pointer"
-              >
-                <Smartphone className="w-4 h-4 text-white" />
-                <span>Open PhonePe App (Home Screen)</span>
-                <ExternalLink className="w-4 h-4 opacity-80" />
-              </a>
-
-              <div className="grid grid-cols-2 gap-2">
+              <p className="text-[11px] font-bold text-[#736C66] uppercase tracking-wider text-center">
+                Select your UPI App to open:
+              </p>
+              <div className="grid grid-cols-3 gap-2">
+                {/* 1. PhonePe */}
                 <a
-                  href="gpay://"
-                  className="py-2.5 px-3 bg-white hover:bg-[#F4EBE6] text-[#2C332D] border border-[#E8E0D5] rounded-xl text-xs font-bold flex items-center justify-center space-x-1.5 transition active:scale-[0.99] cursor-pointer"
+                  href="phonepe://"
+                  onClick={(e) => {
+                    handleLaunchUpi("phonepe");
+                  }}
+                  className="py-3 px-2 bg-[#5f259f] hover:bg-[#4d1e82] text-white rounded-xl text-xs font-bold flex flex-col items-center justify-center space-y-1 shadow-sm transition active:scale-95 cursor-pointer text-center"
                 >
-                  <span>Open Google Pay</span>
-                  <ExternalLink className="w-3.5 h-3.5 opacity-60" />
+                  <Smartphone className="w-4 h-4 text-white" />
+                  <span>PhonePe</span>
+                  <ExternalLink className="w-3 h-3 opacity-80" />
                 </a>
 
+                {/* 2. Google Pay */}
                 <a
-                  href="paytmmp://"
-                  className="py-2.5 px-3 bg-white hover:bg-[#F4EBE6] text-[#002970] border border-[#E8E0D5] rounded-xl text-xs font-bold flex items-center justify-center space-x-1.5 transition active:scale-[0.99] cursor-pointer"
+                  href="intent://#Intent;package=com.google.android.apps.nbu.paisa.user;scheme=tez;end"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleLaunchUpi("gpay");
+                  }}
+                  className="py-3 px-2 bg-[#2C332D] hover:bg-[#3D473E] text-white rounded-xl text-xs font-bold flex flex-col items-center justify-center space-y-1 shadow-sm transition active:scale-95 cursor-pointer text-center"
                 >
-                  <span>Open Paytm</span>
-                  <ExternalLink className="w-3.5 h-3.5 opacity-60" />
+                  <Smartphone className="w-4 h-4 text-[#D4AF37]" />
+                  <span>Google Pay</span>
+                  <ExternalLink className="w-3 h-3 opacity-80" />
+                </a>
+
+                {/* 3. Paytm */}
+                <a
+                  href="intent://#Intent;package=net.one97.paytm;scheme=paytm;end"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleLaunchUpi("paytm");
+                  }}
+                  className="py-3 px-2 bg-[#002970] hover:bg-[#001f54] text-white rounded-xl text-xs font-bold flex flex-col items-center justify-center space-y-1 shadow-sm transition active:scale-95 cursor-pointer text-center"
+                >
+                  <Smartphone className="w-4 h-4 text-white" />
+                  <span>Paytm</span>
+                  <ExternalLink className="w-3 h-3 opacity-80" />
                 </a>
               </div>
 
