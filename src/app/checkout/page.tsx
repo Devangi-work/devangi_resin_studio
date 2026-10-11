@@ -152,6 +152,9 @@ export default function CheckoutPage() {
     activePayeeName
   )}&am=${finalTotal.toFixed(2)}&cu=INR&tn=Test%20Payment&tr=TESTUPI001`;
 
+  // Deep link schemes to open apps directly to their Home Screen (NO payment parameters)
+  const phonepeAppUrl = "phonepe://";
+  const gpayAppUrl = "gpay://";
 
   // Dynamic QR Code generation if admin has not uploaded a static image
   const dynamicQrUrl = settings.upiQrCodeUrl
@@ -1236,38 +1239,65 @@ export default function CheckoutPage() {
                 </button>
               </div>
 
-              {/* Guidance Box */}
+              {/* Guidance Box for Home Screen Transfer */}
               <div className="bg-[#FAF4EC] border border-[#F0E6DF] rounded-xl p-3.5 text-xs text-[#2C332D] space-y-2">
                 <p className="font-bold flex items-center gap-1.5 text-[#8C6D23]">
                   <CheckCircle2 className="w-4 h-4 text-[#B8972E] shrink-0" />
-                  <span>Choose how you want to pay:</span>
+                  <span>How to complete payment:</span>
                 </p>
-                <div className="space-y-2 text-[11px] text-[#554C46] pl-0.5">
+                <div className="space-y-1.5 text-[11px] text-[#554C46] pl-0.5">
                   <div className="flex items-start gap-2">
                     <span className="font-bold text-[#2C332D] bg-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] shrink-0 border border-[#E8E0D5]">1</span>
                     <p>
-                      <strong>Google Pay / GPay:</strong> Tap <strong>&ldquo;Pay via UPI App&rdquo;</strong> below &rarr; choose Google Pay. Payee name, UPI ID, and <strong>₹{finalTotal.toFixed(2)}</strong> are filled in automatically!
+                      Tap <strong>&ldquo;Copy Phone ({activePhone})&rdquo;</strong> above.
                     </p>
                   </div>
                   <div className="flex items-start gap-2">
                     <span className="font-bold text-[#2C332D] bg-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] shrink-0 border border-[#E8E0D5]">2</span>
                     <p>
-                      <strong>PhonePe:</strong> Tap <strong>&ldquo;Copy Phone ({activePhone})&rdquo;</strong> above, open PhonePe, select <em>&ldquo;To Mobile Number&rdquo;</em>, and transfer <strong>₹{finalTotal.toFixed(2)}</strong> directly without any limits.
+                      Tap <strong>&ldquo;Open PhonePe App&rdquo;</strong> or <strong>&ldquo;Open Google Pay App&rdquo;</strong> below to open the home screen directly.
+                    </p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="font-bold text-[#2C332D] bg-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] shrink-0 border border-[#E8E0D5]">3</span>
+                    <p>
+                      In your app, select <em>&ldquo;To Mobile Number&rdquo;</em> (or <em>&ldquo;Pay anyone&rdquo;</em>), enter <strong>{activePhone}</strong>, and send <strong>₹{finalTotal.toFixed(2)}</strong>.
+                    </p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="font-bold text-[#2C332D] bg-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] shrink-0 border border-[#E8E0D5]">4</span>
+                    <p>
+                      Return here and enter the 12-digit UPI UTR number below to confirm your order.
                     </p>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Footer / App Launchers */}
+            {/* Footer / App Home Launchers */}
             <div className="p-4 bg-white border-t border-[#E8E0D5] space-y-2.5">
               <a
-                href={upiIntentUri}
-                className="w-full py-3.5 px-4 bg-[#2C332D] hover:bg-[#3D473E] text-white rounded-xl text-sm font-bold flex items-center justify-center space-x-2 shadow-sm transition active:scale-[0.99] cursor-pointer"
+                href={phonepeAppUrl}
+                className="w-full py-3.5 px-4 bg-[#5f259f] hover:bg-[#4d1e82] text-white rounded-xl text-sm font-bold flex items-center justify-center space-x-2 shadow-sm transition active:scale-[0.99] cursor-pointer"
               >
-                <Smartphone className="w-4 h-4 text-[#D4AF37]" />
-                <span>Pay via UPI App (Google Pay / PhonePe)</span>
-                <ExternalLink className="w-4 h-4 text-[#D4AF37]" />
+                <Smartphone className="w-4 h-4 text-white" />
+                <span>Open PhonePe App (Home Screen)</span>
+                <ExternalLink className="w-3.5 h-3.5 opacity-80" />
+              </a>
+
+              <a
+                href={gpayAppUrl}
+                onClick={() => {
+                  window.location.href = "gpay://";
+                  setTimeout(() => {
+                    window.location.href = "tez://";
+                  }, 350);
+                }}
+                className="w-full py-3 px-4 bg-[#2C332D] hover:bg-[#3D473E] text-white rounded-xl text-xs font-bold flex items-center justify-center space-x-2 transition active:scale-[0.99] cursor-pointer shadow-xs"
+              >
+                <Smartphone className="w-3.5 h-3.5 text-[#D4AF37]" />
+                <span>Open Google Pay App (Home Screen)</span>
+                <ExternalLink className="w-3.5 h-3.5 opacity-80" />
               </a>
 
               <button
