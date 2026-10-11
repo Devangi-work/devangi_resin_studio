@@ -1225,65 +1225,50 @@ export default function CheckoutPage() {
                 </button>
               </div>
 
-              {/* Guidance Box for Home Screen Transfer */}
+              {/* Guidance Box */}
               <div className="bg-[#EBF3EB] border border-[#CDE1CD] rounded-xl p-3 text-[11px] text-[#204E24] leading-relaxed space-y-1">
                 <p className="font-bold flex items-center gap-1 text-[#173F1B]">
                   <CheckCircle2 className="w-3.5 h-3.5 text-[#2E7D32]" />
-                  <span>How to pay without any limit or error:</span>
+                  <span>How to pay easily:</span>
                 </p>
                 <ol className="list-decimal list-inside space-y-1 text-[10.5px] text-[#2C5731] pl-1 pt-0.5">
                   <li>
                     Tap <strong>Copy Phone ({activePhone})</strong> above.
                   </li>
                   <li>
-                    Tap your UPI app below (<strong>PhonePe</strong>, <strong>Google Pay</strong>, or <strong>Paytm</strong>).
+                    For <strong>PhonePe</strong>: Tap &ldquo;Open PhonePe App&rdquo; below, then in PhonePe tap &ldquo;To Mobile Number&rdquo; and send <strong>₹{finalTotal.toFixed(2)}</strong>.
                   </li>
                   <li>
-                    In your app, tap <strong>&ldquo;To Mobile Number&rdquo;</strong> (or Pay to Contact), paste <strong>{activePhone}</strong>, and send <strong>₹{finalTotal.toFixed(2)}</strong>.
+                    For <strong>Google Pay / Paytm / Others</strong>: Tap &ldquo;Pay via Google Pay / Paytm / Other UPI&rdquo; below to pay directly.
                   </li>
                   <li>
-                    Return here and enter the 12-digit UTR number below to confirm order.
+                    After paying, paste your 12-digit UPI UTR number below to confirm order.
                   </li>
                 </ol>
               </div>
             </div>
 
-            {/* Footer / App Home Launchers */}
-            <div className="p-4 bg-white border-t border-[#E8E0D5] space-y-2.5">
-              <p className="text-[11px] font-bold text-[#736C66] uppercase tracking-wider text-center">
-                Select your UPI App to open:
-              </p>
-              <div className="grid grid-cols-3 gap-2">
-                {/* 1. PhonePe */}
-                <a
-                  href="phonepe://"
-                  className="py-3 px-2 bg-[#5f259f] hover:bg-[#4d1e82] text-white rounded-xl text-xs font-bold flex flex-col items-center justify-center space-y-1 shadow-sm transition active:scale-95 cursor-pointer text-center"
-                >
-                  <Smartphone className="w-4 h-4 text-white" />
-                  <span>PhonePe</span>
-                  <ExternalLink className="w-3 h-3 opacity-80" />
-                </a>
+            {/* Footer / App Launchers */}
+            <div className="p-4 bg-white border-t border-[#E8E0D5] space-y-2">
+              {/* Primary: PhonePe App Home Screen (verified working) */}
+              <a
+                href="phonepe://"
+                className="w-full py-3.5 px-4 bg-[#5f259f] hover:bg-[#4d1e82] text-white rounded-xl text-sm font-bold flex items-center justify-center space-x-2 shadow-sm transition active:scale-[0.99] cursor-pointer"
+              >
+                <Smartphone className="w-4 h-4 text-white" />
+                <span>Open PhonePe App (Home Screen)</span>
+                <ExternalLink className="w-4 h-4 opacity-80" />
+              </a>
 
-                {/* 2. Google Pay */}
-                <a
-                  href="tez://"
-                  className="py-3 px-2 bg-[#2C332D] hover:bg-[#3D473E] text-white rounded-xl text-xs font-bold flex flex-col items-center justify-center space-y-1 shadow-sm transition active:scale-95 cursor-pointer text-center"
-                >
-                  <Smartphone className="w-4 h-4 text-[#D4AF37]" />
-                  <span>Google Pay</span>
-                  <ExternalLink className="w-3 h-3 opacity-80" />
-                </a>
-
-                {/* 3. Paytm */}
-                <a
-                  href="paytm://"
-                  className="py-3 px-2 bg-[#002970] hover:bg-[#001f54] text-white rounded-xl text-xs font-bold flex flex-col items-center justify-center space-y-1 shadow-sm transition active:scale-95 cursor-pointer text-center"
-                >
-                  <Smartphone className="w-4 h-4 text-white" />
-                  <span>Paytm</span>
-                  <ExternalLink className="w-3 h-3 opacity-80" />
-                </a>
-              </div>
+              {/* Secondary: Google Pay / Paytm / All other UPI apps */}
+              <a
+                href={upiIntentUri}
+                className="w-full py-2.5 px-3 bg-[#2C332D] hover:bg-[#3D473E] text-white rounded-xl text-xs font-bold flex items-center justify-center space-x-2 shadow-sm transition active:scale-[0.99] cursor-pointer"
+              >
+                <Smartphone className="w-3.5 h-3.5 text-[#D4AF37]" />
+                <span>Pay via Google Pay / Paytm / Other UPI</span>
+                <ExternalLink className="w-3.5 h-3.5 opacity-70" />
+              </a>
 
               <button
                 type="button"
