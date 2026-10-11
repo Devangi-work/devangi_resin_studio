@@ -137,9 +137,13 @@ export default function CheckoutPage() {
   const activePayeeName = settings.accountHolderName || "Devangi Banshilal Barai";
   const activePhone = (settings.contactPhone || settings.whatsappNumber || "9967313355").replace(/[^0-9]/g, "").slice(-10);
 
-  // Pure bare UPI URI with ONLY the payee UPI ID
-  // Stripped of all extra parameters (no note, no amount, no currency) to treat it as a standard manual recipient transfer
-  const upiIntentUri = `upi://pay?pa=${encodeURIComponent(activeUpiId)}`;
+  // Exact UPI URI format requested:
+  // upi://pay?pa=devangibarai0403@okhdfcbank&pn=Devangi%20Banshilal%20Barai&am=1.00&cu=INR&tn=Test%20Payment&tr=TESTUPI001
+  const upiIntentUri = `upi://pay?pa=${encodeURIComponent(
+    activeUpiId
+  )}&pn=${encodeURIComponent(
+    activePayeeName
+  )}&am=${finalTotal.toFixed(2)}&cu=INR&tn=Test%20Payment&tr=TESTUPI001`;
 
   // Dynamic QR Code generation if admin has not uploaded a static image
   const dynamicQrUrl = settings.upiQrCodeUrl
@@ -982,7 +986,7 @@ export default function CheckoutPage() {
                   <ExternalLink className="w-3.5 h-3.5 opacity-70 group-hover:opacity-100 transition-opacity" />
                 </button>
                 <p className="text-[10.5px] text-center text-[#8C7A72]">
-                  Opens your UPI app to transfer to <strong className="text-[#2C332D]">{activeUpiId}</strong>. Enter <strong className="text-[#2C332D]">₹{finalTotal.toFixed(2)}</strong> and proceed.
+                  Opens your UPI app with prefilled payment details (₹{finalTotal.toFixed(2)} to {activePayeeName}).
                 </p>
               </div>
 
