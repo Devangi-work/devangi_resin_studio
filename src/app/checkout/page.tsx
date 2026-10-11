@@ -1229,36 +1229,62 @@ export default function CheckoutPage() {
                 </button>
               </div>
 
-              {/* Guidance Box */}
+              {/* Guidance Box for Home Screen Transfer */}
               <div className="bg-[#EBF3EB] border border-[#CDE1CD] rounded-xl p-3 text-[11px] text-[#204E24] leading-relaxed space-y-1">
                 <p className="font-bold flex items-center gap-1 text-[#173F1B]">
                   <CheckCircle2 className="w-3.5 h-3.5 text-[#2E7D32]" />
-                  <span>Quick 3-Step Guide:</span>
+                  <span>How to pay without any limit or error:</span>
                 </p>
-                <ol className="list-decimal list-inside space-y-0.5 text-[10.5px] text-[#2C5731] pl-1">
-                  <li>Tap <strong>Copy Phone</strong> or <strong>Copy UPI ID</strong> above.</li>
-                  <li>Click <strong>Proceed to UPI App</strong> below to open your installed UPI app.</li>
-                  <li>Complete payment of <strong>₹{finalTotal.toFixed(2)}</strong>.</li>
-                  <li>After paying, paste your 12-digit UPI UTR number to complete order.</li>
+                <ol className="list-decimal list-inside space-y-1 text-[10.5px] text-[#2C5731] pl-1 pt-0.5">
+                  <li>
+                    Tap <strong>Copy Phone ({activePhone})</strong> above.
+                  </li>
+                  <li>
+                    Tap <strong>Open PhonePe App</strong> below to open PhonePe home screen.
+                  </li>
+                  <li>
+                    On PhonePe home, tap <strong>&ldquo;To Mobile Number&rdquo;</strong>, paste <strong>{activePhone}</strong>, and send <strong>₹{finalTotal.toFixed(2)}</strong>.
+                  </li>
+                  <li>
+                    Return here and enter the 12-digit UTR number below to confirm order.
+                  </li>
                 </ol>
               </div>
             </div>
 
-            {/* Footer / Proceed CTA */}
-            <div className="p-4 bg-white border-t border-[#E8E0D5] space-y-2">
-              <button
-                type="button"
-                onClick={handleProceedToApp}
-                className="w-full py-3.5 px-4 bg-[#2C332D] hover:bg-[#3D473E] text-white rounded-xl text-sm font-bold flex items-center justify-center space-x-2 shadow-sm transition active:scale-[0.99] cursor-pointer"
+            {/* Footer / App Home Launchers */}
+            <div className="p-4 bg-white border-t border-[#E8E0D5] space-y-2.5">
+              <a
+                href="phonepe://"
+                className="w-full py-3.5 px-4 bg-[#5f259f] hover:bg-[#4d1e82] text-white rounded-xl text-sm font-bold flex items-center justify-center space-x-2 shadow-sm transition active:scale-[0.99] cursor-pointer"
               >
-                <Smartphone className="w-4 h-4 text-[#D4AF37]" />
-                <span>Proceed to UPI App</span>
-                <ExternalLink className="w-4 h-4 opacity-70" />
-              </button>
+                <Smartphone className="w-4 h-4 text-white" />
+                <span>Open PhonePe App (Home Screen)</span>
+                <ExternalLink className="w-4 h-4 opacity-80" />
+              </a>
+
+              <div className="grid grid-cols-2 gap-2">
+                <a
+                  href="gpay://"
+                  className="py-2.5 px-3 bg-white hover:bg-[#F4EBE6] text-[#2C332D] border border-[#E8E0D5] rounded-xl text-xs font-bold flex items-center justify-center space-x-1.5 transition active:scale-[0.99] cursor-pointer"
+                >
+                  <span>Open Google Pay</span>
+                  <ExternalLink className="w-3.5 h-3.5 opacity-60" />
+                </a>
+
+                <a
+                  href="paytmmp://"
+                  className="py-2.5 px-3 bg-white hover:bg-[#F4EBE6] text-[#002970] border border-[#E8E0D5] rounded-xl text-xs font-bold flex items-center justify-center space-x-1.5 transition active:scale-[0.99] cursor-pointer"
+                >
+                  <span>Open Paytm</span>
+                  <ExternalLink className="w-3.5 h-3.5 opacity-60" />
+                </a>
+              </div>
+
               <button
                 type="button"
                 onClick={() => setShowUpiModal(false)}
-                className="w-full py-1.5 text-xs text-[#8C7A72] hover:text-[#2C332D] text-center font-medium transition cursor-pointer"
+                className="w-full py-1 text-xs text-[#8C7A72] hover:text-[#2C332D] text-center font-medium transition cursor-pointer"
               >
                 Already Paid? Enter 12-Digit UTR
               </button>
