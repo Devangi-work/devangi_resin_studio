@@ -152,16 +152,13 @@ export default function CheckoutPage() {
     activePayeeName
   )}&am=${finalTotal.toFixed(2)}&cu=INR&tn=Test%20Payment&tr=TESTUPI001`;
 
-  // App Launcher URLs (Directly opens App Home Screen - Image 2 - without triggering Image 1 collect block)
+  // App Launcher URLs - Opens the apps directly to their Home Screen (Image 2) like tapping the app icon!
   const phonepeAppUrl = isIOS
     ? "phonepe://"
-    : "intent://#Intent;scheme=phonepe;package=com.phonepe.app;end";
+    : "intent://#Intent;package=com.phonepe.app;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;end";
   const gpayAppUrl = isIOS
     ? "gpay://"
-    : "intent://#Intent;scheme=gpay;package=com.google.android.apps.nbu.paisa.user;end";
-  const paytmAppUrl = isIOS
-    ? "paytmmp://"
-    : "intent://#Intent;scheme=paytmmp;package=net.one97.paytm;end";
+    : "intent://#Intent;package=com.google.android.apps.nbu.paisa.user;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;end";
 
   // Dynamic QR Code generation if admin has not uploaded a static image
   const dynamicQrUrl = settings.upiQrCodeUrl
@@ -1008,7 +1005,7 @@ export default function CheckoutPage() {
                   <ExternalLink className="w-3.5 h-3.5 opacity-70 group-hover:opacity-100 transition-opacity" />
                 </button>
                 <p className="text-[10.5px] text-center text-[#8C7A72]">
-                  Tap to view UPI details &amp; launch your UPI app (PhonePe / GPay / Paytm).
+                  Tap to view UPI details &amp; launch your UPI app (PhonePe / Google Pay).
                 </p>
               </div>
 
@@ -1249,17 +1246,17 @@ export default function CheckoutPage() {
               <div className="bg-[#EBF3EB] border border-[#CDE1CD] rounded-xl p-3 text-[11px] text-[#204E24] leading-relaxed space-y-1">
                 <p className="font-bold flex items-center gap-1 text-[#173F1B]">
                   <CheckCircle2 className="w-3.5 h-3.5 text-[#2E7D32]" />
-                  <span>How to pay without any limit or error:</span>
+                  <span>How to complete payment without error:</span>
                 </p>
                 <ol className="list-decimal list-inside space-y-1 text-[10.5px] text-[#2C5731] pl-1 pt-0.5">
                   <li>
                     Tap <strong>Copy Phone ({activePhone})</strong> above.
                   </li>
                   <li>
-                    Tap <strong>Open PhonePe App</strong> below to open PhonePe home screen.
+                    Tap <strong>Open PhonePe App</strong> or <strong>Open Google Pay</strong> below.
                   </li>
                   <li>
-                    On PhonePe home, tap <strong>&ldquo;To Mobile Number&rdquo;</strong>, paste <strong>{activePhone}</strong>, and send <strong>₹{finalTotal.toFixed(2)}</strong>.
+                    In your app, tap <strong>&ldquo;To Mobile Number&rdquo;</strong>, paste <strong>{activePhone}</strong>, and send <strong>₹{finalTotal.toFixed(2)}</strong>.
                   </li>
                   <li>
                     Return here and enter the 12-digit UTR number below to confirm order.
@@ -1279,23 +1276,13 @@ export default function CheckoutPage() {
                 <ExternalLink className="w-4 h-4 opacity-80" />
               </a>
 
-              <div className="grid grid-cols-2 gap-2">
-                <a
-                  href={gpayAppUrl}
-                  className="py-2.5 px-3 bg-white hover:bg-[#F4EBE6] text-[#2C332D] border border-[#E8E0D5] rounded-xl text-xs font-bold flex items-center justify-center space-x-1.5 transition active:scale-[0.99] cursor-pointer"
-                >
-                  <span>Open Google Pay</span>
-                  <ExternalLink className="w-3.5 h-3.5 opacity-60" />
-                </a>
-
-                <a
-                  href={paytmAppUrl}
-                  className="py-2.5 px-3 bg-white hover:bg-[#F4EBE6] text-[#002970] border border-[#E8E0D5] rounded-xl text-xs font-bold flex items-center justify-center space-x-1.5 transition active:scale-[0.99] cursor-pointer"
-                >
-                  <span>Open Paytm</span>
-                  <ExternalLink className="w-3.5 h-3.5 opacity-60" />
-                </a>
-              </div>
+              <a
+                href={gpayAppUrl}
+                className="w-full py-3 px-4 bg-white hover:bg-[#F4EBE6] text-[#2C332D] border border-[#E8E0D5] rounded-xl text-xs font-bold flex items-center justify-center space-x-2 transition active:scale-[0.99] cursor-pointer shadow-2xs"
+              >
+                <span>Open Google Pay App</span>
+                <ExternalLink className="w-3.5 h-3.5 text-[#8C7A72]" />
+              </a>
 
               <button
                 type="button"
