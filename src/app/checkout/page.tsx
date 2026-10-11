@@ -86,7 +86,6 @@ export default function CheckoutPage() {
   const [copiedPhone, setCopiedPhone] = useState(false);
   const [copiedAmount, setCopiedAmount] = useState(false);
   const [showUpiModal, setShowUpiModal] = useState(false);
-  const [selectedApp, setSelectedApp] = useState<"phonepe" | "gpay" | "paytm">("phonepe");
   const [couponInput, setCouponInput] = useState("");
   const [couponError, setCouponError] = useState("");
   const [couponLoading, setCouponLoading] = useState(false);
@@ -181,31 +180,8 @@ export default function CheckoutPage() {
     setShowUpiModal(true);
   };
 
-  const handleProceedToApp = (appName: "phonepe" | "gpay" | "paytm" = selectedApp) => {
-    const isAndroid = typeof navigator !== "undefined" && /android/i.test(navigator.userAgent);
-
-    if (appName === "phonepe") {
-      if (isAndroid) {
-        window.location.href =
-          "intent:#Intent;package=com.phonepe.app;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;end";
-      } else {
-        window.location.href = "phonepe://";
-      }
-    } else if (appName === "gpay") {
-      if (isAndroid) {
-        window.location.href =
-          "intent:#Intent;package=com.google.android.apps.nbu.paisa.user;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;end";
-      } else {
-        window.location.href = "gpay://";
-      }
-    } else if (appName === "paytm") {
-      if (isAndroid) {
-        window.location.href =
-          "intent:#Intent;package=net.one97.paytm;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;end";
-      } else {
-        window.location.href = "paytmmp://";
-      }
-    }
+  const handleProceedToApp = () => {
+    window.location.href = upiIntentUri;
   };
 
   // Quick In-Checkout Login
@@ -1261,52 +1237,10 @@ export default function CheckoutPage() {
                 </p>
                 <ol className="list-decimal list-inside space-y-0.5 text-[10.5px] text-[#2C5731] pl-1">
                   <li>Tap <strong>Copy Phone</strong> or <strong>Copy UPI ID</strong> above.</li>
-                  <li>Click <strong>Proceed</strong> below to open your UPI app.</li>
-                  <li>In your app, select <em>&ldquo;To Mobile Number&rdquo;</em> or <em>&ldquo;To UPI ID&rdquo;</em>, paste &amp; send <strong>₹{finalTotal.toFixed(2)}</strong>.</li>
+                  <li>Click <strong>Proceed to UPI App</strong> below to open your installed UPI app.</li>
+                  <li>Complete payment of <strong>₹{finalTotal.toFixed(2)}</strong>.</li>
                   <li>After paying, paste your 12-digit UPI UTR number to complete order.</li>
                 </ol>
-              </div>
-
-              {/* App Choice Selector */}
-              <div>
-                <label className="text-[11px] font-bold text-[#736C66] uppercase tracking-wider block mb-2">
-                  Select UPI App to Open:
-                </label>
-                <div className="grid grid-cols-3 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedApp("phonepe")}
-                    className={`py-2 px-2 rounded-xl border text-xs font-bold transition flex items-center justify-center cursor-pointer ${
-                      selectedApp === "phonepe"
-                        ? "bg-[#5f259f]/10 border-[#5f259f] text-[#5f259f] ring-2 ring-[#5f259f]/20"
-                        : "bg-white border-[#E8E0D5] text-[#2C332D] hover:bg-[#F4EBE6]"
-                    }`}
-                  >
-                    <span>PhonePe</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedApp("gpay")}
-                    className={`py-2 px-2 rounded-xl border text-xs font-bold transition flex items-center justify-center cursor-pointer ${
-                      selectedApp === "gpay"
-                        ? "bg-[#2C332D]/10 border-[#2C332D] text-[#2C332D] ring-2 ring-[#2C332D]/20"
-                        : "bg-white border-[#E8E0D5] text-[#2C332D] hover:bg-[#F4EBE6]"
-                    }`}
-                  >
-                    <span>Google Pay</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedApp("paytm")}
-                    className={`py-2 px-2 rounded-xl border text-xs font-bold transition flex items-center justify-center cursor-pointer ${
-                      selectedApp === "paytm"
-                        ? "bg-[#002970]/10 border-[#002970] text-[#002970] ring-2 ring-[#002970]/20"
-                        : "bg-white border-[#E8E0D5] text-[#2C332D] hover:bg-[#F4EBE6]"
-                    }`}
-                  >
-                    <span>Paytm</span>
-                  </button>
-                </div>
               </div>
             </div>
 
@@ -1314,11 +1248,12 @@ export default function CheckoutPage() {
             <div className="p-4 bg-white border-t border-[#E8E0D5] space-y-2">
               <button
                 type="button"
-                onClick={() => handleProceedToApp(selectedApp)}
-                className="w-full py-3 px-4 bg-[#2C332D] hover:bg-[#3D473E] text-white rounded-xl text-sm font-bold flex items-center justify-center space-x-2 shadow-sm transition active:scale-[0.99] cursor-pointer"
+                onClick={handleProceedToApp}
+                className="w-full py-3.5 px-4 bg-[#2C332D] hover:bg-[#3D473E] text-white rounded-xl text-sm font-bold flex items-center justify-center space-x-2 shadow-sm transition active:scale-[0.99] cursor-pointer"
               >
-                <span>Proceed (Open {selectedApp === "phonepe" ? "PhonePe" : selectedApp === "gpay" ? "Google Pay" : "Paytm"})</span>
-                <ExternalLink className="w-4 h-4 text-[#D4AF37]" />
+                <Smartphone className="w-4 h-4 text-[#D4AF37]" />
+                <span>Proceed to UPI App</span>
+                <ExternalLink className="w-4 h-4 opacity-70" />
               </button>
               <button
                 type="button"
