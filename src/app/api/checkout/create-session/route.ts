@@ -194,12 +194,12 @@ export async function POST(request: Request) {
 
       await sendBrevoEmail({
         to: [{ email: customerEmail, name: customerName }],
-        subject: `Order Confirmed: #${order.orderNumber} - Aura Resin Art Studio`,
+        subject: `Order Confirmed: #${order.orderNumber} - Devangi Resin Studio`,
         htmlContent: `
           <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #faf7f2; padding: 24px; color: #2c2523;">
             <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #eee4db;">
               <div style="background: #2C332D; padding: 28px; text-align: center; color: #ffffff;">
-                <h1 style="margin: 0; font-size: 22px; letter-spacing: 1px;">AURA RESIN ART</h1>
+                <h1 style="margin: 0; font-size: 22px; letter-spacing: 1px;">DEVANGI RESIN STUDIO</h1>
                 <p style="margin: 6px 0 0; color: #D4AF37; font-size: 13px;">Order #${order.orderNumber} Confirmed</p>
               </div>
               <div style="padding: 24px;">

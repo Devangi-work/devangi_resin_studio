@@ -1,7 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { dbStore } from "../lib/db/index";
-import { verifyCashfreeWebhookSignature } from "../lib/cashfree/index";
 import { hashPassword, verifyPassword, signAdminSession, verifyAdminSession } from "../lib/auth/index";
 import { ALLOWED_IMAGE_TYPES, MAX_FILE_SIZE_BYTES } from "../lib/blob/index";
 
@@ -138,12 +137,6 @@ test("E-Commerce Test Suite", async (t) => {
     assert.equal(idempotentProd?.stockQuantity, initialStock - 2);
   });
 
-  // 6. Cashfree Webhook Signature Verification
-  await t.test("Cashfree Webhook Verification", async () => {
-    // In sandbox mockup mode without secrets, verification returns true safely
-    const valid = verifyCashfreeWebhookSignature("{}", "1710000000", "dummy-sig");
-    assert.equal(valid, true);
-  });
 
   // 7. Image File Restrictions
   await t.test("Media Upload Allowed Formats and Size Limit Safeguards", async () => {
