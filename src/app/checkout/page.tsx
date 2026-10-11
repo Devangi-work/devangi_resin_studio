@@ -992,7 +992,7 @@ export default function CheckoutPage() {
                   <ExternalLink className="w-3.5 h-3.5 opacity-70 group-hover:opacity-100 transition-opacity" />
                 </button>
                 <p className="text-[10.5px] text-center text-[#8C7A72]">
-                  Tap to view UPI details &amp; launch your UPI app (PhonePe / Google Pay).
+                  Tap to view UPI details &amp; launch your UPI app (PhonePe / GPay / Paytm).
                 </p>
               </div>
 
@@ -1240,10 +1240,10 @@ export default function CheckoutPage() {
                     Tap <strong>Copy Phone ({activePhone})</strong> above.
                   </li>
                   <li>
-                    Tap <strong>Open PhonePe App</strong> or <strong>Open Google Pay</strong> below to launch your app home screen.
+                    Tap <strong>Open PhonePe App</strong> below to open PhonePe home screen.
                   </li>
                   <li>
-                    In your app, tap <strong>&ldquo;To Mobile Number&rdquo;</strong> (or <strong>&ldquo;Pay anyone&rdquo;</strong> in Google Pay), paste <strong>{activePhone}</strong>, and send <strong>₹{finalTotal.toFixed(2)}</strong>.
+                    On PhonePe home, tap <strong>&ldquo;To Mobile Number&rdquo;</strong>, paste <strong>{activePhone}</strong>, and send <strong>₹{finalTotal.toFixed(2)}</strong>.
                   </li>
                   <li>
                     Return here and enter the 12-digit UTR number below to confirm order.
@@ -1263,21 +1263,23 @@ export default function CheckoutPage() {
                 <ExternalLink className="w-4 h-4 opacity-80" />
               </a>
 
-              <a
-                href="intent://#Intent;package=com.google.android.apps.nbu.paisa.user;end"
-                onClick={(e) => {
-                  const isIOS = typeof navigator !== "undefined" && /iPad|iPhone|iPod/.test(navigator.userAgent);
-                  if (isIOS) {
-                    window.location.href = "gpay://";
-                    e.preventDefault();
-                  }
-                }}
-                className="w-full py-3.5 px-4 bg-white hover:bg-[#F4EBE6] text-[#2C332D] border border-[#E8E0D5] rounded-xl text-sm font-bold flex items-center justify-center space-x-2 shadow-2xs transition active:scale-[0.99] cursor-pointer"
-              >
-                <Smartphone className="w-4 h-4 text-[#2C332D]" />
-                <span>Open Google Pay (Home Screen)</span>
-                <ExternalLink className="w-4 h-4 opacity-70" />
-              </a>
+              <div className="grid grid-cols-2 gap-2">
+                <a
+                  href="gpay://"
+                  className="py-2.5 px-3 bg-white hover:bg-[#F4EBE6] text-[#2C332D] border border-[#E8E0D5] rounded-xl text-xs font-bold flex items-center justify-center space-x-1.5 transition active:scale-[0.99] cursor-pointer"
+                >
+                  <span>Open Google Pay</span>
+                  <ExternalLink className="w-3.5 h-3.5 opacity-60" />
+                </a>
+
+                <a
+                  href="paytmmp://"
+                  className="py-2.5 px-3 bg-white hover:bg-[#F4EBE6] text-[#002970] border border-[#E8E0D5] rounded-xl text-xs font-bold flex items-center justify-center space-x-1.5 transition active:scale-[0.99] cursor-pointer"
+                >
+                  <span>Open Paytm</span>
+                  <ExternalLink className="w-3.5 h-3.5 opacity-60" />
+                </a>
+              </div>
 
               <button
                 type="button"
