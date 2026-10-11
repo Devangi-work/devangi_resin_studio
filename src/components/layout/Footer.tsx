@@ -233,7 +233,7 @@ export function Footer() {
         {/* Bottom Trust & Copyright */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-[#736C66] space-y-4 sm:space-y-0">
           <div className="flex items-center space-x-1.5">
-            <span>© {new Date().getFullYear()} Aura Resin Art Studio. Handcrafted in India.</span>
+            <span>© {new Date().getFullYear()} {settings?.storeName || "Devangi Resin Studio"}. Handcrafted in India.</span>
           </div>
 
           {/* Secure Payment Badges */}

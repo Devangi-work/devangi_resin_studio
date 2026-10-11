@@ -46,7 +46,7 @@ export default async function PolicyPage({ params }: PolicyPageProps) {
       icon: FileText,
       content:
         settings.termsPolicy ||
-        "By placing an order on Aura Resin Art Studio, you acknowledge that handmade art may exhibit slight organic variations in petal placement, pigment swirling, and foil flakes, which is the hallmark of genuine artisan craftsmanship.",
+        "By placing an order on Devangi Resin Studio, you acknowledge that handmade art may exhibit slight organic variations in petal placement, pigment swirling, and foil flakes, which is the hallmark of genuine artisan craftsmanship.",
     },
   };
 

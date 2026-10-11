@@ -54,8 +54,8 @@ function getInitialStoreState(): StoreState {
     ],
     siteSettings: {
       id: "default",
-      storeName: "Aura Resin Art Studio",
-      storeTagline: "Handmade Resin Elegance, Preserved Forever",
+      storeName: "Devangi Resin Studio",
+      storeTagline: "Handcrafted Resin Creations by Devangi",
       storeDescription: "Boutique handmade resin art, bespoke jewellery, personalized gifts, keychains, and coasters crafted with passion.",
       logoUrl: null,
       contactEmail: "devangi0403@gmail.com",

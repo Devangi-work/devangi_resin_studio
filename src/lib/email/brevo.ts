@@ -1,7 +1,7 @@
 const BREVO_API_URL = "https://api.brevo.com/v3";
 const BREVO_API_KEY = process.env.BREVO_API_KEY || "";
 const BREVO_SENDER_EMAIL = process.env.BREVO_SENDER_EMAIL || "orders@resinartstudio.com";
-const BREVO_SENDER_NAME = process.env.BREVO_SENDER_NAME || "Aura Resin Art Studio";
+const BREVO_SENDER_NAME = process.env.BREVO_SENDER_NAME || "Devangi Resin Studio";
 
 export function isBrevoConfigured(): boolean {
   return Boolean(
@@ -94,8 +94,8 @@ export async function sendOrderConfirmationEmail(order: any) {
         
         <!-- Header -->
         <div style="background: linear-gradient(135deg, #2c2523 0%, #4a3e3a 100%); padding: 32px 24px; text-align: center; color: #ffffff;">
-          <h1 style="margin: 0; font-size: 24px; letter-spacing: 1px; font-weight: 600;">AURA RESIN ART</h1>
-          <p style="margin: 8px 0 0; color: #d4af37; font-size: 14px; letter-spacing: 0.5px;">Preserving Memories in Glass-like Resin</p>
+          <h1 style="margin: 0; font-size: 24px; letter-spacing: 1px; font-weight: 600;">DEVANGI RESIN STUDIO</h1>
+          <p style="margin: 8px 0 0; color: #d4af37; font-size: 14px; letter-spacing: 0.5px;">Handcrafted Resin Creations by Devangi</p>
         </div>
 
         <div style="padding: 32px 24px;">
@@ -172,7 +172,7 @@ export async function sendOrderConfirmationEmail(order: any) {
 
   return sendBrevoEmail({
     to: [{ email: order.customerEmail, name: order.customerName }],
-    subject: `Order Confirmed #${order.orderNumber} - Aura Resin Art Studio`,
+    subject: `Order Confirmed #${order.orderNumber} - Devangi Resin Studio`,
     htmlContent: html,
   });
 }

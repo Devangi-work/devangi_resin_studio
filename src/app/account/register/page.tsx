@@ -54,7 +54,7 @@ export default function CustomerRegisterPage() {
             Create an Account
           </h1>
           <p className="text-xs text-[#736C66]">
-            Join Aura Resin Art Studio to track your custom orders and receive exclusive handcrafted releases.
+            Join Devangi Resin Studio to track your custom orders and receive exclusive handcrafted releases.
           </p>
         </div>
 

@@ -6,9 +6,9 @@ import { Footer } from "@/components/layout/Footer";
 import { CartDrawer } from "@/components/cart/CartDrawer";
 
 export const metadata: Metadata = {
-  title: "Aura Resin Art Studio | Luxury Handmade Resin Homeware & Gifts",
+  title: "Devangi Resin Studio | Handcrafted Resin Creations by Devangi",
   description:
-    "Discover handcrafted resin art, personalized geode coasters, real flower jewellery, entrance nameplates, and bespoke keepsakes. Hand-poured with love in India.",
+    "Discover handcrafted resin art, personalized geode coasters, real flower jewellery, entrance nameplates, and bespoke keepsakes by Devangi. Hand-poured with love in India.",
   keywords: [
     "resin art",
     "resin coasters",
@@ -18,10 +18,11 @@ export const metadata: Metadata = {
     "resin nameplates",
     "personalized gifts",
     "handmade gifts india",
+    "devangi resin studio",
   ],
   openGraph: {
-    title: "Aura Resin Art Studio",
-    description: "Handcrafted resin homeware, botanical jewellery, and bespoke personalised gifts.",
+    title: "Devangi Resin Studio",
+    description: "Handcrafted resin homeware, botanical jewellery, and bespoke personalised gifts by Devangi.",
     type: "website",
   },
 };

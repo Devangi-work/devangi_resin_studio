@@ -368,7 +368,7 @@ export default async function HomePage() {
           </h2>
 
           <p className="text-sm text-[#736C66] max-w-2xl mx-auto leading-relaxed font-light">
-            Founded with a passion for slow, intentional craft, Aura Resin Art Studio combines optical-grade, heat-tested resins with natural botanicals, quartz crystals, and metallic minerals. Every design undergoes three manual polishing phases to ensure flawless optical depth.
+            Founded with a passion for slow, intentional craft, Devangi Resin Studio combines optical-grade, heat-tested resins with natural botanicals, quartz crystals, and metallic minerals. Every design undergoes three manual polishing phases to ensure flawless optical depth.
           </p>
 
           <div className="pt-2">
