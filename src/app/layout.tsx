@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { CartProvider } from "@/lib/store/cart";
-import { Navbar } from "@/components/layout/Navbar";
-import { Footer } from "@/components/layout/Footer";
-import { CartDrawer } from "@/components/cart/CartDrawer";
+import { StorefrontShell } from "@/components/layout/StorefrontShell";
 
 export const metadata: Metadata = {
   title: "Devangi Resin Studio | Handcrafted Resin Creations by Devangi",
@@ -36,10 +34,7 @@ export default function RootLayout({
     <html lang="en">
       <body className="min-h-screen flex flex-col bg-[#FAF8F5] text-[#222523] selection:bg-[#D4AF37]/30">
         <CartProvider>
-          <Navbar />
-          <main className="flex-1">{children}</main>
-          <CartDrawer />
-          <Footer />
+          <StorefrontShell>{children}</StorefrontShell>
         </CartProvider>
       </body>
     </html>

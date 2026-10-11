@@ -19,6 +19,13 @@ export async function GET() {
       name: customer?.name || session.name,
       email: session.email,
       phone: customer?.phone || "",
+      avatarUrl: customer?.avatarUrl || null,
+      addressLine1: customer?.addressLine1 || "",
+      addressLine2: customer?.addressLine2 || "",
+      city: customer?.city || "",
+      state: customer?.state || "",
+      postalCode: customer?.postalCode || "",
+      country: customer?.country || "India",
     },
   });
 }

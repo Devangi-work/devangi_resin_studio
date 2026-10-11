@@ -14,6 +14,14 @@ const updateOrderSchema = z.object({
     "cancelled",
     "refunded",
   ]).optional(),
+  paymentStatus: z.enum([
+    "paid",
+    "unpaid",
+    "pending",
+    "pending_verification",
+    "failed",
+    "cancelled",
+  ]).optional(),
   trackingNumber: z.string().optional(),
   courierName: z.string().optional(),
   internalNotes: z.string().optional(),
@@ -58,10 +66,14 @@ export async function PUT(
       );
     }
 
-    const { orderStatus, trackingNumber, courierName, internalNotes } = result.data;
+    const { orderStatus, paymentStatus, trackingNumber, courierName, internalNotes } = result.data;
     let order = await dbStore.getOrderById(id);
     if (!order) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
+    }
+
+    if (paymentStatus && paymentStatus !== order?.paymentStatus) {
+      order = await dbStore.updateOrderPaymentStatus(id, paymentStatus);
     }
 
     if (trackingNumber && courierName) {

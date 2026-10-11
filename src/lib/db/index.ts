@@ -442,23 +442,95 @@ export const dbStore = {
   },
 
   // ---------------- ORDERS ----------------
-  async getOrders(filters?: { status?: string; paymentStatus?: string; search?: string }) {
+  async getOrders(filters?: { status?: string; paymentStatus?: string; search?: string; source?: string }) {
+    if (sql) {
+      try {
+        const rows = await sql`
+          SELECT 
+            id,
+            order_number as "orderNumber",
+            customer_id as "customerId",
+            customer_name as "customerName",
+            customer_email as "customerEmail",
+            customer_phone as "customerPhone",
+            shipping_address_line1 as "shippingAddressLine1",
+            shipping_address_line2 as "shippingAddressLine2",
+            shipping_city as "shippingCity",
+            shipping_state as "shippingState",
+            shipping_postal_code as "shippingPostalCode",
+            shipping_country as "shippingCountry",
+            order_notes as "orderNotes",
+            subtotal,
+            discount_amount as "discountAmount",
+            shipping_charge as "shippingCharge",
+            tax_amount as "taxAmount",
+            total_amount as "totalAmount",
+            order_status as "orderStatus",
+            payment_status as "paymentStatus",
+            payment_method as "paymentMethod",
+            upi_transaction_id as "upiTransactionId",
+            cancellation_reason as "cancellationReason",
+            cancelled_at as "cancelledAt",
+            tracking_number as "trackingNumber",
+            courier_name as "courierName",
+            internal_notes as "internalNotes",
+            order_source as "orderSource",
+            is_discarded as "isDiscarded",
+            discarded_at as "discardedAt",
+            secure_lookup_token as "secureLookupToken",
+            created_at as "createdAt",
+            updated_at as "updatedAt"
+          FROM orders
+          ORDER BY created_at DESC;
+        `;
+
+        if (rows && rows.length > 0) {
+          let list = rows as any[];
+          if (filters?.status && filters.status !== "all") {
+            list = list.filter((o) => o.orderStatus === filters.status);
+          }
+          if (filters?.paymentStatus && filters.paymentStatus !== "all") {
+            list = list.filter((o) => o.paymentStatus === filters.paymentStatus);
+          }
+          if (filters?.source && filters.source !== "all") {
+            list = list.filter((o) => (o.orderSource || "online") === filters.source);
+          }
+          if (filters?.search && filters.search.trim()) {
+            const q = filters.search.toLowerCase().trim();
+            list = list.filter(
+              (o) =>
+                o.orderNumber?.toLowerCase().includes(q) ||
+                o.customerName?.toLowerCase().includes(q) ||
+                o.customerEmail?.toLowerCase().includes(q) ||
+                o.customerPhone?.includes(q)
+            );
+          }
+          return list;
+        }
+      } catch (err) {
+        console.error("[getOrders] DB error, falling back to memory:", err);
+      }
+    }
+
     let ords = [...store.orders];
 
-    if (filters?.status) {
+    if (filters?.status && filters.status !== "all") {
       ords = ords.filter((o) => o.orderStatus === filters.status);
     }
-    if (filters?.paymentStatus) {
+    if (filters?.paymentStatus && filters.paymentStatus !== "all") {
       ords = ords.filter((o) => o.paymentStatus === filters.paymentStatus);
+    }
+    if (filters?.source && filters.source !== "all") {
+      ords = ords.filter((o) => (o.orderSource || "online") === filters.source);
     }
     if (filters?.search && filters.search.trim()) {
       const q = filters.search.toLowerCase().trim();
       ords = ords.filter(
         (o) =>
-          o.orderNumber.toLowerCase().includes(q) ||
-          o.customerName.toLowerCase().includes(q) ||
-          o.customerEmail.toLowerCase().includes(q) ||
-          o.customerPhone.includes(q)
+          o.orderNumber?.toLowerCase().includes(q) ||
+          o.customerName?.toLowerCase().includes(q) ||
+          o.customerEmail?.toLowerCase().includes(q) ||
+          o.customerPhone?.includes(q)
       );
     }
 
@@ -466,7 +538,67 @@ export const dbStore = {
   },
 
   async getOrderById(id: string) {
-    return store.orders.find((o) => o.id === id) || null;
+    let ord = store.orders.find((o) => o.id === id);
+    if (!ord && sql) {
+      try {
+        const rows = await sql`
+          SELECT 
+            id,
+            order_number as "orderNumber",
+            customer_id as "customerId",
+            customer_name as "customerName",
+            customer_email as "customerEmail",
+            customer_phone as "customerPhone",
+            shipping_address_line1 as "shippingAddressLine1",
+            shipping_address_line2 as "shippingAddressLine2",
+            shipping_city as "shippingCity",
+            shipping_state as "shippingState",
+            shipping_postal_code as "shippingPostalCode",
+            shipping_country as "shippingCountry",
+            order_notes as "orderNotes",
+            subtotal,
+            discount_amount as "discountAmount",
+            shipping_charge as "shippingCharge",
+            tax_amount as "taxAmount",
+            total_amount as "totalAmount",
+            order_status as "orderStatus",
+            payment_status as "paymentStatus",
+            payment_method as "paymentMethod",
+            upi_transaction_id as "upiTransactionId",
+            cancellation_reason as "cancellationReason",
+            cancelled_at as "cancelledAt",
+            tracking_number as "trackingNumber",
+            courier_name as "courierName",
+            internal_notes as "internalNotes",
+            order_source as "orderSource",
+            is_discarded as "isDiscarded",
+            discarded_at as "discardedAt",
+            secure_lookup_token as "secureLookupToken",
+            created_at as "createdAt",
+            updated_at as "updatedAt"
+          FROM orders
+          WHERE id = ${id}
+          LIMIT 1;
+        `;
+        if (rows && rows.length > 0) {
+          ord = rows[0];
+          const items = await sql`
+            SELECT 
+              id, product_id as "productId", variant_id as "variantId",
+              product_name as "productName", variant_name as "variantName",
+              sku, unit_price as "unitPrice", quantity, total_price as "totalPrice",
+              personalization_details as "personalizationDetails",
+              reference_image_url as "referenceImageUrl"
+            FROM order_items
+            WHERE order_id = ${ord.id};
+          `;
+          ord.items = items || [];
+        }
+      } catch (err) {
+        console.error("DB getOrderById error:", err);
+      }
+    }
+    return ord || null;
   },
 
   async getOrderByNumber(orderNumber: string, verificationInput?: string) {
@@ -562,6 +694,8 @@ export const dbStore = {
       orderStatus: data.orderStatus || "confirmed",
       paymentStatus: data.paymentStatus || "pending_verification",
       paymentMethod: data.paymentMethod || "upi",
+      orderSource: data.orderSource || "online",
+      isDiscarded: false,
       upiTransactionId: data.upiTransactionId || null,
       items: data.items || [],
       createdAt: new Date(),
@@ -578,7 +712,8 @@ export const dbStore = {
             shipping_address_line1, shipping_address_line2, shipping_city, shipping_state,
             shipping_postal_code, shipping_country, order_notes, subtotal, discount_amount,
             shipping_charge, tax_amount, total_amount, order_status, payment_status,
-            payment_method, upi_transaction_id, secure_lookup_token, created_at, updated_at
+            payment_method, upi_transaction_id, secure_lookup_token, order_source, is_discarded,
+            created_at, updated_at
           ) VALUES (
             ${id}, ${orderNumber}, ${data.customerId || null}, ${data.customerName}, ${data.customerEmail}, ${data.customerPhone},
             ${data.shippingAddressLine1}, ${data.shippingAddressLine2 || null}, ${data.shippingCity}, ${data.shippingState},
@@ -586,7 +721,7 @@ export const dbStore = {
             ${Number(data.subtotal).toFixed(2)}, ${Number(data.discountAmount || 0).toFixed(2)},
             ${Number(data.shippingCharge || 0).toFixed(2)}, ${Number(data.taxAmount || 0).toFixed(2)},
             ${Number(data.totalAmount).toFixed(2)}, ${newOrder.orderStatus}, ${newOrder.paymentStatus},
-            ${newOrder.paymentMethod}, ${newOrder.upiTransactionId}, ${secureLookupToken},
+            ${newOrder.paymentMethod}, ${newOrder.upiTransactionId}, ${secureLookupToken}, ${newOrder.orderSource}, false,
             NOW(), NOW()
           );
         `;
@@ -599,7 +734,7 @@ export const dbStore = {
                 id, order_id, product_id, variant_id, product_name, variant_name,
                 sku, unit_price, quantity, total_price, personalization_details, reference_image_url
               ) VALUES (
-                ${itemId}, ${id}, ${item.productId}, ${item.variantId || null},
+                ${itemId}, ${id}, ${item.productId || null}, ${item.variantId || null},
                 ${item.productName || 'Handmade Resin Art'}, ${item.variantName || null},
                 ${item.sku || 'SKU-CUSTOM'}, ${Number(item.price || item.unitPrice || 0).toFixed(2)},
                 ${Number(item.quantity)}, ${Number((item.price || item.unitPrice || 0) * item.quantity).toFixed(2)},
@@ -619,45 +754,139 @@ export const dbStore = {
 
   async updateOrderStatus(id: string, newStatus: string, notes?: string, updatedBy = "admin") {
     const ord = store.orders.find((o) => o.id === id);
-    if (!ord) return null;
+    if (ord) {
+      ord.orderStatus = newStatus;
+      if (notes) ord.internalNotes = `${ord.internalNotes || ""}\n[${new Date().toISOString()}] ${notes}`.trim();
+      ord.updatedAt = new Date();
+    }
 
-    ord.orderStatus = newStatus;
-    if (notes) ord.internalNotes = `${ord.internalNotes || ""}\n[${new Date().toISOString()}] ${notes}`.trim();
-    ord.updatedAt = new Date();
-    return ord;
+    if (sql) {
+      try {
+        await sql`
+          UPDATE orders
+          SET 
+            order_status = ${newStatus},
+            internal_notes = CASE 
+              WHEN ${notes || null} IS NOT NULL 
+              THEN CONCAT(COALESCE(internal_notes, ''), E'\n', ${notes || ''}) 
+              ELSE internal_notes 
+            END,
+            updated_at = NOW()
+          WHERE id = ${id} OR order_number = ${id};
+        `;
+      } catch (err) {
+        console.error("DB updateOrderStatus err:", err);
+      }
+    }
+
+    return this.getOrderById(id);
   },
 
-  async updateOrderPaymentStatus(orderNumberOrId: string, paymentStatus: string, cashfreeDetails?: any) {
+  async updateOrderPaymentStatus(orderNumberOrId: string, paymentStatus: string, details?: any) {
     const ord = store.orders.find((o) => o.id === orderNumberOrId || o.orderNumber === orderNumberOrId);
-    if (!ord) return null;
+    const previousPaymentStatus = ord?.paymentStatus;
+    if (ord) {
+      ord.paymentStatus = paymentStatus;
+      if (paymentStatus === "paid" && previousPaymentStatus !== "paid") {
+        ord.orderStatus = "confirmed";
+      }
+      ord.updatedAt = new Date();
+    }
 
-    const previousPaymentStatus = ord.paymentStatus;
-    ord.paymentStatus = paymentStatus;
-    if (paymentStatus === "paid" && previousPaymentStatus !== "paid") {
-      ord.orderStatus = "confirmed";
+    if (sql) {
+      try {
+        await sql`
+          UPDATE orders
+          SET 
+            payment_status = ${paymentStatus},
+            order_status = CASE 
+              WHEN ${paymentStatus} = 'paid' AND order_status IN ('pending_payment', 'unpaid') THEN 'confirmed' 
+              ELSE order_status 
+            END,
+            updated_at = NOW()
+          WHERE id = ${orderNumberOrId} OR order_number = ${orderNumberOrId};
+        `;
+      } catch (err) {
+        console.error("DB updateOrderPaymentStatus err:", err);
+      }
+    }
 
-      // Decrement inventory exactly once
-      if (ord.items && Array.isArray(ord.items)) {
-        for (const item of ord.items) {
-          if (item.productId) {
-            try {
-              await this.adjustStock(
-                item.productId,
-                item.variantId || null,
-                -Number(item.quantity),
-                `Order Placed (${ord.orderNumber})`,
-                "system"
-              );
-            } catch (err) {
-              console.error("Stock adjustment err:", err);
-            }
+    if (paymentStatus === "paid" && previousPaymentStatus !== "paid" && ord?.items) {
+      for (const item of ord.items) {
+        if (item.productId) {
+          try {
+            await this.adjustStock(
+              item.productId,
+              item.variantId || null,
+              -Number(item.quantity),
+              `Order Paid (${ord.orderNumber})`,
+              "system"
+            );
+          } catch (err) {
+            console.error("Stock adjustment err:", err);
           }
         }
       }
     }
 
-    ord.updatedAt = new Date();
-    return ord;
+    return this.getOrderById(orderNumberOrId);
+  },
+
+  async getCustomerLatestUnpaidOrder(customerIdOrEmail: string) {
+    const clean = customerIdOrEmail.trim().toLowerCase();
+    if (sql) {
+      try {
+        const rows = await sql`
+          SELECT 
+            id, order_number as "orderNumber", customer_id as "customerId",
+            customer_email as "customerEmail", payment_status as "paymentStatus",
+            is_discarded as "isDiscarded", created_at as "createdAt"
+          FROM orders
+          WHERE (customer_id = ${customerIdOrEmail} OR LOWER(customer_email) = ${clean})
+            AND payment_status = 'unpaid'
+            AND (is_discarded IS FALSE OR is_discarded IS NULL)
+          ORDER BY created_at DESC
+          LIMIT 1;
+        `;
+        if (rows && rows.length > 0) return rows[0];
+      } catch (err) {
+        console.error("DB getCustomerLatestUnpaidOrder err:", err);
+      }
+    }
+
+    const mem = store.orders.find(
+      (o) =>
+        (o.customerId === customerIdOrEmail || o.customerEmail?.toLowerCase() === clean) &&
+        o.paymentStatus === "unpaid" &&
+        !o.isDiscarded
+    );
+    return mem || null;
+  },
+
+  async discardUnpaidOrder(orderNumberOrId: string) {
+    const ord = store.orders.find((o) => o.id === orderNumberOrId || o.orderNumber === orderNumberOrId);
+    if (ord) {
+      ord.isDiscarded = true;
+      ord.discardedAt = new Date();
+      ord.orderStatus = "cancelled";
+    }
+
+    if (sql) {
+      try {
+        await sql`
+          UPDATE orders
+          SET 
+            is_discarded = TRUE,
+            discarded_at = NOW(),
+            order_status = 'cancelled',
+            updated_at = NOW()
+          WHERE id = ${orderNumberOrId} OR order_number = ${orderNumberOrId};
+        `;
+      } catch (err) {
+        console.error("DB discardUnpaidOrder err:", err);
+      }
+    }
+    return true;
   },
 
   async updateTracking(id: string, trackingNumber: string, courierName: string) {
@@ -946,7 +1175,18 @@ export const dbStore = {
     if (sql) {
       try {
         const rows = await sql`
-          SELECT id, name, email, phone, password_hash as "passwordHash", is_verified as "isVerified", created_at as "createdAt"
+          SELECT 
+            id, name, email, phone, 
+            password_hash as "passwordHash", 
+            google_id as "googleId",
+            avatar_url as "avatarUrl",
+            address_line1 as "addressLine1",
+            address_line2 as "addressLine2",
+            city, state, 
+            postal_code as "postalCode",
+            country,
+            is_verified as "isVerified", 
+            created_at as "createdAt"
           FROM customers
           WHERE LOWER(email) = ${cleanEmail}
           LIMIT 1;
@@ -963,7 +1203,17 @@ export const dbStore = {
     if (sql) {
       try {
         const rows = await sql`
-          SELECT id, name, email, phone, is_verified as "isVerified", created_at as "createdAt"
+          SELECT 
+            id, name, email, phone, 
+            google_id as "googleId",
+            avatar_url as "avatarUrl",
+            address_line1 as "addressLine1",
+            address_line2 as "addressLine2",
+            city, state, 
+            postal_code as "postalCode",
+            country,
+            is_verified as "isVerified", 
+            created_at as "createdAt"
           FROM customers
           WHERE id = ${id}
           LIMIT 1;
@@ -976,13 +1226,35 @@ export const dbStore = {
     return null;
   },
 
-  async createCustomer(data: { name: string; email: string; phone?: string; passwordHash: string }) {
+  async createCustomer(data: {
+    name: string;
+    email: string;
+    phone?: string;
+    passwordHash?: string | null;
+    googleId?: string | null;
+    avatarUrl?: string | null;
+    addressLine1?: string | null;
+    addressLine2?: string | null;
+    city?: string | null;
+    state?: string | null;
+    postalCode?: string | null;
+    country?: string | null;
+  }) {
     const id = `cust_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
     const cleanEmail = data.email.trim().toLowerCase();
     if (sql) {
       await sql`
-        INSERT INTO customers (id, name, email, phone, password_hash, is_verified, created_at, updated_at)
-        VALUES (${id}, ${data.name.trim()}, ${cleanEmail}, ${data.phone?.trim() || null}, ${data.passwordHash}, true, NOW(), NOW());
+        INSERT INTO customers (
+          id, name, email, phone, password_hash, google_id, avatar_url,
+          address_line1, address_line2, city, state, postal_code, country,
+          is_verified, created_at, updated_at
+        ) VALUES (
+          ${id}, ${data.name.trim()}, ${cleanEmail}, ${data.phone?.trim() || null},
+          ${data.passwordHash || null}, ${data.googleId || null}, ${data.avatarUrl || null},
+          ${data.addressLine1 || null}, ${data.addressLine2 || null}, ${data.city || null},
+          ${data.state || null}, ${data.postalCode || null}, ${data.country || 'India'},
+          true, NOW(), NOW()
+        );
       `;
     }
     return {
@@ -990,9 +1262,72 @@ export const dbStore = {
       name: data.name.trim(),
       email: cleanEmail,
       phone: data.phone?.trim() || "",
+      googleId: data.googleId || null,
+      avatarUrl: data.avatarUrl || null,
+      addressLine1: data.addressLine1 || "",
+      addressLine2: data.addressLine2 || "",
+      city: data.city || "",
+      state: data.state || "",
+      postalCode: data.postalCode || "",
+      country: data.country || "India",
       isVerified: true,
       createdAt: new Date(),
     };
+  },
+
+  async findOrCreateGoogleCustomer(data: {
+    googleId: string;
+    name: string;
+    email: string;
+    avatarUrl?: string;
+  }): Promise<any> {
+    const cleanEmail = data.email.trim().toLowerCase();
+    let existing = await this.getCustomerByEmail(cleanEmail);
+    if (existing) {
+      if (sql && (!existing.googleId || !existing.avatarUrl)) {
+        await sql`
+          UPDATE customers
+          SET 
+            google_id = COALESCE(google_id, ${data.googleId}),
+            avatar_url = COALESCE(avatar_url, ${data.avatarUrl || null}),
+            is_verified = true,
+            updated_at = NOW()
+          WHERE id = ${existing.id};
+        `;
+      }
+      return {
+        ...existing,
+        googleId: existing.googleId || data.googleId,
+        avatarUrl: existing.avatarUrl || data.avatarUrl,
+      };
+    }
+
+    return this.createCustomer({
+      name: data.name,
+      email: cleanEmail,
+      googleId: data.googleId,
+      avatarUrl: data.avatarUrl,
+    });
+  },
+
+  async updateCustomerProfile(id: string, data: any) {
+    if (sql) {
+      await sql`
+        UPDATE customers
+        SET
+          name = COALESCE(${data.name || null}, name),
+          phone = COALESCE(${data.phone || null}, phone),
+          address_line1 = COALESCE(${data.addressLine1 || null}, address_line1),
+          address_line2 = COALESCE(${data.addressLine2 || null}, address_line2),
+          city = COALESCE(${data.city || null}, city),
+          state = COALESCE(${data.state || null}, state),
+          postal_code = COALESCE(${data.postalCode || null}, postal_code),
+          country = COALESCE(${data.country || null}, country),
+          updated_at = NOW()
+        WHERE id = ${id};
+      `;
+    }
+    return this.getCustomerById(id);
   },
 
   async getCustomerOrders(customerIdOrEmail: string) {

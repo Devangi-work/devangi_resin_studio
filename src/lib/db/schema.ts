@@ -246,6 +246,14 @@ export const customers = pgTable(
     email: text("email").notNull(),
     phone: text("phone"),
     passwordHash: text("password_hash"),
+    googleId: text("google_id"),
+    avatarUrl: text("avatar_url"),
+    addressLine1: text("address_line1"),
+    addressLine2: text("address_line2"),
+    city: text("city"),
+    state: text("state"),
+    postalCode: text("postal_code"),
+    country: text("country").default("India"),
     isVerified: boolean("is_verified").default(true).notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -253,6 +261,7 @@ export const customers = pgTable(
   (table) => [
     index("customers_email_idx").on(table.email),
     index("customers_phone_idx").on(table.phone),
+    index("customers_google_id_idx").on(table.googleId),
   ]
 );
 
@@ -322,9 +331,14 @@ export const orders = pgTable(
     paymentMethod: text("payment_method").default("upi").notNull(),
     upiTransactionId: text("upi_transaction_id"),
 
-    // Cancellation
+    // Offline / Online Source
+    orderSource: text("order_source").default("online").notNull(),
+
+    // Cancellation & Discarding
     cancellationReason: text("cancellation_reason"),
     cancelledAt: timestamp("cancelled_at"),
+    discardedAt: timestamp("discarded_at"),
+    isDiscarded: boolean("is_discarded").default(false).notNull(),
 
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),

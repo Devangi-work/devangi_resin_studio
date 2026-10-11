@@ -68,13 +68,18 @@ export default async function OrderConfirmationPage({ params, searchParams }: Or
           <CheckCircle2 className="w-9 h-9" />
         </div>
         <span className="text-xs uppercase font-bold tracking-widest text-[#B8972E] block">
-          Order Verified & Confirmed
+          Order Placed Successfully
         </span>
-        <h1 className="font-serif text-3xl font-bold text-[#2C332D]">
-          Thank You, {order.customerName}!
+        <h1 className="font-serif text-2xl sm:text-3xl font-bold text-[#2C332D]">
+          Thank you for shopping!
         </h1>
+        <div className="p-4 bg-[#FAF4EC] border border-[#E8E0D5] rounded-2xl max-w-lg mx-auto">
+          <p className="text-xs sm:text-sm font-medium text-[#2C332D] leading-relaxed">
+            Your payment is getting validated. After confirmation, your order will start processing.
+          </p>
+        </div>
         <p className="text-xs text-[#736C66] max-w-md mx-auto leading-relaxed">
-          Your order has been recorded in our studio ledger. An itemized receipt has been dispatched to <strong>{order.customerEmail}</strong>.
+          An itemized receipt and tracking updates will be dispatched to <strong>{order.customerEmail}</strong>.
         </p>
         <div className="inline-block bg-[#FAF8F5] px-4 py-2 rounded-xl border border-[#E8E0D5] text-xs">
           <span className="text-[#8C7A72]">Order Number:</span>{" "}
