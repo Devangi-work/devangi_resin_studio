@@ -29,6 +29,7 @@ export async function POST(request: Request) {
       orderNotes,
       couponCode,
       upiTransactionId,
+      paymentScreenshotUrl,
       items,
     } = result.data;
 
@@ -155,6 +156,7 @@ export async function POST(request: Request) {
       paymentStatus: "pending_verification",
       paymentMethod: "upi",
       upiTransactionId,
+      paymentScreenshotUrl,
       items: validatedItems,
     });
 

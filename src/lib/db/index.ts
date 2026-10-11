@@ -14,6 +14,12 @@ const isLiveNeonConfigured = Boolean(
 const sql = isLiveNeonConfigured ? neon(process.env.DATABASE_URL!) : null;
 export const db = sql ? drizzle(sql, { schema }) : null;
 
+// Ensure new columns exist on startup without requiring manual migration
+if (sql) {
+  sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_screenshot_url TEXT;`.catch(() => {});
+  sql`ALTER TABLE customers ADD COLUMN IF NOT EXISTS avatar_url TEXT;`.catch(() => {});
+}
+
 // =========================================================================
 // UNIVERSAL DATA STORE (Live Neon + Resilient Fallback Store)
 // =========================================================================
@@ -801,6 +807,7 @@ export const dbStore = {
             payment_status as "paymentStatus",
             payment_method as "paymentMethod",
             upi_transaction_id as "upiTransactionId",
+            payment_screenshot_url as "paymentScreenshotUrl",
             cancellation_reason as "cancellationReason",
             cancelled_at as "cancelledAt",
             tracking_number as "trackingNumber",
@@ -897,6 +904,7 @@ export const dbStore = {
             payment_status as "paymentStatus",
             payment_method as "paymentMethod",
             upi_transaction_id as "upiTransactionId",
+            payment_screenshot_url as "paymentScreenshotUrl",
             cancellation_reason as "cancellationReason",
             cancelled_at as "cancelledAt",
             tracking_number as "trackingNumber",
@@ -962,6 +970,7 @@ export const dbStore = {
             payment_status as "paymentStatus",
             payment_method as "paymentMethod",
             upi_transaction_id as "upiTransactionId",
+            payment_screenshot_url as "paymentScreenshotUrl",
             cancellation_reason as "cancellationReason",
             cancelled_at as "cancelledAt",
             tracking_number as "trackingNumber",
@@ -1029,6 +1038,7 @@ export const dbStore = {
       orderSource: data.orderSource || "online",
       isDiscarded: false,
       upiTransactionId: data.upiTransactionId || null,
+      paymentScreenshotUrl: data.paymentScreenshotUrl || null,
       items: data.items || [],
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -1044,7 +1054,7 @@ export const dbStore = {
             shipping_address_line1, shipping_address_line2, shipping_city, shipping_state,
             shipping_postal_code, shipping_country, order_notes, subtotal, discount_amount,
             shipping_charge, tax_amount, total_amount, order_status, payment_status,
-            payment_method, upi_transaction_id, secure_lookup_token, order_source, is_discarded,
+            payment_method, upi_transaction_id, payment_screenshot_url, secure_lookup_token, order_source, is_discarded,
             created_at, updated_at
           ) VALUES (
             ${id}, ${orderNumber}, ${data.customerId || null}, ${data.customerName}, ${data.customerEmail}, ${data.customerPhone},
@@ -1053,7 +1063,7 @@ export const dbStore = {
             ${Number(data.subtotal).toFixed(2)}, ${Number(data.discountAmount || 0).toFixed(2)},
             ${Number(data.shippingCharge || 0).toFixed(2)}, ${Number(data.taxAmount || 0).toFixed(2)},
             ${Number(data.totalAmount).toFixed(2)}, ${newOrder.orderStatus}, ${newOrder.paymentStatus},
-            ${newOrder.paymentMethod}, ${newOrder.upiTransactionId}, ${secureLookupToken}, ${newOrder.orderSource}, false,
+            ${newOrder.paymentMethod}, ${newOrder.upiTransactionId}, ${newOrder.paymentScreenshotUrl}, ${secureLookupToken}, ${newOrder.orderSource}, false,
             NOW(), NOW()
           );
         `;
@@ -1649,6 +1659,7 @@ export const dbStore = {
         SET
           name = COALESCE(${data.name || null}, name),
           phone = COALESCE(${data.phone || null}, phone),
+          avatar_url = COALESCE(${data.avatarUrl || null}, avatar_url),
           address_line1 = COALESCE(${data.addressLine1 || null}, address_line1),
           address_line2 = COALESCE(${data.addressLine2 || null}, address_line2),
           city = COALESCE(${data.city || null}, city),

@@ -19,6 +19,8 @@ import {
   Store,
   DollarSign,
   Tag,
+  Camera,
+  Image as ImageIcon,
 } from "lucide-react";
 
 export default function AdminOrdersPage() {
@@ -405,6 +407,18 @@ export default function AdminOrdersPage() {
                         <span className="w-1.5 h-1.5 rounded-full bg-current" />
                         <span>{o.paymentStatus} (Toggle)</span>
                       </button>
+                      {o.paymentScreenshotUrl && (
+                        <a
+                          href={o.paymentScreenshotUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          title="View Payment Screenshot"
+                          className="mt-1 inline-flex items-center gap-1 text-[9.5px] font-bold text-[#2E7D32] bg-[#E8EFE8] px-2 py-0.5 rounded-full border border-[#C5D8C5] hover:bg-[#D5E5D5]"
+                        >
+                          <Camera className="w-2.5 h-2.5" />
+                          <span>Receipt Attached</span>
+                        </a>
+                      )}
                     </td>
                     <td className="py-3 px-4 text-right">
                       <button
@@ -686,6 +700,93 @@ export default function AdminOrdersPage() {
                   </div>
                 ))}
               </div>
+            </div>
+
+            {/* Payment & Verification Details Box */}
+            <div className="bg-[#FAF8F5] p-4 rounded-2xl border border-[#E8E0D5] space-y-3">
+              <div className="flex items-center justify-between border-b border-[#E8E0D5] pb-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-[#2C332D] flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-[#B8972E]" />
+                  <span>Payment &amp; Screenshot Verification</span>
+                </span>
+                <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase ${
+                  selectedOrder.paymentStatus === "paid"
+                    ? "bg-[#E8EFE8] text-[#2E7D32]"
+                    : "bg-[#FDF2F2] text-[#DF4C4C]"
+                }`}>
+                  {selectedOrder.paymentStatus}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                <div className="space-y-1">
+                  <span className="text-[10px] uppercase font-bold text-[#8C7A72] block">
+                    Customer 12-Digit UTR / Reference ID:
+                  </span>
+                  <span className="font-mono text-sm font-bold text-[#2C332D] block bg-white px-3 py-1.5 rounded-lg border border-[#E8E0D5]">
+                    {selectedOrder.upiTransactionId || "Not Provided"}
+                  </span>
+                  <span className="text-[11px] text-[#736C66] block pt-1">
+                    Method: <strong className="uppercase">{selectedOrder.paymentMethod || "UPI"}</strong> • Total Amount: <strong className="text-[#B8972E]">₹{selectedOrder.totalAmount}</strong>
+                  </span>
+                </div>
+
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-[#8C7A72] block mb-1">
+                    Payment Receipt Screenshot:
+                  </span>
+                  {selectedOrder.paymentScreenshotUrl ? (
+                    <div className="flex items-center space-x-3 bg-white p-2 rounded-xl border border-[#E8E0D5]">
+                      <a
+                        href={selectedOrder.paymentScreenshotUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="group relative block w-14 h-14 rounded-lg overflow-hidden border border-[#E8E0D5] shrink-0"
+                      >
+                        <img
+                          src={selectedOrder.paymentScreenshotUrl}
+                          alt="Customer Payment Receipt"
+                          className="w-full h-full object-cover group-hover:scale-105 transition"
+                        />
+                        <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition">
+                          <ExternalLink className="w-4 h-4 text-white" />
+                        </div>
+                      </a>
+                      <div className="flex-1 min-w-0">
+                        <a
+                          href={selectedOrder.paymentScreenshotUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-xs font-bold text-[#2E7D32] hover:underline flex items-center gap-1"
+                        >
+                          <span>Open Screenshot</span>
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                        <p className="text-[10px] text-[#8C7A72] mt-0.5">
+                          Tap thumbnail to view full image in high resolution
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-white p-3 rounded-xl border border-[#E8E0D5] text-xs text-[#8C7A72] italic">
+                      No screenshot uploaded by customer.
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {selectedOrder.paymentStatus !== "paid" && (
+                <div className="pt-2 border-t border-[#E8E0D5] flex justify-end">
+                  <button
+                    type="button"
+                    onClick={(e) => handleTogglePayment(selectedOrder, e)}
+                    className="px-4 py-2 bg-[#2E7D32] hover:bg-[#256828] text-white text-xs font-semibold rounded-xl shadow-xs flex items-center space-x-1.5 cursor-pointer transition"
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Verify Receipt &amp; Mark as Paid</span>
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Update Status Form */}

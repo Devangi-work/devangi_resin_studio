@@ -21,6 +21,11 @@ import {
   ExternalLink,
   Info,
   X,
+  UploadCloud,
+  Camera,
+  Sparkles,
+  Loader2,
+  Image as ImageIcon,
 } from "lucide-react";
 
 export default function CheckoutPage() {
@@ -85,8 +90,6 @@ export default function CheckoutPage() {
   const [copiedUpi, setCopiedUpi] = useState(false);
   const [copiedPhone, setCopiedPhone] = useState(false);
   const [copiedAmount, setCopiedAmount] = useState(false);
-  const [showUpiModal, setShowUpiModal] = useState(false);
-  const [isIOS, setIsIOS] = useState(false);
   const [couponInput, setCouponInput] = useState("");
   const [couponError, setCouponError] = useState("");
   const [couponLoading, setCouponLoading] = useState(false);
@@ -94,12 +97,21 @@ export default function CheckoutPage() {
   const [errorMessage, setErrorMessage] = useState("");
   const [orderSuccessMessage, setOrderSuccessMessage] = useState("");
 
+  // Payment Screenshot Upload & OCR Auto-Detection States
+  const [paymentScreenshotUrl, setPaymentScreenshotUrl] = useState<string | null>(null);
+  const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
+  const [isUploadingScreenshot, setIsUploadingScreenshot] = useState(false);
+  const [ocrDetectedUtr, setOcrDetectedUtr] = useState<string | null>(null);
+  const [ocrDetectedApp, setOcrDetectedApp] = useState<string | null>(null);
+  const [ocrDetectedAmount, setOcrDetectedAmount] = useState<string | null>(null);
+  const [ocrStatusMessage, setOcrStatusMessage] = useState<string>("");
+
+  // Google Logged-In Profile Completion States
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [saveProfileSuccess, setSaveProfileSuccess] = useState(false);
+
   // Fetch settings & Customer Session
   useEffect(() => {
-    if (typeof navigator !== "undefined" && /iPad|iPhone|iPod/.test(navigator.userAgent)) {
-      setIsIOS(true);
-    }
-
     fetch("/api/settings")
       .then((res) => res.json())
       .then((data) => {
@@ -144,14 +156,12 @@ export default function CheckoutPage() {
   const activePayeeName = settings.accountHolderName || "Devangi Banshilal Barai";
   const activePhone = (settings.contactPhone || settings.whatsappNumber || "9967313355").replace(/[^0-9]/g, "").slice(-10);
 
-  // Exact UPI URI format requested:
-  // upi://pay?pa=devangibarai0403@okhdfcbank&pn=Devangi%20Banshilal%20Barai&am=1.00&cu=INR&tn=Test%20Payment&tr=TESTUPI001
+  // Standard UPI URI for QR Code scanning
   const upiIntentUri = `upi://pay?pa=${encodeURIComponent(
     activeUpiId
   )}&pn=${encodeURIComponent(
     activePayeeName
-  )}&am=${finalTotal.toFixed(2)}&cu=INR&tn=Test%20Payment&tr=TESTUPI001`;
-
+  )}&am=${finalTotal.toFixed(2)}&cu=INR&tn=Order%20Payment`;
 
   // Dynamic QR Code generation if admin has not uploaded a static image
   const dynamicQrUrl = settings.upiQrCodeUrl
@@ -182,12 +192,84 @@ export default function CheckoutPage() {
     setTimeout(() => setCopiedAmount(false), 2500);
   };
 
-  const handleOpenUpiApp = () => {
-    setShowUpiModal(true);
+  // Upload Payment Screenshot & Run OCR Details Auto-Detection
+  const handleScreenshotUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setErrorMessage("Please select a valid image file (JPEG, PNG, WebP).");
+      return;
+    }
+
+    const previewUrl = URL.createObjectURL(file);
+    setScreenshotPreview(previewUrl);
+    setIsUploadingScreenshot(true);
+    setOcrStatusMessage("Scanning receipt for 12-digit UTR / UPI Reference ID...");
+
+    try {
+      const data = new FormData();
+      data.append("file", file);
+
+      const res = await fetch("/api/upload/payment-receipt", {
+        method: "POST",
+        body: data,
+      });
+
+      const json = await res.json();
+      if (!res.ok) {
+        setOcrStatusMessage("Screenshot uploaded. Please manually verify or enter your 12-digit UTR below.");
+        setIsUploadingScreenshot(false);
+        return;
+      }
+
+      setPaymentScreenshotUrl(json.url);
+      if (json.detectedUtr) {
+        setOcrDetectedUtr(json.detectedUtr);
+        setOcrDetectedApp(json.detectedApp || null);
+        setOcrDetectedAmount(json.detectedAmount || null);
+        setUpiTransactionId(json.detectedUtr);
+        setOcrStatusMessage(
+          `✓ Auto-detected UTR: ${json.detectedUtr}${json.detectedApp ? ` from ${json.detectedApp}` : ""}`
+        );
+      } else {
+        setOcrStatusMessage("Screenshot attached! Please enter your 12-digit UTR number below.");
+      }
+    } catch (err) {
+      console.error("Screenshot upload err:", err);
+      setOcrStatusMessage("Screenshot attached! Please enter your 12-digit UTR number below.");
+    } finally {
+      setIsUploadingScreenshot(false);
+    }
   };
 
-  const handleProceedToApp = () => {
-    window.location.href = upiIntentUri;
+  // 1-Click Save Profile Details for Google / Registered Users
+  const handleSaveProfile = async () => {
+    setIsSavingProfile(true);
+    try {
+      const res = await fetch("/api/customer/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phone: formData.customerPhone,
+          addressLine1: formData.shippingAddressLine1,
+          addressLine2: formData.shippingAddressLine2,
+          city: formData.shippingCity,
+          state: formData.shippingState,
+          postalCode: formData.shippingPostalCode,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.customer) setCustomer(data.customer);
+        setSaveProfileSuccess(true);
+        setTimeout(() => setSaveProfileSuccess(false), 3500);
+      }
+    } catch (err) {
+      console.error("Save profile error:", err);
+    } finally {
+      setIsSavingProfile(false);
+    }
   };
 
   // Quick In-Checkout Login
@@ -331,6 +413,7 @@ export default function CheckoutPage() {
         customerId: customer.id,
         couponCode: appliedCoupon?.code || undefined,
         upiTransactionId: upiTransactionId.trim(),
+        paymentScreenshotUrl: paymentScreenshotUrl || undefined,
         items: items.map((i) => ({
           productId: i.productId,
           variantId: i.variantId || null,
@@ -743,6 +826,67 @@ export default function CheckoutPage() {
             </div>
           </div>
 
+          {/* Prompt for Google Logged-In User with Missing Details */}
+          {customer && (!customer.phone || !customer.addressLine1 || !customer.city || !customer.state || !customer.postalCode) && (
+            <div className="bg-[#FAF4EC] p-5 rounded-2xl border border-[#E8E0D5] space-y-3 shadow-xs">
+              <div className="flex items-start space-x-3.5">
+                {customer.avatarUrl ? (
+                  <img
+                    src={customer.avatarUrl}
+                    alt={customer.name}
+                    className="w-11 h-11 rounded-full border border-[#D4AF37] object-cover flex-shrink-0 shadow-xs"
+                  />
+                ) : (
+                  <div className="w-11 h-11 rounded-full bg-[#2C332D] text-[#D4AF37] flex items-center justify-center font-bold text-sm flex-shrink-0">
+                    {customer.name?.charAt(0)?.toUpperCase() || "U"}
+                  </div>
+                )}
+                <div className="flex-1">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-xs font-bold text-[#2C332D]">
+                      Welcome, {customer.name}!
+                    </span>
+                    <span className="text-[10px] font-semibold text-[#B8972E] bg-white px-2 py-0.5 rounded-full border border-[#E8E0D5]">
+                      Google Account
+                    </span>
+                  </div>
+                  <p className="text-[11.5px] text-[#736C66] mt-1 leading-relaxed">
+                    Your Google profile doesn&rsquo;t include a contact number and shipping address. Please fill in your delivery details below and tap <strong>&ldquo;Save to Profile&rdquo;</strong> to store them permanently for real-time delivery updates.
+                  </p>
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-[#E8E0D5] flex items-center justify-between">
+                <span className="text-[10.5px] text-[#8C7A72]">
+                  {saveProfileSuccess ? "✓ Profile updated successfully!" : "Saves phone & address to your account"}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleSaveProfile}
+                  disabled={isSavingProfile || !formData.customerPhone || !formData.shippingAddressLine1}
+                  className="px-3.5 py-1.5 bg-[#2C332D] hover:bg-[#3D473E] text-white rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition disabled:opacity-50 cursor-pointer shadow-xs"
+                >
+                  {isSavingProfile ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Saving...</span>
+                    </>
+                  ) : saveProfileSuccess ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-[#A3E635]" />
+                      <span>Saved to Profile!</span>
+                    </>
+                  ) : (
+                    <>
+                      <UserCheck className="w-3.5 h-3.5 text-[#D4AF37]" />
+                      <span>Save to My Profile</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Shipping Address (Auto-fetched & fully editable) */}
           <div className="bg-white p-6 rounded-2xl border border-[#E8E0D5] shadow-sm space-y-4">
             <div className="flex items-center justify-between border-b border-[#F4EBE6] pb-3">
@@ -949,212 +1093,64 @@ export default function CheckoutPage() {
               </div>
             </div>
 
-            {/* ---------------- UPI & QR Code Payment Box ---------------- */}
-            <div className="bg-[#FAF8F5] p-5 rounded-2xl border border-[#E8E0D5] space-y-4">
-              <div className="flex items-center justify-between border-b border-[#E8E0D5] pb-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-[#2C332D] flex items-center gap-1.5">
-                  <Smartphone className="w-4 h-4 text-[#B8972E]" />
-                  <span>Step 1: Pay via UPI</span>
-                </span>
-                <span className="text-[11px] font-semibold text-[#2E7D32] bg-[#E8EFE8] px-2 py-0.5 rounded-full">
-                  Instant UPI
-                </span>
-              </div>
-
-              {/* Amount to Pay with Copy Button */}
-              <div className="bg-white p-3 rounded-xl border border-[#E8E0D5] flex items-center justify-between">
+            {/* ---------------- Manual UPI Payment & Screenshot Verification Box ---------------- */}
+            <div className="bg-[#FAF8F5] p-5 sm:p-6 rounded-2xl border border-[#E8E0D5] space-y-5">
+              <div className="flex items-center justify-between border-b border-[#E8E0D5] pb-3">
                 <div>
-                  <span className="text-[11px] text-[#8C7A72] block font-medium">Amount to Enter in UPI App:</span>
-                  <span className="text-lg font-bold text-[#B8972E]">₹{finalTotal.toFixed(2)}</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={copyAmountToClipboard}
-                  className="p-1.5 px-3 bg-[#FAF8F5] hover:bg-[#F4EBE6] text-[#2C332D] rounded-lg border border-[#E8E0D5] text-xs font-semibold flex items-center gap-1.5 transition"
-                >
-                  {copiedAmount ? (
-                    <>
-                      <Check className="w-3.5 h-3.5 text-[#2E7D32]" />
-                      <span className="text-[#2E7D32]">Copied!</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-3.5 h-3.5 text-[#8C7A72]" />
-                      <span>Copy Amount</span>
-                    </>
-                  )}
-                </button>
-              </div>
-
-              {/* Single "Open UPI App" Button */}
-              <div className="space-y-1.5">
-                <button
-                  type="button"
-                  onClick={handleOpenUpiApp}
-                  className="w-full py-3 px-4 bg-[#2C332D] hover:bg-[#3D473E] text-white rounded-xl text-sm font-bold flex items-center justify-center space-x-2 shadow-xs transition-all active:scale-[0.99] group cursor-pointer"
-                >
-                  <Smartphone className="w-4 h-4 text-[#D4AF37]" />
-                  <span>Open UPI App</span>
-                  <ExternalLink className="w-3.5 h-3.5 opacity-70 group-hover:opacity-100 transition-opacity" />
-                </button>
-                <p className="text-[10.5px] text-center text-[#8C7A72]">
-                  Tap to view UPI details &amp; launch your UPI app (PhonePe / Google Pay).
-                </p>
-              </div>
-
-              <div className="relative flex items-center justify-center">
-                <div className="border-t border-[#E8E0D5] w-full" />
-                <span className="bg-[#FAF8F5] px-3 text-[10px] uppercase tracking-wider text-[#A0988F] absolute">
-                  or scan QR / pay to details
-                </span>
-              </div>
-
-              {/* QR Code Graphic Card */}
-              <div className="flex flex-col items-center justify-center p-3 bg-white rounded-xl border border-[#E8E0D5] shadow-xs">
-                <div className="w-44 h-44 bg-white p-2 rounded-lg border border-[#F0E6DF] flex items-center justify-center">
-                  <img
-                    src={dynamicQrUrl}
-                    alt="Scan UPI QR Code to Pay"
-                    className="w-full h-full object-contain"
-                  />
-                </div>
-                <p className="text-[11px] font-semibold text-[#2C332D] mt-2 text-center">
-                  Pay to: <span className="text-[#B8972E]">{activePayeeName}</span>
-                </p>
-                <p className="text-[10px] text-[#8C7A72] text-center">
-                  Scan and enter amount: <strong className="text-[#2C332D]">₹{finalTotal.toFixed(2)}</strong>
-                </p>
-              </div>
-
-              {/* Direct UPI Options */}
-              <div className="space-y-2 pt-1">
-                {/* 1. Mobile Number / UPI Number */}
-                <div className="flex items-center space-x-2 bg-white px-3 py-2 rounded-xl border border-[#E8E0D5]">
-                  <div className="flex-1 min-w-0">
-                    <span className="text-[9.5px] text-[#8C7A72] block">Pay to Mobile / UPI Number:</span>
-                    <span className="font-mono text-xs font-bold text-[#2C332D]">{activePhone}</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={copyPhoneToClipboard}
-                    className="p-1.5 px-2.5 bg-[#FAF8F5] hover:bg-[#F4EBE6] text-[#2C332D] rounded-lg border border-[#E8E0D5] text-[11px] font-semibold flex items-center gap-1 transition"
-                  >
-                    {copiedPhone ? (
-                      <>
-                        <Check className="w-3.5 h-3.5 text-[#2E7D32]" />
-                        <span className="text-[#2E7D32]">Copied!</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-3.5 h-3.5 text-[#8C7A72]" />
-                        <span>Copy Mobile</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-
-                {/* 2. UPI ID */}
-                <div className="flex items-center space-x-2 bg-white px-3 py-2 rounded-xl border border-[#E8E0D5]">
-                  <div className="flex-1 min-w-0">
-                    <span className="text-[9.5px] text-[#8C7A72] block">Pay to UPI ID:</span>
-                    <span className="font-mono text-xs font-bold text-[#2C332D] truncate block select-all">
-                      {activeUpiId}
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={copyToClipboard}
-                    className="p-1.5 px-2.5 bg-[#FAF8F5] hover:bg-[#F4EBE6] text-[#2C332D] rounded-lg border border-[#E8E0D5] text-[11px] font-semibold flex items-center gap-1 transition"
-                  >
-                    {copiedUpi ? (
-                      <>
-                        <Check className="w-3.5 h-3.5 text-[#2E7D32]" />
-                        <span className="text-[#2E7D32]">Copied!</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-3.5 h-3.5 text-[#8C7A72]" />
-                        <span>Copy ID</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              {/* Step 2: UPI Reference ID Input */}
-              <div className="pt-3 border-t border-[#E8E0D5]">
-                <label className="text-xs font-bold text-[#2C332D] block mb-1">
-                  Enter 12-Digit UPI Ref / UTR Number <span className="text-[#DF4C4C]">*</span>
-                </label>
-                <input
-                  id="upiTransactionId"
-                  type="text"
-                  required
-                  placeholder="e.g. 428901234567 or UPI Txn ID"
-                  value={upiTransactionId}
-                  onChange={(e) => setUpiTransactionId(e.target.value)}
-                  className="w-full px-3.5 py-2.5 text-xs font-mono bg-white border border-[#E8E0D5] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#D4AF37] text-[#2C332D]"
-                />
-                <p className="text-[10px] text-[#8C7A72] mt-1">
-                  After paying in your UPI app, paste the 12-digit UTR/Reference ID from the payment confirmation screen.
-                </p>
-              </div>
-            </div>
-
-            {/* Place Order Button */}
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full py-4 bg-[#2C332D] text-white rounded-xl font-bold text-xs uppercase tracking-wider flex items-center justify-center space-x-2 hover:bg-[#3D473E] shadow-md transition-all disabled:opacity-60 group"
-            >
-              <span>{isSubmitting ? "Submitting Order..." : `Confirm Payment & Place Order (₹${finalTotal.toFixed(2)})`}</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </button>
-
-            <div className="text-center text-[11px] text-[#8C7A72] space-y-1">
-              <p className="flex items-center justify-center space-x-1 text-[#2E7D32]">
-                <ShieldCheck className="w-3.5 h-3.5" />
-                <span>1-Hour Free Cancellation • Handcrafted Quality Guarantee</span>
-              </p>
-            </div>
-          </div>
-        </div>
-      </form>
-
-      {/* ---------------- UPI Payment Details & App Launcher Modal ---------------- */}
-      {showUpiModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-[#FAF8F5] border border-[#E8E0D5] w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[92vh]">
-            {/* Header */}
-            <div className="p-4 px-5 bg-white border-b border-[#E8E0D5] flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 rounded-full bg-[#E8EFE8] flex items-center justify-center">
-                  <Smartphone className="w-4 h-4 text-[#2E7D32]" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-[#2C332D]">Pay via UPI App</h3>
-                  <p className="text-[11px] text-[#8C7A72]">Copy details &amp; proceed to your UPI app</p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowUpiModal(false)}
-                className="w-8 h-8 rounded-full hover:bg-[#F4EBE6] flex items-center justify-center text-[#8C7A72] hover:text-[#2C332D] transition cursor-pointer"
-                aria-label="Close"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Modal Body */}
-            <div className="p-5 space-y-3.5 overflow-y-auto text-[#2C332D]">
-              {/* Amount to Pay */}
-              <div className="bg-white p-3 rounded-xl border border-[#E8E0D5] flex items-center justify-between">
-                <div>
-                  <span className="text-[10px] uppercase font-bold text-[#8C7A72] tracking-wider block">
-                    Amount to Pay
+                  <span className="text-xs font-bold uppercase tracking-wider text-[#2C332D] flex items-center gap-1.5">
+                    <Smartphone className="w-4 h-4 text-[#B8972E]" />
+                    <span>Pay via UPI &amp; Upload Screenshot</span>
                   </span>
-                  <span className="text-lg font-bold text-[#B8972E]">₹{finalTotal.toFixed(2)}</span>
+                  <p className="text-[11px] text-[#736C66] mt-0.5">
+                    Fast &amp; secure manual transfer with AI screenshot verification
+                  </p>
+                </div>
+                <span className="text-[10px] font-semibold text-[#2E7D32] bg-[#E8EFE8] px-2.5 py-1 rounded-full border border-[#C5D8C5]">
+                  Zero Convenience Fee
+                </span>
+              </div>
+
+              {/* Step-by-Step Instructions Guide */}
+              <div className="bg-[#FAF4EC] border border-[#F0E6DF] rounded-xl p-3.5 text-xs text-[#2C332D] space-y-2">
+                <p className="font-bold flex items-center gap-1.5 text-[#8C6D23]">
+                  <CheckCircle2 className="w-4 h-4 text-[#B8972E] shrink-0" />
+                  <span>How to complete your payment:</span>
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-[#554C46] pt-1">
+                  <div className="flex items-start gap-2 bg-white/70 p-2 rounded-lg border border-[#E8E0D5]/60">
+                    <span className="font-bold text-[#2C332D] bg-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] shrink-0 border border-[#E8E0D5]">1</span>
+                    <p>
+                      <strong>Copy Details / Scan QR:</strong> Copy Mobile <strong>{activePhone}</strong>, UPI ID, or scan the QR below.
+                    </p>
+                  </div>
+                  <div className="flex items-start gap-2 bg-white/70 p-2 rounded-lg border border-[#E8E0D5]/60">
+                    <span className="font-bold text-[#2C332D] bg-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] shrink-0 border border-[#E8E0D5]">2</span>
+                    <p>
+                      <strong>Pay Exact Amount:</strong> Open <strong>PhonePe, Google Pay, or Paytm</strong> and transfer <strong>₹{finalTotal.toFixed(2)}</strong>.
+                    </p>
+                  </div>
+                  <div className="flex items-start gap-2 bg-white/70 p-2 rounded-lg border border-[#E8E0D5]/60">
+                    <span className="font-bold text-[#2C332D] bg-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] shrink-0 border border-[#E8E0D5]">3</span>
+                    <p>
+                      <strong>Take a Screenshot:</strong> Capture the payment success screen showing the 12-digit UTR/Ref ID.
+                    </p>
+                  </div>
+                  <div className="flex items-start gap-2 bg-white/70 p-2 rounded-lg border border-[#E8E0D5]/60">
+                    <span className="font-bold text-[#2C332D] bg-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] shrink-0 border border-[#E8E0D5]">4</span>
+                    <p>
+                      <strong>Upload Below:</strong> Our system will automatically read your UTR from the image!
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Exact Amount Card with Copy Button */}
+              <div className="bg-white p-3.5 rounded-xl border border-[#E8E0D5] flex items-center justify-between shadow-xs">
+                <div>
+                  <span className="text-[10px] uppercase tracking-wider text-[#8C7A72] block font-bold">
+                    Amount to Enter in UPI App:
+                  </span>
+                  <span className="text-xl font-bold text-[#B8972E]">₹{finalTotal.toFixed(2)}</span>
                 </div>
                 <button
                   type="button"
@@ -1175,117 +1171,226 @@ export default function CheckoutPage() {
                 </button>
               </div>
 
-              {/* 1. Mobile Number / UPI Number */}
-              <div className="bg-white p-3 rounded-xl border border-[#E8E0D5] flex items-center justify-between space-x-2">
-                <div className="min-w-0 flex-1">
-                  <span className="text-[10px] uppercase font-bold text-[#8C7A72] tracking-wider block">
-                    Pay to Mobile Number (PhonePe / GPay)
-                  </span>
-                  <span className="font-mono text-sm font-bold text-[#2C332D] block">
-                    {activePhone}
-                  </span>
-                  <span className="text-[10.5px] text-[#736C66] block truncate">
-                    {activePayeeName}
-                  </span>
+              {/* Payee Details (Mobile Number & UPI ID) */}
+              <div className="space-y-2">
+                {/* 1. Mobile Number */}
+                <div className="flex items-center space-x-2 bg-white px-3.5 py-2.5 rounded-xl border border-[#E8E0D5] shadow-xs">
+                  <div className="flex-1 min-w-0">
+                    <span className="text-[10px] text-[#8C7A72] uppercase font-bold tracking-wider block">
+                      Pay to Mobile Number (PhonePe / Google Pay / Paytm):
+                    </span>
+                    <span className="font-mono text-sm font-bold text-[#2C332D] block">
+                      {activePhone}
+                    </span>
+                    <span className="text-[10.5px] text-[#736C66] block truncate">
+                      {activePayeeName}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={copyPhoneToClipboard}
+                    className="py-2 px-3 bg-[#2C332D] hover:bg-[#3D473E] text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition active:scale-95 shrink-0 cursor-pointer shadow-xs"
+                  >
+                    {copiedPhone ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-[#A3E635]" />
+                        <span className="text-[#A3E635]">Copied!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5 text-[#D4AF37]" />
+                        <span>Copy Phone</span>
+                      </>
+                    )}
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={copyPhoneToClipboard}
-                  className="py-2 px-3 bg-[#2C332D] hover:bg-[#3D473E] text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition active:scale-95 shrink-0 cursor-pointer"
-                >
-                  {copiedPhone ? (
-                    <>
-                      <Check className="w-3.5 h-3.5 text-[#A3E635]" />
-                      <span className="text-[#A3E635]">Copied!</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-3.5 h-3.5 text-[#D4AF37]" />
-                      <span>Copy Phone</span>
-                    </>
-                  )}
-                </button>
+
+                {/* 2. UPI ID */}
+                <div className="flex items-center space-x-2 bg-white px-3.5 py-2.5 rounded-xl border border-[#E8E0D5] shadow-xs">
+                  <div className="flex-1 min-w-0">
+                    <span className="text-[10px] text-[#8C7A72] uppercase font-bold tracking-wider block">
+                      Or Pay to UPI ID / VPA:
+                    </span>
+                    <span className="font-mono text-xs font-bold text-[#2C332D] truncate block select-all">
+                      {activeUpiId}
+                    </span>
+                    <span className="text-[10.5px] text-[#736C66] block truncate">
+                      {activePayeeName}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={copyToClipboard}
+                    className="py-1.5 px-3 bg-[#FAF8F5] hover:bg-[#F4EBE6] text-[#2C332D] rounded-lg border border-[#E8E0D5] text-xs font-semibold flex items-center gap-1.5 transition active:scale-95 shrink-0 cursor-pointer"
+                  >
+                    {copiedUpi ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-[#2E7D32]" />
+                        <span className="text-[#2E7D32]">Copied!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5 text-[#8C7A72]" />
+                        <span>Copy UPI ID</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
 
-              {/* 2. UPI ID */}
-              <div className="bg-white p-3 rounded-xl border border-[#E8E0D5] flex items-center justify-between space-x-2">
-                <div className="min-w-0 flex-1">
-                  <span className="text-[10px] uppercase font-bold text-[#8C7A72] tracking-wider block">
-                    Or Pay to UPI ID
-                  </span>
-                  <span className="font-mono text-xs font-bold text-[#2C332D] block truncate select-all">
-                    {activeUpiId}
-                  </span>
+              {/* QR Code Scan Option */}
+              <div className="flex flex-col items-center justify-center p-3 bg-white rounded-xl border border-[#E8E0D5] shadow-xs">
+                <div className="w-40 h-40 bg-white p-2 rounded-lg border border-[#F0E6DF] flex items-center justify-center">
+                  <img
+                    src={dynamicQrUrl}
+                    alt="Scan UPI QR Code to Pay"
+                    className="w-full h-full object-contain"
+                  />
                 </div>
-                <button
-                  type="button"
-                  onClick={copyToClipboard}
-                  className="py-1.5 px-3 bg-[#FAF8F5] hover:bg-[#F4EBE6] text-[#2C332D] rounded-lg border border-[#E8E0D5] text-xs font-semibold flex items-center gap-1.5 transition active:scale-95 shrink-0 cursor-pointer"
-                >
-                  {copiedUpi ? (
-                    <>
-                      <Check className="w-3.5 h-3.5 text-[#2E7D32]" />
-                      <span className="text-[#2E7D32]">Copied!</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-3.5 h-3.5 text-[#8C7A72]" />
-                      <span>Copy UPI ID</span>
-                    </>
-                  )}
-                </button>
-              </div>
-
-              {/* Guidance Box */}
-              <div className="bg-[#FAF4EC] border border-[#F0E6DF] rounded-xl p-3.5 text-xs text-[#2C332D] space-y-2">
-                <p className="font-bold flex items-center gap-1.5 text-[#8C6D23]">
-                  <CheckCircle2 className="w-4 h-4 text-[#B8972E] shrink-0" />
-                  <span>Choose how you want to pay:</span>
+                <p className="text-[11px] font-semibold text-[#2C332D] mt-2 text-center">
+                  Pay to: <span className="text-[#B8972E]">{activePayeeName}</span>
                 </p>
-                <div className="space-y-2 text-[11px] text-[#554C46] pl-0.5">
-                  <div className="flex items-start gap-2">
-                    <span className="font-bold text-[#2C332D] bg-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] shrink-0 border border-[#E8E0D5]">1</span>
-                    <p>
-                      <strong>Direct 1-Tap Payment:</strong> Tap <strong>&ldquo;Pay via UPI App&rdquo;</strong> below. Android will prompt you to open <strong>Google Pay</strong> or <strong>PhonePe</strong> with Devangi&rsquo;s details and <strong>₹{finalTotal.toFixed(2)}</strong> ready to pay.
-                    </p>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <span className="font-bold text-[#2C332D] bg-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] shrink-0 border border-[#E8E0D5]">2</span>
-                    <p>
-                      <strong>PhonePe Mobile Number Transfer:</strong> If you prefer paying via PhonePe&rsquo;s <em>&ldquo;To Mobile Number&rdquo;</em>, tap <strong>&ldquo;Copy Phone ({activePhone})&rdquo;</strong> above, switch to your PhonePe app, select <em>&ldquo;To Mobile Number&rdquo;</em>, and transfer directly.
-                    </p>
-                  </div>
+                <p className="text-[10px] text-[#8C7A72] text-center">
+                  Scan and enter amount: <strong className="text-[#2C332D]">₹{finalTotal.toFixed(2)}</strong>
+                </p>
+              </div>
+
+              {/* ---------------- Screenshot Upload & OCR Auto-Detection Area ---------------- */}
+              <div className="pt-3 border-t border-[#E8E0D5] space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-[#2C332D] flex items-center gap-1.5">
+                    <Camera className="w-4 h-4 text-[#B8972E]" />
+                    <span>Upload Payment Screenshot (Auto-Detects Details)</span>
+                  </label>
+                  <span className="text-[10px] font-semibold text-[#B8972E] bg-white px-2 py-0.5 rounded-full border border-[#E8E0D5]">
+                    Recommended
+                  </span>
                 </div>
+
+                {screenshotPreview ? (
+                  <div className="bg-white p-3.5 rounded-xl border border-[#E8E0D5] space-y-3">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-16 h-16 rounded-lg overflow-hidden bg-[#FAF8F5] border border-[#E8E0D5] shrink-0">
+                        <img
+                          src={screenshotPreview}
+                          alt="Payment Receipt Preview"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold text-[#2C332D] truncate">
+                          Payment Screenshot Attached
+                        </p>
+                        {isUploadingScreenshot ? (
+                          <div className="flex items-center space-x-1.5 text-xs text-[#B8972E] font-medium mt-1">
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            <span>Scanning receipt with OCR...</span>
+                          </div>
+                        ) : ocrDetectedUtr ? (
+                          <div className="mt-1">
+                            <span className="inline-flex items-center space-x-1 text-[11px] text-[#2E7D32] bg-[#E8EFE8] px-2 py-0.5 rounded-md font-semibold">
+                              <Sparkles className="w-3 h-3" />
+                              <span>Detected UTR: {ocrDetectedUtr}</span>
+                            </span>
+                            {ocrDetectedApp && (
+                              <span className="text-[10px] text-[#736C66] ml-1.5">
+                                via {ocrDetectedApp}
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          <p className="text-[11px] text-[#736C66] mt-0.5">
+                            Image attached successfully!
+                          </p>
+                        )}
+                      </div>
+                      <label className="text-xs font-semibold text-[#B8972E] hover:underline cursor-pointer shrink-0">
+                        Change
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleScreenshotUpload}
+                        />
+                      </label>
+                    </div>
+
+                    {ocrStatusMessage && (
+                      <p className={`text-[11px] font-medium ${ocrDetectedUtr ? "text-[#2E7D32]" : "text-[#736C66]"}`}>
+                        {ocrStatusMessage}
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <label className="border-2 border-dashed border-[#D5CEC5] hover:border-[#B8972E] bg-white p-5 rounded-xl flex flex-col items-center justify-center text-center cursor-pointer transition-colors group">
+                    <UploadCloud className="w-8 h-8 text-[#8C7A72] group-hover:text-[#B8972E] transition-colors mb-1.5" />
+                    <span className="text-xs font-bold text-[#2C332D]">
+                      Tap to Upload Payment Screenshot
+                    </span>
+                    <span className="text-[10.5px] text-[#8C7A72] mt-0.5">
+                      PhonePe, Google Pay, or Paytm receipt (JPEG, PNG, WebP)
+                    </span>
+                    <span className="text-[10px] font-semibold text-[#B8972E] mt-1.5 bg-[#FAF4EC] px-2.5 py-0.5 rounded-full">
+                      ✨ Auto-extracts 12-digit UTR &amp; verifies order
+                    </span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleScreenshotUpload}
+                    />
+                  </label>
+                )}
+              </div>
+
+              {/* 12-Digit UPI Reference / UTR Input */}
+              <div className="pt-2 border-t border-[#E8E0D5]">
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs font-bold text-[#2C332D] block">
+                    12-Digit UPI Ref / UTR Number <span className="text-[#DF4C4C]">*</span>
+                  </label>
+                  {ocrDetectedUtr && (
+                    <span className="text-[10px] font-bold text-[#2E7D32] bg-[#E8EFE8] px-2 py-0.5 rounded-full flex items-center gap-1">
+                      <Check className="w-3 h-3" /> Auto-filled
+                    </span>
+                  )}
+                </div>
+                <input
+                  id="upiTransactionId"
+                  type="text"
+                  required
+                  placeholder="e.g. 428901234567"
+                  value={upiTransactionId}
+                  onChange={(e) => setUpiTransactionId(e.target.value)}
+                  className={`w-full px-3.5 py-2.5 text-xs font-mono bg-white border rounded-xl focus:outline-none focus:ring-1 focus:ring-[#D4AF37] text-[#2C332D] ${
+                    ocrDetectedUtr ? "border-[#2E7D32] bg-[#F9FDF9]" : "border-[#E8E0D5]"
+                  }`}
+                />
+                <p className="text-[10px] text-[#8C7A72] mt-1 leading-relaxed">
+                  Look for <strong>&ldquo;UPI Ref No&rdquo;</strong> (PhonePe/Paytm) or <strong>&ldquo;UPI transaction ID&rdquo;</strong> (Google Pay) in your payment receipt.
+                </p>
               </div>
             </div>
 
-            {/* Footer / App Launchers */}
-            <div className="p-4 bg-white border-t border-[#E8E0D5] space-y-2.5">
-              <a
-                href={upiIntentUri}
-                className="w-full py-3.5 px-4 bg-[#2C332D] hover:bg-[#3D473E] text-white rounded-xl text-sm font-bold flex items-center justify-center space-x-2 shadow-sm transition active:scale-[0.99] cursor-pointer"
-              >
-                <Smartphone className="w-4 h-4 text-[#D4AF37]" />
-                <span>Pay via UPI App (Google Pay / PhonePe)</span>
-                <ExternalLink className="w-4 h-4 text-[#D4AF37]" />
-              </a>
+            {/* Place Order Button */}
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full py-4 bg-[#2C332D] text-white rounded-xl font-bold text-xs uppercase tracking-wider flex items-center justify-center space-x-2 hover:bg-[#3D473E] shadow-md transition-all disabled:opacity-60 group cursor-pointer"
+            >
+              <span>{isSubmitting ? "Submitting Order..." : `Confirm Payment & Place Order (₹${finalTotal.toFixed(2)})`}</span>
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </button>
 
-              <button
-                type="button"
-                onClick={() => {
-                  setShowUpiModal(false);
-                  setTimeout(() => {
-                    document.getElementById("upiTransactionId")?.focus();
-                  }, 200);
-                }}
-                className="w-full py-2.5 text-xs text-[#8C7A72] hover:text-[#2C332D] hover:bg-[#FAF8F5] rounded-xl text-center font-medium transition cursor-pointer border border-transparent hover:border-[#E8E0D5]"
-              >
-                Already Paid? Enter 12-Digit UTR / Ref Number &rarr;
-              </button>
+            <div className="text-center text-[11px] text-[#8C7A72] space-y-1">
+              <p className="flex items-center justify-center space-x-1 text-[#2E7D32]">
+                <ShieldCheck className="w-3.5 h-3.5" />
+                <span>1-Hour Free Cancellation • Handcrafted Quality Guarantee</span>
+              </p>
             </div>
           </div>
         </div>
-      )}
+      </form>
     </div>
   );
 }

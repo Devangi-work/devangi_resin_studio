@@ -24,6 +24,7 @@ export function Navbar() {
   const [isCollectionsOpen, setIsCollectionsOpen] = useState(false);
   const [categories, setCategories] = useState<any[]>([]);
   const [settings, setSettings] = useState<any>(null);
+  const [customer, setCustomer] = useState<any>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -41,6 +42,16 @@ export function Navbar() {
       .then((data) => {
         if (Array.isArray(data)) {
           setCategories(data);
+        }
+      })
+      .catch(() => {});
+
+    // 3. Check customer session for avatar display
+    fetch("/api/customer/me")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.authenticated && data?.customer) {
+          setCustomer(data.customer);
         }
       })
       .catch(() => {});
@@ -224,13 +235,25 @@ export function Navbar() {
               <Search className="w-5 h-5" />
             </button>
 
-            {/* Customer Account / Orders */}
+            {/* Customer Account / Avatar */}
             <Link
               href="/account"
-              className="p-1.5 sm:p-2 text-[#736C66] hover:text-[#2C332D] hover:bg-[#F4EBE6] rounded-full transition-colors hidden sm:inline-flex"
-              title="My Account & Orders"
+              className="p-1 sm:p-1.5 text-[#736C66] hover:text-[#2C332D] hover:bg-[#F4EBE6] rounded-full transition-colors hidden sm:inline-flex items-center"
+              title={customer ? `My Account (${customer.name})` : "My Account & Orders"}
             >
-              <User className="w-5 h-5" />
+              {customer?.avatarUrl ? (
+                <img
+                  src={customer.avatarUrl}
+                  alt={customer.name}
+                  className="w-7 h-7 rounded-full object-cover border border-[#D4AF37]"
+                />
+              ) : customer ? (
+                <div className="w-7 h-7 rounded-full bg-[#FAF4EC] border border-[#E8E0D5] flex items-center justify-center text-[#B8972E] font-bold text-xs font-serif">
+                  {customer.name?.charAt(0)?.toUpperCase() || "U"}
+                </div>
+              ) : (
+                <User className="w-5 h-5" />
+              )}
             </Link>
 
             {/* Cart Trigger Button */}
@@ -343,10 +366,20 @@ export function Navbar() {
               <Link
                 href="/account"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="flex items-center space-x-1.5 py-1 hover:text-[#2C332D]"
+                className="flex items-center space-x-2 py-1 hover:text-[#2C332D]"
               >
-                <User className="w-4 h-4" />
-                <span>My Account & Orders</span>
+                {customer?.avatarUrl ? (
+                  <img
+                    src={customer.avatarUrl}
+                    alt={customer.name}
+                    className="w-5 h-5 rounded-full object-cover border border-[#D4AF37]"
+                  />
+                ) : (
+                  <User className="w-4 h-4" />
+                )}
+                <span className="truncate max-w-[140px]">
+                  {customer ? customer.name : "My Account"}
+                </span>
               </Link>
             </div>
           </div>

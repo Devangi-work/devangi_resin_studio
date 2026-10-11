@@ -146,4 +146,67 @@ test("E-Commerce Test Suite", async (t) => {
     assert.equal(ALLOWED_IMAGE_TYPES.includes("application/pdf"), false);
     assert.equal(MAX_FILE_SIZE_BYTES, 5 * 1024 * 1024);
   });
+
+  // 8. UPI Payment Screenshot OCR Text Parser Test
+  await t.test("UPI Receipt Text Parser Extracts 12-digit UTR, Amount & Payee", async () => {
+    const { parseUpiReceiptText } = await import("../lib/ocr/upi-receipt");
+
+    // PhonePe sample receipt text
+    const phonePeSample = `
+      PhonePe
+      Payment Successful
+      Paid to Devangi Banshilal Barai
+      ₹ 850.00
+      UPI Ref No: 428901234567
+      Transaction ID: T241011123456
+      11 Oct 2026, 04:30 PM
+    `;
+    const parsedPhonePe = parseUpiReceiptText(phonePeSample);
+    assert.equal(parsedPhonePe.detectedUtr, "428901234567");
+    assert.equal(parsedPhonePe.detectedAmount, "850.00");
+    assert.equal(parsedPhonePe.detectedApp, "PhonePe");
+    assert.equal(parsedPhonePe.payeeMatched, true);
+    assert.equal(parsedPhonePe.statusMatched, true);
+
+    // Google Pay sample receipt text
+    const gpaySample = `
+      Google Pay
+      Paid ₹1,299.00 to Devangi Resin Studio
+      devangibarai0403@okhdfcbank
+      UPI transaction ID: 529103847291
+      Completed
+      Oct 11, 2026
+    `;
+    const parsedGPay = parseUpiReceiptText(gpaySample);
+    assert.equal(parsedGPay.detectedUtr, "529103847291");
+    assert.equal(parsedGPay.detectedAmount, "1299.00");
+    assert.equal(parsedGPay.detectedApp, "Google Pay");
+    assert.equal(parsedGPay.payeeMatched, true);
+    assert.equal(parsedGPay.statusMatched, true);
+  });
+
+  // 9. Order Creation with Payment Screenshot Persistence
+  await t.test("Order creation persists paymentScreenshotUrl correctly", async () => {
+    const orderWithReceipt = await dbStore.createOrder({
+      customerName: "Aarav Patel",
+      customerEmail: "aarav@example.com",
+      customerPhone: "9876543210",
+      shippingAddressLine1: "12 Marine Drive",
+      shippingCity: "Mumbai",
+      shippingState: "Maharashtra",
+      shippingPostalCode: "400020",
+      subtotal: 500,
+      totalAmount: 500,
+      paymentMethod: "upi",
+      upiTransactionId: "428901234567",
+      paymentScreenshotUrl: "https://blob.vercel-storage.com/payment-receipts/aarav_receipt.png",
+      items: [],
+    });
+
+    assert.equal(orderWithReceipt.paymentScreenshotUrl, "https://blob.vercel-storage.com/payment-receipts/aarav_receipt.png");
+    assert.equal(orderWithReceipt.upiTransactionId, "428901234567");
+
+    const fetched = await dbStore.getOrderByNumber(orderWithReceipt.orderNumber);
+    assert.equal(fetched?.paymentScreenshotUrl, "https://blob.vercel-storage.com/payment-receipts/aarav_receipt.png");
+  });
 });

@@ -148,6 +148,7 @@ export const checkoutSchema = z.object({
   orderNotes: z.string().optional().nullable(),
   couponCode: z.string().optional().nullable(),
   upiTransactionId: z.string().min(4, "Please enter your UPI transaction reference / UTR number."),
+  paymentScreenshotUrl: z.string().optional().nullable(),
   items: z.array(checkoutItemSchema).min(1, "Cart cannot be empty."),
 });
 

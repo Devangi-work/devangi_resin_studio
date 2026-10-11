@@ -330,6 +330,7 @@ export const orders = pgTable(
     // UPI & Payment Info
     paymentMethod: text("payment_method").default("upi").notNull(),
     upiTransactionId: text("upi_transaction_id"),
+    paymentScreenshotUrl: text("payment_screenshot_url"),
 
     // Offline / Online Source
     orderSource: text("order_source").default("online").notNull(),
