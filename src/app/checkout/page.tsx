@@ -83,6 +83,7 @@ export default function CheckoutPage() {
   const [upiTransactionId, setUpiTransactionId] = useState("");
   const [copiedUpi, setCopiedUpi] = useState(false);
   const [copiedPhone, setCopiedPhone] = useState(false);
+  const [copiedAmount, setCopiedAmount] = useState(false);
   const [couponInput, setCouponInput] = useState("");
   const [couponError, setCouponError] = useState("");
   const [couponLoading, setCouponLoading] = useState(false);
@@ -136,23 +137,18 @@ export default function CheckoutPage() {
   const activePayeeName = settings.accountHolderName || "Devangi Banshilal Barai";
   const activePhone = (settings.contactPhone || settings.whatsappNumber || "9967313355").replace(/[^0-9]/g, "").slice(-10);
 
-  // Formatted UPI Intent URIs with standardized parameters
+  // Standard UPI Intent URI without prefilled amount
+  // Omitting 'am' allows standard user-entered P2P payment in any UPI app, completely avoiding NPCI / PhonePe ₹2,000 gallery/web collect caps!
   const cleanNote = "DevangiResinOrder";
-  const trId = `DRS${Date.now()}`;
-  const baseUpiParams = `pa=${encodeURIComponent(activeUpiId)}&pn=${encodeURIComponent(
+  const upiIntentUri = `upi://pay?pa=${encodeURIComponent(activeUpiId)}&pn=${encodeURIComponent(
     activePayeeName
-  )}&am=${finalTotal.toFixed(2)}&cu=INR&tn=${encodeURIComponent(cleanNote)}&tr=${trId}`;
-
-  const upiIntentUri = `upi://pay?${baseUpiParams}`;
-  const gpayUri = `gpay://upi/pay?${baseUpiParams}`;
-  const phonepeUri = `phonepe://pay?${baseUpiParams}`;
-  const paytmUri = `paytmmp://pay?${baseUpiParams}`;
+  )}&cu=INR&tn=${encodeURIComponent(cleanNote)}`;
 
   // Dynamic QR Code generation if admin has not uploaded a static image
   const dynamicQrUrl = settings.upiQrCodeUrl
     ? settings.upiQrCodeUrl
     : `https://api.qrserver.com/v1/create-qr-code/?size=250x250&margin=8&data=${encodeURIComponent(
-        `upi://pay?pa=${activeUpiId}&pn=${encodeURIComponent(activePayeeName)}&am=${finalTotal.toFixed(2)}&cu=INR`
+        upiIntentUri
       )}`;
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -171,12 +167,14 @@ export default function CheckoutPage() {
     setTimeout(() => setCopiedPhone(false), 2500);
   };
 
-  const handleOpenUpiApp = (app: "generic" | "gpay" | "phonepe" | "paytm" = "generic") => {
-    let target = upiIntentUri;
-    if (app === "gpay") target = gpayUri;
-    else if (app === "phonepe") target = phonepeUri;
-    else if (app === "paytm") target = paytmUri;
-    window.location.href = target;
+  const copyAmountToClipboard = () => {
+    navigator.clipboard.writeText(finalTotal.toFixed(2));
+    setCopiedAmount(true);
+    setTimeout(() => setCopiedAmount(false), 2500);
+  };
+
+  const handleOpenUpiApp = () => {
+    window.location.href = upiIntentUri;
   };
 
   // Quick In-Checkout Login
@@ -943,61 +941,58 @@ export default function CheckoutPage() {
               <div className="flex items-center justify-between border-b border-[#E8E0D5] pb-2">
                 <span className="text-xs font-bold uppercase tracking-wider text-[#2C332D] flex items-center gap-1.5">
                   <Smartphone className="w-4 h-4 text-[#B8972E]" />
-                  <span>Pay via UPI App or QR Code</span>
+                  <span>Step 1: Pay via UPI</span>
                 </span>
                 <span className="text-[11px] font-semibold text-[#2E7D32] bg-[#E8EFE8] px-2 py-0.5 rounded-full">
                   Instant UPI
                 </span>
               </div>
 
-              {/* App-Specific One-Click Pay Buttons */}
-              <div className="space-y-2">
-                <p className="text-[11px] font-semibold text-[#736C66]">
-                  Select your installed UPI app to pay:
-                </p>
-                <div className="grid grid-cols-3 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleOpenUpiApp("gpay")}
-                    className="py-2.5 px-2 bg-white hover:bg-[#F4EBE6] border border-[#E8E0D5] text-[#2C332D] rounded-xl text-xs font-bold flex items-center justify-center space-x-1 shadow-2xs transition-all active:scale-95 group"
-                  >
-                    <span>Google Pay</span>
-                    <ExternalLink className="w-3 h-3 text-[#8C7A72] group-hover:text-[#2C332D]" />
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleOpenUpiApp("phonepe")}
-                    className="py-2.5 px-2 bg-white hover:bg-[#F4EBE6] border border-[#E8E0D5] text-[#5f259f] rounded-xl text-xs font-bold flex items-center justify-center space-x-1 shadow-2xs transition-all active:scale-95 group"
-                  >
-                    <span>PhonePe</span>
-                    <ExternalLink className="w-3 h-3 text-[#8C7A72] group-hover:text-[#5f259f]" />
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleOpenUpiApp("paytm")}
-                    className="py-2.5 px-2 bg-white hover:bg-[#F4EBE6] border border-[#E8E0D5] text-[#002970] rounded-xl text-xs font-bold flex items-center justify-center space-x-1 shadow-2xs transition-all active:scale-95 group"
-                  >
-                    <span>Paytm</span>
-                    <ExternalLink className="w-3 h-3 text-[#8C7A72] group-hover:text-[#002970]" />
-                  </button>
+              {/* Amount to Pay with Copy Button */}
+              <div className="bg-white p-3 rounded-xl border border-[#E8E0D5] flex items-center justify-between">
+                <div>
+                  <span className="text-[11px] text-[#8C7A72] block font-medium">Amount to Enter in UPI App:</span>
+                  <span className="text-lg font-bold text-[#B8972E]">₹{finalTotal.toFixed(2)}</span>
                 </div>
-
                 <button
                   type="button"
-                  onClick={() => handleOpenUpiApp("generic")}
-                  className="w-full py-2.5 px-3 bg-[#2C332D] hover:bg-[#3D473E] text-white rounded-xl text-xs font-bold flex items-center justify-center space-x-2 shadow-xs transition-all"
+                  onClick={copyAmountToClipboard}
+                  className="p-1.5 px-3 bg-[#FAF8F5] hover:bg-[#F4EBE6] text-[#2C332D] rounded-lg border border-[#E8E0D5] text-xs font-semibold flex items-center gap-1.5 transition"
                 >
-                  <Smartphone className="w-3.5 h-3.5 text-[#D4AF37]" />
-                  <span>Open Any Installed UPI App (BHIM / CRED / Others)</span>
+                  {copiedAmount ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-[#2E7D32]" />
+                      <span className="text-[#2E7D32]">Copied!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5 text-[#8C7A72]" />
+                      <span>Copy Amount</span>
+                    </>
+                  )}
                 </button>
+              </div>
+
+              {/* Single "Open UPI App" Button */}
+              <div className="space-y-1.5">
+                <button
+                  type="button"
+                  onClick={handleOpenUpiApp}
+                  className="w-full py-3 px-4 bg-[#2C332D] hover:bg-[#3D473E] text-white rounded-xl text-sm font-bold flex items-center justify-center space-x-2 shadow-xs transition-all active:scale-[0.99] group cursor-pointer"
+                >
+                  <Smartphone className="w-4 h-4 text-[#D4AF37]" />
+                  <span>Open UPI App</span>
+                  <ExternalLink className="w-3.5 h-3.5 opacity-70 group-hover:opacity-100 transition-opacity" />
+                </button>
+                <p className="text-[10.5px] text-center text-[#8C7A72]">
+                  Opens any installed UPI app on your phone. Just enter <strong className="text-[#2C332D]">₹{finalTotal.toFixed(2)}</strong> and complete payment. Note is prefilled.
+                </p>
               </div>
 
               <div className="relative flex items-center justify-center">
                 <div className="border-t border-[#E8E0D5] w-full" />
                 <span className="bg-[#FAF8F5] px-3 text-[10px] uppercase tracking-wider text-[#A0988F] absolute">
-                  or scan QR / pay to number
+                  or scan QR / pay to details
                 </span>
               </div>
 
@@ -1014,21 +1009,12 @@ export default function CheckoutPage() {
                   Pay to: <span className="text-[#B8972E]">{activePayeeName}</span>
                 </p>
                 <p className="text-[10px] text-[#8C7A72] text-center">
-                  Exact Amount: <strong className="text-[#2C332D]">₹{finalTotal.toFixed(2)}</strong>
+                  Scan and enter amount: <strong className="text-[#2C332D]">₹{finalTotal.toFixed(2)}</strong>
                 </p>
               </div>
 
-              {/* Direct UPI Options (Bypasses any ₹2,000 app gallery limits!) */}
+              {/* Direct UPI Options */}
               <div className="space-y-2 pt-1">
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#2C332D]">
-                    Direct Transfer (No Limit)
-                  </span>
-                  <span className="text-[9.5px] font-semibold text-[#2E7D32] bg-[#E8EFE8] px-2 py-0.5 rounded-full">
-                    Up to ₹1,00,000
-                  </span>
-                </div>
-
                 {/* 1. Mobile Number / UPI Number */}
                 <div className="flex items-center space-x-2 bg-white px-3 py-2 rounded-xl border border-[#E8E0D5]">
                   <div className="flex-1 min-w-0">
@@ -1079,17 +1065,6 @@ export default function CheckoutPage() {
                       </>
                     )}
                   </button>
-                </div>
-
-                {/* Explanatory Advisory Note for PhonePe Gallery Warning */}
-                <div className="bg-[#FFF9E6] border border-[#FFE8A3] rounded-xl p-2.5 flex items-start space-x-2 text-[10.5px] text-[#7A5A00] leading-relaxed">
-                  <Info className="w-4 h-4 text-[#B8972E] flex-shrink-0 mt-0.5" />
-                  <div>
-                    <strong>Seeing "Pay up to ₹2000 via gallery" in PhonePe?</strong>
-                    <p className="mt-0.5 text-[10px] text-[#8A6700]">
-                      This is an NPCI security message on PhonePe for web links. You can safely tap <strong>Google Pay</strong> above, or tap <strong>Copy Mobile ({activePhone})</strong> and pay using <em>"To Mobile Number"</em> inside PhonePe/GPay without any restrictions.
-                    </p>
-                  </div>
                 </div>
               </div>
 
