@@ -86,6 +86,7 @@ export default function CheckoutPage() {
   const [copiedPhone, setCopiedPhone] = useState(false);
   const [copiedAmount, setCopiedAmount] = useState(false);
   const [showUpiModal, setShowUpiModal] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
   const [couponInput, setCouponInput] = useState("");
   const [couponError, setCouponError] = useState("");
   const [couponLoading, setCouponLoading] = useState(false);
@@ -95,6 +96,10 @@ export default function CheckoutPage() {
 
   // Fetch settings & Customer Session
   useEffect(() => {
+    if (typeof navigator !== "undefined" && /iPad|iPhone|iPod/.test(navigator.userAgent)) {
+      setIsIOS(true);
+    }
+
     fetch("/api/settings")
       .then((res) => res.json())
       .then((data) => {
@@ -146,6 +151,17 @@ export default function CheckoutPage() {
   )}&pn=${encodeURIComponent(
     activePayeeName
   )}&am=${finalTotal.toFixed(2)}&cu=INR&tn=Test%20Payment&tr=TESTUPI001`;
+
+  // App Launcher URLs (Directly opens App Home Screen - Image 2 - without triggering Image 1 collect block)
+  const phonepeAppUrl = isIOS
+    ? "phonepe://"
+    : "intent://#Intent;scheme=phonepe;package=com.phonepe.app;end";
+  const gpayAppUrl = isIOS
+    ? "gpay://"
+    : "intent://#Intent;scheme=gpay;package=com.google.android.apps.nbu.paisa.user;end";
+  const paytmAppUrl = isIOS
+    ? "paytmmp://"
+    : "intent://#Intent;scheme=paytmmp;package=net.one97.paytm;end";
 
   // Dynamic QR Code generation if admin has not uploaded a static image
   const dynamicQrUrl = settings.upiQrCodeUrl
@@ -1255,7 +1271,7 @@ export default function CheckoutPage() {
             {/* Footer / App Home Launchers */}
             <div className="p-4 bg-white border-t border-[#E8E0D5] space-y-2.5">
               <a
-                href="phonepe://"
+                href={phonepeAppUrl}
                 className="w-full py-3.5 px-4 bg-[#5f259f] hover:bg-[#4d1e82] text-white rounded-xl text-sm font-bold flex items-center justify-center space-x-2 shadow-sm transition active:scale-[0.99] cursor-pointer"
               >
                 <Smartphone className="w-4 h-4 text-white" />
@@ -1265,7 +1281,7 @@ export default function CheckoutPage() {
 
               <div className="grid grid-cols-2 gap-2">
                 <a
-                  href="gpay://"
+                  href={gpayAppUrl}
                   className="py-2.5 px-3 bg-white hover:bg-[#F4EBE6] text-[#2C332D] border border-[#E8E0D5] rounded-xl text-xs font-bold flex items-center justify-center space-x-1.5 transition active:scale-[0.99] cursor-pointer"
                 >
                   <span>Open Google Pay</span>
@@ -1273,7 +1289,7 @@ export default function CheckoutPage() {
                 </a>
 
                 <a
-                  href="paytmmp://"
+                  href={paytmAppUrl}
                   className="py-2.5 px-3 bg-white hover:bg-[#F4EBE6] text-[#002970] border border-[#E8E0D5] rounded-xl text-xs font-bold flex items-center justify-center space-x-1.5 transition active:scale-[0.99] cursor-pointer"
                 >
                   <span>Open Paytm</span>
