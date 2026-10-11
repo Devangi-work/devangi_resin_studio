@@ -85,7 +85,6 @@ export default function CheckoutPage() {
   const [copiedUpi, setCopiedUpi] = useState(false);
   const [copiedPhone, setCopiedPhone] = useState(false);
   const [copiedAmount, setCopiedAmount] = useState(false);
-  const [showUpiModal, setShowUpiModal] = useState(false);
   const [couponInput, setCouponInput] = useState("");
   const [couponError, setCouponError] = useState("");
   const [couponLoading, setCouponLoading] = useState(false);
@@ -174,10 +173,6 @@ export default function CheckoutPage() {
     navigator.clipboard.writeText(finalTotal.toFixed(2));
     setCopiedAmount(true);
     setTimeout(() => setCopiedAmount(false), 2500);
-  };
-
-  const handleOpenUpiApp = () => {
-    setShowUpiModal(true);
   };
 
   // Quick In-Checkout Login
@@ -976,19 +971,29 @@ export default function CheckoutPage() {
                 </button>
               </div>
 
-              {/* Single "Open UPI App" Button */}
+              {/* Single "Open UPI App" Button (Direct Universal UPI Intent) */}
               <div className="space-y-1.5">
-                <button
-                  type="button"
-                  onClick={handleOpenUpiApp}
-                  className="w-full py-3 px-4 bg-[#2C332D] hover:bg-[#3D473E] text-white rounded-xl text-sm font-bold flex items-center justify-center space-x-2 shadow-xs transition-all active:scale-[0.99] group cursor-pointer"
+                <a
+                  href={upiIntentUri}
+                  className="w-full py-3.5 px-4 bg-[#2C332D] hover:bg-[#3D473E] text-white rounded-xl text-sm font-bold flex items-center justify-center space-x-2 shadow-xs transition-all active:scale-[0.99] group cursor-pointer"
                 >
                   <Smartphone className="w-4 h-4 text-[#D4AF37]" />
-                  <span>Open UPI App</span>
+                  <span>Open UPI App (PhonePe / GPay / Paytm)</span>
                   <ExternalLink className="w-3.5 h-3.5 opacity-70 group-hover:opacity-100 transition-opacity" />
-                </button>
+                </a>
                 <p className="text-[10.5px] text-center text-[#8C7A72]">
-                  Tap to view UPI details &amp; launch your UPI app (PhonePe / GPay / Paytm).
+                  Tap to launch PhonePe, Google Pay, or Paytm directly to complete payment.
+                </p>
+              </div>
+
+              {/* Direct PhonePe / Mobile Number Transfer Guidance */}
+              <div className="bg-[#FAF4EC] border border-[#E8E0D5] rounded-xl p-3 text-[11px] text-[#736C66] space-y-1">
+                <p className="font-bold text-[#2C332D] flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-[#B8972E]" />
+                  <span>For PhonePe Users (Direct Mobile Transfer):</span>
+                </p>
+                <p className="text-[10.5px] text-[#554E48] leading-relaxed">
+                  If PhonePe shows a gallery scan warning, simply tap <strong>&ldquo;Copy Mobile&rdquo;</strong> below, open PhonePe from your apps, tap <strong>&ldquo;To Mobile Number&rdquo;</strong>, and pay <strong>₹{finalTotal.toFixed(2)}</strong> to <strong>{activePhone}</strong>.
                 </p>
               </div>
 
@@ -1110,177 +1115,6 @@ export default function CheckoutPage() {
         </div>
       </form>
 
-      {/* ---------------- UPI Payment Details & App Launcher Modal ---------------- */}
-      {showUpiModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-[#FAF8F5] border border-[#E8E0D5] w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[92vh]">
-            {/* Header */}
-            <div className="p-4 px-5 bg-white border-b border-[#E8E0D5] flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 rounded-full bg-[#E8EFE8] flex items-center justify-center">
-                  <Smartphone className="w-4 h-4 text-[#2E7D32]" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-[#2C332D]">Pay via UPI App</h3>
-                  <p className="text-[11px] text-[#8C7A72]">Copy details &amp; proceed to your UPI app</p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowUpiModal(false)}
-                className="w-8 h-8 rounded-full hover:bg-[#F4EBE6] flex items-center justify-center text-[#8C7A72] hover:text-[#2C332D] transition cursor-pointer"
-                aria-label="Close"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Modal Body */}
-            <div className="p-5 space-y-3.5 overflow-y-auto text-[#2C332D]">
-              {/* Amount to Pay */}
-              <div className="bg-white p-3 rounded-xl border border-[#E8E0D5] flex items-center justify-between">
-                <div>
-                  <span className="text-[10px] uppercase font-bold text-[#8C7A72] tracking-wider block">
-                    Amount to Pay
-                  </span>
-                  <span className="text-lg font-bold text-[#B8972E]">₹{finalTotal.toFixed(2)}</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={copyAmountToClipboard}
-                  className="py-1.5 px-3 bg-[#FAF8F5] hover:bg-[#F4EBE6] text-[#2C332D] rounded-lg border border-[#E8E0D5] text-xs font-semibold flex items-center gap-1.5 transition active:scale-95 cursor-pointer"
-                >
-                  {copiedAmount ? (
-                    <>
-                      <Check className="w-3.5 h-3.5 text-[#2E7D32]" />
-                      <span className="text-[#2E7D32]">Copied!</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-3.5 h-3.5 text-[#8C7A72]" />
-                      <span>Copy Amount</span>
-                    </>
-                  )}
-                </button>
-              </div>
-
-              {/* 1. Mobile Number / UPI Number */}
-              <div className="bg-white p-3 rounded-xl border border-[#E8E0D5] flex items-center justify-between space-x-2">
-                <div className="min-w-0 flex-1">
-                  <span className="text-[10px] uppercase font-bold text-[#8C7A72] tracking-wider block">
-                    Pay to Mobile Number (PhonePe / GPay)
-                  </span>
-                  <span className="font-mono text-sm font-bold text-[#2C332D] block">
-                    {activePhone}
-                  </span>
-                  <span className="text-[10.5px] text-[#736C66] block truncate">
-                    {activePayeeName}
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={copyPhoneToClipboard}
-                  className="py-2 px-3 bg-[#2C332D] hover:bg-[#3D473E] text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition active:scale-95 shrink-0 cursor-pointer"
-                >
-                  {copiedPhone ? (
-                    <>
-                      <Check className="w-3.5 h-3.5 text-[#A3E635]" />
-                      <span className="text-[#A3E635]">Copied!</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-3.5 h-3.5 text-[#D4AF37]" />
-                      <span>Copy Phone</span>
-                    </>
-                  )}
-                </button>
-              </div>
-
-              {/* 2. UPI ID */}
-              <div className="bg-white p-3 rounded-xl border border-[#E8E0D5] flex items-center justify-between space-x-2">
-                <div className="min-w-0 flex-1">
-                  <span className="text-[10px] uppercase font-bold text-[#8C7A72] tracking-wider block">
-                    Or Pay to UPI ID
-                  </span>
-                  <span className="font-mono text-xs font-bold text-[#2C332D] block truncate select-all">
-                    {activeUpiId}
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={copyToClipboard}
-                  className="py-1.5 px-3 bg-[#FAF8F5] hover:bg-[#F4EBE6] text-[#2C332D] rounded-lg border border-[#E8E0D5] text-xs font-semibold flex items-center gap-1.5 transition active:scale-95 shrink-0 cursor-pointer"
-                >
-                  {copiedUpi ? (
-                    <>
-                      <Check className="w-3.5 h-3.5 text-[#2E7D32]" />
-                      <span className="text-[#2E7D32]">Copied!</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-3.5 h-3.5 text-[#8C7A72]" />
-                      <span>Copy UPI ID</span>
-                    </>
-                  )}
-                </button>
-              </div>
-
-              {/* Guidance Box */}
-              <div className="bg-[#EBF3EB] border border-[#CDE1CD] rounded-xl p-3 text-[11px] text-[#204E24] leading-relaxed space-y-1">
-                <p className="font-bold flex items-center gap-1 text-[#173F1B]">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-[#2E7D32]" />
-                  <span>How to pay easily:</span>
-                </p>
-                <ol className="list-decimal list-inside space-y-1 text-[10.5px] text-[#2C5731] pl-1 pt-0.5">
-                  <li>
-                    Tap <strong>Copy Phone ({activePhone})</strong> above.
-                  </li>
-                  <li>
-                    For <strong>PhonePe</strong>: Tap &ldquo;Open PhonePe App&rdquo; below, then in PhonePe tap &ldquo;To Mobile Number&rdquo; and send <strong>₹{finalTotal.toFixed(2)}</strong>.
-                  </li>
-                  <li>
-                    For <strong>Google Pay / Paytm / Others</strong>: Tap &ldquo;Pay via Google Pay / Paytm / Other UPI&rdquo; below to pay directly.
-                  </li>
-                  <li>
-                    After paying, paste your 12-digit UPI UTR number below to confirm order.
-                  </li>
-                </ol>
-              </div>
-            </div>
-
-            {/* Footer / App Launchers */}
-            <div className="p-4 bg-white border-t border-[#E8E0D5] space-y-2">
-              {/* Primary: PhonePe App Home Screen (verified working) */}
-              <a
-                href="phonepe://"
-                className="w-full py-3.5 px-4 bg-[#5f259f] hover:bg-[#4d1e82] text-white rounded-xl text-sm font-bold flex items-center justify-center space-x-2 shadow-sm transition active:scale-[0.99] cursor-pointer"
-              >
-                <Smartphone className="w-4 h-4 text-white" />
-                <span>Open PhonePe App (Home Screen)</span>
-                <ExternalLink className="w-4 h-4 opacity-80" />
-              </a>
-
-              {/* Secondary: Google Pay / Paytm / All other UPI apps */}
-              <a
-                href={upiIntentUri}
-                className="w-full py-2.5 px-3 bg-[#2C332D] hover:bg-[#3D473E] text-white rounded-xl text-xs font-bold flex items-center justify-center space-x-2 shadow-sm transition active:scale-[0.99] cursor-pointer"
-              >
-                <Smartphone className="w-3.5 h-3.5 text-[#D4AF37]" />
-                <span>Pay via Google Pay / Paytm / Other UPI</span>
-                <ExternalLink className="w-3.5 h-3.5 opacity-70" />
-              </a>
-
-              <button
-                type="button"
-                onClick={() => setShowUpiModal(false)}
-                className="w-full py-1 text-xs text-[#8C7A72] hover:text-[#2C332D] text-center font-medium transition cursor-pointer"
-              >
-                Already Paid? Enter 12-Digit UTR
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
