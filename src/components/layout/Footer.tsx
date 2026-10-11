@@ -8,7 +8,6 @@ import {
   Phone,
   MessageCircle,
   Instagram,
-  Facebook,
   ShieldCheck,
   CheckCircle2,
   Lock,
@@ -78,15 +77,6 @@ export function Footer() {
                 aria-label="Instagram"
               >
                 <Instagram className="w-4 h-4" />
-              </a>
-              <a
-                href={settings?.facebookUrl || "https://facebook.com/auraresinart"}
-                target="_blank"
-                rel="noreferrer"
-                className="w-9 h-9 rounded-full bg-[#2C332D] flex items-center justify-center text-[#FAF8F5] hover:text-[#D4AF37] hover:bg-[#3D473E] transition-colors"
-                aria-label="Facebook"
-              >
-                <Facebook className="w-4 h-4" />
               </a>
               <a
                 href={`https://wa.me/${(settings?.whatsappNumber || "919876543210").replace(/[^0-9]/g, "")}?text=Hi%20${encodeURIComponent(settings?.storeName || "Aura Resin Art")},%20I%20have%20an%20inquiry%20about%20a%20custom%20order!`}

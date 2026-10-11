@@ -79,27 +79,27 @@ export function Navbar() {
       </div>
 
       {/* Main Glass Navbar */}
-      <nav className="glass border-b border-[#E8E0D5] px-4 sm:px-6 lg:px-8 transition-all">
-        <div className="max-w-7xl mx-auto flex items-center justify-between h-20 gap-4">
+      <nav className="glass border-b border-[#E8E0D5] px-3 sm:px-6 lg:px-8 transition-all overflow-x-hidden">
+        <div className="max-w-7xl mx-auto flex items-center justify-between h-16 sm:h-20 gap-1.5 sm:gap-4 w-full">
           
           {/* Mobile Menu Button */}
-          <div className="flex items-center lg:hidden">
+          <div className="flex items-center lg:hidden flex-shrink-0">
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="p-2 rounded-md text-[#2C332D] hover:bg-[#F4EBE6] focus:outline-none"
+              className="p-1.5 sm:p-2 rounded-md text-[#2C332D] hover:bg-[#F4EBE6] focus:outline-none"
               aria-label="Toggle menu"
             >
-              {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {isMobileMenuOpen ? <X className="w-5 h-5 sm:w-6 sm:h-6" /> : <Menu className="w-5 h-5 sm:w-6 sm:h-6" />}
             </button>
           </div>
 
-          {/* Brand Logo */}
-          <div className="flex-1 lg:flex-none text-center lg:text-left">
-            <Link href="/" className="inline-block group">
-              <span className="font-serif text-xl sm:text-2xl font-bold tracking-wide text-[#2C332D] group-hover:text-[#B8972E] transition-colors whitespace-nowrap block">
+          {/* Brand Logo - auto-constrains on mobile so right icons never shift outside */}
+          <div className="flex-1 lg:flex-none text-center lg:text-left min-w-0 px-1 sm:px-0 overflow-hidden">
+            <Link href="/" className="inline-block max-w-full group">
+              <span className="font-serif text-base sm:text-xl lg:text-2xl font-bold tracking-tight sm:tracking-wide text-[#2C332D] group-hover:text-[#B8972E] transition-colors truncate block">
                 {settings?.storeName || "Devangi Resin Studio"}
               </span>
-              <span className="block text-[8.5px] uppercase tracking-[0.2em] text-[#8C7A72] -mt-0.5 font-sans font-medium whitespace-nowrap">
+              <span className="hidden sm:block text-[8.5px] uppercase tracking-[0.2em] text-[#8C7A72] -mt-0.5 font-sans font-medium truncate">
                 {settings?.storeTagline || "Handcrafted Resin Creations by Devangi"}
               </span>
             </Link>
@@ -213,11 +213,11 @@ export function Navbar() {
           </div>
 
           {/* Right Action Icons */}
-          <div className="flex items-center space-x-2 sm:space-x-3">
+          <div className="flex items-center space-x-1.5 sm:space-x-3 flex-shrink-0">
             {/* Search Trigger */}
             <button
               onClick={() => setIsSearchOpen(!isSearchOpen)}
-              className="p-2 text-[#2C332D] hover:text-[#B8972E] hover:bg-[#F4EBE6] rounded-full transition-colors"
+              className="p-1.5 sm:p-2 text-[#2C332D] hover:text-[#B8972E] hover:bg-[#F4EBE6] rounded-full transition-colors"
               aria-label="Search products"
               title="Search Boutique"
             >
@@ -227,7 +227,7 @@ export function Navbar() {
             {/* Customer Account / Orders */}
             <Link
               href="/account"
-              className="p-2 text-[#736C66] hover:text-[#2C332D] hover:bg-[#F4EBE6] rounded-full transition-colors hidden sm:inline-flex"
+              className="p-1.5 sm:p-2 text-[#736C66] hover:text-[#2C332D] hover:bg-[#F4EBE6] rounded-full transition-colors hidden sm:inline-flex"
               title="My Account & Orders"
             >
               <User className="w-5 h-5" />
@@ -236,12 +236,12 @@ export function Navbar() {
             {/* Cart Trigger Button */}
             <button
               onClick={() => setIsCartOpen(true)}
-              className="relative p-2.5 bg-[#2C332D] text-[#FAF8F5] rounded-full hover:bg-[#3D473E] transition-all shadow-sm flex items-center justify-center group"
+              className="relative p-2 sm:p-2.5 bg-[#2C332D] text-[#FAF8F5] rounded-full hover:bg-[#3D473E] transition-all shadow-sm flex items-center justify-center group"
               aria-label="View Shopping Cart"
             >
               <ShoppingBag className="w-5 h-5 group-hover:scale-105 transition-transform" />
               {totalItems > 0 && (
-                <span className="absolute -top-1 -right-1 bg-[#D4AF37] text-[#2C332D] text-[11px] font-bold w-5 h-5 rounded-full flex items-center justify-center shadow-md animate-pulse">
+                <span className="absolute -top-1 -right-1 bg-[#D4AF37] text-[#2C332D] text-[10px] sm:text-[11px] font-bold w-4.5 h-4.5 sm:w-5 sm:h-5 rounded-full flex items-center justify-center shadow-md">
                   {totalItems}
                 </span>
               )}
