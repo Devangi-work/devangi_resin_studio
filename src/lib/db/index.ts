@@ -95,6 +95,25 @@ if (process.env.NODE_ENV !== "production") {
 export const dbStore = {
   // ---------------- CATEGORIES ----------------
   async getCategories(onlyPublished = false) {
+    if (sql) {
+      try {
+        const rows = onlyPublished
+          ? await sql`
+              SELECT id, name, slug, description, image_url as "imageUrl", display_order as "displayOrder", is_published as "isPublished", created_at as "createdAt", updated_at as "updatedAt"
+              FROM categories
+              WHERE is_published = true
+              ORDER BY display_order ASC;
+            `
+          : await sql`
+              SELECT id, name, slug, description, image_url as "imageUrl", display_order as "displayOrder", is_published as "isPublished", created_at as "createdAt", updated_at as "updatedAt"
+              FROM categories
+              ORDER BY display_order ASC;
+            `;
+        if (rows && rows.length > 0) return rows;
+      } catch (e) {
+        console.error("DB getCategories error:", e);
+      }
+    }
     let cats = [...store.categories];
     if (onlyPublished) {
       cats = cats.filter((c) => c.isPublished);
@@ -103,45 +122,136 @@ export const dbStore = {
   },
 
   async getCategoryBySlug(slug: string) {
+    if (sql) {
+      try {
+        const rows = await sql`
+          SELECT id, name, slug, description, image_url as "imageUrl", display_order as "displayOrder", is_published as "isPublished"
+          FROM categories
+          WHERE slug = ${slug}
+          LIMIT 1;
+        `;
+        if (rows && rows.length > 0) return rows[0];
+      } catch (e) {
+        console.error("DB getCategoryBySlug error:", e);
+      }
+    }
     return store.categories.find((c) => c.slug === slug) || null;
   },
 
+  async getCategoryById(id: string) {
+    if (sql) {
+      try {
+        const rows = await sql`
+          SELECT id, name, slug, description, image_url as "imageUrl", display_order as "displayOrder", is_published as "isPublished"
+          FROM categories
+          WHERE id = ${id}
+          LIMIT 1;
+        `;
+        if (rows && rows.length > 0) return rows[0];
+      } catch (e) {
+        console.error("DB getCategoryById error:", e);
+      }
+    }
+    return store.categories.find((c) => c.id === id) || null;
+  },
+
   async createCategory(data: any) {
+    const id = data.id || `cat_${Date.now()}`;
+    const slug = data.slug || data.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "");
+    const displayOrder = Number(data.displayOrder) || (store.categories.length + 1);
+    const isPublished = data.isPublished !== undefined ? Boolean(data.isPublished) : true;
+
+    if (sql) {
+      try {
+        await sql`
+          INSERT INTO categories (id, name, slug, description, image_url, display_order, is_published, created_at, updated_at)
+          VALUES (${id}, ${data.name}, ${slug}, ${data.description || null}, ${data.imageUrl || null}, ${displayOrder}, ${isPublished}, NOW(), NOW())
+          ON CONFLICT (id) DO UPDATE SET
+            name = EXCLUDED.name,
+            slug = EXCLUDED.slug,
+            description = EXCLUDED.description,
+            image_url = EXCLUDED.image_url,
+            display_order = EXCLUDED.display_order,
+            is_published = EXCLUDED.is_published,
+            updated_at = NOW();
+        `;
+      } catch (e) {
+        console.error("DB createCategory error:", e);
+      }
+    }
+
     const newCat = {
       ...data,
-      id: data.id || `cat_${Date.now()}`,
-      displayOrder: Number(data.displayOrder) || store.categories.length + 1,
-      isPublished: data.isPublished !== undefined ? Boolean(data.isPublished) : true,
+      id,
+      slug,
+      displayOrder,
+      isPublished,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
-    store.categories.push(newCat);
+    const existingIdx = store.categories.findIndex((c) => c.id === id);
+    if (existingIdx !== -1) {
+      store.categories[existingIdx] = newCat;
+    } else {
+      store.categories.push(newCat);
+    }
     return newCat;
   },
 
   async updateCategory(id: string, data: any) {
+    if (sql) {
+      try {
+        await sql`
+          UPDATE categories
+          SET
+            name = COALESCE(${data.name || null}, name),
+            slug = COALESCE(${data.slug || null}, slug),
+            description = COALESCE(${data.description !== undefined ? data.description : null}, description),
+            image_url = COALESCE(${data.imageUrl !== undefined ? data.imageUrl : null}, image_url),
+            display_order = COALESCE(${data.displayOrder !== undefined ? Number(data.displayOrder) : null}, display_order),
+            is_published = COALESCE(${data.isPublished !== undefined ? Boolean(data.isPublished) : null}, is_published),
+            updated_at = NOW()
+          WHERE id = ${id};
+        `;
+      } catch (e) {
+        console.error("DB updateCategory error:", e);
+      }
+    }
+
     const idx = store.categories.findIndex((c) => c.id === id);
-    if (idx === -1) return null;
-    store.categories[idx] = {
-      ...store.categories[idx],
-      ...data,
-      updatedAt: new Date(),
-    };
-    return store.categories[idx];
+    if (idx !== -1) {
+      store.categories[idx] = {
+        ...store.categories[idx],
+        ...data,
+        updatedAt: new Date(),
+      };
+      return store.categories[idx];
+    }
+    return { id, ...data };
   },
 
   async deleteCategory(id: string) {
-    // Check if products exist in category
-    const hasProducts = store.products.some((p) => p.categoryId === id && p.status !== "archived");
-    if (hasProducts) {
-      throw new Error("Cannot delete category containing active products. Reassign or archive products first.");
+    if (sql) {
+      try {
+        const prodCount = await sql`
+          SELECT count(*) FROM products WHERE category_id = ${id} AND status != 'archived';
+        `;
+        if (prodCount && Number(prodCount[0].count) > 0) {
+          throw new Error("Cannot delete category containing active products. Reassign or archive products first.");
+        }
+        await sql`DELETE FROM categories WHERE id = ${id};`;
+      } catch (e: any) {
+        if (e.message?.includes("Cannot delete category")) throw e;
+        console.error("DB deleteCategory error:", e);
+      }
     }
+
     const idx = store.categories.findIndex((c) => c.id === id);
     if (idx !== -1) {
       store.categories.splice(idx, 1);
       return true;
     }
-    return false;
+    return true;
   },
 
   // ---------------- PRODUCTS ----------------
@@ -159,7 +269,57 @@ export const dbStore = {
     page?: number;
     limit?: number;
   }) {
-    let prods = [...store.products];
+    let prods: any[] = [];
+    if (sql) {
+      try {
+        const rows = await sql`
+          SELECT 
+            p.id, p.name, p.slug, p.short_description as "shortDescription", p.description,
+            p.category_id as "categoryId", p.sku, p.product_type as "productType", p.status,
+            p.is_featured as "isFeatured", p.is_bestseller as "isBestseller",
+            p.regular_price as "regularPrice", p.sale_price as "salePrice", p.cost_price as "costPrice",
+            p.currency, p.track_inventory as "trackInventory", p.stock_quantity as "stockQuantity",
+            p.low_stock_threshold as "lowStockThreshold", p.allow_backorders as "allowBackorders",
+            p.enable_variants as "enableVariants", p.enable_personalization as "enablePersonalization",
+            p.custom_name_enabled as "customNameEnabled", p.custom_initials_enabled as "customInitialsEnabled",
+            p.custom_color_enabled as "customColorEnabled", p.custom_design_enabled as "customDesignEnabled",
+            p.custom_image_upload_enabled as "customImageUploadEnabled",
+            p.personalization_surcharge as "personalizationSurcharge",
+            p.customization_instructions as "customizationInstructions",
+            p.production_time_days as "productionTimeDays",
+            p.gift_wrapping_available as "giftWrappingAvailable",
+            p.gift_wrapping_charge as "giftWrappingCharge",
+            p.custom_order_notes_enabled as "customOrderNotesEnabled",
+            p.weight, p.dimensions, p.shipping_class as "shippingClass",
+            p.is_free_shipping as "isFreeShipping", p.care_instructions as "careInstructions",
+            p.materials, p.dispatch_time_days as "dispatchTimeDays",
+            p.seo_title as "seoTitle", p.seo_description as "seoDescription",
+            p.created_at as "createdAt", p.updated_at as "updatedAt"
+          FROM products p
+          ORDER BY p.created_at DESC;
+        `;
+        if (rows && rows.length > 0) {
+          const allImages = await sql`
+            SELECT id, product_id as "productId", image_url as "imageUrl", alt_text as "altText", is_primary as "isPrimary", display_order as "displayOrder"
+            FROM product_images
+            ORDER BY display_order ASC;
+          `;
+          const allCats = await this.getCategories(false);
+          prods = rows.map((p: any) => ({
+            ...p,
+            regularPrice: Number(p.regularPrice).toFixed(2),
+            salePrice: p.salePrice ? Number(p.salePrice).toFixed(2) : null,
+            images: allImages.filter((img: any) => img.productId === p.id),
+            category: allCats.find((c: any) => c.id === p.categoryId),
+          }));
+        }
+      } catch (e) {
+        console.error("DB getProducts error, falling back to memory:", e);
+      }
+    }
+    if (prods.length === 0) {
+      prods = [...store.products];
+    }
 
     // Status filter
     if (filters?.status) {
@@ -172,12 +332,7 @@ export const dbStore = {
 
     // Category filter
     if (filters?.categorySlug) {
-      const cat = store.categories.find((c) => c.slug === filters.categorySlug);
-      if (cat) {
-        prods = prods.filter((p) => p.categoryId === cat.id);
-      } else {
-        return { products: [], total: 0, page: 1, totalPages: 0 };
-      }
+      prods = prods.filter((p) => p.category?.slug === filters.categorySlug);
     } else if (filters?.categoryId) {
       prods = prods.filter((p) => p.categoryId === filters.categoryId);
     }
@@ -187,9 +342,9 @@ export const dbStore = {
       const query = filters.search.toLowerCase().trim();
       prods = prods.filter(
         (p) =>
-          p.name.toLowerCase().includes(query) ||
-          p.sku.toLowerCase().includes(query) ||
-          p.description.toLowerCase().includes(query) ||
+          p.name?.toLowerCase().includes(query) ||
+          p.sku?.toLowerCase().includes(query) ||
+          p.description?.toLowerCase().includes(query) ||
           (p.shortDescription && p.shortDescription.toLowerCase().includes(query))
       );
     }
@@ -245,6 +400,56 @@ export const dbStore = {
   },
 
   async getProductBySlug(slug: string) {
+    if (sql) {
+      try {
+        const rows = await sql`
+          SELECT 
+            p.id, p.name, p.slug, p.short_description as "shortDescription", p.description,
+            p.category_id as "categoryId", p.sku, p.product_type as "productType", p.status,
+            p.is_featured as "isFeatured", p.is_bestseller as "isBestseller",
+            p.regular_price as "regularPrice", p.sale_price as "salePrice", p.cost_price as "costPrice",
+            p.currency, p.track_inventory as "trackInventory", p.stock_quantity as "stockQuantity",
+            p.low_stock_threshold as "lowStockThreshold", p.allow_backorders as "allowBackorders",
+            p.enable_variants as "enableVariants", p.enable_personalization as "enablePersonalization",
+            p.custom_name_enabled as "customNameEnabled", p.custom_initials_enabled as "customInitialsEnabled",
+            p.custom_color_enabled as "customColorEnabled", p.custom_design_enabled as "customDesignEnabled",
+            p.custom_image_upload_enabled as "customImageUploadEnabled",
+            p.personalization_surcharge as "personalizationSurcharge",
+            p.customization_instructions as "customizationInstructions",
+            p.production_time_days as "productionTimeDays",
+            p.gift_wrapping_available as "giftWrappingAvailable",
+            p.gift_wrapping_charge as "giftWrappingCharge",
+            p.custom_order_notes_enabled as "customOrderNotesEnabled",
+            p.weight, p.dimensions, p.shipping_class as "shippingClass",
+            p.is_free_shipping as "isFreeShipping", p.care_instructions as "careInstructions",
+            p.materials, p.dispatch_time_days as "dispatchTimeDays",
+            p.seo_title as "seoTitle", p.seo_description as "seoDescription",
+            p.created_at as "createdAt", p.updated_at as "updatedAt"
+          FROM products p
+          WHERE p.slug = ${slug}
+          LIMIT 1;
+        `;
+        if (rows && rows.length > 0) {
+          const p = rows[0];
+          const images = await sql`
+            SELECT id, product_id as "productId", image_url as "imageUrl", alt_text as "altText", is_primary as "isPrimary", display_order as "displayOrder"
+            FROM product_images
+            WHERE product_id = ${p.id}
+            ORDER BY display_order ASC;
+          `;
+          const cat = await this.getCategoryById(p.categoryId);
+          return {
+            ...p,
+            regularPrice: Number(p.regularPrice).toFixed(2),
+            salePrice: p.salePrice ? Number(p.salePrice).toFixed(2) : null,
+            images: images || [],
+            category: cat,
+          };
+        }
+      } catch (e) {
+        console.error("DB getProductBySlug error:", e);
+      }
+    }
     const prod = store.products.find((p) => p.slug === slug);
     if (!prod) return null;
     const cat = store.categories.find((c) => c.id === prod.categoryId);
@@ -252,6 +457,56 @@ export const dbStore = {
   },
 
   async getProductById(id: string) {
+    if (sql) {
+      try {
+        const rows = await sql`
+          SELECT 
+            p.id, p.name, p.slug, p.short_description as "shortDescription", p.description,
+            p.category_id as "categoryId", p.sku, p.product_type as "productType", p.status,
+            p.is_featured as "isFeatured", p.is_bestseller as "isBestseller",
+            p.regular_price as "regularPrice", p.sale_price as "salePrice", p.cost_price as "costPrice",
+            p.currency, p.track_inventory as "trackInventory", p.stock_quantity as "stockQuantity",
+            p.low_stock_threshold as "lowStockThreshold", p.allow_backorders as "allowBackorders",
+            p.enable_variants as "enableVariants", p.enable_personalization as "enablePersonalization",
+            p.custom_name_enabled as "customNameEnabled", p.custom_initials_enabled as "customInitialsEnabled",
+            p.custom_color_enabled as "customColorEnabled", p.custom_design_enabled as "customDesignEnabled",
+            p.custom_image_upload_enabled as "customImageUploadEnabled",
+            p.personalization_surcharge as "personalizationSurcharge",
+            p.customization_instructions as "customizationInstructions",
+            p.production_time_days as "productionTimeDays",
+            p.gift_wrapping_available as "giftWrappingAvailable",
+            p.gift_wrapping_charge as "giftWrappingCharge",
+            p.custom_order_notes_enabled as "customOrderNotesEnabled",
+            p.weight, p.dimensions, p.shipping_class as "shippingClass",
+            p.is_free_shipping as "isFreeShipping", p.care_instructions as "careInstructions",
+            p.materials, p.dispatch_time_days as "dispatchTimeDays",
+            p.seo_title as "seoTitle", p.seo_description as "seoDescription",
+            p.created_at as "createdAt", p.updated_at as "updatedAt"
+          FROM products p
+          WHERE p.id = ${id}
+          LIMIT 1;
+        `;
+        if (rows && rows.length > 0) {
+          const p = rows[0];
+          const images = await sql`
+            SELECT id, product_id as "productId", image_url as "imageUrl", alt_text as "altText", is_primary as "isPrimary", display_order as "displayOrder"
+            FROM product_images
+            WHERE product_id = ${p.id}
+            ORDER BY display_order ASC;
+          `;
+          const cat = await this.getCategoryById(p.categoryId);
+          return {
+            ...p,
+            regularPrice: Number(p.regularPrice).toFixed(2),
+            salePrice: p.salePrice ? Number(p.salePrice).toFixed(2) : null,
+            images: images || [],
+            category: cat,
+          };
+        }
+      } catch (e) {
+        console.error("DB getProductById error:", e);
+      }
+    }
     const prod = store.products.find((p) => p.id === id);
     if (!prod) return null;
     const cat = store.categories.find((c) => c.id === prod.categoryId);
@@ -260,74 +515,150 @@ export const dbStore = {
 
   async createProduct(data: any) {
     const id = data.id || `prod_${Date.now()}`;
+    const slug = data.slug || data.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "");
+    const sku = data.sku || `RA-${data.name.replace(/[^a-zA-Z0-9]/g, "").slice(0, 4).toUpperCase() || "ART"}-${Math.floor(100 + Math.random() * 900)}`;
+    const regularPrice = Number(data.regularPrice).toFixed(2);
+    const salePrice = data.salePrice ? Number(data.salePrice).toFixed(2) : null;
+    const costPrice = data.costPrice ? Number(data.costPrice).toFixed(2) : null;
+    const stockQuantity = Number(data.stockQuantity) || 0;
+
+    if (sql) {
+      try {
+        await sql`
+          INSERT INTO products (
+            id, name, slug, short_description, description, category_id, sku,
+            product_type, status, is_featured, is_bestseller, regular_price, sale_price, cost_price,
+            currency, track_inventory, stock_quantity, low_stock_threshold, allow_backorders,
+            enable_variants, enable_personalization, custom_name_enabled, custom_initials_enabled,
+            custom_color_enabled, custom_design_enabled, custom_image_upload_enabled,
+            personalization_surcharge, customization_instructions, production_time_days,
+            gift_wrapping_available, gift_wrapping_charge, custom_order_notes_enabled,
+            weight, dimensions, shipping_class, is_free_shipping, care_instructions,
+            materials, dispatch_time_days, seo_title, seo_description, created_at, updated_at
+          ) VALUES (
+            ${id}, ${data.name}, ${slug}, ${data.shortDescription || null}, ${data.description},
+            ${data.categoryId}, ${sku}, ${data.productType || 'ready_made'}, ${data.status || 'draft'},
+            ${Boolean(data.isFeatured)}, ${Boolean(data.isBestseller)},
+            ${regularPrice}, ${salePrice}, ${costPrice},
+            ${data.currency || 'INR'}, ${data.trackInventory !== false}, ${stockQuantity},
+            ${Number(data.lowStockThreshold) || 3}, ${Boolean(data.allowBackorders)},
+            ${Boolean(data.enableVariants)}, ${Boolean(data.enablePersonalization)},
+            ${Boolean(data.customNameEnabled)}, ${Boolean(data.customInitialsEnabled)},
+            ${Boolean(data.customColorEnabled)}, ${Boolean(data.customDesignEnabled)},
+            ${Boolean(data.customImageUploadEnabled)},
+            ${data.personalizationSurcharge ? String(Number(data.personalizationSurcharge).toFixed(2)) : '0.00'},
+            ${data.customizationInstructions || null}, ${Number(data.productionTimeDays) || 3},
+            ${data.giftWrappingAvailable !== false},
+            ${data.giftWrappingCharge ? String(Number(data.giftWrappingCharge).toFixed(2)) : '49.00'},
+            ${data.customOrderNotesEnabled !== false},
+            ${data.weight ? String(Number(data.weight)) : null},
+            ${data.dimensions || null}, ${data.shippingClass || 'standard'},
+            ${Boolean(data.isFreeShipping)}, ${data.careInstructions || null},
+            ${data.materials || null}, ${Number(data.dispatchTimeDays) || 2},
+            ${data.seoTitle || null}, ${data.seoDescription || null},
+            NOW(), NOW()
+          );
+        `;
+
+        if (Array.isArray(data.images) && data.images.length > 0) {
+          for (let i = 0; i < data.images.length; i++) {
+            const img = data.images[i];
+            if (img && img.imageUrl) {
+              await sql`
+                INSERT INTO product_images (id, product_id, image_url, alt_text, display_order, is_primary, created_at)
+                VALUES (${img.id || `img_${Date.now()}_${i}`}, ${id}, ${img.imageUrl}, ${img.altText || ''}, ${img.displayOrder ?? i}, ${Boolean(img.isPrimary)}, NOW());
+              `;
+            }
+          }
+        }
+      } catch (e) {
+        console.error("DB createProduct error:", e);
+      }
+    }
+
     const newProduct = {
       ...data,
       id,
-      slug: data.slug || data.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, ""),
-      regularPrice: Number(data.regularPrice).toFixed(2),
-      salePrice: data.salePrice ? Number(data.salePrice).toFixed(2) : null,
-      stockQuantity: Number(data.stockQuantity) || 0,
+      slug,
+      sku,
+      regularPrice,
+      salePrice,
+      costPrice,
+      stockQuantity,
       images: data.images || [],
       variants: data.variants || [],
       createdAt: new Date(),
       updatedAt: new Date(),
     };
     store.products.unshift(newProduct);
-
-    // Record initial inventory movement if tracking
-    if (newProduct.trackInventory && newProduct.stockQuantity > 0) {
-      store.inventoryMovements.unshift({
-        id: `mov_${Date.now()}`,
-        productId: id,
-        variantId: null,
-        previousQuantity: 0,
-        newQuantity: newProduct.stockQuantity,
-        changeAmount: newProduct.stockQuantity,
-        reason: "Initial Product Creation",
-        adminUserId: "admin",
-        createdAt: new Date(),
-      });
-    }
-
     return newProduct;
   },
 
   async updateProduct(id: string, data: any) {
-    const idx = store.products.findIndex((p) => p.id === id);
-    if (idx === -1) return null;
+    if (sql) {
+      try {
+        const regularPriceVal = data.regularPrice !== undefined ? String(Number(data.regularPrice).toFixed(2)) : null;
+        const salePriceVal = data.salePrice !== undefined ? (data.salePrice ? String(Number(data.salePrice).toFixed(2)) : null) : undefined;
+        const costPriceVal = data.costPrice !== undefined ? (data.costPrice ? String(Number(data.costPrice).toFixed(2)) : null) : undefined;
 
-    const prev = store.products[idx];
-    const newStock = data.stockQuantity !== undefined ? Number(data.stockQuantity) : prev.stockQuantity;
+        await sql`
+          UPDATE products
+          SET
+            name = COALESCE(${data.name || null}, name),
+            slug = COALESCE(${data.slug || null}, slug),
+            short_description = COALESCE(${data.shortDescription !== undefined ? data.shortDescription : null}, short_description),
+            description = COALESCE(${data.description || null}, description),
+            category_id = COALESCE(${data.categoryId || null}, category_id),
+            sku = COALESCE(${data.sku || null}, sku),
+            product_type = COALESCE(${data.productType || null}, product_type),
+            status = COALESCE(${data.status || null}, status),
+            is_featured = COALESCE(${data.isFeatured !== undefined ? Boolean(data.isFeatured) : null}, is_featured),
+            is_bestseller = COALESCE(${data.isBestseller !== undefined ? Boolean(data.isBestseller) : null}, is_bestseller),
+            regular_price = COALESCE(${regularPriceVal}, regular_price),
+            sale_price = ${salePriceVal !== undefined ? salePriceVal : sql`sale_price`},
+            cost_price = ${costPriceVal !== undefined ? costPriceVal : sql`cost_price`},
+            stock_quantity = COALESCE(${data.stockQuantity !== undefined ? Number(data.stockQuantity) : null}, stock_quantity),
+            track_inventory = COALESCE(${data.trackInventory !== undefined ? Boolean(data.trackInventory) : null}, track_inventory),
+            enable_personalization = COALESCE(${data.enablePersonalization !== undefined ? Boolean(data.enablePersonalization) : null}, enable_personalization),
+            updated_at = NOW()
+          WHERE id = ${id};
+        `;
 
-    // Track stock change
-    if (data.stockQuantity !== undefined && newStock !== prev.stockQuantity) {
-      store.inventoryMovements.unshift({
-        id: `mov_${Date.now()}`,
-        productId: id,
-        variantId: null,
-        previousQuantity: prev.stockQuantity,
-        newQuantity: newStock,
-        changeAmount: newStock - prev.stockQuantity,
-        reason: "Admin Product Edit",
-        adminUserId: "admin",
-        createdAt: new Date(),
-      });
+        if (Array.isArray(data.images)) {
+          await sql`DELETE FROM product_images WHERE product_id = ${id};`;
+          for (let i = 0; i < data.images.length; i++) {
+            const img = data.images[i];
+            if (img && img.imageUrl) {
+              await sql`
+                INSERT INTO product_images (id, product_id, image_url, alt_text, display_order, is_primary, created_at)
+                VALUES (${img.id || `img_${Date.now()}_${i}`}, ${id}, ${img.imageUrl}, ${img.altText || ''}, ${img.displayOrder ?? i}, ${Boolean(img.isPrimary)}, NOW());
+              `;
+            }
+          }
+        }
+      } catch (e) {
+        console.error("DB updateProduct error:", e);
+      }
     }
 
-    store.products[idx] = {
-      ...prev,
-      ...data,
-      regularPrice: data.regularPrice !== undefined ? Number(data.regularPrice).toFixed(2) : prev.regularPrice,
-      salePrice: data.salePrice !== undefined && data.salePrice !== null ? Number(data.salePrice).toFixed(2) : data.salePrice === null ? null : prev.salePrice,
-      stockQuantity: newStock,
-      updatedAt: new Date(),
-    };
-
-    return store.products[idx];
+    const idx = store.products.findIndex((p) => p.id === id);
+    if (idx !== -1) {
+      const prev = store.products[idx];
+      store.products[idx] = {
+        ...prev,
+        ...data,
+        regularPrice: data.regularPrice !== undefined ? Number(data.regularPrice).toFixed(2) : prev.regularPrice,
+        salePrice: data.salePrice !== undefined && data.salePrice !== null ? Number(data.salePrice).toFixed(2) : data.salePrice === null ? null : prev.salePrice,
+        stockQuantity: data.stockQuantity !== undefined ? Number(data.stockQuantity) : prev.stockQuantity,
+        updatedAt: new Date(),
+      };
+      return store.products[idx];
+    }
+    return this.getProductById(id);
   },
 
   async duplicateProduct(id: string) {
-    const original = store.products.find((p) => p.id === id);
+    const original = await this.getProductById(id);
     if (!original) return null;
 
     const newId = `prod_${Date.now()}`;
@@ -338,35 +669,37 @@ export const dbStore = {
       slug: `${original.slug}-copy-${Math.floor(1000 + Math.random() * 9000)}`,
       sku: `${original.sku}-CPY`,
       status: "draft",
-      createdAt: new Date(),
-      updatedAt: new Date(),
     };
 
-    store.products.unshift(duplicated);
-    return duplicated;
+    return this.createProduct(duplicated);
   },
 
   async deleteProduct(id: string) {
-    // Check if product is in orders
-    const hasOrders = store.orders.some((o) =>
-      o.items?.some((item: any) => item.productId === id)
-    );
-
-    if (hasOrders) {
-      // Archive instead of permanent deletion to preserve historical order accuracy
-      await this.updateProduct(id, { status: "archived" });
-      return { archived: true, message: "Product is associated with existing orders and has been safely archived." };
+    if (sql) {
+      try {
+        await sql`DELETE FROM product_images WHERE product_id = ${id};`;
+        await sql`DELETE FROM products WHERE id = ${id};`;
+      } catch (e) {
+        console.error("DB deleteProduct error:", e);
+      }
     }
-
     const idx = store.products.findIndex((p) => p.id === id);
     if (idx !== -1) {
       store.products.splice(idx, 1);
-      return { deleted: true };
     }
-    return { notFound: true };
+    return { deleted: true };
   },
 
   async bulkUpdateProductStatus(ids: string[], status: "draft" | "published" | "archived") {
+    if (sql && ids.length > 0) {
+      try {
+        for (const pid of ids) {
+          await sql`UPDATE products SET status = ${status}, updated_at = NOW() WHERE id = ${pid};`;
+        }
+      } catch (e) {
+        console.error("DB bulkUpdateProductStatus error:", e);
+      }
+    }
     store.products.forEach((p) => {
       if (ids.includes(p.id)) {
         p.status = status;
@@ -1385,6 +1718,93 @@ export const dbStore = {
     }
 
     return memOrders;
+  },
+
+  async getAllCustomersWithStats() {
+    let custs: any[] = [];
+    let ords: any[] = [];
+
+    if (sql) {
+      try {
+        custs = await sql`
+          SELECT 
+            id, name, email, phone, 
+            google_id as "googleId", avatar_url as "avatarUrl", 
+            city, state, postal_code as "postalCode", 
+            created_at as "createdAt" 
+          FROM customers
+          ORDER BY created_at DESC;
+        `;
+        ords = await sql`
+          SELECT 
+            id, customer_id as "customerId", customer_email as "customerEmail", 
+            customer_name as "customerName", customer_phone as "customerPhone",
+            shipping_city as "shippingCity", shipping_state as "shippingState",
+            total_amount as "totalAmount", payment_status as "paymentStatus", 
+            created_at as "createdAt" 
+          FROM orders;
+        `;
+      } catch (e) {
+        console.error("DB getAllCustomersWithStats error:", e);
+      }
+    }
+
+    if (!custs || custs.length === 0) {
+      custs = [];
+      ords = store.orders.map((o) => ({
+        id: o.id,
+        customerId: o.customerId,
+        customerEmail: o.customerEmail,
+        customerName: o.customerName,
+        customerPhone: o.customerPhone,
+        shippingCity: o.shippingCity,
+        shippingState: o.shippingState,
+        totalAmount: o.totalAmount,
+        paymentStatus: o.paymentStatus,
+        createdAt: o.createdAt,
+      }));
+    }
+
+    // Also include guest orders if email not yet registered
+    const existingEmails = new Set(custs.map((c: any) => c.email?.toLowerCase().trim()));
+    ords.forEach((o: any) => {
+      if (o.customerEmail && !existingEmails.has(o.customerEmail.toLowerCase().trim())) {
+        existingEmails.add(o.customerEmail.toLowerCase().trim());
+        custs.push({
+          id: `guest_${o.id}`,
+          name: o.customerName || "Guest Customer",
+          email: o.customerEmail,
+          phone: o.customerPhone || null,
+          googleId: null,
+          avatarUrl: null,
+          city: o.shippingCity || null,
+          state: o.shippingState || null,
+          createdAt: o.createdAt,
+        });
+      }
+    });
+
+    return custs.map((c: any) => {
+      const matching = ords.filter((o: any) =>
+        (o.customerId && o.customerId === c.id) ||
+        (o.customerEmail && o.customerEmail.toLowerCase().trim() === c.email.toLowerCase().trim())
+      );
+      // IMPORTANT: Only paid orders count toward totalSpent!
+      const paidOrders = matching.filter((o: any) => o.paymentStatus === "paid");
+      const totalSpent = paidOrders.reduce((sum: number, o: any) => sum + Number(o.totalAmount), 0);
+
+      const latestOrder = matching.length > 0
+        ? [...matching].sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0]
+        : null;
+
+      return {
+        ...c,
+        totalOrders: matching.length,
+        paidOrdersCount: paidOrders.length,
+        totalSpent,
+        lastOrderDate: latestOrder ? latestOrder.createdAt : null,
+      };
+    });
   },
 
   // ---------------- DASHBOARD ANALYTICS ----------------

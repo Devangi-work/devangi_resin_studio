@@ -65,7 +65,7 @@ export function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full">
+    <header className="sticky top-0 z-50 w-full">
       {/* Announcement Top Bar */}
       <div className="bg-[#2C332D] text-[#FAF8F5] text-xs py-2 px-4 text-center font-medium tracking-wide flex items-center justify-center space-x-2">
         <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />
@@ -79,7 +79,7 @@ export function Navbar() {
       </div>
 
       {/* Main Glass Navbar */}
-      <nav className="glass border-b border-[#E8E0D5] px-3 sm:px-6 lg:px-8 transition-all overflow-x-hidden">
+      <nav className="glass border-b border-[#E8E0D5] px-3 sm:px-6 lg:px-8 transition-all">
         <div className="max-w-7xl mx-auto flex items-center justify-between h-16 sm:h-20 gap-1.5 sm:gap-4 w-full">
           
           {/* Mobile Menu Button */}
@@ -133,7 +133,7 @@ export function Navbar() {
               {isCollectionsOpen && (
                 <div
                   onMouseLeave={() => setIsCollectionsOpen(false)}
-                  className="absolute top-full -left-6 mt-2 w-80 bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-[#E8E0D5] p-3 z-50 animate-fadeIn"
+                  className="absolute top-full -left-6 mt-2 w-80 bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-[#E8E0D5] p-3 z-[60] animate-fadeIn"
                 >
                   <div className="px-3 py-2 border-b border-[#F4EBE6] flex items-center justify-between">
                     <span className="text-[10px] font-bold uppercase tracking-widest text-[#B8972E] flex items-center gap-1">

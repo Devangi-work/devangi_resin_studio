@@ -8,7 +8,7 @@ export async function GET() {
     const categories = await dbStore.getCategories(true);
     return NextResponse.json(categories, {
       headers: {
-        "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120",
+        "Cache-Control": "no-store, max-age=0",
       },
     });
   } catch (err: any) {

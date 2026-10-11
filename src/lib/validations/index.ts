@@ -17,28 +17,34 @@ export const adminSetupSchema = z.object({
 export const categorySchema = z.object({
   name: z.string().min(2, "Category name must be at least 2 characters."),
   slug: z.string().min(2, "Category slug is required."),
-  description: z.string().optional(),
-  imageUrl: z.string().url("Must be a valid image URL").optional().or(z.literal("")),
+  description: z.string().optional().nullable().or(z.literal("")),
+  imageUrl: z.string().optional().nullable().or(z.literal("")),
   displayOrder: z.coerce.number().default(0),
   isPublished: z.boolean().default(true),
 });
 
 // Product
 export const productSchema = z.object({
-  name: z.string().min(3, "Product name must be at least 3 characters."),
-  slug: z.string().min(3, "Slug is required."),
-  shortDescription: z.string().optional(),
-  description: z.string().min(10, "Description must be at least 10 characters."),
+  name: z.string().min(2, "Product name must be at least 2 characters."),
+  slug: z.string().min(2, "Slug is required."),
+  shortDescription: z.string().optional().nullable(),
+  description: z.string().min(3, "Description must be at least 3 characters."),
   categoryId: z.string().min(1, "Category is required."),
-  sku: z.string().min(3, "SKU is required."),
+  sku: z.string().optional().nullable(),
   productType: z.enum(["ready_made", "made_to_order", "customised"]).default("ready_made"),
   status: z.enum(["draft", "published", "archived"]).default("draft"),
   isFeatured: z.boolean().default(false),
   isBestseller: z.boolean().default(false),
 
   regularPrice: z.coerce.number().positive("Regular price must be greater than 0."),
-  salePrice: z.coerce.number().positive("Sale price must be positive.").nullable().optional(),
-  costPrice: z.coerce.number().nonnegative().nullable().optional(),
+  salePrice: z.preprocess(
+    (val) => (val === "" || val === null || val === undefined ? null : Number(val)),
+    z.number().positive("Sale price must be positive.").nullable().optional()
+  ),
+  costPrice: z.preprocess(
+    (val) => (val === "" || val === null || val === undefined ? null : Number(val)),
+    z.number().nonnegative().nullable().optional()
+  ),
   currency: z.string().default("INR"),
 
   trackInventory: z.boolean().default(true),
@@ -54,14 +60,23 @@ export const productSchema = z.object({
   customColorEnabled: z.boolean().default(false),
   customDesignEnabled: z.boolean().default(false),
   customImageUploadEnabled: z.boolean().default(false),
-  personalizationSurcharge: z.coerce.number().nonnegative().default(0),
+  personalizationSurcharge: z.preprocess(
+    (val) => (val === "" || val === null || val === undefined ? 0 : Number(val)),
+    z.number().nonnegative().default(0)
+  ),
   customizationInstructions: z.string().optional().nullable(),
   productionTimeDays: z.coerce.number().int().nonnegative().default(3),
   giftWrappingAvailable: z.boolean().default(true),
-  giftWrappingCharge: z.coerce.number().nonnegative().default(49),
+  giftWrappingCharge: z.preprocess(
+    (val) => (val === "" || val === null || val === undefined ? 49 : Number(val)),
+    z.number().nonnegative().default(49)
+  ),
   customOrderNotesEnabled: z.boolean().default(true),
 
-  weight: z.coerce.number().nonnegative().optional().nullable(),
+  weight: z.preprocess(
+    (val) => (val === "" || val === null || val === undefined ? null : Number(val)),
+    z.number().nonnegative().nullable().optional()
+  ),
   dimensions: z.string().optional().nullable(),
   shippingClass: z.string().default("standard"),
   isFreeShipping: z.boolean().default(false),
@@ -76,13 +91,14 @@ export const productSchema = z.object({
     .array(
       z.object({
         id: z.string().optional(),
-        imageUrl: z.string().url("Valid image URL required"),
-        altText: z.string().optional(),
+        imageUrl: z.string().min(1, "Valid image URL required"),
+        altText: z.string().optional().nullable(),
         isPrimary: z.boolean().default(false),
         displayOrder: z.number().default(0),
       })
     )
-    .optional(),
+    .optional()
+    .default([]),
 
   variants: z
     .array(
@@ -96,7 +112,8 @@ export const productSchema = z.object({
         isActive: z.boolean().default(true),
       })
     )
-    .optional(),
+    .optional()
+    .default([]),
 });
 
 // Checkout

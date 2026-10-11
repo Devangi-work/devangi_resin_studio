@@ -35,6 +35,12 @@ export async function POST(request: Request) {
   try {
     await requireAdminAuth();
     const body = await request.json();
+    if (!body.sku && body.name) {
+      body.sku = `RA-${body.name.replace(/[^a-zA-Z0-9]/g, "").slice(0, 4).toUpperCase() || "ART"}-${Math.floor(100 + Math.random() * 900)}`;
+    }
+    if (!body.slug && body.name) {
+      body.slug = body.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "");
+    }
     const result = productSchema.safeParse(body);
 
     if (!result.success) {

@@ -216,10 +216,16 @@ export function ProductForm({ initialData, isEditing = false }: ProductFormProps
 
       const method = isEditing ? "PUT" : "POST";
 
+      const payload = {
+        ...formData,
+        sku: formData.sku?.trim() || `RA-${formData.name.replace(/[^a-zA-Z0-9]/g, "").slice(0, 4).toUpperCase() || "ART"}-${Math.floor(100 + Math.random() * 900)}`,
+        slug: formData.slug?.trim() || formData.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, ""),
+      };
+
       const res = await fetch(endpoint, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
@@ -229,7 +235,14 @@ export function ProductForm({ initialData, isEditing = false }: ProductFormProps
           router.push("/admin/products");
         }, 1200);
       } else {
-        setErrorMessage(data.error || "Failed to save product.");
+        let err = data.error || "Failed to save product.";
+        if (data.details && typeof data.details === "object") {
+          const detailMsgs = Object.entries(data.details)
+            .map(([field, msgs]: [string, any]) => `${field}: ${Array.isArray(msgs) ? msgs.join(", ") : msgs}`)
+            .join(" | ");
+          if (detailMsgs) err = `${err}: ${detailMsgs}`;
+        }
+        setErrorMessage(err);
       }
     } catch {
       setErrorMessage("Network error occurred.");

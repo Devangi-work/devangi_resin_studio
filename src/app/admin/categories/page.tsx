@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Plus, Edit, Trash2, FolderTree, AlertCircle, Check } from "lucide-react";
+import { Plus, Edit, Trash2, FolderTree, AlertCircle, Check, Upload, Loader2, X, Image as ImageIcon } from "lucide-react";
 
 export default function AdminCategoriesPage() {
   const [categories, setCategories] = useState<any[]>([]);
@@ -19,6 +19,7 @@ export default function AdminCategoriesPage() {
     isPublished: true,
   });
 
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
@@ -72,6 +73,31 @@ export default function AdminCategoriesPage() {
       name,
       slug: editingId ? prev.slug : slug,
     }));
+  };
+
+  const handleImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingImage(true);
+    setError("");
+    try {
+      const data = new FormData();
+      data.append("file", file);
+      const res = await fetch("/api/admin/upload", {
+        method: "POST",
+        body: data,
+      });
+      const json = await res.json();
+      if (res.ok && json.url) {
+        setFormData((prev) => ({ ...prev, imageUrl: json.url }));
+      } else {
+        setError(json.error || "Failed to upload image file.");
+      }
+    } catch {
+      setError("Image upload network error.");
+    } finally {
+      setUploadingImage(false);
+    }
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -240,15 +266,49 @@ export default function AdminCategoriesPage() {
 
               <div>
                 <label className="text-xs font-semibold text-[#2C332D] block mb-1">
-                  Image URL
+                  Category Image
                 </label>
-                <input
-                  type="url"
-                  placeholder="https://..."
-                  value={formData.imageUrl}
-                  onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-                  className="w-full px-3 py-2 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
-                />
+                
+                {formData.imageUrl ? (
+                  <div className="relative group rounded-xl overflow-hidden border border-[#E8E0D5] bg-[#FAF8F5] mb-2 p-2 flex items-center space-x-3">
+                    <img
+                      src={formData.imageUrl}
+                      alt="Category preview"
+                      className="w-16 h-16 object-cover rounded-lg border border-[#E8E0D5]"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-[#2C332D] truncate">Image uploaded</p>
+                      <p className="text-[10px] text-[#8C7A72] truncate">{formData.imageUrl}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, imageUrl: "" })}
+                      className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                      title="Remove image"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : null}
+
+                <div className="flex items-center space-x-2">
+                  <label className={`flex-1 flex items-center justify-center space-x-2 px-3 py-2.5 rounded-xl border-2 border-dashed border-[#D4AF37]/50 hover:border-[#D4AF37] bg-[#FAF8F5] cursor-pointer transition-colors ${uploadingImage ? "opacity-50 pointer-events-none" : ""}`}>
+                    {uploadingImage ? (
+                      <Loader2 className="w-4 h-4 text-[#D4AF37] animate-spin" />
+                    ) : (
+                      <Upload className="w-4 h-4 text-[#D4AF37]" />
+                    )}
+                    <span className="text-xs font-medium text-[#2C332D]">
+                      {uploadingImage ? "Uploading file..." : formData.imageUrl ? "Change Image File" : "Upload Category Image"}
+                    </span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageFileChange}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
               </div>
 
               <div>
