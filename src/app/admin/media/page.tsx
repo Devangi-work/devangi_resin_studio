@@ -33,6 +33,8 @@ export default function AdminMediaPage() {
   const [previewItem, setPreviewItem] = useState<MediaItem | null>(null);
   const [notification, setNotification] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const loadMedia = async () => {
     setLoading(true);
@@ -108,6 +110,55 @@ export default function AdminMediaPage() {
     }
   };
 
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === filteredMedia.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(filteredMedia.map((m) => m.id));
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+    const count = selectedIds.length;
+    if (
+      !confirm(
+        `Are you sure you want to delete these ${count} selected media asset${
+          count > 1 ? "s" : ""
+        } from the library?`
+      )
+    ) {
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      const res = await fetch("/api/admin/media/bulk", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: selectedIds }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setNotification(`Successfully deleted ${count} media asset${count > 1 ? "s" : ""}.`);
+        setSelectedIds([]);
+        loadMedia();
+      } else {
+        alert(data.error || "Failed to delete selected media assets.");
+      }
+    } catch {
+      alert("Failed to delete selected media assets.");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const filteredMedia = media.filter((item) => {
     const query = searchQuery.toLowerCase().trim();
     if (!query) return true;
@@ -168,21 +219,54 @@ export default function AdminMediaPage() {
         </div>
       )}
 
-      {/* Search & Filter Bar */}
+      {/* Search & Bulk Action Bar */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-[#E8E0D5] shadow-xs">
-        <div className="relative w-full sm:w-80">
-          <Search className="w-4 h-4 text-[#8C7A72] absolute left-3 top-2.5" />
-          <input
-            type="text"
-            placeholder="Search by file name or label..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-3.5 py-1.5 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
-          />
+        <div className="flex items-center space-x-3 w-full sm:w-auto">
+          {filteredMedia.length > 0 && (
+            <label className="flex items-center space-x-2 text-xs font-medium text-[#2C332D] cursor-pointer flex-shrink-0">
+              <input
+                type="checkbox"
+                checked={filteredMedia.length > 0 && selectedIds.length === filteredMedia.length}
+                onChange={toggleSelectAll}
+                className="rounded text-[#2C332D]"
+              />
+              <span className="hidden sm:inline">Select All</span>
+            </label>
+          )}
+
+          <div className="relative w-full sm:w-72">
+            <Search className="w-4 h-4 text-[#8C7A72] absolute left-3 top-2.5" />
+            <input
+              type="text"
+              placeholder="Search by file name or label..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-3.5 py-1.5 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
+            />
+          </div>
         </div>
-        <p className="text-[11px] text-[#736C66]">
-          Showing {filteredMedia.length} of {media.length} media items
-        </p>
+
+        <div className="flex items-center space-x-3 w-full sm:w-auto justify-between sm:justify-end">
+          {selectedIds.length > 0 && (
+            <div className="flex items-center space-x-2">
+              <span className="text-xs text-[#736C66] font-medium">
+                {selectedIds.length} selected
+              </span>
+              <button
+                type="button"
+                onClick={handleBulkDelete}
+                disabled={isDeleting}
+                className="px-3 py-1.5 text-xs font-semibold bg-[#FDF2F2] text-[#DF4C4C] hover:bg-[#fbdada] rounded-lg border border-[#FADBD8] flex items-center space-x-1.5 transition-colors shadow-xs"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>{isDeleting ? "Deleting..." : `Delete Selected (${selectedIds.length})`}</span>
+              </button>
+            </div>
+          )}
+          <p className="text-[11px] text-[#736C66]">
+            Showing {filteredMedia.length} of {media.length} media items
+          </p>
+        </div>
       </div>
 
       {/* Grid of Media Assets */}
@@ -216,9 +300,19 @@ export default function AdminMediaPage() {
           {filteredMedia.map((item) => (
             <div
               key={item.id}
-              className="group bg-white rounded-2xl overflow-hidden border border-[#E8E0D5] shadow-xs hover:border-[#D4AF37] hover:shadow-md transition-all flex flex-col justify-between"
+              className={`group bg-white rounded-2xl overflow-hidden border ${
+                selectedIds.includes(item.id) ? "border-[#D4AF37] ring-1 ring-[#D4AF37]" : "border-[#E8E0D5]"
+              } shadow-xs hover:border-[#D4AF37] hover:shadow-md transition-all flex flex-col justify-between`}
             >
               <div className="aspect-square bg-[#FAF8F5] overflow-hidden relative">
+                <div className="absolute top-2 left-2 z-10">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.includes(item.id)}
+                    onChange={() => toggleSelect(item.id)}
+                    className="w-4 h-4 rounded text-[#2C332D] bg-white/90 shadow-sm cursor-pointer"
+                  />
+                </div>
                 <img
                   src={item.url}
                   alt={item.altText || item.fileName}

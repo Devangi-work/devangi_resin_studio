@@ -272,6 +272,19 @@ export const dbStore = {
     return true;
   },
 
+  async bulkDeleteCategories(ids: string[]) {
+    let deletedCount = 0;
+    for (const id of ids) {
+      try {
+        await this.deleteCategory(id);
+        deletedCount++;
+      } catch (e) {
+        console.error(`Failed to delete category ${id}:`, e);
+      }
+    }
+    return { deleted: true, count: deletedCount };
+  },
+
   // ---------------- PRODUCTS ----------------
   async getProducts(filters?: {
     status?: string | string[];
@@ -709,6 +722,22 @@ export const dbStore = {
       store.products.splice(idx, 1);
     }
     return { deleted: true };
+  },
+
+  async bulkDeleteProducts(ids: string[]) {
+    if (sql && ids.length > 0) {
+      try {
+        for (const pid of ids) {
+          await sql`DELETE FROM product_images WHERE product_id = ${pid};`;
+          await sql`DELETE FROM products WHERE id = ${pid};`;
+        }
+      } catch (e) {
+        console.error("DB bulkDeleteProducts error:", e);
+      }
+    }
+    const idSet = new Set(ids);
+    store.products = store.products.filter((p) => !idSet.has(p.id));
+    return { deleted: true, count: ids.length };
   },
 
   async bulkUpdateProductStatus(ids: string[], status: "draft" | "published" | "archived") {
@@ -1340,6 +1369,12 @@ export const dbStore = {
       return true;
     }
     return false;
+  },
+
+  async bulkDeleteCoupons(ids: string[]) {
+    const idSet = new Set(ids);
+    store.coupons = store.coupons.filter((c) => !idSet.has(c.id));
+    return { deleted: true, count: ids.length };
   },
 
   // ---------------- SITE SETTINGS ----------------
@@ -2005,6 +2040,21 @@ export const dbStore = {
     }
     store.mediaItems = store.mediaItems.filter((m) => m.id !== id);
     return true;
+  },
+
+  async bulkDeleteMedia(ids: string[]) {
+    if (sql && ids.length > 0) {
+      try {
+        for (const mid of ids) {
+          await sql`DELETE FROM media_items WHERE id = ${mid};`;
+        }
+      } catch (e) {
+        console.error("DB bulkDeleteMedia error:", e);
+      }
+    }
+    const idSet = new Set(ids);
+    store.mediaItems = store.mediaItems.filter((m) => !idSet.has(m.id));
+    return { deleted: true, count: ids.length };
   },
 
   // ---------------- DASHBOARD ANALYTICS (REAL LIVE NEON DATA) ----------------

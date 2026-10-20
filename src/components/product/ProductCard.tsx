@@ -66,10 +66,10 @@ export function ProductCard({ product }: ProductCardProps) {
   };
 
   return (
-    <div className="group flex flex-col bg-white rounded-2xl overflow-hidden border border-[#E8E0D5] hover:border-[#D4AF37] hover:shadow-lg transition-all duration-300">
+    <div className="group flex flex-col bg-white rounded-2xl overflow-hidden border border-[#EFE3E7] hover:border-[#D4AF37] hover:shadow-lg transition-all duration-300">
       
       {/* Image Container */}
-      <Link href={`/shop/${product.slug}`} className="relative aspect-square overflow-hidden bg-[#FAF8F5] block">
+      <Link href={`/shop/${product.slug}`} className="relative aspect-square overflow-hidden bg-[#FCFAF8] block">
         {/* Primary Image */}
         <img
           src={primaryImage}
@@ -89,18 +89,18 @@ export function ProductCard({ product }: ProductCardProps) {
         {/* Badges */}
         <div className="absolute top-3 left-3 flex flex-col space-y-1 z-10">
           {hasDiscount && (
-            <span className="text-[10px] font-bold uppercase tracking-wider bg-[#DF4C4C] text-white px-2 py-0.5 rounded-full shadow-sm">
+            <span className="text-[10px] font-bold uppercase tracking-wider bg-[#C04E6C] text-white px-2 py-0.5 rounded-full shadow-sm">
               {discountPercent}% OFF
             </span>
           )}
           {product.isBestseller && (
-            <span className="text-[10px] font-bold uppercase tracking-wider bg-[#2C332D] text-[#D4AF37] px-2 py-0.5 rounded-full shadow-sm flex items-center space-x-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider bg-[#3A1823] text-[#D4AF37] px-2 py-0.5 rounded-full shadow-sm flex items-center space-x-1">
               <Sparkles className="w-2.5 h-2.5" />
               <span>Bestseller</span>
             </span>
           )}
           {product.productType === "customised" && (
-            <span className="text-[10px] font-semibold tracking-wider bg-white/90 text-[#2C332D] px-2 py-0.5 rounded-full backdrop-blur-sm shadow-sm border border-[#E8E0D5]">
+            <span className="text-[10px] font-semibold tracking-wider bg-white/90 text-[#3A1823] px-2 py-0.5 rounded-full backdrop-blur-sm shadow-sm border border-[#EFE3E7]">
               Personalised
             </span>
           )}
@@ -109,17 +109,17 @@ export function ProductCard({ product }: ProductCardProps) {
         {/* Out of Stock Overlay */}
         {isOutOfStock && (
           <div className="absolute inset-0 bg-white/70 backdrop-blur-[2px] flex items-center justify-center z-20">
-            <span className="text-xs font-bold text-[#736C66] uppercase tracking-wider bg-white px-3 py-1 rounded-full border border-[#E8E0D5]">
+            <span className="text-xs font-bold text-[#8C6E79] uppercase tracking-wider bg-white px-3 py-1 rounded-full border border-[#EFE3E7]">
               Out of Stock
             </span>
           </div>
         )}
 
-        {/* Quick Add overlay button */}
+        {/* Quick Add overlay button - Accessible on mobile and hover on desktop */}
         {!isOutOfStock && (
           <button
             onClick={handleQuickAdd}
-            className="absolute bottom-3 right-3 w-10 h-10 rounded-full bg-white/95 text-[#2C332D] hover:bg-[#2C332D] hover:text-white shadow-md flex items-center justify-center opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300 z-10"
+            className="absolute bottom-3 right-3 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/95 text-[#3A1823] hover:bg-[#3A1823] hover:text-white shadow-md flex items-center justify-center opacity-100 sm:opacity-0 group-hover:opacity-100 transform translate-y-0 sm:translate-y-2 group-hover:translate-y-0 transition-all duration-300 z-10 active:scale-95"
             title="Quick Add to Cart"
             aria-label="Add to Cart"
           >
@@ -136,24 +136,24 @@ export function ProductCard({ product }: ProductCardProps) {
       <div className="p-4 flex-1 flex flex-col justify-between space-y-2">
         <div>
           {product.category && (
-            <span className="text-[10px] uppercase font-semibold text-[#8C7A72] tracking-widest block mb-1">
+            <span className="text-[10px] uppercase font-semibold text-[#8C6E79] tracking-widest block mb-1">
               {product.category.name}
             </span>
           )}
           <Link
             href={`/shop/${product.slug}`}
-            className="font-serif text-sm font-semibold text-[#2C332D] hover:text-[#B8972E] line-clamp-1 transition-colors block"
+            className="font-serif text-sm font-semibold text-[#3A1823] hover:text-[#B84A67] line-clamp-1 transition-colors block"
           >
             {product.name}
           </Link>
         </div>
 
-        <div className="flex items-baseline space-x-2 pt-1 border-t border-[#F4EBE6]">
-          <span className="text-sm font-bold text-[#2C332D]">
+        <div className="flex items-baseline space-x-2 pt-1 border-t border-[#FAF0F3]">
+          <span className="text-sm font-bold text-[#3A1823]">
             ₹{currentPrice.toFixed(2)}
           </span>
           {hasDiscount && (
-            <span className="text-xs text-[#A69E96] line-through">
+            <span className="text-xs text-[#AFA0A6] line-through">
               ₹{regular.toFixed(2)}
             </span>
           )}

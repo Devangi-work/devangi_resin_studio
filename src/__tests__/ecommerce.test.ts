@@ -209,4 +209,50 @@ test("E-Commerce Test Suite", async (t) => {
     const fetched = await dbStore.getOrderByNumber(orderWithReceipt.orderNumber);
     assert.equal(fetched?.paymentScreenshotUrl, "https://blob.vercel-storage.com/payment-receipts/aarav_receipt.png");
   });
+
+  // 10. Admin Bulk Item Deletion Test
+  await t.test("Admin can select and bulk delete multiple items together", async () => {
+    // Create test products to delete
+    const p1 = await dbStore.createProduct({
+      name: "Bulk Test Item 1",
+      slug: "bulk-test-item-1",
+      sku: "TEST-B1",
+      regularPrice: 299,
+      categoryId: "cat_1",
+      stockQuantity: 10,
+      trackInventory: true,
+      status: "draft",
+    });
+
+    const p2 = await dbStore.createProduct({
+      name: "Bulk Test Item 2",
+      slug: "bulk-test-item-2",
+      sku: "TEST-B2",
+      regularPrice: 399,
+      categoryId: "cat_1",
+      stockQuantity: 10,
+      trackInventory: true,
+      status: "draft",
+    });
+
+    assert.ok(p1.id);
+    assert.ok(p2.id);
+
+    // Verify they exist
+    const beforeP1 = await dbStore.getProductById(p1.id);
+    const beforeP2 = await dbStore.getProductById(p2.id);
+    assert.ok(beforeP1);
+    assert.ok(beforeP2);
+
+    // Bulk delete them together
+    const deleteRes = await dbStore.bulkDeleteProducts([p1.id, p2.id]);
+    assert.equal(deleteRes.deleted, true);
+    assert.equal(deleteRes.count, 2);
+
+    // Verify both are deleted
+    const afterP1 = await dbStore.getProductById(p1.id);
+    const afterP2 = await dbStore.getProductById(p2.id);
+    assert.equal(afterP1, null);
+    assert.equal(afterP2, null);
+  });
 });

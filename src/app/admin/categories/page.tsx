@@ -24,6 +24,8 @@ export default function AdminCategoriesPage() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const loadCategories = async () => {
     setLoading(true);
@@ -147,6 +149,55 @@ export default function AdminCategoriesPage() {
     }
   };
 
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === categories.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(categories.map((c) => c.id));
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+    const count = selectedIds.length;
+    if (
+      !confirm(
+        `Are you sure you want to permanently delete these ${count} selected categor${
+          count > 1 ? "ies" : "y"
+        }? Categories with active products cannot be deleted.`
+      )
+    ) {
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      const res = await fetch("/api/admin/categories/bulk", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: selectedIds }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setMessage(`Successfully deleted ${count} categor${count > 1 ? "ies" : "y"}!`);
+        setSelectedIds([]);
+        loadCategories();
+      } else {
+        alert(data.error || "Failed to delete selected categories.");
+      }
+    } catch {
+      alert("Failed to delete selected categories.");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -168,6 +219,37 @@ export default function AdminCategoriesPage() {
         </button>
       </div>
 
+      {/* Bulk Action Controls Bar */}
+      {categories.length > 0 && (
+        <div className="bg-white p-3.5 rounded-2xl border border-[#E8E0D5] shadow-xs flex flex-wrap items-center justify-between gap-3">
+          <label className="flex items-center space-x-2 text-xs font-medium text-[#2C332D] cursor-pointer">
+            <input
+              type="checkbox"
+              checked={categories.length > 0 && selectedIds.length === categories.length}
+              onChange={toggleSelectAll}
+              className="rounded text-[#2C332D]"
+            />
+            <span>Select All ({categories.length})</span>
+          </label>
+
+          {selectedIds.length > 0 && (
+            <div className="flex items-center space-x-2">
+              <span className="text-xs text-[#736C66] font-medium">
+                {selectedIds.length} selected
+              </span>
+              <button
+                onClick={handleBulkDelete}
+                disabled={isDeleting}
+                className="px-3 py-1.5 text-xs font-semibold bg-[#FDF2F2] text-[#DF4C4C] hover:bg-[#fbdada] rounded-lg border border-[#FADBD8] flex items-center space-x-1.5 transition-colors shadow-xs"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>{isDeleting ? "Deleting..." : `Delete Selected (${selectedIds.length})`}</span>
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
       {message && (
         <div className="p-3 bg-[#E8EFE8] border border-[#C5D8C5] rounded-xl text-xs text-[#2E7D32] flex items-center justify-between">
           <span>{message}</span>
@@ -182,10 +264,20 @@ export default function AdminCategoriesPage() {
         {categories.map((cat) => (
           <div
             key={cat.id}
-            className="bg-white rounded-2xl border border-[#E8E0D5] overflow-hidden shadow-sm flex flex-col justify-between"
+            className={`bg-white rounded-2xl border ${
+              selectedIds.includes(cat.id) ? "border-[#D4AF37] ring-1 ring-[#D4AF37]" : "border-[#E8E0D5]"
+            } overflow-hidden shadow-sm flex flex-col justify-between transition-all`}
           >
             <div>
               <div className="aspect-[16/9] bg-[#FAF8F5] overflow-hidden relative">
+                <div className="absolute top-2.5 left-2.5 z-10">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.includes(cat.id)}
+                    onChange={() => toggleSelect(cat.id)}
+                    className="w-4 h-4 rounded text-[#2C332D] bg-white/90 shadow-sm cursor-pointer"
+                  />
+                </div>
                 <img
                   src={cat.imageUrl || "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=800"}
                   alt={cat.name}

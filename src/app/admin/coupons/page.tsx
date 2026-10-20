@@ -22,6 +22,8 @@ export default function AdminCouponsPage() {
 
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const loadCoupons = async () => {
     setLoading(true);
@@ -110,6 +112,55 @@ export default function AdminCouponsPage() {
     }
   };
 
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === coupons.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(coupons.map((c) => c.id));
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+    const count = selectedIds.length;
+    if (
+      !confirm(
+        `Are you sure you want to permanently delete these ${count} selected coupon${
+          count > 1 ? "s" : ""
+        }?`
+      )
+    ) {
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      const res = await fetch("/api/admin/coupons/bulk", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: selectedIds }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setMessage(`Successfully deleted ${count} coupon${count > 1 ? "s" : ""}!`);
+        setSelectedIds([]);
+        loadCoupons();
+      } else {
+        alert(data.error || "Failed to delete selected coupons.");
+      }
+    } catch {
+      alert("Failed to delete selected coupons.");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -131,6 +182,37 @@ export default function AdminCouponsPage() {
         </button>
       </div>
 
+      {/* Bulk Action Controls Bar */}
+      {coupons.length > 0 && (
+        <div className="bg-white p-3.5 rounded-2xl border border-[#E8E0D5] shadow-xs flex flex-wrap items-center justify-between gap-3">
+          <label className="flex items-center space-x-2 text-xs font-medium text-[#2C332D] cursor-pointer">
+            <input
+              type="checkbox"
+              checked={coupons.length > 0 && selectedIds.length === coupons.length}
+              onChange={toggleSelectAll}
+              className="rounded text-[#2C332D]"
+            />
+            <span>Select All ({coupons.length})</span>
+          </label>
+
+          {selectedIds.length > 0 && (
+            <div className="flex items-center space-x-2">
+              <span className="text-xs text-[#736C66] font-medium">
+                {selectedIds.length} selected
+              </span>
+              <button
+                onClick={handleBulkDelete}
+                disabled={isDeleting}
+                className="px-3 py-1.5 text-xs font-semibold bg-[#FDF2F2] text-[#DF4C4C] hover:bg-[#fbdada] rounded-lg border border-[#FADBD8] flex items-center space-x-1.5 transition-colors shadow-xs"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>{isDeleting ? "Deleting..." : `Delete Selected (${selectedIds.length})`}</span>
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
       {message && (
         <div className="p-3 bg-[#E8EFE8] border border-[#C5D8C5] rounded-xl text-xs text-[#2E7D32]">
           {message}
@@ -143,6 +225,14 @@ export default function AdminCouponsPage() {
           <table className="w-full text-left text-xs">
             <thead className="bg-[#FAF8F5] text-[#736C66] border-b border-[#E8E0D5]">
               <tr>
+                <th className="py-3 px-4 w-10">
+                  <input
+                    type="checkbox"
+                    checked={coupons.length > 0 && selectedIds.length === coupons.length}
+                    onChange={toggleSelectAll}
+                    className="rounded text-[#2C332D]"
+                  />
+                </th>
                 <th className="py-3 px-4 font-semibold">Coupon Code</th>
                 <th className="py-3 px-4 font-semibold">Discount</th>
                 <th className="py-3 px-4 font-semibold">Min. Cart</th>
@@ -155,19 +245,27 @@ export default function AdminCouponsPage() {
             <tbody className="divide-y divide-[#F4EBE6] text-[#2C332D]">
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="py-8 text-center text-[#736C66]">
+                  <td colSpan={8} className="py-8 text-center text-[#736C66]">
                     Loading coupons...
                   </td>
                 </tr>
               ) : coupons.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-8 text-center text-[#736C66]">
+                  <td colSpan={8} className="py-8 text-center text-[#736C66]">
                     No promotional coupons found.
                   </td>
                 </tr>
               ) : (
                 coupons.map((c) => (
                   <tr key={c.id} className="hover:bg-[#FAF8F5] transition-colors">
+                    <td className="py-3 px-4">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(c.id)}
+                        onChange={() => toggleSelect(c.id)}
+                        className="rounded text-[#2C332D]"
+                      />
+                    </td>
                     <td className="py-3 px-4 font-mono font-bold text-sm text-[#2C332D]">
                       {c.code}
                     </td>

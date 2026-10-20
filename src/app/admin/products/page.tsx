@@ -28,6 +28,7 @@ export default function AdminProductsPage() {
   // Selection
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [actionMessage, setActionMessage] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const loadData = async () => {
     setLoading(true);
@@ -111,6 +112,42 @@ export default function AdminProductsPage() {
       }
     } catch {
       alert("Bulk update failed.");
+    }
+  };
+
+  // Bulk Delete Products
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+    const count = selectedIds.length;
+    if (
+      !confirm(
+        `Are you sure you want to permanently delete these ${count} selected product${
+          count > 1 ? "s" : ""
+        }? This will remove them from your boutique catalog and cannot be undone.`
+      )
+    ) {
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      const res = await fetch("/api/admin/products/bulk", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: selectedIds }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setActionMessage(`Successfully deleted ${count} product${count > 1 ? "s" : ""}!`);
+        setSelectedIds([]);
+        loadData();
+      } else {
+        alert(data.error || "Failed to delete selected products.");
+      }
+    } catch {
+      alert("Failed to delete selected products.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -204,27 +241,36 @@ export default function AdminProductsPage() {
 
         {/* Bulk Action Controls */}
         {selectedIds.length > 0 && (
-          <div className="flex items-center space-x-2">
-            <span className="text-xs text-[#736C66] font-medium">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs text-[#736C66] font-medium mr-1">
               {selectedIds.length} selected:
             </span>
             <button
               onClick={() => handleBulkStatus("published")}
-              className="px-2.5 py-1.5 text-[11px] font-semibold bg-[#E8EFE8] text-[#2E7D32] rounded-lg border border-[#C5D8C5]"
+              className="px-2.5 py-1.5 text-[11px] font-semibold bg-[#E8EFE8] text-[#2E7D32] hover:bg-[#d8e6d8] rounded-lg border border-[#C5D8C5] transition-colors"
             >
               Publish
             </button>
             <button
               onClick={() => handleBulkStatus("draft")}
-              className="px-2.5 py-1.5 text-[11px] font-semibold bg-[#FAF4EC] text-[#B8972E] rounded-lg border border-[#E8E0D5]"
+              className="px-2.5 py-1.5 text-[11px] font-semibold bg-[#FAF4EC] text-[#B8972E] hover:bg-[#f3ebd9] rounded-lg border border-[#E8E0D5] transition-colors"
             >
               Unpublish
             </button>
             <button
               onClick={() => handleBulkStatus("archived")}
-              className="px-2.5 py-1.5 text-[11px] font-semibold bg-[#FDF2F2] text-[#DF4C4C] rounded-lg border border-[#FADBD8]"
+              className="px-2.5 py-1.5 text-[11px] font-semibold bg-[#FAF8F5] text-[#736C66] hover:bg-[#EFE9E2] rounded-lg border border-[#E8E0D5] transition-colors"
             >
               Archive
+            </button>
+            <button
+              onClick={handleBulkDelete}
+              disabled={isDeleting}
+              className="px-3 py-1.5 text-[11px] font-semibold bg-[#FDF2F2] text-[#DF4C4C] hover:bg-[#fbdada] rounded-lg border border-[#FADBD8] flex items-center space-x-1.5 transition-colors shadow-xs"
+              title="Permanently delete selected products"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>{isDeleting ? "Deleting..." : `Delete (${selectedIds.length})`}</span>
             </button>
           </div>
         )}

@@ -60,10 +60,10 @@ export function ShopFilters({
 
   return (
     <aside className="lg:col-span-1 space-y-6">
-      <div className="bg-white p-5 rounded-2xl border border-[#E8E0D5] shadow-sm space-y-6">
+      <div className="bg-white p-5 rounded-2xl border border-[#EFE3E7] shadow-xs space-y-6">
         {/* Search Input */}
         <div>
-          <label className="text-xs font-bold text-[#2C332D] uppercase tracking-wider block mb-2">
+          <label className="text-xs font-bold text-[#3A1823] uppercase tracking-wider block mb-2">
             Search Catalog
           </label>
           <form onSubmit={handleSearchSubmit} className="relative">
@@ -72,22 +72,22 @@ export function ShopFilters({
               name="search"
               defaultValue={initialSearch}
               placeholder="e.g. Geode, Forget-me-not..."
-              className="w-full pl-9 pr-3 py-2 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
+              className="w-full pl-9 pr-3 py-2 text-xs bg-[#FCFAF8] border border-[#EFE3E7] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#D4AF37] text-[#2E161F]"
             />
-            <Search className="w-3.5 h-3.5 text-[#8C7A72] absolute left-3 top-3" />
+            <Search className="w-3.5 h-3.5 text-[#8C6E79] absolute left-3 top-3" />
           </form>
         </div>
 
         {/* Sort Dropdown */}
         <div>
-          <label className="text-xs font-bold text-[#2C332D] uppercase tracking-wider block mb-2">
+          <label className="text-xs font-bold text-[#3A1823] uppercase tracking-wider block mb-2">
             Sort By
           </label>
           <select
             name="sort"
             value={initialSort}
             onChange={(e) => handleSortChange(e.target.value)}
-            className="w-full py-2 px-3 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl text-[#2C332D] focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
+            className="w-full py-2 px-3 text-xs bg-[#FCFAF8] border border-[#EFE3E7] rounded-xl text-[#3A1823] focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
           >
             <option value="popularity">Most Popular & Bestsellers</option>
             <option value="price_asc">Price: Low to High</option>
@@ -96,17 +96,17 @@ export function ShopFilters({
         </div>
 
         {/* Availability Filter */}
-        <div className="pt-2 border-t border-[#F4EBE6]">
-          <label className="text-xs font-bold text-[#2C332D] uppercase tracking-wider block mb-2">
+        <div className="pt-2 border-t border-[#FAF0F3]">
+          <label className="text-xs font-bold text-[#3A1823] uppercase tracking-wider block mb-2">
             Availability
           </label>
-          <label className="flex items-center space-x-2 text-xs text-[#2C332D] cursor-pointer">
+          <label className="flex items-center space-x-2 text-xs text-[#3A1823] cursor-pointer">
             <input
               type="checkbox"
               name="in_stock"
               checked={initialInStock}
               onChange={(e) => handleInStockToggle(e.target.checked)}
-              className="rounded border-[#E8E0D5] text-[#2C332D] focus:ring-[#D4AF37]"
+              className="rounded border-[#EFE3E7] text-[#3A1823] focus:ring-[#D4AF37]"
             />
             <span>In Stock Only</span>
           </label>
@@ -114,10 +114,10 @@ export function ShopFilters({
 
         {/* Clear All Filters */}
         {(activeCategorySlug || initialSearch || initialInStock) && (
-          <div className="pt-2 border-t border-[#F4EBE6]">
+          <div className="pt-2 border-t border-[#FAF0F3]">
             <Link
               href="/shop"
-              className="w-full py-2 text-xs font-semibold text-[#DF4C4C] hover:bg-[#FDF2F2] rounded-lg transition-colors flex items-center justify-center space-x-1"
+              className="w-full py-2 text-xs font-semibold text-[#DF4C4C] hover:bg-[#FDF2F4] rounded-lg transition-colors flex items-center justify-center space-x-1"
             >
               <X className="w-3.5 h-3.5" />
               <span>Reset All Filters</span>

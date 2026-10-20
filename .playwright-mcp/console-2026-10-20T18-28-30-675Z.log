@@ -1,0 +1,160 @@
+[  947356ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_05y3oi5z9mc_3._.js:719
+[  947371ms] [LOG] [Fast Refresh] done in 121ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_05y3oi5z9mc_3._.js:719
+[  947590ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_05y3oi5z9mc_3._.js:719
+[  947974ms] [LOG] [Fast Refresh] done in 495ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_05y3oi5z9mc_3._.js:719
+[  960593ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_05y3oi5z9mc_3._.js:719
+[  960694ms] [LOG] [Fast Refresh] done in 204ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_05y3oi5z9mc_3._.js:719
+[  965942ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_05y3oi5z9mc_3._.js:719
+[  965953ms] [LOG] [Fast Refresh] done in 112ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_05y3oi5z9mc_3._.js:719
+[ 1005886ms] [ERROR] ./src/app/admin/products/page.tsx:446:1
+Error: Expected '}', got '<eof>'
+  444 |   );
+  445 | }
+> 446 |
+      | ^
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/app/admin/products/page.tsx [Client Component Browser]
+    ./src/app/admin/products/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/app/admin/products/page.tsx [Client Component SSR]
+    ./src/app/admin/products/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_05y3oi5z9mc_3._.js:995
+[ 1005888ms] [ERROR] ./src/app/admin/products/page.tsx:446:1
+Error: Expected a semicolon
+  444 |   );
+  445 | }
+> 446 |
+      | ^
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/app/admin/products/page.tsx [Client Component Browser]
+    ./src/app/admin/products/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/app/admin/products/page.tsx [Client Component SSR]
+    ./src/app/admin/products/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_05y3oi5z9mc_3._.js:995
+[ 1005986ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_05y3oi5z9mc_3._.js:719
+[ 1006097ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_05y3oi5z9mc_3._.js:719
+[ 1006758ms] [ERROR] ./src/app/admin/products/page.tsx:446:1
+Error: Expected '}', got '<eof>'
+  444 |   );
+  445 | }
+> 446 |
+      | ^
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/app/admin/products/page.tsx [Client Component Browser]
+    ./src/app/admin/products/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/app/admin/products/page.tsx [Client Component SSR]
+    ./src/app/admin/products/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_05y3oi5z9mc_3._.js:995
+[ 1006758ms] [ERROR] ./src/app/admin/products/page.tsx:446:1
+Error: Expected a semicolon
+  444 |   );
+  445 | }
+> 446 |
+      | ^
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/app/admin/products/page.tsx [Client Component Browser]
+    ./src/app/admin/products/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/app/admin/products/page.tsx [Client Component SSR]
+    ./src/app/admin/products/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_05y3oi5z9mc_3._.js:995
+[ 1007014ms] [ERROR] ./src/app/admin/products/page.tsx:446:1
+Error: Expected '}', got '<eof>'
+  444 |   );
+  445 | }
+> 446 |
+      | ^
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/app/admin/products/page.tsx [Client Component Browser]
+    ./src/app/admin/products/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/app/admin/products/page.tsx [Client Component SSR]
+    ./src/app/admin/products/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_05y3oi5z9mc_3._.js:995
+[ 1007016ms] [ERROR] ./src/app/admin/products/page.tsx:446:1
+Error: Expected a semicolon
+  444 |   );
+  445 | }
+> 446 |
+      | ^
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/app/admin/products/page.tsx [Client Component Browser]
+    ./src/app/admin/products/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/app/admin/products/page.tsx [Client Component SSR]
+    ./src/app/admin/products/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_05y3oi5z9mc_3._.js:995
+[ 1007047ms] [ERROR] ./src/app/admin/products/page.tsx:446:1
+Error: Expected '}', got '<eof>'
+  444 |   );
+  445 | }
+> 446 |
+      | ^
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/app/admin/products/page.tsx [Client Component Browser]
+    ./src/app/admin/products/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/app/admin/products/page.tsx [Client Component SSR]
+    ./src/app/admin/products/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_05y3oi5z9mc_3._.js:995
+[ 1007048ms] [ERROR] ./src/app/admin/products/page.tsx:446:1
+Error: Expected a semicolon
+  444 |   );
+  445 | }
+> 446 |
+      | ^
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/app/admin/products/page.tsx [Client Component Browser]
+    ./src/app/admin/products/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/app/admin/products/page.tsx [Client Component SSR]
+    ./src/app/admin/products/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_05y3oi5z9mc_3._.js:995
+[ 1042241ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_05y3oi5z9mc_3._.js:719
+[ 1042255ms] [LOG] [Fast Refresh] done in 43ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_05y3oi5z9mc_3._.js:719
+[ 1042414ms] [LOG] [Fast Refresh] done in 43ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_05y3oi5z9mc_3._.js:719
+[ 1042607ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_05y3oi5z9mc_3._.js:719
+[ 1042676ms] [LOG] [Fast Refresh] done in 174ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_05y3oi5z9mc_3._.js:719
+[ 1134188ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_05y3oi5z9mc_3._.js:719
+[ 1134595ms] [LOG] [Fast Refresh] done in 512ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_05y3oi5z9mc_3._.js:719
+[ 1134809ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_05y3oi5z9mc_3._.js:719
+[ 1134895ms] [LOG] [Fast Refresh] done in 195ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_05y3oi5z9mc_3._.js:719
+[ 1215607ms] [ERROR] WebSocket connection to 'ws://localhost:3000/_next/hmr?id=ryEkXw5n-StayW8H8aEoB' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_1wygxxh5rwq0t._.js:16225
+[ 1216612ms] [ERROR] WebSocket connection to 'ws://localhost:3000/_next/hmr?id=ryEkXw5n-StayW8H8aEoB' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_1wygxxh5rwq0t._.js:16225
+[ 1217630ms] [ERROR] WebSocket connection to 'ws://localhost:3000/_next/hmr?id=ryEkXw5n-StayW8H8aEoB' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_1wygxxh5rwq0t._.js:16225
+[ 1218634ms] [ERROR] WebSocket connection to 'ws://localhost:3000/_next/hmr?id=ryEkXw5n-StayW8H8aEoB' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_1wygxxh5rwq0t._.js:16225
+[ 1219639ms] [ERROR] WebSocket connection to 'ws://localhost:3000/_next/hmr?id=ryEkXw5n-StayW8H8aEoB' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_1wygxxh5rwq0t._.js:16225
