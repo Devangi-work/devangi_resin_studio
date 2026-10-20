@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { requireAdminAuth } from "@/lib/auth";
 import { dbStore } from "@/lib/db";
 import { productSchema } from "@/lib/validations";
@@ -51,6 +52,12 @@ export async function POST(request: Request) {
     }
 
     const created = await dbStore.createProduct(result.data);
+    
+    try {
+      revalidatePath("/");
+      revalidatePath("/shop");
+    } catch {}
+
     return NextResponse.json({ success: true, product: created }, { status: 201 });
   } catch (err: any) {
     if (err.message?.includes("Unauthorized")) {

@@ -1,0 +1,134 @@
+- generic [ref=f1e1]:
+  - generic [ref=f1e2]:
+    - complementary [ref=f1e3]:
+      - generic [ref=f1e4]:
+        - link "Devangi Resin Studio Logo DEVANGI RESIN STUDIO View Live Store" [ref=f1e6] [cursor=pointer]:
+          - /url: /
+          - img "Devangi Resin Studio Logo" [ref=f1e7]
+          - generic [ref=f1e8]:
+            - generic [ref=f1e9]: DEVANGI RESIN STUDIO
+            - generic [ref=f1e10]: View Live Store
+        - navigation [ref=f1e16]:
+          - link "Dashboard" [ref=f1e17] [cursor=pointer]:
+            - /url: /admin/dashboard
+          - link "Products" [ref=f1e24] [cursor=pointer]:
+            - /url: /admin/products
+          - link "Categories" [ref=f1e30] [cursor=pointer]:
+            - /url: /admin/categories
+          - link "Orders" [ref=f1e37] [cursor=pointer]:
+            - /url: /admin/orders
+          - link "Inventory" [ref=f1e42] [cursor=pointer]:
+            - /url: /admin/inventory
+          - link "Coupons" [ref=f1e54] [cursor=pointer]:
+            - /url: /admin/coupons
+          - link "Customers" [ref=f1e59] [cursor=pointer]:
+            - /url: /admin/customers
+          - link "Media Library" [ref=f1e66] [cursor=pointer]:
+            - /url: /admin/media
+          - link "Store Settings" [ref=f1e72] [cursor=pointer]:
+            - /url: /admin/settings
+      - generic [ref=f1e77]:
+        - 'button "Theme: light Mode Switch" [active] [ref=f1e78]':
+          - generic [ref=f1e79]:
+            - generic [ref=f1e86]: "Theme:"
+            - generic [ref=f1e87]: light Mode
+          - generic [ref=f1e88]: Switch
+        - generic "Click to manage admin profile & avatar" [ref=f1e89] [cursor=pointer]:
+          - img "Devangi Resin Studio Admin" [ref=f1e126]
+          - generic [ref=f1e97]:
+            - paragraph [ref=f1e99]: Devangi Resin Studio Admin
+            - paragraph [ref=f1e100]: devangiresin@gmail.com
+            - paragraph [ref=f1e101]:
+              - generic [ref=f1e102]: Change Photo
+        - button "Logout" [ref=f1e103]
+    - main [ref=f1e108]:
+      - generic [ref=f1e110]:
+        - generic [ref=f1e127]:
+          - generic [ref=f1e128]:
+            - heading "Studio Operations Dashboard" [level=1] [ref=f1e129]
+            - paragraph [ref=f1e130]: Real-time sales, order fulfillment, and inventory indicators from Neon PostgreSQL.
+          - link "Add New Product" [ref=f1e132] [cursor=pointer]:
+            - /url: /admin/products/new
+        - generic [ref=f1e135]:
+          - generic [ref=f1e137]:
+            - paragraph [ref=f1e138]: Total Verified Sales
+            - paragraph [ref=f1e139]: ₹349
+            - paragraph [ref=f1e140]: From verified paid orders
+          - generic [ref=f1e145]:
+            - paragraph [ref=f1e146]: Paid Orders
+            - paragraph [ref=f1e147]: "1"
+            - paragraph [ref=f1e148]: 4 total lifetime orders
+          - generic [ref=f1e154]:
+            - paragraph [ref=f1e155]: Awaiting Fulfilment
+            - paragraph [ref=f1e156]: "1"
+            - paragraph [ref=f1e157]: Confirmed / In crafting
+          - generic [ref=f1e163]:
+            - paragraph [ref=f1e164]: Low / Out of Stock
+            - paragraph [ref=f1e165]: "0"
+            - paragraph [ref=f1e166]: 0 completely out of stock
+        - generic [ref=f1e170]:
+          - generic [ref=f1e171]:
+            - generic [ref=f1e172]:
+              - heading "Recent Orders" [level=2] [ref=f1e173]
+              - link "View All" [ref=f1e174] [cursor=pointer]:
+                - /url: /admin/orders
+            - table [ref=f1e180]:
+              - rowgroup [ref=f1e181]:
+                - row [ref=f1e182]:
+                  - columnheader "Order" [ref=f1e183]
+                  - columnheader "Customer" [ref=f1e184]
+                  - columnheader "Total" [ref=f1e185]
+                  - columnheader "Status" [ref=f1e186]
+                  - columnheader "Payment" [ref=f1e187]
+              - rowgroup [ref=f1e188]:
+                - row [ref=f1e189]:
+                  - cell [ref=f1e190]:
+                    - link "RA-20261011-1391" [ref=f1e191] [cursor=pointer]:
+                      - /url: /admin/orders
+                  - cell [ref=f1e192]:
+                    - paragraph [ref=f1e193]: Shrikesh Shetty
+                    - paragraph [ref=f1e194]: shrikesh123shetty@gmail.com
+                  - cell "₹349.00" [ref=f1e195]
+                  - cell "confirmed" [ref=f1e196]
+                  - cell "paid" [ref=f1e197]
+                - row [ref=f1e198]:
+                  - cell [ref=f1e199]:
+                    - link "RA-20261011-9951" [ref=f1e200] [cursor=pointer]:
+                      - /url: /admin/orders
+                  - cell [ref=f1e201]:
+                    - paragraph [ref=f1e202]: Shrikesh Shetty
+                    - paragraph [ref=f1e203]: shrikesh123shetty@gmail.com
+                  - cell "₹1.00" [ref=f1e204]
+                  - cell "cancelled" [ref=f1e205]
+                  - cell "unpaid" [ref=f1e206]
+                - row [ref=f1e207]:
+                  - cell [ref=f1e208]:
+                    - link "RA-20261011-6659" [ref=f1e209] [cursor=pointer]:
+                      - /url: /admin/orders
+                  - cell [ref=f1e210]:
+                    - paragraph [ref=f1e211]: Shrikesh Shetty
+                    - paragraph [ref=f1e212]: shrikesh123shetty@gmail.com
+                  - cell "₹1099.00" [ref=f1e213]
+                  - cell "confirmed" [ref=f1e214]
+                  - cell "unpaid" [ref=f1e215]
+                - row [ref=f1e216]:
+                  - cell [ref=f1e217]:
+                    - link "RA-20261010-2217" [ref=f1e218] [cursor=pointer]:
+                      - /url: /admin/orders
+                  - cell [ref=f1e219]:
+                    - paragraph [ref=f1e220]: Devangi Banshilal Barai
+                    - paragraph [ref=f1e221]: devangi0403@gmail.com
+                  - cell "₹1099.00" [ref=f1e222]
+                  - cell "confirmed" [ref=f1e223]
+                  - cell "pending_verification" [ref=f1e224]
+          - generic [ref=f1e225]:
+            - generic [ref=f1e226]:
+              - generic [ref=f1e227]:
+                - heading "Low Stock Watchlist" [level=2] [ref=f1e228]
+                - link "Inventory" [ref=f1e232] [cursor=pointer]:
+                  - /url: /admin/inventory
+              - paragraph [ref=f1e234]: All active items are healthy and adequately stocked.
+            - link "Adjust & Audit Stock Movements →" [ref=f1e236] [cursor=pointer]:
+              - /url: /admin/inventory
+  - button "Open Next.js Dev Tools" [ref=f1e116] [cursor=pointer]
+  - alert [ref=f1e237]

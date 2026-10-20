@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Plus, Edit, Trash2, FolderTree, AlertCircle, Check, Upload, Loader2, X, Image as ImageIcon } from "lucide-react";
+import { MediaPickerModal } from "@/components/admin/MediaPickerModal";
 
 export default function AdminCategoriesPage() {
   const [categories, setCategories] = useState<any[]>([]);
@@ -19,6 +20,7 @@ export default function AdminCategoriesPage() {
     isPublished: true,
   });
 
+  const [isMediaPickerOpen, setIsMediaPickerOpen] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -277,7 +279,7 @@ export default function AdminCategoriesPage() {
                       className="w-16 h-16 object-cover rounded-lg border border-[#E8E0D5]"
                     />
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-[#2C332D] truncate">Image uploaded</p>
+                      <p className="text-xs font-medium text-[#2C332D] truncate">Image selected</p>
                       <p className="text-[10px] text-[#8C7A72] truncate">{formData.imageUrl}</p>
                     </div>
                     <button
@@ -291,15 +293,24 @@ export default function AdminCategoriesPage() {
                   </div>
                 ) : null}
 
-                <div className="flex items-center space-x-2">
-                  <label className={`flex-1 flex items-center justify-center space-x-2 px-3 py-2.5 rounded-xl border-2 border-dashed border-[#D4AF37]/50 hover:border-[#D4AF37] bg-[#FAF8F5] cursor-pointer transition-colors ${uploadingImage ? "opacity-50 pointer-events-none" : ""}`}>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsMediaPickerOpen(true)}
+                    className="flex items-center justify-center space-x-1.5 px-3 py-2.5 rounded-xl border border-[#D4AF37] bg-[#FAF4EC] hover:bg-[#F3EAD9] text-[#7A6117] text-xs font-semibold transition-colors"
+                  >
+                    <ImageIcon className="w-4 h-4 text-[#B8972E]" />
+                    <span>Media Library</span>
+                  </button>
+
+                  <label className={`flex items-center justify-center space-x-1.5 px-3 py-2.5 rounded-xl border border-[#E8E0D5] hover:border-[#D4AF37] bg-white cursor-pointer transition-colors ${uploadingImage ? "opacity-50 pointer-events-none" : ""}`}>
                     {uploadingImage ? (
                       <Loader2 className="w-4 h-4 text-[#D4AF37] animate-spin" />
                     ) : (
-                      <Upload className="w-4 h-4 text-[#D4AF37]" />
+                      <Upload className="w-4 h-4 text-[#736C66]" />
                     )}
                     <span className="text-xs font-medium text-[#2C332D]">
-                      {uploadingImage ? "Uploading file..." : formData.imageUrl ? "Change Image File" : "Upload Category Image"}
+                      {uploadingImage ? "Uploading..." : "Upload File"}
                     </span>
                     <input
                       type="file"
@@ -370,6 +381,19 @@ export default function AdminCategoriesPage() {
           </div>
         </div>
       )}
+
+      {/* Media Picker Modal */}
+      <MediaPickerModal
+        isOpen={isMediaPickerOpen}
+        onClose={() => setIsMediaPickerOpen(false)}
+        multiple={false}
+        title="Select Category Cover Image"
+        onSelect={(items) => {
+          if (items.length > 0) {
+            setFormData((prev) => ({ ...prev, imageUrl: items[0].url }));
+          }
+        }}
+      />
     </div>
   );
 }

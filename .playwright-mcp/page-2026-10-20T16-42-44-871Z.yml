@@ -1,0 +1,139 @@
+- generic [ref=f1e1]:
+  - generic [ref=f1e2]:
+    - complementary [ref=f1e3]:
+      - generic [ref=f1e4]:
+        - link "Devangi Resin Studio Logo DEVANGI RESIN STUDIO View Live Store" [ref=f1e6] [cursor=pointer]:
+          - /url: /
+          - img "Devangi Resin Studio Logo" [ref=f1e7]
+          - generic [ref=f1e8]:
+            - generic [ref=f1e9]: DEVANGI RESIN STUDIO
+            - generic [ref=f1e10]: View Live Store
+        - navigation [ref=f1e16]:
+          - link "Dashboard" [ref=f1e17] [cursor=pointer]:
+            - /url: /admin/dashboard
+          - link "Products" [ref=f1e24] [cursor=pointer]:
+            - /url: /admin/products
+          - link "Categories" [ref=f1e30] [cursor=pointer]:
+            - /url: /admin/categories
+          - link "Orders" [ref=f1e37] [cursor=pointer]:
+            - /url: /admin/orders
+          - link "Inventory" [ref=f1e42] [cursor=pointer]:
+            - /url: /admin/inventory
+          - link "Coupons" [ref=f1e54] [cursor=pointer]:
+            - /url: /admin/coupons
+          - link "Customers" [ref=f1e59] [cursor=pointer]:
+            - /url: /admin/customers
+          - link "Media Library" [ref=f1e66] [cursor=pointer]:
+            - /url: /admin/media
+          - link "Store Settings" [ref=f1e72] [cursor=pointer]:
+            - /url: /admin/settings
+      - generic [ref=f1e77]:
+        - 'button "Theme: light Mode Switch" [ref=f1e117]':
+          - generic [ref=f1e79]:
+            - generic [ref=f1e82]: "Theme:"
+            - generic [ref=f1e83]: light Mode
+          - generic [ref=f1e84]: Switch
+        - generic "Click to manage admin profile & avatar" [ref=f1e85] [cursor=pointer]:
+          - img "Devangi Resin Studio Admin" [ref=f1e124]
+          - generic [ref=f1e93]:
+            - paragraph [ref=f1e95]: Devangi Resin Studio Admin
+            - paragraph [ref=f1e96]: devangiresin@gmail.com
+            - paragraph [ref=f1e97]:
+              - generic [ref=f1e98]: Change Photo
+        - button "Logout" [ref=f1e99]
+    - main [ref=f1e104]:
+      - generic [ref=f1e125]:
+        - generic [ref=f1e126]:
+          - generic [ref=f1e127]:
+            - heading "Studio Branding & Site Settings" [level=1] [ref=f1e128]
+            - paragraph [ref=f1e129]: Configure store contact information, shipping rates, and legal policies stored in Neon PostgreSQL.
+          - button "Save Settings" [ref=f1e130]
+        - generic [ref=f1e136]:
+          - generic [ref=f1e137]:
+            - generic [ref=f1e138]:
+              - heading "Administrator Account & Theme" [level=2] [ref=f1e143]
+              - generic [ref=f1e144]: "Role: owner"
+            - generic [ref=f1e145]:
+              - generic [ref=f1e146]:
+                - img "Devangi Resin Studio Admin" [ref=f1e149]
+                - generic [ref=f1e150]:
+                  - paragraph [ref=f1e151]: Devangi Resin Studio Admin
+                  - paragraph [ref=f1e152]: devangiresin@gmail.com
+                  - generic [ref=f1e153]:
+                    - generic [ref=f1e154] [cursor=pointer]: Upload
+                    - button "Media Library" [ref=f1e159]
+                    - button "Remove avatar" [ref=f1e165]
+              - generic [ref=f1e169]:
+                - paragraph [ref=f1e170]: Dashboard Theme Mode
+                - paragraph [ref=f1e171]: Choose your visual interface style for the management dashboard.
+                - generic [ref=f1e172]:
+                  - button "Light Mode" [active] [ref=f1e173]
+                  - button "Dark Mode" [ref=f1e181]
+          - generic [ref=f1e185]:
+            - heading "Store Identity & Contact Information" [level=2] [ref=f1e186]
+            - generic [ref=f1e187]:
+              - generic [ref=f1e188]:
+                - generic [ref=f1e189]: Store Brand Name
+                - textbox [ref=f1e190]: Devangi Resin Studio
+              - generic [ref=f1e191]:
+                - generic [ref=f1e192]: Store Tagline
+                - textbox [ref=f1e193]: Handcrafted Resin Creations by Devangi
+            - generic [ref=f1e194]:
+              - generic [ref=f1e195]:
+                - generic [ref=f1e196]: Contact Email
+                - textbox [ref=f1e197]: devangiresinstudioofficial@gmail.com
+              - generic [ref=f1e198]:
+                - generic [ref=f1e199]: Phone Number
+                - textbox [ref=f1e200]: +91 9967313355
+              - generic [ref=f1e201]:
+                - generic [ref=f1e202]: WhatsApp Number (with country code)
+                - textbox [ref=f1e203]: +91 9967313355
+            - generic [ref=f1e204]:
+              - generic [ref=f1e205]: Store Description
+              - textbox [ref=f1e206]: Boutique handmade resin art, bespoke jewellery, personalized gifts, keychains, and coasters crafted with passion.
+          - generic [ref=f1e207]:
+            - heading "Shipping Charges & Thresholds" [level=2] [ref=f1e208]
+            - generic [ref=f1e209]:
+              - generic [ref=f1e210]:
+                - generic [ref=f1e211]: Default Domestic Shipping Fee (₹)
+                - spinbutton [ref=f1e212]: "79.00"
+              - generic [ref=f1e213]:
+                - generic [ref=f1e214]: Free Shipping Cart Threshold (₹)
+                - spinbutton [ref=f1e215]: "999.00"
+          - generic [ref=f1e216]:
+            - generic [ref=f1e217]:
+              - generic [ref=f1e218]:
+                - heading "UPI & QR Code Payment Setup" [level=2] [ref=f1e219]
+                - paragraph [ref=f1e220]: Customers scan this QR code or pay to this UPI ID directly at checkout.
+              - generic [ref=f1e221]: Live Checkout
+            - generic [ref=f1e222]:
+              - generic [ref=f1e223]:
+                - generic [ref=f1e224]: UPI ID (VPA) *
+                - textbox "e.g. devangi0403@okaxis or 9876543210@paytm" [ref=f1e225]: devangibarai0403@okhdfcbank
+                - paragraph [ref=f1e226]: Customers can copy this UPI ID with 1 click to pay in Google Pay, PhonePe, or Paytm.
+              - generic [ref=f1e227]:
+                - generic [ref=f1e228]: Account Holder / Display Name *
+                - textbox "e.g. Devangi Resin Studio" [ref=f1e229]: Devangi Banshilal Barai
+                - paragraph [ref=f1e230]: Name shown on the payment screen alongside your UPI ID.
+            - generic [ref=f1e231]:
+              - generic [ref=f1e232]: UPI Scanner QR Code Image
+              - generic [ref=f1e233]:
+                - generic [ref=f1e234]:
+                  - img "UPI QR Code Preview" [ref=f1e235]
+                  - button "✕" [ref=f1e236]
+                - generic [ref=f1e237]:
+                  - button "Replace QR Code Image" [ref=f1e238]
+                  - paragraph [ref=f1e239]: Upload your Google Pay, PhonePe, or Paytm QR code (Max 5MB). It will be saved securely to Vercel Blob and displayed directly to buyers.
+          - generic [ref=f1e240]:
+            - heading "Customer Policies & Resin Care Instructions" [level=2] [ref=f1e241]
+            - generic [ref=f1e242]:
+              - generic [ref=f1e243]: Default Resin Care Instructions
+              - textbox [ref=f1e244]: Keep away from prolonged direct high heat. Clean gently with a soft microfiber cloth and mild soap. Avoid harsh chemical cleaners.
+            - generic [ref=f1e245]:
+              - generic [ref=f1e246]: Shipping & Dispatch Policy
+              - textbox [ref=f1e247]: Insured express delivery across India takes 4-7 business days.
+            - generic [ref=f1e248]:
+              - generic [ref=f1e249]: Return & Refund Policy
+              - textbox [ref=f1e250]: Handcrafted items are backed by our 7-day transit replacement guarantee.
+  - button "Open Next.js Dev Tools" [ref=f1e112] [cursor=pointer]
+  - alert [ref=f1e116]

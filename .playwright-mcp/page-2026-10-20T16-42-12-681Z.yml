@@ -1,0 +1,47 @@
+- generic [active] [ref=f1e1]:
+  - generic [ref=f1e2]:
+    - complementary [ref=f1e3]:
+      - generic [ref=f1e4]:
+        - link "Devangi Resin Studio Logo DEVANGI RESIN STUDIO View Live Store" [ref=f1e6] [cursor=pointer]:
+          - /url: /
+          - img "Devangi Resin Studio Logo" [ref=f1e7]
+          - generic [ref=f1e8]:
+            - generic [ref=f1e9]: DEVANGI RESIN STUDIO
+            - generic [ref=f1e10]: View Live Store
+        - navigation [ref=f1e16]:
+          - link "Dashboard" [ref=f1e17] [cursor=pointer]:
+            - /url: /admin/dashboard
+          - link "Products" [ref=f1e24] [cursor=pointer]:
+            - /url: /admin/products
+          - link "Categories" [ref=f1e30] [cursor=pointer]:
+            - /url: /admin/categories
+          - link "Orders" [ref=f1e37] [cursor=pointer]:
+            - /url: /admin/orders
+          - link "Inventory" [ref=f1e42] [cursor=pointer]:
+            - /url: /admin/inventory
+          - link "Coupons" [ref=f1e54] [cursor=pointer]:
+            - /url: /admin/coupons
+          - link "Customers" [ref=f1e59] [cursor=pointer]:
+            - /url: /admin/customers
+          - link "Media Library" [ref=f1e66] [cursor=pointer]:
+            - /url: /admin/media
+          - link "Store Settings" [ref=f1e72] [cursor=pointer]:
+            - /url: /admin/settings
+      - generic [ref=f1e77]:
+        - 'button "Theme: dark Mode Switch" [ref=f1e78]':
+          - generic [ref=f1e79]:
+            - generic [ref=f1e82]: "Theme:"
+            - generic [ref=f1e83]: dark Mode
+          - generic [ref=f1e84]: Switch
+        - generic "Click to manage admin profile & avatar" [ref=f1e85] [cursor=pointer]:
+          - generic [ref=f1e86]: A
+          - generic [ref=f1e93]:
+            - paragraph [ref=f1e95]: Administrator
+            - paragraph [ref=f1e96]: admin
+            - paragraph [ref=f1e97]:
+              - generic [ref=f1e98]: Change Photo
+        - button "Logout" [ref=f1e99]
+    - main [ref=f1e104]:
+      - paragraph [ref=f1e106]: Loading settings...
+  - button "Open Next.js Dev Tools" [ref=f1e112] [cursor=pointer]
+  - alert [ref=f1e116]

@@ -32,7 +32,7 @@ export const productSchema = z.object({
   categoryId: z.string().min(1, "Category is required."),
   sku: z.string().optional().nullable(),
   productType: z.enum(["ready_made", "made_to_order", "customised"]).default("ready_made"),
-  status: z.enum(["draft", "published", "archived"]).default("draft"),
+  status: z.enum(["draft", "published", "archived"]).default("published"),
   isFeatured: z.boolean().default(false),
   isBestseller: z.boolean().default(false),
 

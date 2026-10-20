@@ -22,6 +22,7 @@ export const adminUsers = pgTable(
     email: text("email").notNull().unique(),
     passwordHash: text("password_hash").notNull(),
     fullName: text("full_name").notNull(),
+    avatarUrl: text("avatar_url"),
     role: text("role").default("admin").notNull(), // 'owner' | 'admin'
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -522,16 +523,16 @@ export const couponRedemptions = pgTable(
 // -------------------------------------------------------------
 export const siteSettings = pgTable("site_settings", {
   id: text("id").primaryKey(), // singleton 'default'
-  storeName: text("store_name").default("Aura Resin Art Studio").notNull(),
+  storeName: text("store_name").default("Devangi Resin Studio").notNull(),
   storeTagline: text("store_tagline").default("Handmade Resin Elegance, Preserved Forever").notNull(),
   storeDescription: text("store_description").default("Boutique handmade resin art, bespoke jewellery, personalized gifts, keychains, and coasters crafted with passion.").notNull(),
-  logoUrl: text("logo_url"),
-  contactEmail: text("contact_email").default("hello@auraresinart.com").notNull(),
+  logoUrl: text("logo_url").default("/images/logo/resin_logo.png"),
+  contactEmail: text("contact_email").default("hello@devangiresinstudio.com").notNull(),
   contactPhone: text("contact_phone").default("+91 98765 43210").notNull(),
   whatsappNumber: text("whatsapp_number").default("+919876543210").notNull(),
-  instagramUrl: text("instagram_url").default("https://instagram.com/auraresinart"),
-  facebookUrl: text("facebook_url").default("https://facebook.com/auraresinart"),
-  pinterestUrl: text("pinterest_url").default("https://pinterest.com/auraresinart"),
+  instagramUrl: text("instagram_url").default("https://instagram.com/devangiresinstudio"),
+  facebookUrl: text("facebook_url").default("https://facebook.com/devangiresinstudio"),
+  pinterestUrl: text("pinterest_url").default("https://pinterest.com/devangiresinstudio"),
   currency: text("currency").default("INR").notNull(),
   upiId: text("upi_id").default("devangi0403@okaxis").notNull(),
   upiQrCodeUrl: text("upi_qr_code_url").default("").notNull(),
@@ -550,7 +551,26 @@ export const siteSettings = pgTable("site_settings", {
 });
 
 // -------------------------------------------------------------
-// 12. BESPOKE CUSTOM REQUESTS
+// 12. MEDIA LIBRARY
+// -------------------------------------------------------------
+export const mediaItems = pgTable(
+  "media_items",
+  {
+    id: text("id").primaryKey(),
+    fileName: text("file_name").notNull(),
+    url: text("url").notNull(),
+    fileSize: integer("file_size").default(0),
+    mimeType: text("mime_type").default("image/png"),
+    altText: text("alt_text").default(""),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("media_items_created_at_idx").on(table.createdAt),
+  ]
+);
+
+// -------------------------------------------------------------
+// 13. BESPOKE CUSTOM REQUESTS
 // -------------------------------------------------------------
 export const customRequests = pgTable(
   "custom_requests",

@@ -24,6 +24,7 @@ export interface AdminSessionPayload {
   email: string;
   role: string;
   fullName: string;
+  avatarUrl?: string | null;
 }
 
 // In-memory admin store fallback (persists alongside database)
@@ -45,7 +46,7 @@ let inMemoryAdmins: Array<{
     id: "admin_primary",
     email: "admin@auraresinart.com",
     passwordHash: "$2b$10$rK3UeUj3yO0d03zY0kEWee7Z13U0mPZpM83a2p004f2jQo0oK.85u", // AdminSecret2025!
-    fullName: "Aura Resin Studio Admin",
+    fullName: "Devangi Resin Studio Admin",
     role: "owner",
   },
 ];
@@ -128,7 +129,7 @@ export async function findAdminByEmail(email: string) {
   if (sql) {
     try {
       const rows = await sql`
-        SELECT id, email, full_name as "fullName", password_hash as "passwordHash", role
+        SELECT id, email, full_name as "fullName", password_hash as "passwordHash", role, avatar_url as "avatarUrl"
         FROM admin_users
         WHERE LOWER(email) = ${normalized}
         LIMIT 1;
@@ -140,13 +141,62 @@ export async function findAdminByEmail(email: string) {
           fullName: rows[0].fullName,
           passwordHash: rows[0].passwordHash,
           role: rows[0].role,
+          avatarUrl: rows[0].avatarUrl || null,
         };
       }
     } catch {
       // fallback
     }
   }
-  return inMemoryAdmins.find((a) => a.email.toLowerCase() === normalized) || null;
+  const mem = inMemoryAdmins.find((a) => a.email.toLowerCase() === normalized);
+  return mem ? { ...mem, avatarUrl: (mem as any).avatarUrl || null } : null;
+}
+
+export async function findAdminById(id: string) {
+  const sql = getSql();
+  if (sql) {
+    try {
+      const rows = await sql`
+        SELECT id, email, full_name as "fullName", password_hash as "passwordHash", role, avatar_url as "avatarUrl"
+        FROM admin_users
+        WHERE id = ${id}
+        LIMIT 1;
+      `;
+      if (rows && rows.length > 0) {
+        return {
+          id: rows[0].id,
+          email: rows[0].email,
+          fullName: rows[0].fullName,
+          role: rows[0].role,
+          avatarUrl: rows[0].avatarUrl || null,
+        };
+      }
+    } catch {
+      // fallback
+    }
+  }
+  const mem = inMemoryAdmins.find((a) => a.id === id);
+  return mem ? { ...mem, avatarUrl: (mem as any).avatarUrl || null } : null;
+}
+
+export async function updateAdminAvatar(idOrEmail: string, avatarUrl: string) {
+  const sql = getSql();
+  if (sql) {
+    try {
+      await sql`
+        UPDATE admin_users
+        SET avatar_url = ${avatarUrl}, updated_at = NOW()
+        WHERE id = ${idOrEmail} OR LOWER(email) = ${idOrEmail.toLowerCase()};
+      `;
+    } catch (e) {
+      console.error("updateAdminAvatar DB error:", e);
+    }
+  }
+  const mem = inMemoryAdmins.find((a) => a.id === idOrEmail || a.email.toLowerCase() === idOrEmail.toLowerCase());
+  if (mem) {
+    (mem as any).avatarUrl = avatarUrl;
+  }
+  return { success: true, avatarUrl };
 }
 
 export async function createAdminUser(data: {

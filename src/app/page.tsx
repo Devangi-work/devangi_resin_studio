@@ -15,12 +15,15 @@ import {
 } from "lucide-react";
 
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function HomePage() {
   const categories = await dbStore.getCategories(true);
   const featuredRes = await dbStore.getProducts({
     isFeatured: true,
     status: "published",
-    limit: 8,
+    limit: 12,
   });
   const bestsellersRes = await dbStore.getProducts({
     isBestseller: true,
@@ -95,34 +98,13 @@ export default async function HomePage() {
 
           {/* Hero Visual Collage */}
           <div className="lg:col-span-5 relative">
-            <div className="relative mx-auto max-w-sm sm:max-w-md">
-              <div className="rounded-3xl overflow-hidden shadow-2xl border-4 border-white aspect-[4/5] bg-white">
+            <div className="relative mx-auto max-w-sm sm:max-w-md lg:max-w-none">
+              <div className="rounded-3xl overflow-hidden shadow-2xl border-4 border-white aspect-square bg-white">
                 <img
-                  src="https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=800&auto=format&fit=crop&q=80"
-                  alt="Ocean geode resin art coaster showcase"
+                  src="/images/home/Devangi_Resin_Studio_Handmade_Keepsakes.png"
+                  alt="Devangi Resin Studio - Handmade Keepsakes & Resin Art"
                   className="w-full h-full object-cover"
                 />
-              </div>
-
-              {/* Floating Testimonial Card */}
-              <div className="absolute -bottom-6 -left-6 sm:-left-8 bg-white/95 backdrop-blur-md p-4 rounded-2xl shadow-xl border border-[#E8E0D5] max-w-[240px] hidden sm:block">
-                <div className="flex text-[#D4AF37] mb-1">
-                  {"★".repeat(5)}
-                </div>
-                <p className="text-xs text-[#2C332D] font-medium leading-snug">
-                  "The ocean coasters look exactly like rolling crystal waves. Absolutely magical craftsmanship!"
-                </p>
-                <p className="text-[10px] text-[#8C7A72] mt-1.5 font-bold uppercase tracking-wider">
-                  — Tanya K., Verified Buyer
-                </p>
-              </div>
-
-              {/* Floating Quality Seal */}
-              <div className="absolute -top-4 -right-4 sm:-right-6 bg-[#2C332D] text-[#D4AF37] p-3 rounded-2xl shadow-lg flex items-center space-x-2">
-                <Gem className="w-5 h-5 flex-shrink-0" />
-                <span className="text-xs font-semibold text-white tracking-wide">
-                  Real 24k Gold Trim
-                </span>
               </div>
             </div>
           </div>

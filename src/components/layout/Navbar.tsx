@@ -91,7 +91,7 @@ export function Navbar() {
 
       {/* Main Glass Navbar */}
       <nav className="glass border-b border-[#E8E0D5] px-3 sm:px-6 lg:px-8 transition-all">
-        <div className="max-w-7xl mx-auto flex items-center justify-between h-16 sm:h-20 gap-1.5 sm:gap-4 w-full">
+        <div className="max-w-7xl mx-auto flex items-center justify-between h-20 sm:h-24 gap-1.5 sm:gap-4 w-full">
           
           {/* Mobile Menu Button */}
           <div className="flex items-center lg:hidden flex-shrink-0">
@@ -104,15 +104,22 @@ export function Navbar() {
             </button>
           </div>
 
-          {/* Brand Logo - auto-constrains on mobile so right icons never shift outside */}
-          <div className="flex-1 lg:flex-none text-center lg:text-left min-w-0 px-1 sm:px-0 overflow-hidden">
-            <Link href="/" className="inline-block max-w-full group">
-              <span className="font-serif text-base sm:text-xl lg:text-2xl font-bold tracking-tight sm:tracking-wide text-[#2C332D] group-hover:text-[#B8972E] transition-colors truncate block">
-                {settings?.storeName || "Devangi Resin Studio"}
-              </span>
-              <span className="hidden sm:block text-[8.5px] uppercase tracking-[0.2em] text-[#8C7A72] -mt-0.5 font-sans font-medium truncate">
-                {settings?.storeTagline || "Handcrafted Resin Creations by Devangi"}
-              </span>
+          {/* Brand Logo - Prominent & grand styling */}
+          <div className="flex-1 lg:flex-none min-w-0 px-1 sm:px-0">
+            <Link href="/" className="flex items-center space-x-2.5 sm:space-x-3.5 group text-left">
+              <img
+                src="/images/logo/resin_logo.png"
+                alt="Devangi Resin Studio Logo"
+                className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 object-contain drop-shadow-md group-hover:scale-105 transition-transform flex-shrink-0"
+              />
+              <div className="min-w-0">
+                <span className="font-serif text-base sm:text-2xl lg:text-3xl font-bold tracking-tight sm:tracking-wide text-[#2C332D] group-hover:text-[#B8972E] transition-colors truncate block">
+                  {settings?.storeName || "Devangi Resin Studio"}
+                </span>
+                <span className="hidden sm:block text-[9px] sm:text-[10px] uppercase tracking-[0.25em] text-[#8C7A72] -mt-0.5 font-sans font-medium truncate">
+                  {settings?.storeTagline || "Handcrafted Resin Creations by Devangi"}
+                </span>
+              </div>
             </Link>
           </div>
 
@@ -190,7 +197,7 @@ export function Navbar() {
                         { name: "Ocean & Geode Coasters", slug: "resin-coasters" },
                         { name: "Floral Keychains", slug: "resin-keychains" },
                         { name: "Botanical Jewellery", slug: "resin-jewellery" },
-                        { name: "Golden Foil Bookmarks", slug: "resin-bookmarks" },
+                        { name: "Resin Phone Charms", slug: "resin-phone-charms" },
                         { name: "Entrance Nameplates", slug: "resin-nameplates" },
                       ].map((cat) => (
                         <Link
@@ -299,6 +306,17 @@ export function Navbar() {
       {/* Mobile Drawer Menu - Responsive and Categorized */}
       {isMobileMenuOpen && (
         <div className="lg:hidden glass border-b border-[#E8E0D5] px-6 py-6 shadow-xl animate-fadeIn">
+          <div className="flex items-center space-x-3 pb-4 mb-3 border-b border-[#F4EBE6]">
+            <img
+              src="/images/logo/resin_logo.png"
+              alt="Devangi Resin Studio"
+              className="w-10 h-10 object-contain drop-shadow-sm"
+            />
+            <div>
+              <p className="font-serif font-bold text-sm text-[#2C332D]">Devangi Resin Studio</p>
+              <p className="text-[10px] text-[#8C7A72]">Handmade with love in India</p>
+            </div>
+          </div>
           <div className="flex flex-col space-y-3">
             <Link
               href="/shop"
@@ -330,7 +348,7 @@ export function Navbar() {
                     { name: "Coasters", slug: "resin-coasters" },
                     { name: "Keychains", slug: "resin-keychains" },
                     { name: "Jewellery", slug: "resin-jewellery" },
-                    { name: "Bookmarks", slug: "resin-bookmarks" },
+                    { name: "Phone Charms", slug: "resin-phone-charms" },
                     { name: "Nameplates", slug: "resin-nameplates" },
                   ].map((cat) => (
                     <Link

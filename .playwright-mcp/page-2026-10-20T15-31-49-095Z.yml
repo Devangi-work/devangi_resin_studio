@@ -1,0 +1,164 @@
+- generic [ref=f2e1]:
+  - generic [ref=f2e2]:
+    - complementary [ref=f2e3]:
+      - generic [ref=f2e4]:
+        - link "Devangi Resin Studio Logo DEVANGI RESIN STUDIO View Live Store" [ref=f2e6] [cursor=pointer]:
+          - /url: /
+          - img "Devangi Resin Studio Logo" [ref=f2e7]
+          - generic [ref=f2e8]:
+            - generic [ref=f2e9]: DEVANGI RESIN STUDIO
+            - generic [ref=f2e10]: View Live Store
+        - navigation [ref=f2e16]:
+          - link "Dashboard" [ref=f2e17] [cursor=pointer]:
+            - /url: /admin/dashboard
+          - link "Products" [ref=f2e24] [cursor=pointer]:
+            - /url: /admin/products
+          - link "Categories" [ref=f2e30] [cursor=pointer]:
+            - /url: /admin/categories
+          - link "Orders" [ref=f2e37] [cursor=pointer]:
+            - /url: /admin/orders
+          - link "Inventory" [ref=f2e42] [cursor=pointer]:
+            - /url: /admin/inventory
+          - link "Coupons" [ref=f2e54] [cursor=pointer]:
+            - /url: /admin/coupons
+          - link "Customers" [ref=f2e59] [cursor=pointer]:
+            - /url: /admin/customers
+          - link "Media Library" [ref=f2e66] [cursor=pointer]:
+            - /url: /admin/media
+          - link "Store Settings" [ref=f2e72] [cursor=pointer]:
+            - /url: /admin/settings
+      - generic [ref=f2e77]:
+        - 'button "Theme: dark Mode Switch" [ref=f2e127]':
+          - generic [ref=f2e79]:
+            - generic [ref=f2e86]: "Theme:"
+            - generic [ref=f2e87]: dark Mode
+          - generic [ref=f2e88]: Switch
+        - generic "Click to manage admin profile & avatar" [ref=f2e89] [cursor=pointer]:
+          - generic [ref=f2e90]: D
+          - generic [ref=f2e97]:
+            - paragraph [ref=f2e99]: Devangi Resin Studio Admin
+            - paragraph [ref=f2e100]: devangiresin@gmail.com
+            - paragraph [ref=f2e101]:
+              - generic [ref=f2e102]: Change Photo
+        - button "Logout" [ref=f2e103]
+    - main [ref=f2e108]:
+      - generic [ref=f2e110]:
+        - generic [ref=f2e111]:
+          - generic [ref=f2e112]:
+            - heading "Category Management" [level=1] [ref=f2e113]
+            - paragraph [ref=f2e114]: Organize handmade resin art collections and storefront navigation.
+          - button "Add New Category" [active] [ref=f2e115]
+        - generic [ref=f2e130]:
+          - generic [ref=f2e131]:
+            - generic [ref=f2e132]:
+              - img "Resin Keychains" [ref=f2e134]
+              - generic [ref=f2e135]:
+                - generic [ref=f2e136]:
+                  - heading "Resin Keychains" [level=3] [ref=f2e137]
+                  - generic [ref=f2e138]: "Order: 1"
+                - paragraph [ref=f2e139]: /resin-keychains
+                - paragraph [ref=f2e140]: Handcrafted letter keychains, floral monograms, and personalized name tags with shimmering foils.
+            - generic [ref=f2e141]:
+              - button "Edit" [ref=f2e142]
+              - button "Delete" [ref=f2e143]
+          - generic [ref=f2e144]:
+            - generic [ref=f2e145]:
+              - img "Resin Coasters" [ref=f2e147]
+              - generic [ref=f2e148]:
+                - generic [ref=f2e149]:
+                  - heading "Resin Coasters" [level=3] [ref=f2e150]
+                  - generic [ref=f2e151]: "Order: 2"
+                - paragraph [ref=f2e152]: /resin-coasters
+                - paragraph [ref=f2e153]: Luxury geode agate coasters, ocean wave shorelines, and pressed flower botanical sets.
+            - generic [ref=f2e154]:
+              - button "Edit" [ref=f2e155]
+              - button "Delete" [ref=f2e156]
+          - generic [ref=f2e157]:
+            - generic [ref=f2e158]:
+              - img "Resin Jewellery" [ref=f2e160]
+              - generic [ref=f2e161]:
+                - generic [ref=f2e162]:
+                  - heading "Resin Jewellery" [level=3] [ref=f2e163]
+                  - generic [ref=f2e164]: "Order: 3"
+                - paragraph [ref=f2e165]: /resin-jewellery
+                - paragraph [ref=f2e166]: Delicate pendants, floral drop earrings, and crystal rings preserving real nature forever.
+            - generic [ref=f2e167]:
+              - button "Edit" [ref=f2e168]
+              - button "Delete" [ref=f2e169]
+          - generic [ref=f2e170]:
+            - generic [ref=f2e171]:
+              - img "Resin Phone Charms" [ref=f2e173]
+              - generic [ref=f2e174]:
+                - generic [ref=f2e175]:
+                  - heading "Resin Phone Charms" [level=3] [ref=f2e176]
+                  - generic [ref=f2e177]: "Order: 4"
+                - paragraph [ref=f2e178]: /resin-phone-charms
+                - paragraph [ref=f2e179]: Handmade crystal resin phone charms with real pressed botanicals, gold leaf accents, and durable aesthetic cords.
+            - generic [ref=f2e180]:
+              - button "Edit" [ref=f2e181]
+              - button "Delete" [ref=f2e182]
+          - generic [ref=f2e183]:
+            - generic [ref=f2e184]:
+              - img "Resin Nameplates" [ref=f2e186]
+              - generic [ref=f2e187]:
+                - generic [ref=f2e188]:
+                  - heading "Resin Nameplates" [level=3] [ref=f2e189]
+                  - generic [ref=f2e190]: "Order: 5"
+                - paragraph [ref=f2e191]: /resin-nameplates
+                - paragraph [ref=f2e192]: Statement entrance nameplates combining glossy epoxy resin, wooden textures, and embossed golden lettering.
+            - generic [ref=f2e193]:
+              - button "Edit" [ref=f2e194]
+              - button "Delete" [ref=f2e195]
+          - generic [ref=f2e196]:
+            - generic [ref=f2e197]:
+              - img "Resin Photo Frames" [ref=f2e199]
+              - generic [ref=f2e200]:
+                - generic [ref=f2e201]:
+                  - heading "Resin Photo Frames" [level=3] [ref=f2e202]
+                  - generic [ref=f2e203]: "Order: 6"
+                - paragraph [ref=f2e204]: /resin-photo-frames
+                - paragraph [ref=f2e205]: Immortalize your most cherished memories with dried floral inlays and embedded warm fairy lights.
+            - generic [ref=f2e206]:
+              - button "Edit" [ref=f2e207]
+              - button "Delete" [ref=f2e208]
+          - generic [ref=f2e209]:
+            - generic [ref=f2e210]:
+              - img "Personalised Gifts" [ref=f2e212]
+              - generic [ref=f2e213]:
+                - generic [ref=f2e214]:
+                  - heading "Personalised Gifts" [level=3] [ref=f2e215]
+                  - generic [ref=f2e216]: "Order: 7"
+                - paragraph [ref=f2e217]: /personalised-gifts
+                - paragraph [ref=f2e218]: Bespoke clocks, preserved wedding garland keepsakes, and personalized anniversary treasures.
+            - generic [ref=f2e219]:
+              - button "Edit" [ref=f2e220]
+              - button "Delete" [ref=f2e221]
+        - generic [ref=f2e224]:
+          - heading "Create New Category" [level=2] [ref=f2e225]
+          - generic [ref=f2e226]:
+            - generic [ref=f2e227]:
+              - generic [ref=f2e228]: Category Name *
+              - textbox "e.g. Resin Nameplates" [ref=f2e229]
+            - generic [ref=f2e230]:
+              - generic [ref=f2e231]: URL Slug *
+              - textbox [ref=f2e232]
+            - generic [ref=f2e233]:
+              - generic [ref=f2e234]: Category Image
+              - generic [ref=f2e235]:
+                - button "Media Library" [ref=f2e236]
+                - generic [ref=f2e242] [cursor=pointer]: Upload File
+            - generic [ref=f2e247]:
+              - generic [ref=f2e248]: Description
+              - textbox "Short collection description..." [ref=f2e249]
+            - generic [ref=f2e250]:
+              - generic [ref=f2e251]:
+                - generic [ref=f2e252]: Display Order
+                - spinbutton [ref=f2e253]: "8"
+              - generic [ref=f2e254]:
+                - checkbox "Visible on Store" [checked] [ref=f2e255]
+                - generic [ref=f2e256] [cursor=pointer]: Visible on Store
+            - generic [ref=f2e257]:
+              - button "Cancel" [ref=f2e258]
+              - button "Save Category" [ref=f2e259]
+  - button "Open Next.js Dev Tools" [ref=f2e123] [cursor=pointer]
+  - alert [ref=f2e222]

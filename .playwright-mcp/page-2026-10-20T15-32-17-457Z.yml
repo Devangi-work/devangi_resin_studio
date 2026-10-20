@@ -1,0 +1,257 @@
+- generic [ref=f2e1]:
+  - generic [ref=f2e2]:
+    - complementary [ref=f2e3]:
+      - generic [ref=f2e4]:
+        - link "Devangi Resin Studio Logo DEVANGI RESIN STUDIO View Live Store" [ref=f2e6] [cursor=pointer]:
+          - /url: /
+          - img "Devangi Resin Studio Logo" [ref=f2e7]
+          - generic [ref=f2e8]:
+            - generic [ref=f2e9]: DEVANGI RESIN STUDIO
+            - generic [ref=f2e10]: View Live Store
+        - navigation [ref=f2e16]:
+          - link "Dashboard" [ref=f2e17] [cursor=pointer]:
+            - /url: /admin/dashboard
+          - link "Products" [ref=f2e24] [cursor=pointer]:
+            - /url: /admin/products
+          - link "Categories" [ref=f2e30] [cursor=pointer]:
+            - /url: /admin/categories
+          - link "Orders" [ref=f2e37] [cursor=pointer]:
+            - /url: /admin/orders
+          - link "Inventory" [ref=f2e42] [cursor=pointer]:
+            - /url: /admin/inventory
+          - link "Coupons" [ref=f2e54] [cursor=pointer]:
+            - /url: /admin/coupons
+          - link "Customers" [ref=f2e59] [cursor=pointer]:
+            - /url: /admin/customers
+          - link "Media Library" [ref=f2e66] [cursor=pointer]:
+            - /url: /admin/media
+          - link "Store Settings" [ref=f2e72] [cursor=pointer]:
+            - /url: /admin/settings
+      - generic [ref=f2e77]:
+        - 'button "Theme: dark Mode Switch" [ref=f2e127]':
+          - generic [ref=f2e79]:
+            - generic [ref=f2e86]: "Theme:"
+            - generic [ref=f2e87]: dark Mode
+          - generic [ref=f2e88]: Switch
+        - generic "Click to manage admin profile & avatar" [ref=f2e89] [cursor=pointer]:
+          - generic [ref=f2e90]: D
+          - generic [ref=f2e97]:
+            - paragraph [ref=f2e99]: Devangi Resin Studio Admin
+            - paragraph [ref=f2e100]: devangiresin@gmail.com
+            - paragraph [ref=f2e101]:
+              - generic [ref=f2e102]: Change Photo
+        - button "Logout" [ref=f2e103]
+    - main [ref=f2e108]:
+      - generic [ref=f2e110]:
+        - generic [ref=f2e111]:
+          - generic [ref=f2e112]:
+            - heading "Category Management" [level=1] [ref=f2e113]
+            - paragraph [ref=f2e114]: Organize handmade resin art collections and storefront navigation.
+          - button "Add New Category" [ref=f2e115]
+        - generic [ref=f2e130]:
+          - generic [ref=f2e131]:
+            - generic [ref=f2e132]:
+              - img "Resin Keychains" [ref=f2e134]
+              - generic [ref=f2e135]:
+                - generic [ref=f2e136]:
+                  - heading "Resin Keychains" [level=3] [ref=f2e137]
+                  - generic [ref=f2e138]: "Order: 1"
+                - paragraph [ref=f2e139]: /resin-keychains
+                - paragraph [ref=f2e140]: Handcrafted letter keychains, floral monograms, and personalized name tags with shimmering foils.
+            - generic [ref=f2e141]:
+              - button "Edit" [ref=f2e142]
+              - button "Delete" [ref=f2e143]
+          - generic [ref=f2e144]:
+            - generic [ref=f2e145]:
+              - img "Resin Coasters" [ref=f2e147]
+              - generic [ref=f2e148]:
+                - generic [ref=f2e149]:
+                  - heading "Resin Coasters" [level=3] [ref=f2e150]
+                  - generic [ref=f2e151]: "Order: 2"
+                - paragraph [ref=f2e152]: /resin-coasters
+                - paragraph [ref=f2e153]: Luxury geode agate coasters, ocean wave shorelines, and pressed flower botanical sets.
+            - generic [ref=f2e154]:
+              - button "Edit" [ref=f2e155]
+              - button "Delete" [ref=f2e156]
+          - generic [ref=f2e157]:
+            - generic [ref=f2e158]:
+              - img "Resin Jewellery" [ref=f2e160]
+              - generic [ref=f2e161]:
+                - generic [ref=f2e162]:
+                  - heading "Resin Jewellery" [level=3] [ref=f2e163]
+                  - generic [ref=f2e164]: "Order: 3"
+                - paragraph [ref=f2e165]: /resin-jewellery
+                - paragraph [ref=f2e166]: Delicate pendants, floral drop earrings, and crystal rings preserving real nature forever.
+            - generic [ref=f2e167]:
+              - button "Edit" [ref=f2e168]
+              - button "Delete" [ref=f2e169]
+          - generic [ref=f2e170]:
+            - generic [ref=f2e171]:
+              - img "Resin Phone Charms" [ref=f2e173]
+              - generic [ref=f2e174]:
+                - generic [ref=f2e175]:
+                  - heading "Resin Phone Charms" [level=3] [ref=f2e176]
+                  - generic [ref=f2e177]: "Order: 4"
+                - paragraph [ref=f2e178]: /resin-phone-charms
+                - paragraph [ref=f2e179]: Handmade crystal resin phone charms with real pressed botanicals, gold leaf accents, and durable aesthetic cords.
+            - generic [ref=f2e180]:
+              - button "Edit" [ref=f2e181]
+              - button "Delete" [ref=f2e182]
+          - generic [ref=f2e183]:
+            - generic [ref=f2e184]:
+              - img "Resin Nameplates" [ref=f2e186]
+              - generic [ref=f2e187]:
+                - generic [ref=f2e188]:
+                  - heading "Resin Nameplates" [level=3] [ref=f2e189]
+                  - generic [ref=f2e190]: "Order: 5"
+                - paragraph [ref=f2e191]: /resin-nameplates
+                - paragraph [ref=f2e192]: Statement entrance nameplates combining glossy epoxy resin, wooden textures, and embossed golden lettering.
+            - generic [ref=f2e193]:
+              - button "Edit" [ref=f2e194]
+              - button "Delete" [ref=f2e195]
+          - generic [ref=f2e196]:
+            - generic [ref=f2e197]:
+              - img "Resin Photo Frames" [ref=f2e199]
+              - generic [ref=f2e200]:
+                - generic [ref=f2e201]:
+                  - heading "Resin Photo Frames" [level=3] [ref=f2e202]
+                  - generic [ref=f2e203]: "Order: 6"
+                - paragraph [ref=f2e204]: /resin-photo-frames
+                - paragraph [ref=f2e205]: Immortalize your most cherished memories with dried floral inlays and embedded warm fairy lights.
+            - generic [ref=f2e206]:
+              - button "Edit" [ref=f2e207]
+              - button "Delete" [ref=f2e208]
+          - generic [ref=f2e209]:
+            - generic [ref=f2e210]:
+              - img "Personalised Gifts" [ref=f2e212]
+              - generic [ref=f2e213]:
+                - generic [ref=f2e214]:
+                  - heading "Personalised Gifts" [level=3] [ref=f2e215]
+                  - generic [ref=f2e216]: "Order: 7"
+                - paragraph [ref=f2e217]: /personalised-gifts
+                - paragraph [ref=f2e218]: Bespoke clocks, preserved wedding garland keepsakes, and personalized anniversary treasures.
+            - generic [ref=f2e219]:
+              - button "Edit" [ref=f2e220]
+              - button "Delete" [ref=f2e221]
+        - generic [ref=f2e224]:
+          - heading "Create New Category" [level=2] [ref=f2e225]
+          - generic [ref=f2e226]:
+            - generic [ref=f2e227]:
+              - generic [ref=f2e228]: Category Name *
+              - textbox "e.g. Resin Nameplates" [ref=f2e229]
+            - generic [ref=f2e230]:
+              - generic [ref=f2e231]: URL Slug *
+              - textbox [ref=f2e232]
+            - generic [ref=f2e233]:
+              - generic [ref=f2e234]: Category Image
+              - generic [ref=f2e235]:
+                - button "Media Library" [active] [ref=f2e236]
+                - generic [ref=f2e242] [cursor=pointer]: Upload File
+            - generic [ref=f2e247]:
+              - generic [ref=f2e248]: Description
+              - textbox "Short collection description..." [ref=f2e249]
+            - generic [ref=f2e250]:
+              - generic [ref=f2e251]:
+                - generic [ref=f2e252]: Display Order
+                - spinbutton [ref=f2e253]: "8"
+              - generic [ref=f2e254]:
+                - checkbox "Visible on Store" [checked] [ref=f2e255]
+                - generic [ref=f2e256] [cursor=pointer]: Visible on Store
+            - generic [ref=f2e257]:
+              - button "Cancel" [ref=f2e258]
+              - button "Save Category" [ref=f2e259]
+        - generic [ref=f2e261]:
+          - generic [ref=f2e262]:
+            - generic [ref=f2e267]:
+              - heading "Select Category Cover Image" [level=2] [ref=f2e268]
+              - paragraph [ref=f2e269]: Select an image to apply.
+            - button [ref=f2e270]
+          - generic [ref=f2e274]:
+            - textbox "Search library assets..." [ref=f2e279]
+            - generic [ref=f2e280]: Upload New
+          - generic [ref=f2e287]:
+            - generic [ref=f2e288] [cursor=pointer]:
+              - img "resin logo" [ref=f2e289]
+              - paragraph [ref=f2e294]: resin_logo.png
+            - generic [ref=f2e295] [cursor=pointer]:
+              - img "Personalised Gifts" [ref=f2e296]
+              - paragraph [ref=f2e301]: photo-1513201099705-a9742e15a5b6
+            - generic [ref=f2e302] [cursor=pointer]:
+              - img "Resin Nameplates" [ref=f2e303]
+              - paragraph [ref=f2e308]: photo-1513519245088-0e12902e5a38
+            - generic [ref=f2e309] [cursor=pointer]:
+              - img "Resin Photo Frames" [ref=f2e310]
+              - paragraph [ref=f2e315]: photo-1583847268964-b28dc8f51f92
+            - generic [ref=f2e316] [cursor=pointer]:
+              - img "Resin Coasters" [ref=f2e317]
+              - paragraph [ref=f2e322]: photo-1579783900882-c0d3dad7b119
+            - generic [ref=f2e323] [cursor=pointer]:
+              - img "Resin Jewellery" [ref=f2e324]
+              - paragraph [ref=f2e329]: photo-1535632066927-ab7c9ab60908
+            - generic [ref=f2e330] [cursor=pointer]:
+              - img "Resin Keychains" [ref=f2e331]
+              - paragraph [ref=f2e336]: photo-1618354691373-d851c5c3a990
+            - generic [ref=f2e337] [cursor=pointer]:
+              - img "Resin Phone Charms" [ref=f2e338]
+              - paragraph [ref=f2e343]: 1792505053481-golden_resin_charm_keychain_on_white-FqPszUVIREH9Tf87G5548n7ekdd2m4.png
+            - generic [ref=f2e344] [cursor=pointer]:
+              - img "Bespoke floral resin letter keychain" [ref=f2e345]
+              - paragraph [ref=f2e350]: photo-1618354691373-d851c5c3a990
+            - generic [ref=f2e351] [cursor=pointer]:
+              - img "Luxury geode resin entrance nameplate" [ref=f2e352]
+              - paragraph [ref=f2e357]: photo-1513519245088-0e12902e5a38
+            - generic [ref=f2e358] [cursor=pointer]:
+              - img "Eternal Bloom Resin Keychain" [ref=f2e359]
+              - paragraph [ref=f2e364]: 1792505040507-golden_floral_resin_keychain-gJxoUkFiNShI6WvUO773xjwZmcDMIk.png
+            - generic [ref=f2e365] [cursor=pointer]:
+              - img "Raw amethyst geode resin wall clock" [ref=f2e366]
+              - paragraph [ref=f2e371]: photo-1563861826100-9cb868fdbe1c
+            - generic [ref=f2e372] [cursor=pointer]:
+              - img "Ocean resin coaster close-up detailing gold leaf" [ref=f2e373]
+              - paragraph [ref=f2e378]: photo-1582562124811-c09040d0a901
+            - generic [ref=f2e379] [cursor=pointer]:
+              - img "Emerald trinket box prototype" [ref=f2e380]
+              - paragraph [ref=f2e385]: photo-1513201099705-a9742e15a5b6
+            - generic [ref=f2e386] [cursor=pointer]:
+              - img "Preserved rose petals resin ring dish" [ref=f2e387]
+              - paragraph [ref=f2e392]: photo-1513201099705-a9742e15a5b6
+            - generic [ref=f2e393] [cursor=pointer]:
+              - img "Enchanted daisy drop resin earrings" [ref=f2e394]
+              - paragraph [ref=f2e399]: photo-1535632066927-ab7c9ab60908
+            - generic [ref=f2e400] [cursor=pointer]:
+              - img "Botanical resin pendant necklace" [ref=f2e401]
+              - paragraph [ref=f2e406]: photo-1535632066927-ab7c9ab60908
+            - generic [ref=f2e407] [cursor=pointer]:
+              - img "Resin keychain packaging and gift box" [ref=f2e408]
+              - paragraph [ref=f2e413]: photo-1584917865442-de89df76afd3
+            - generic [ref=f2e414] [cursor=pointer]:
+              - img "Eternal Bloom Resin Keychain" [ref=f2e415]
+              - paragraph [ref=f2e420]: 1792505067340-half-white__half-gold_glitter_leaf_charm-2tM5biwH9OtrLxfOSMOSXb5MOMAT6l.png
+            - generic [ref=f2e421] [cursor=pointer]:
+              - img "Aurora Ocean Coasters Set of 4" [ref=f2e422]
+              - paragraph [ref=f2e427]: photo-1579783900882-c0d3dad7b119
+            - generic [ref=f2e428] [cursor=pointer]:
+              - img "Acacia wood and resin ocean wave serving board" [ref=f2e429]
+              - paragraph [ref=f2e434]: photo-1582562124811-c09040d0a901
+            - generic [ref=f2e435] [cursor=pointer]:
+              - img "Illuminated floral resin photo frame" [ref=f2e436]
+              - paragraph [ref=f2e441]: photo-1583847268964-b28dc8f51f92
+            - generic [ref=f2e442] [cursor=pointer]:
+              - img "Festive diya resin coaster" [ref=f2e443]
+              - paragraph [ref=f2e448]: photo-1579783900882-c0d3dad7b119
+            - generic [ref=f2e449] [cursor=pointer]:
+              - img "Eternal Bloom Resin Keychain" [ref=f2e450]
+              - paragraph [ref=f2e455]: 1792505028548-dried_wildflower_resin_keychain-YDw8A9YBp6tOgN2a7SiuSh90BOBruI.png
+            - generic [ref=f2e456] [cursor=pointer]:
+              - img "Eternal Bloom Resin Keychain" [ref=f2e457]
+              - paragraph [ref=f2e462]: 1792505053481-golden_resin_charm_keychain_on_white-FqPszUVIREH9Tf87G5548n7ekdd2m4.png
+            - generic [ref=f2e463] [cursor=pointer]:
+              - img "Golden Foil Botanical Resin Phone Charm" [ref=f2e464]
+              - paragraph [ref=f2e469]: 1792505053481-golden_resin_charm_keychain_on_white-FqPszUVIREH9Tf87G5548n7ekdd2m4.png
+          - generic [ref=f2e470]:
+            - generic [ref=f2e471]: Click on images to select
+            - generic [ref=f2e472]:
+              - button "Cancel" [ref=f2e473]
+              - button "Use Selected Image" [disabled]
+  - button "Open Next.js Dev Tools" [ref=f2e123] [cursor=pointer]
+  - alert [ref=f2e222]

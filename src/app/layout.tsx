@@ -12,12 +12,16 @@ export const metadata: Metadata = {
     "resin coasters",
     "resin keychains",
     "resin jewellery",
-    "resin bookmarks",
+    "resin phone charms",
     "resin nameplates",
     "personalized gifts",
     "handmade gifts india",
     "devangi resin studio",
   ],
+  icons: {
+    icon: "/images/logo/resin_logo.png",
+    apple: "/images/logo/resin_logo.png",
+  },
   openGraph: {
     title: "Devangi Resin Studio",
     description: "Handcrafted resin homeware, botanical jewellery, and bespoke personalised gifts by Devangi.",

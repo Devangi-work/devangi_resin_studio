@@ -37,7 +37,7 @@ export async function POST(
     if (cancelledOrder.customerEmail) {
       await sendBrevoEmail({
         to: [{ email: cancelledOrder.customerEmail, name: cancelledOrder.customerName }],
-        subject: `Order Cancelled: ${cancelledOrder.orderNumber} - Aura Resin Art Studio`,
+        subject: `Order Cancelled: ${cancelledOrder.orderNumber} - Devangi Resin Studio`,
         htmlContent: `
           <div style="font-family: sans-serif; padding: 24px; color: #2C332D;">
             <h2>Order Cancellation Confirmation</h2>
@@ -47,7 +47,7 @@ export async function POST(
             <p>If you paid via UPI, your payment will be refunded to your source UPI account within 24-48 business hours.</p>
             <p>If you have any questions, feel free to contact us at support.</p>
             <br>
-            <p>Warm regards,<br>Aura Resin Art Studio</p>
+            <p>Warm regards,<br>Devangi Resin Studio</p>
           </div>
         `,
       }).catch((e) => console.error("Cancellation email error:", e));

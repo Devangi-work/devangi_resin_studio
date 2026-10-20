@@ -1,0 +1,50 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - complementary [ref=e3]:
+      - generic [ref=e4]:
+        - link "Devangi Resin Studio Logo DEVANGI RESIN STUDIO View Live Store" [ref=e6] [cursor=pointer]:
+          - /url: /
+          - img "Devangi Resin Studio Logo" [ref=e7]
+          - generic [ref=e8]:
+            - generic [ref=e9]: DEVANGI RESIN STUDIO
+            - generic [ref=e10]: View Live Store
+        - navigation [ref=e16]:
+          - link "Dashboard" [ref=e17] [cursor=pointer]:
+            - /url: /admin/dashboard
+          - link "Products" [ref=e24] [cursor=pointer]:
+            - /url: /admin/products
+          - link "Categories" [ref=e30] [cursor=pointer]:
+            - /url: /admin/categories
+          - link "Orders" [ref=e37] [cursor=pointer]:
+            - /url: /admin/orders
+          - link "Inventory" [ref=e42] [cursor=pointer]:
+            - /url: /admin/inventory
+          - link "Coupons" [ref=e54] [cursor=pointer]:
+            - /url: /admin/coupons
+          - link "Customers" [ref=e59] [cursor=pointer]:
+            - /url: /admin/customers
+          - link "Media Library" [ref=e66] [cursor=pointer]:
+            - /url: /admin/media
+          - link "Store Settings" [ref=e72] [cursor=pointer]:
+            - /url: /admin/settings
+      - generic [ref=e77]:
+        - 'button "Theme: light Mode Switch" [ref=e78]':
+          - generic [ref=e79]:
+            - generic [ref=e86]: "Theme:"
+            - generic [ref=e87]: light Mode
+          - generic [ref=e88]: Switch
+        - generic "Click to manage admin profile & avatar" [ref=e89] [cursor=pointer]:
+          - generic [ref=e90]: A
+          - generic [ref=e97]:
+            - paragraph [ref=e99]: Administrator
+            - paragraph [ref=e100]: admin
+            - paragraph [ref=e101]:
+              - generic [ref=e102]: Change Photo
+        - button "Logout" [ref=e103]
+    - main [ref=e108]:
+      - generic [ref=e111]:
+        - generic [ref=e112]:
+          - heading "Category Management" [level=1] [ref=e113]
+          - paragraph [ref=e114]: Organize handmade resin art collections and storefront navigation.
+        - button "Add New Category" [ref=e115]
+  - button "Open Next.js Dev Tools" [ref=e123] [cursor=pointer]

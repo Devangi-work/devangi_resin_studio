@@ -440,7 +440,7 @@ export default function CustomerAccountPage() {
               </div>
               <h3 className="font-serif text-xl font-bold text-[#2C332D]">No Orders Placed Yet</h3>
               <p className="text-xs text-[#736C66] max-w-sm mx-auto leading-relaxed">
-                Explore our boutique collection of handmade resin coasters, bespoke letter keychains, floral bookmark sets, and ocean trays.
+                Explore our boutique collection of handmade resin coasters, bespoke letter keychains, botanical phone charms, and ocean trays.
               </p>
               <Link
                 href="/shop"

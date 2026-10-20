@@ -14,10 +14,20 @@ const isLiveNeonConfigured = Boolean(
 const sql = isLiveNeonConfigured ? neon(process.env.DATABASE_URL!) : null;
 export const db = sql ? drizzle(sql, { schema }) : null;
 
-// Ensure new columns exist on startup without requiring manual migration
+// Ensure new columns and tables exist on startup without requiring manual migration
 if (sql) {
   sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_screenshot_url TEXT;`.catch(() => {});
   sql`ALTER TABLE customers ADD COLUMN IF NOT EXISTS avatar_url TEXT;`.catch(() => {});
+  sql`ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS avatar_url TEXT;`.catch(() => {});
+  sql`CREATE TABLE IF NOT EXISTS media_items (
+    id TEXT PRIMARY KEY,
+    file_name TEXT NOT NULL,
+    url TEXT NOT NULL,
+    file_size INTEGER DEFAULT 0,
+    mime_type TEXT DEFAULT 'image/png',
+    alt_text TEXT DEFAULT '',
+    created_at TIMESTAMP DEFAULT NOW()
+  );`.catch(() => {});
 }
 
 // =========================================================================
@@ -33,6 +43,7 @@ interface StoreState {
   inventoryMovements: any[];
   siteSettings: any;
   customRequests: any[];
+  mediaItems: any[];
 }
 
 const globalForStore = globalThis as unknown as {
@@ -45,6 +56,7 @@ function getInitialStoreState(): StoreState {
     products: JSON.parse(JSON.stringify(initialProducts)),
     orders: JSON.parse(JSON.stringify(initialOrders)),
     coupons: JSON.parse(JSON.stringify(initialCoupons)),
+    mediaItems: [],
     inventoryMovements: [
       {
         id: "mov_1",
@@ -324,7 +336,10 @@ export const dbStore = {
       }
     }
     if (prods.length === 0) {
-      prods = [...store.products];
+      prods = store.products.map((p) => ({
+        ...p,
+        category: p.category || store.categories.find((c) => c.id === p.categoryId),
+      }));
     }
 
     // Status filter
@@ -357,10 +372,10 @@ export const dbStore = {
 
     // Featured / Bestseller
     if (filters?.isFeatured !== undefined) {
-      prods = prods.filter((p) => p.isFeatured === filters.isFeatured);
+      prods = prods.filter((p) => Boolean(p.isFeatured) === Boolean(filters.isFeatured));
     }
     if (filters?.isBestseller !== undefined) {
-      prods = prods.filter((p) => p.isBestseller === filters.isBestseller);
+      prods = prods.filter((p) => Boolean(p.isBestseller) === Boolean(filters.isBestseller));
     }
 
     // Price range
@@ -543,7 +558,7 @@ export const dbStore = {
             materials, dispatch_time_days, seo_title, seo_description, created_at, updated_at
           ) VALUES (
             ${id}, ${data.name}, ${slug}, ${data.shortDescription || null}, ${data.description},
-            ${data.categoryId}, ${sku}, ${data.productType || 'ready_made'}, ${data.status || 'draft'},
+            ${data.categoryId}, ${sku}, ${data.productType || 'ready_made'}, ${data.status || 'published'},
             ${Boolean(data.isFeatured)}, ${Boolean(data.isBestseller)},
             ${regularPrice}, ${salePrice}, ${costPrice},
             ${data.currency || 'INR'}, ${data.trackInventory !== false}, ${stockQuantity},
@@ -1818,25 +1833,260 @@ export const dbStore = {
     });
   },
 
-  // ---------------- DASHBOARD ANALYTICS ----------------
+  // ---------------- MEDIA LIBRARY ----------------
+  async getMediaItems() {
+    if (sql) {
+      try {
+        const rows = await sql`
+          SELECT 
+            id, file_name as "fileName", url, 
+            file_size as "fileSize", mime_type as "mimeType", 
+            alt_text as "altText", created_at as "createdAt"
+          FROM media_items
+          ORDER BY created_at DESC;
+        `;
+        if (rows && rows.length > 0) {
+          // Strictly deduplicate by URL so each asset is shown only once
+          const uniqueItems: any[] = [];
+          const seen = new Set<string>();
+          for (const item of rows) {
+            const cleanUrl = item.url?.trim();
+            if (cleanUrl && !seen.has(cleanUrl)) {
+              seen.add(cleanUrl);
+              uniqueItems.push(item);
+            }
+          }
+          return uniqueItems;
+        }
+
+        // Auto-seed media library from existing product and category images if table is empty
+        const prodImages = await sql`SELECT DISTINCT image_url, alt_text FROM product_images WHERE image_url IS NOT NULL AND image_url != '';`;
+        const catImages = await sql`SELECT DISTINCT image_url, name as alt_text FROM categories WHERE image_url IS NOT NULL AND image_url != '';`;
+        const initialSeed = [...prodImages, ...catImages];
+        const insertedUrls = new Set<string>();
+
+        for (let i = 0; i < initialSeed.length; i++) {
+          const item = initialSeed[i];
+          const rawUrl = item.image_url?.trim();
+          if (!rawUrl || insertedUrls.has(rawUrl)) continue;
+          insertedUrls.add(rawUrl);
+
+          const id = `media_init_${i}`;
+          const fileName = rawUrl.split("/").pop()?.split("?")[0] || `asset_${i}.png`;
+          try {
+            await sql`
+              INSERT INTO media_items (id, file_name, url, file_size, mime_type, alt_text, created_at)
+              VALUES (${id}, ${fileName}, ${rawUrl}, 0, 'image/png', ${item.alt_text || ''}, NOW())
+              ON CONFLICT (url) DO NOTHING;
+            `;
+          } catch {
+            // Ignore conflict
+          }
+        }
+
+        const seededRows = await sql`
+          SELECT 
+            id, file_name as "fileName", url, 
+            file_size as "fileSize", mime_type as "mimeType", 
+            alt_text as "altText", created_at as "createdAt"
+          FROM media_items
+          ORDER BY created_at DESC;
+        `;
+        const uniqueSeeded: any[] = [];
+        const seenSeeded = new Set<string>();
+        for (const item of (seededRows || [])) {
+          const cleanUrl = item.url?.trim();
+          if (cleanUrl && !seenSeeded.has(cleanUrl)) {
+            seenSeeded.add(cleanUrl);
+            uniqueSeeded.push(item);
+          }
+        }
+        return uniqueSeeded;
+      } catch (e) {
+        console.error("DB getMediaItems error:", e);
+      }
+    }
+
+    // Memory store fallback
+    const uniqueMem: any[] = [];
+    const seenMem = new Set<string>();
+    for (const item of (store.mediaItems || [])) {
+      if (item.url && !seenMem.has(item.url)) {
+        seenMem.add(item.url);
+        uniqueMem.push(item);
+      }
+    }
+    return uniqueMem;
+  },
+
+  async addMediaItem(data: { id?: string; fileName?: string; url: string; fileSize?: number; mimeType?: string; altText?: string }) {
+    const cleanUrl = data.url?.trim();
+    if (!cleanUrl) return null;
+
+    if (sql) {
+      try {
+        const existing = await sql`
+          SELECT 
+            id, file_name as "fileName", url, 
+            file_size as "fileSize", mime_type as "mimeType", 
+            alt_text as "altText", created_at as "createdAt"
+          FROM media_items
+          WHERE url = ${cleanUrl}
+          LIMIT 1;
+        `;
+        if (existing && existing.length > 0) {
+          return existing[0];
+        }
+
+        const id = data.id || `media_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+        const fileName = data.fileName || cleanUrl.split("/").pop()?.split("?")[0] || "media_asset.png";
+        const fileSize = Number(data.fileSize) || 0;
+        const mimeType = data.mimeType || "image/png";
+        const altText = data.altText || "";
+
+        await sql`
+          INSERT INTO media_items (id, file_name, url, file_size, mime_type, alt_text, created_at)
+          VALUES (${id}, ${fileName}, ${cleanUrl}, ${fileSize}, ${mimeType}, ${altText}, NOW())
+          ON CONFLICT (url) DO UPDATE SET
+            file_name = EXCLUDED.file_name,
+            alt_text = EXCLUDED.alt_text;
+        `;
+
+        const inserted = {
+          id,
+          fileName,
+          url: cleanUrl,
+          fileSize,
+          mimeType,
+          altText,
+          createdAt: new Date(),
+        };
+
+        const memIdx = store.mediaItems.findIndex((m) => m.url === cleanUrl);
+        if (memIdx >= 0) {
+          store.mediaItems[memIdx] = inserted;
+        } else {
+          store.mediaItems.unshift(inserted);
+        }
+        return inserted;
+      } catch (e) {
+        console.error("DB addMediaItem error:", e);
+      }
+    }
+
+    const id = data.id || `media_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    const fileName = data.fileName || cleanUrl.split("/").pop()?.split("?")[0] || "media_asset.png";
+    const newItem = {
+      id,
+      fileName,
+      url: cleanUrl,
+      fileSize: Number(data.fileSize) || 0,
+      mimeType: data.mimeType || "image/png",
+      altText: data.altText || "",
+      createdAt: new Date(),
+    };
+
+    const memIdx = store.mediaItems.findIndex((m) => m.url === cleanUrl);
+    if (memIdx >= 0) {
+      store.mediaItems[memIdx] = newItem;
+    } else {
+      store.mediaItems.unshift(newItem);
+    }
+    return newItem;
+  },
+
+  async deleteMediaItem(id: string) {
+    if (sql) {
+      try {
+        await sql`DELETE FROM media_items WHERE id = ${id};`;
+      } catch (e) {
+        console.error("DB deleteMediaItem error:", e);
+      }
+    }
+    store.mediaItems = store.mediaItems.filter((m) => m.id !== id);
+    return true;
+  },
+
+  // ---------------- DASHBOARD ANALYTICS (REAL LIVE NEON DATA) ----------------
   async getDashboardStats() {
-    const paidOrders = store.orders.filter((o) => o.paymentStatus === "paid");
-    const totalRevenue = paidOrders.reduce((sum, o) => sum + Number(o.totalAmount), 0);
-    const awaitingPayment = store.orders.filter((o) => o.paymentStatus === "pending").length;
-    const awaitingFulfilment = store.orders.filter(
+    let ordersList: any[] = [];
+    let productsList: any[] = [];
+
+    if (sql) {
+      try {
+        const ordRows = await sql`
+          SELECT 
+            id,
+            order_number as "orderNumber",
+            customer_id as "customerId",
+            customer_name as "customerName",
+            customer_email as "customerEmail",
+            customer_phone as "customerPhone",
+            shipping_city as "shippingCity",
+            shipping_state as "shippingState",
+            subtotal,
+            discount_amount as "discountAmount",
+            shipping_charge as "shippingCharge",
+            tax_amount as "taxAmount",
+            total_amount as "totalAmount",
+            order_status as "orderStatus",
+            payment_status as "paymentStatus",
+            payment_method as "paymentMethod",
+            upi_transaction_id as "upiTransactionId",
+            created_at as "createdAt"
+          FROM orders
+          ORDER BY created_at DESC;
+        `;
+        ordersList = ordRows || [];
+
+        const prodRows = await sql`
+          SELECT 
+            id, name, slug, sku,
+            regular_price as "regularPrice", sale_price as "salePrice",
+            track_inventory as "trackInventory", stock_quantity as "stockQuantity",
+            low_stock_threshold as "lowStockThreshold", status,
+            created_at as "createdAt"
+          FROM products
+          WHERE status != 'archived'
+          ORDER BY stock_quantity ASC;
+        `;
+        productsList = prodRows || [];
+      } catch (e) {
+        console.error("DB getDashboardStats error:", e);
+      }
+    }
+
+    if (ordersList.length === 0 && !sql) {
+      ordersList = [...store.orders];
+    }
+    if (productsList.length === 0 && !sql) {
+      productsList = [...store.products];
+    }
+
+    const paidOrders = ordersList.filter((o) => o.paymentStatus === "paid");
+    const totalRevenue = paidOrders.reduce((sum, o) => sum + Number(o.totalAmount || 0), 0);
+    const awaitingPayment = ordersList.filter(
+      (o) => o.paymentStatus === "pending" || o.paymentStatus === "unpaid" || o.paymentStatus === "pending_verification"
+    ).length;
+    const awaitingFulfilment = ordersList.filter(
       (o) => o.paymentStatus === "paid" && ["confirmed", "processing", "ready_to_ship"].includes(o.orderStatus)
     ).length;
-    const completedOrders = store.orders.filter((o) => o.orderStatus === "delivered").length;
+    const completedOrders = ordersList.filter((o) => o.orderStatus === "delivered").length;
 
-    const lowStockProducts = store.products.filter(
-      (p) => p.trackInventory && p.stockQuantity <= p.lowStockThreshold && p.stockQuantity > 0
+    const lowStockProducts = productsList.filter(
+      (p) => p.trackInventory && Number(p.stockQuantity) <= Number(p.lowStockThreshold) && Number(p.stockQuantity) > 0
     );
-    const outOfStockProducts = store.products.filter(
-      (p) => p.trackInventory && p.stockQuantity <= 0
+    const outOfStockProducts = productsList.filter(
+      (p) => p.trackInventory && Number(p.stockQuantity) <= 0
+    );
+
+    // Watchlist contains all items requiring inventory attention (both low and out of stock)
+    const watchlist = productsList.filter(
+      (p) => p.trackInventory && Number(p.stockQuantity) <= Number(p.lowStockThreshold)
     );
 
     return {
-      totalOrders: store.orders.length,
+      totalOrders: ordersList.length,
       paidOrdersCount: paidOrders.length,
       awaitingPayment,
       awaitingFulfilment,
@@ -1844,8 +2094,8 @@ export const dbStore = {
       totalRevenue: Number(totalRevenue.toFixed(2)),
       lowStockCount: lowStockProducts.length,
       outOfStockCount: outOfStockProducts.length,
-      recentOrders: store.orders.slice(0, 5),
-      lowStockProducts: lowStockProducts.slice(0, 5),
+      recentOrders: ordersList.slice(0, 10),
+      lowStockProducts: watchlist.slice(0, 10),
       recentMovements: store.inventoryMovements.slice(0, 5),
     };
   },

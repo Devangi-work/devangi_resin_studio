@@ -15,6 +15,7 @@ import {
   ArrowLeft,
   Gift,
 } from "lucide-react";
+import { MediaPickerModal } from "@/components/admin/MediaPickerModal";
 
 export interface ProductFormProps {
   initialData?: any;
@@ -39,7 +40,7 @@ export function ProductForm({ initialData, isEditing = false }: ProductFormProps
     categoryId: initialData?.categoryId || "",
     sku: initialData?.sku || "",
     productType: initialData?.productType || "ready_made",
-    status: initialData?.status || "draft",
+    status: initialData?.status || "published",
     isFeatured: initialData?.isFeatured || false,
     isBestseller: initialData?.isBestseller || false,
 
@@ -84,6 +85,7 @@ export function ProductForm({ initialData, isEditing = false }: ProductFormProps
   });
 
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [isMediaPickerOpen, setIsMediaPickerOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
@@ -113,44 +115,64 @@ export function ProductForm({ initialData, isEditing = false }: ProductFormProps
     }));
   };
 
-  // Image Upload handler (Vercel Blob)
+  // Image Upload handler (Vercel Blob + Media Library)
   const handleImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
     setUploadingImage(true);
     setErrorMessage("");
 
     try {
-      const form = new FormData();
-      form.append("file", file);
+      const newImgs: any[] = [];
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const form = new FormData();
+        form.append("file", file);
 
-      const res = await fetch("/api/admin/upload", {
-        method: "POST",
-        body: form,
-      });
+        const res = await fetch("/api/admin/upload", {
+          method: "POST",
+          body: form,
+        });
 
-      const data = await res.json();
-      if (res.ok && data.url) {
-        const newImg = {
-          id: `img_${Date.now()}`,
-          imageUrl: data.url,
-          altText: formData.name || "Resin Art Product",
-          isPrimary: formData.images.length === 0,
-          displayOrder: formData.images.length + 1,
-        };
+        const data = await res.json();
+        if (res.ok && data.url) {
+          newImgs.push({
+            id: `img_${Date.now()}_${i}`,
+            imageUrl: data.url,
+            altText: formData.name || file.name || "Resin Art Product",
+            isPrimary: formData.images.length === 0 && newImgs.length === 0,
+            displayOrder: formData.images.length + newImgs.length + 1,
+          });
+        }
+      }
+
+      if (newImgs.length > 0) {
         setFormData((prev) => ({
           ...prev,
-          images: [...prev.images, newImg],
+          images: [...prev.images, ...newImgs],
         }));
-      } else {
-        setErrorMessage(data.error || "Image upload failed.");
       }
     } catch {
       setErrorMessage("Upload request failed.");
     } finally {
       setUploadingImage(false);
+      e.target.value = "";
     }
+  };
+
+  const handleSelectFromLibrary = (selected: { url: string; altText?: string }[]) => {
+    const newImgs = selected.map((item, idx) => ({
+      id: `img_${Date.now()}_${idx}`,
+      imageUrl: item.url,
+      altText: item.altText || formData.name || "Resin Art Product",
+      isPrimary: formData.images.length === 0 && idx === 0,
+      displayOrder: formData.images.length + idx + 1,
+    }));
+    setFormData((prev) => ({
+      ...prev,
+      images: [...prev.images, ...newImgs],
+    }));
   };
 
   const removeImage = (index: number) => {
@@ -451,8 +473,8 @@ export function ProductForm({ initialData, isEditing = false }: ProductFormProps
                   onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                   className="w-full px-3.5 py-2.5 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
                 >
-                  <option value="draft">Draft (Hidden)</option>
                   <option value="published">Published (Live on Store)</option>
+                  <option value="draft">Draft (Hidden)</option>
                   <option value="archived">Archived (Delisted)</option>
                 </select>
               </div>
@@ -602,17 +624,28 @@ export function ProductForm({ initialData, isEditing = false }: ProductFormProps
                   Upload high-resolution photography. Set primary image and reorder.
                 </p>
               </div>
-              <label className="px-4 py-2 bg-[#2C332D] text-white rounded-xl text-xs font-semibold flex items-center space-x-1.5 cursor-pointer hover:bg-[#3D473E] shadow-sm">
-                <Upload className="w-3.5 h-3.5" />
-                <span>{uploadingImage ? "Uploading..." : "Upload New Image"}</span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleImageFileChange}
-                  disabled={uploadingImage}
-                />
-              </label>
+              <div className="flex items-center space-x-2">
+                <button
+                  type="button"
+                  onClick={() => setIsMediaPickerOpen(true)}
+                  className="px-4 py-2 bg-[#FAF8F5] border border-[#E8E0D5] hover:border-[#D4AF37] text-[#2C332D] rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition-colors shadow-xs"
+                >
+                  <ImageIcon className="w-3.5 h-3.5 text-[#B8972E]" />
+                  <span>Choose from Media Library</span>
+                </button>
+                <label className="px-4 py-2 bg-[#2C332D] text-white rounded-xl text-xs font-semibold flex items-center space-x-1.5 cursor-pointer hover:bg-[#3D473E] shadow-sm transition-all">
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>{uploadingImage ? "Uploading..." : "Upload Images"}</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={handleImageFileChange}
+                    disabled={uploadingImage}
+                  />
+                </label>
+              </div>
             </div>
 
             {formData.images.length === 0 ? (
@@ -932,7 +965,7 @@ export function ProductForm({ initialData, isEditing = false }: ProductFormProps
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. Handcrafted Ocean Wave Resin Coasters Set of 4 | Aura Resin"
+                  placeholder="e.g. Handcrafted Ocean Wave Resin Coasters Set of 4 | Devangi Resin Studio"
                   value={formData.seoTitle}
                   onChange={(e) => setFormData({ ...formData, seoTitle: e.target.value })}
                   className="w-full px-3.5 py-2.5 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl"
@@ -955,6 +988,15 @@ export function ProductForm({ initialData, isEditing = false }: ProductFormProps
           </div>
         )}
       </form>
+
+      {/* Media Picker Modal */}
+      <MediaPickerModal
+        isOpen={isMediaPickerOpen}
+        onClose={() => setIsMediaPickerOpen(false)}
+        multiple={true}
+        title="Select Product Images from Library"
+        onSelect={handleSelectFromLibrary}
+      />
     </div>
   );
 }

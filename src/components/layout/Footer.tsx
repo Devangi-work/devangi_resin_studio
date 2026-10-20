@@ -56,13 +56,20 @@ export function Footer() {
           
           {/* Brand Info */}
           <div className="lg:col-span-2 space-y-4">
-            <Link href="/" className="inline-block">
-              <span className="font-serif text-2xl tracking-widest font-bold text-[#FAF8F5]">
-                {settings?.storeName || "AURA"}
-              </span>
-              <span className="block text-[9px] uppercase tracking-[0.25em] text-[#D4AF37] -mt-1 font-sans">
-                {settings?.storeTagline || "Resin Art Studio"}
-              </span>
+            <Link href="/" className="flex items-center space-x-3 group">
+              <img
+                src="/images/logo/resin_logo.png"
+                alt="Devangi Resin Studio"
+                className="w-12 h-12 object-contain drop-shadow"
+              />
+              <div>
+                <span className="font-serif text-2xl tracking-widest font-bold text-[#FAF8F5] block">
+                  {settings?.storeName || "DEVANGI"}
+                </span>
+                <span className="block text-[9px] uppercase tracking-[0.25em] text-[#D4AF37] -mt-1 font-sans">
+                  {settings?.storeTagline || "Resin Art Studio"}
+                </span>
+              </div>
             </Link>
             <p className="text-sm text-[#A69E96] leading-relaxed max-w-sm">
               {settings?.storeDescription ||
@@ -70,7 +77,7 @@ export function Footer() {
             </p>
             <div className="flex items-center space-x-3 pt-2">
               <a
-                href={settings?.instagramUrl || "https://instagram.com/auraresinart"}
+                href={settings?.instagramUrl || "https://instagram.com/devangiresinstudio"}
                 target="_blank"
                 rel="noreferrer"
                 className="w-9 h-9 rounded-full bg-[#2C332D] flex items-center justify-center text-[#FAF8F5] hover:text-[#D4AF37] hover:bg-[#3D473E] transition-colors"
@@ -79,7 +86,7 @@ export function Footer() {
                 <Instagram className="w-4 h-4" />
               </a>
               <a
-                href={`https://wa.me/${(settings?.whatsappNumber || "919876543210").replace(/[^0-9]/g, "")}?text=Hi%20${encodeURIComponent(settings?.storeName || "Aura Resin Art")},%20I%20have%20an%20inquiry%20about%20a%20custom%20order!`}
+                href={`https://wa.me/${(settings?.whatsappNumber || "919876543210").replace(/[^0-9]/g, "")}?text=Hi%20${encodeURIComponent(settings?.storeName || "Devangi Resin Studio")},%20I%20have%20an%20inquiry%20about%20a%20custom%20order!`}
                 target="_blank"
                 rel="noreferrer"
                 className="w-9 h-9 rounded-full bg-[#25D366]/20 text-[#25D366] flex items-center justify-center hover:bg-[#25D366] hover:text-white transition-colors"
@@ -112,8 +119,8 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/shop?category=resin-bookmarks" className="hover:text-white transition-colors">
-                  Golden Foil Bookmarks
+                <Link href="/shop?category=resin-phone-charms" className="hover:text-white transition-colors">
+                  Resin Phone Charms
                 </Link>
               </li>
               <li>
@@ -210,7 +217,7 @@ export function Footer() {
             <div className="pt-2 text-xs text-[#A69E96] space-y-1">
               <p className="flex items-center space-x-2">
                 <Mail className="w-3.5 h-3.5 text-[#D4AF37]" />
-                <span>{settings?.contactEmail || "hello@auraresinart.com"}</span>
+                <span>{settings?.contactEmail || "hello@devangiresinstudio.com"}</span>
               </p>
               <p className="flex items-center space-x-2">
                 <Phone className="w-3.5 h-3.5 text-[#D4AF37]" />

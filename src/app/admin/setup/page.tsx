@@ -9,7 +9,7 @@ export default function AdminSetupPage() {
   const router = useRouter();
   const [formData, setFormData] = useState({
     fullName: "Resin Studio Owner",
-    email: "admin@auraresinart.com",
+    email: "admin@devangiresinstudio.com",
     password: "",
     setupKey: "resin-art-admin-bootstrap-secret-2026",
   });
@@ -46,11 +46,15 @@ export default function AdminSetupPage() {
       <div className="bg-white p-8 rounded-3xl border border-[#E8E0D5] shadow-xl space-y-6">
         
         <div className="text-center space-y-2">
-          <div className="w-14 h-14 bg-[#FAF4EC] rounded-full flex items-center justify-center text-[#B8972E] mx-auto border border-[#E8E0D5]">
-            <KeyRound className="w-7 h-7" />
+          <div className="w-16 h-16 mx-auto flex items-center justify-center">
+            <img
+              src="/images/logo/resin_logo.png"
+              alt="Devangi Resin Studio Logo"
+              className="w-16 h-16 object-contain drop-shadow"
+            />
           </div>
           <h1 className="font-serif text-2xl font-bold text-[#2C332D]">
-            One-Time Admin Setup
+            Devangi Resin Studio Setup
           </h1>
           <p className="text-xs text-[#736C66]">
             Create your primary owner administrator account. Requires the ADMIN_SETUP_KEY from your .env file.
@@ -91,7 +95,7 @@ export default function AdminSetupPage() {
               <input
                 type="email"
                 required
-                placeholder="admin@auraresinart.com"
+                placeholder="admin@devangiresinstudio.com"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 className="w-full pl-9 pr-3.5 py-2.5 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"

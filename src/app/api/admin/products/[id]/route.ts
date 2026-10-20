@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { requireAdminAuth } from "@/lib/auth";
 import { dbStore } from "@/lib/db";
 import { productSchema } from "@/lib/validations";
@@ -53,6 +54,11 @@ export async function PUT(
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
 
+    try {
+      revalidatePath("/");
+      revalidatePath("/shop");
+    } catch {}
+
     return NextResponse.json({ success: true, product: updated });
   } catch (err: any) {
     if (err.message?.includes("Unauthorized")) {
@@ -70,6 +76,11 @@ export async function DELETE(
     await requireAdminAuth();
     const { id } = await params;
     const result = await dbStore.deleteProduct(id);
+
+    try {
+      revalidatePath("/");
+      revalidatePath("/shop");
+    } catch {}
 
     return NextResponse.json(result);
   } catch (err: any) {

@@ -96,3 +96,146 @@
 .group:hover .product-card-image {
   transform: scale(1.05);
 }
+
+/* ==========================================================
+   Admin Dark Theme System
+   Obsidian resin charcoal & burnished gold palette
+   ========================================================== */
+
+html.admin-dark,
+body.admin-dark,
+.admin-dark {
+  color-scheme: dark;
+}
+
+html.admin-dark body,
+html.admin-dark .admin-main-wrapper,
+.admin-dark .admin-main-wrapper {
+  background-color: #0E120F !important;
+  color: #EDE8E1 !important;
+}
+
+html.admin-dark aside,
+.admin-dark aside {
+  background-color: #121714 !important;
+  border-color: #222C25 !important;
+}
+
+html.admin-dark .admin-mobile-header,
+.admin-dark .admin-mobile-header {
+  background-color: #121714 !important;
+  border-color: #222C25 !important;
+}
+
+/* All admin cards and containers */
+html.admin-dark .admin-main-wrapper div[class*="bg-white"],
+.admin-dark .admin-main-wrapper div[class*="bg-white"],
+html.admin-dark .admin-modal-box,
+.admin-dark .admin-modal-box {
+  background-color: #161D18 !important;
+  border-color: #263328 !important;
+  color: #EDE8E1 !important;
+}
+
+/* Subtle surfaces */
+html.admin-dark .admin-main-wrapper div[class*="bg-[#FAF8F5]"],
+.admin-dark .admin-main-wrapper div[class*="bg-[#FAF8F5]"],
+html.admin-dark .admin-main-wrapper div[class*="bg-[#FAF4EC]"],
+.admin-dark .admin-main-wrapper div[class*="bg-[#FAF4EC]"],
+html.admin-dark .admin-main-wrapper div[class*="bg-[#F7F5F0]"],
+.admin-dark .admin-main-wrapper div[class*="bg-[#F7F5F0]"] {
+  background-color: #111613 !important;
+  border-color: #263328 !important;
+}
+
+/* Headings and primary text */
+html.admin-dark .admin-main-wrapper h1,
+html.admin-dark .admin-main-wrapper h2,
+html.admin-dark .admin-main-wrapper h3,
+html.admin-dark .admin-main-wrapper [class*="text-[#2C332D]"],
+.admin-dark .admin-main-wrapper [class*="text-[#2C332D]"] {
+  color: #F4EFEB !important;
+}
+
+/* Secondary text */
+html.admin-dark .admin-main-wrapper [class*="text-[#736C66]"],
+.admin-dark .admin-main-wrapper [class*="text-[#736C66]"],
+html.admin-dark .admin-main-wrapper [class*="text-[#8C7A72]"],
+.admin-dark .admin-main-wrapper [class*="text-[#8C7A72]"],
+html.admin-dark .admin-main-wrapper [class*="text-[#A69E96]"],
+.admin-dark .admin-main-wrapper [class*="text-[#A69E96]"] {
+  color: #9EA8A0 !important;
+}
+
+/* Borders */
+html.admin-dark .admin-main-wrapper [class*="border-[#E8E0D5]"],
+.admin-dark .admin-main-wrapper [class*="border-[#E8E0D5]"],
+html.admin-dark .admin-main-wrapper [class*="border-[#F4EBE6]"],
+.admin-dark .admin-main-wrapper [class*="border-[#F4EBE6]"],
+html.admin-dark .admin-main-wrapper [class*="border-[#333A35]"],
+.admin-dark .admin-main-wrapper [class*="border-[#333A35]"] {
+  border-color: #263328 !important;
+}
+
+/* Inputs, Textareas, Selects */
+html.admin-dark .admin-main-wrapper input:not([type="checkbox"]):not([type="radio"]),
+.admin-dark .admin-main-wrapper input:not([type="checkbox"]):not([type="radio"]),
+html.admin-dark .admin-main-wrapper select,
+.admin-dark .admin-main-wrapper select,
+html.admin-dark .admin-main-wrapper textarea,
+.admin-dark .admin-main-wrapper textarea {
+  background-color: #121814 !important;
+  color: #F4EFEB !important;
+  border-color: #2C3A2F !important;
+}
+
+html.admin-dark .admin-main-wrapper input:focus,
+html.admin-dark .admin-main-wrapper select:focus,
+html.admin-dark .admin-main-wrapper textarea:focus {
+  border-color: #D4AF37 !important;
+}
+
+/* Table styling */
+html.admin-dark .admin-main-wrapper thead,
+html.admin-dark .admin-main-wrapper thead tr,
+html.admin-dark .admin-main-wrapper thead th {
+  background-color: #111613 !important;
+  color: #D4AF37 !important;
+  border-color: #263328 !important;
+}
+
+html.admin-dark .admin-main-wrapper td {
+  border-color: #263328 !important;
+  color: #EDE8E1 !important;
+}
+
+html.admin-dark .admin-main-wrapper tr:hover td {
+  background-color: #1A221C !important;
+}
+
+/* Primary dark mode buttons (rich amber gold) */
+html.admin-dark .admin-main-wrapper button[class*="bg-[#2C332D]"],
+.admin-dark .admin-main-wrapper button[class*="bg-[#2C332D]"] {
+  background-color: #D4AF37 !important;
+  color: #121714 !important;
+  font-weight: 700 !important;
+}
+
+html.admin-dark .admin-main-wrapper button[class*="bg-[#2C332D]"]:hover,
+.admin-dark .admin-main-wrapper button[class*="bg-[#2C332D]"]:hover {
+  background-color: #E2BC44 !important;
+}
+
+/* White buttons (edit, cancel, view) */
+html.admin-dark .admin-main-wrapper button[class*="bg-white"],
+.admin-dark .admin-main-wrapper button[class*="bg-white"] {
+  background-color: #1E2721 !important;
+  color: #EDE8E1 !important;
+  border-color: #2C3A2F !important;
+}
+
+html.admin-dark .admin-main-wrapper button[class*="bg-white"]:hover,
+.admin-dark .admin-main-wrapper button[class*="bg-white"]:hover {
+  background-color: #26332A !important;
+}
+

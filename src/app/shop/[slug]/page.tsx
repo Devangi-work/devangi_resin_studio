@@ -13,14 +13,14 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
   const product = await dbStore.getProductBySlug(slug);
 
   if (!product) {
-    return { title: "Product Not Found | Aura Resin Art" };
+    return { title: "Product Not Found | Devangi Resin Studio" };
   }
 
   const price = Number(product.salePrice || product.regularPrice);
   const primaryImage = product.images?.[0]?.imageUrl || "";
 
   return {
-    title: `${product.name} | Aura Resin Art Studio`,
+    title: `${product.name} | Devangi Resin Studio`,
     description: product.shortDescription || product.description.slice(0, 160),
     openGraph: {
       title: product.name,
