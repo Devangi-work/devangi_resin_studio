@@ -3,7 +3,7 @@ import Link from "next/link";
 import { dbStore } from "@/lib/db";
 import { ProductCard } from "@/components/product/ProductCard";
 import { ShopFilters } from "@/components/shop/ShopFilters";
-import { Filter, Search, X, SlidersHorizontal, ArrowUpDown } from "lucide-react";
+import { Filter, Search, X, SlidersHorizontal, ArrowUpDown, Sparkles } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -16,11 +16,14 @@ interface ShopPageProps {
     max_price?: string;
     in_stock?: string;
     page?: string;
+    festival?: string;
+    filter?: string;
   }>;
 }
 
 export default async function ShopPage({ searchParams }: ShopPageProps) {
   const params = await searchParams;
+  const isFestivalOnly = params.festival === "true" || params.filter === "festival";
   const categorySlug = params.category || undefined;
   const search = params.search || undefined;
   const sort = params.sort || "popularity";
@@ -33,7 +36,8 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
 
   const { products, total, totalPages } = await dbStore.getProducts({
     status: "published",
-    categorySlug,
+    categorySlug: isFestivalOnly ? undefined : categorySlug,
+    isFestivalSpecial: isFestivalOnly ? true : undefined,
     search,
     sort,
     minPrice,
@@ -58,18 +62,41 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
               <Link href="/" className="hover:text-[#3A1823]">Home</Link>
               <span>/</span>
               <span>Shop Boutique</span>
-              {activeCategory && (
+              {isFestivalOnly ? (
+                <>
+                  <span>/</span>
+                  <span className="font-bold text-[#8C1D38] flex items-center space-x-1">
+                    <Sparkles className="w-3 h-3 text-[#D4AF37]" />
+                    <span>Festive Specials</span>
+                  </span>
+                </>
+              ) : activeCategory ? (
                 <>
                   <span>/</span>
                   <span className="font-semibold text-[#3A1823]">{activeCategory.name}</span>
                 </>
-              )}
+              ) : null}
             </div>
-            <h1 className="font-serif text-3xl sm:text-4xl font-bold text-[#3A1823]">
-              {activeCategory ? activeCategory.name : "Handmade Resin Collection"}
+
+            <h1 className="font-serif text-3xl sm:text-4xl font-bold text-[#3A1823] flex items-center space-x-3">
+              {isFestivalOnly ? (
+                <>
+                  <span className="w-9 h-9 rounded-xl bg-gradient-to-r from-[#6A162B] to-[#3A1823] text-[#FFDF78] flex items-center justify-center shadow-sm">
+                    <Sparkles className="w-5 h-5" />
+                  </span>
+                  <span>Festive Special Editions</span>
+                </>
+              ) : activeCategory ? (
+                activeCategory.name
+              ) : (
+                "Handmade Resin Collection"
+              )}
             </h1>
-            <p className="text-xs text-[#7A5E68] mt-1 max-w-xl">
-              {activeCategory
+
+            <p className="text-xs text-[#7A5E68] mt-1.5 max-w-xl leading-relaxed">
+              {isFestivalOnly
+                ? "Discover our limited-edition celebratory keepsakes, floral frames, and geode clocks featuring exclusive festive discounts."
+                : activeCategory
                 ? activeCategory.description
                 : "Explore our complete range of handmade crystal geode coasters, floral jewellery, bespoke keychains, and personalized keepsake gifts."}
             </p>
@@ -84,20 +111,37 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
         <div className="flex flex-wrap items-center gap-2 pt-6">
           <Link
             href="/shop"
-            className={`text-xs px-3.5 py-1.5 rounded-full font-medium transition-all ${
-              !categorySlug
+            className={`text-xs px-4 py-2 rounded-full font-semibold transition-all ${
+              !categorySlug && !isFestivalOnly
                 ? "bg-[#3A1823] text-white shadow-sm"
                 : "bg-white border border-[#EFE3E7] text-[#3A1823] hover:bg-[#FAF0F3]"
             }`}
           >
             All Collections
           </Link>
+
+          {/* Dedicated Festive Specials Boutique Pill */}
+          <Link
+            href="/shop?festival=true"
+            className={`text-xs px-4 py-2 rounded-full font-bold transition-all flex items-center space-x-1.5 shadow-xs ${
+              isFestivalOnly
+                ? "bg-gradient-to-r from-[#6A162B] via-[#851E39] to-[#6A162B] text-[#FFDF78] ring-2 ring-[#D4AF37] shadow-md scale-105"
+                : "bg-gradient-to-r from-[#FAF0F3] to-[#FFF5F8] border-2 border-[#D4AF37]/70 text-[#6A162B] hover:border-[#D4AF37] hover:scale-102"
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />
+            <span>✨ Festive Specials</span>
+            <span className="text-[9px] bg-[#D4AF37] text-[#2D121C] px-1.5 py-0.2 rounded-full font-black">
+              DEALS
+            </span>
+          </Link>
+
           {categories.map((c) => (
             <Link
               key={c.id}
               href={`/shop?category=${c.slug}`}
-              className={`text-xs px-3.5 py-1.5 rounded-full font-medium transition-all ${
-                categorySlug === c.slug
+              className={`text-xs px-3.5 py-2 rounded-full font-medium transition-all ${
+                categorySlug === c.slug && !isFestivalOnly
                   ? "bg-[#3A1823] text-white shadow-sm"
                   : "bg-white border border-[#EFE3E7] text-[#3A1823] hover:bg-[#FAF0F3]"
               }`}
@@ -118,6 +162,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
             initialSearch={search}
             initialSort={sort}
             initialInStock={inStockOnly}
+            initialFestival={isFestivalOnly}
           />
         </React.Suspense>
 

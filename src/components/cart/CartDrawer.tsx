@@ -196,6 +196,17 @@ export function CartDrawer() {
                           <span>Gift Wrapped</span>
                         </span>
                       )}
+
+                      {item.isFestivalSpecial && (
+                        <span className="inline-flex items-center space-x-1 mt-1 text-[10px] bg-[#FFF0F4] text-[#800020] border border-[#D4AF37]/40 px-2 py-0.5 rounded font-bold">
+                          <Sparkles className="w-2.5 h-2.5 text-[#D4AF37]" />
+                          <span>
+                            {item.festivalDiscountPercentage
+                              ? `${String(item.festivalDiscountPercentage).replace(/%/g, "")}% Festive Deal`
+                              : "Festive Deal"}
+                          </span>
+                        </span>
+                      )}
                     </div>
 
                     <div className="flex items-center justify-between mt-2 pt-2 border-t border-[#F4EBE6]">
@@ -219,9 +230,16 @@ export function CartDrawer() {
                         </button>
                       </div>
 
-                      <span className="text-xs font-bold text-[#2C332D]">
-                        ₹{(item.price * item.quantity).toFixed(2)}
-                      </span>
+                      <div className="text-right">
+                        <span className="text-xs font-bold text-[#2C332D]">
+                          ₹{(item.price * item.quantity).toFixed(2)}
+                        </span>
+                        {item.originalPrice && item.originalPrice > item.price && (
+                          <span className="block text-[10px] text-[#A69E96] line-through">
+                            ₹{(item.originalPrice * item.quantity).toFixed(2)}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -278,6 +296,17 @@ export function CartDrawer() {
                   <span>Subtotal</span>
                   <span className="font-medium text-[#3A1823]">₹{subtotal.toFixed(2)}</span>
                 </div>
+                {items.some((i) => i.originalPrice && i.originalPrice > i.price) && (
+                  <div className="flex justify-between text-[#800020] font-semibold bg-[#FFF0F4] px-2 py-1 rounded-md border border-[#D4AF37]/30">
+                    <span className="flex items-center space-x-1">
+                      <Sparkles className="w-3 h-3 text-[#D4AF37]" />
+                      <span>Festive Deal Savings</span>
+                    </span>
+                    <span>
+                      -₹{items.reduce((sum, i) => i.originalPrice && i.originalPrice > i.price ? sum + (i.originalPrice - i.price) * i.quantity : sum, 0).toFixed(2)}
+                    </span>
+                  </div>
+                )}
                 {appliedCoupon && (
                   <div className="flex justify-between text-[#2E7D32]">
                     <span>Coupon Discount</span>

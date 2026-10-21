@@ -3,7 +3,7 @@
 import React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Search, X } from "lucide-react";
+import { Search, X, Sparkles } from "lucide-react";
 
 interface Category {
   id: string;
@@ -17,6 +17,7 @@ interface ShopFiltersProps {
   initialSearch?: string;
   initialSort?: string;
   initialInStock?: boolean;
+  initialFestival?: boolean;
 }
 
 export function ShopFilters({
@@ -25,6 +26,7 @@ export function ShopFilters({
   initialSearch = "",
   initialSort = "popularity",
   initialInStock = false,
+  initialFestival = false,
 }: ShopFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -58,6 +60,18 @@ export function ShopFilters({
     router.push(`/shop?${params.toString()}`);
   };
 
+  const handleFestivalToggle = (checked: boolean) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (checked) {
+      params.set("festival", "true");
+      params.delete("category");
+    } else {
+      params.delete("festival");
+      params.delete("filter");
+    }
+    router.push(`/shop?${params.toString()}`);
+  };
+
   return (
     <aside className="lg:col-span-1 space-y-6">
       <div className="bg-white p-5 rounded-2xl border border-[#EFE3E7] shadow-xs space-y-6">
@@ -76,6 +90,29 @@ export function ShopFilters({
             />
             <Search className="w-3.5 h-3.5 text-[#8C6E79] absolute left-3 top-3" />
           </form>
+        </div>
+
+        {/* Festive Specials Filter Section */}
+        <div className="p-3.5 rounded-xl bg-gradient-to-r from-[#FAF0F3] to-[#FFF5F8] border-2 border-[#D4AF37]/60 space-y-2 shadow-xs">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-black uppercase tracking-wider text-[#6A162B] flex items-center space-x-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />
+              <span>Festive Specials</span>
+            </span>
+            <span className="text-[9px] font-bold bg-[#D4AF37] text-[#2D121C] px-1.5 py-0.5 rounded-full font-mono">
+              OFFERS
+            </span>
+          </div>
+          <label className="flex items-center space-x-2 text-xs text-[#3A1823] cursor-pointer font-bold">
+            <input
+              type="checkbox"
+              name="festival"
+              checked={initialFestival}
+              onChange={(e) => handleFestivalToggle(e.target.checked)}
+              className="rounded border-[#D4AF37] text-[#6A162B] focus:ring-[#D4AF37]"
+            />
+            <span>Show Festive Editions Only</span>
+          </label>
         </div>
 
         {/* Sort Dropdown */}
@@ -113,7 +150,7 @@ export function ShopFilters({
         </div>
 
         {/* Clear All Filters */}
-        {(activeCategorySlug || initialSearch || initialInStock) && (
+        {(activeCategorySlug || initialSearch || initialInStock || initialFestival) && (
           <div className="pt-2 border-t border-[#FAF0F3]">
             <Link
               href="/shop"

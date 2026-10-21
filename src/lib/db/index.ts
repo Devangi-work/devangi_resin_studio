@@ -416,16 +416,29 @@ export const dbStore = {
       prods = prods.filter((p) => Boolean(p.isFestivalSpecial) === Boolean(filters.isFestivalSpecial));
     }
 
+    const getEffectivePrice = (p: any): number => {
+      const reg = Number(p.regularPrice) || 0;
+      if (p.isFestivalSpecial) {
+        const rawFestPct = p.festivalDiscountPercentage
+          ? Number(String(p.festivalDiscountPercentage).replace(/%/g, "").trim())
+          : 0;
+        if (rawFestPct > 0) {
+          return Math.max(0, Number((reg - (reg * rawFestPct) / 100).toFixed(2)));
+        }
+      }
+      return Number(p.salePrice || p.regularPrice) || 0;
+    };
+
     // Price range
     if (filters?.minPrice !== undefined) {
       prods = prods.filter((p) => {
-        const price = Number(p.salePrice || p.regularPrice);
+        const price = getEffectivePrice(p);
         return price >= filters.minPrice!;
       });
     }
     if (filters?.maxPrice !== undefined) {
       prods = prods.filter((p) => {
-        const price = Number(p.salePrice || p.regularPrice);
+        const price = getEffectivePrice(p);
         return price <= filters.maxPrice!;
       });
     }
@@ -437,9 +450,9 @@ export const dbStore = {
 
     // Sorting
     if (filters?.sort === "price_asc") {
-      prods.sort((a, b) => Number(a.salePrice || a.regularPrice) - Number(b.salePrice || b.regularPrice));
+      prods.sort((a, b) => getEffectivePrice(a) - getEffectivePrice(b));
     } else if (filters?.sort === "price_desc") {
-      prods.sort((a, b) => Number(b.salePrice || b.regularPrice) - Number(a.salePrice || a.regularPrice));
+      prods.sort((a, b) => getEffectivePrice(b) - getEffectivePrice(a));
     } else if (filters?.sort === "popularity") {
       prods.sort((a, b) => (b.isBestseller ? 1 : 0) - (a.isBestseller ? 1 : 0));
     }
@@ -680,10 +693,10 @@ export const dbStore = {
             is_featured = COALESCE(${data.isFeatured !== undefined ? Boolean(data.isFeatured) : null}, is_featured),
             is_bestseller = COALESCE(${data.isBestseller !== undefined ? Boolean(data.isBestseller) : null}, is_bestseller),
             is_festival_special = COALESCE(${data.isFestivalSpecial !== undefined ? Boolean(data.isFestivalSpecial) : null}, is_festival_special),
-            festival_discount_percentage = ${data.festivalDiscountPercentage !== undefined ? (data.festivalDiscountPercentage ? String(Number(data.festivalDiscountPercentage)) : null) : sql`festival_discount_percentage`},
+            festival_discount_percentage = CASE WHEN ${data.festivalDiscountPercentage !== undefined} THEN ${data.festivalDiscountPercentage ? String(Number(data.festivalDiscountPercentage)) : null} ELSE festival_discount_percentage END,
             regular_price = COALESCE(${regularPriceVal}, regular_price),
-            sale_price = ${salePriceVal !== undefined ? salePriceVal : sql`sale_price`},
-            cost_price = ${costPriceVal !== undefined ? costPriceVal : sql`cost_price`},
+            sale_price = CASE WHEN ${data.salePrice !== undefined} THEN ${salePriceVal || null} ELSE sale_price END,
+            cost_price = CASE WHEN ${data.costPrice !== undefined} THEN ${costPriceVal || null} ELSE cost_price END,
             stock_quantity = COALESCE(${data.stockQuantity !== undefined ? Number(data.stockQuantity) : null}, stock_quantity),
             track_inventory = COALESCE(${data.trackInventory !== undefined ? Boolean(data.trackInventory) : null}, track_inventory),
             enable_personalization = COALESCE(${data.enablePersonalization !== undefined ? Boolean(data.enablePersonalization) : null}, enable_personalization),
@@ -1351,8 +1364,41 @@ export const dbStore = {
   },
 
   async validateCoupon(code: string, cartAmount: number, customerEmail?: string) {
-    const coupon = await this.getCouponByCode(code);
-    if (!coupon) return { valid: false, message: "Invalid coupon code." };
+    const cleanCode = (code || "").trim().toUpperCase();
+    let coupon = await this.getCouponByCode(cleanCode);
+
+    if (!coupon) {
+      // Check festival special coupon configured in site_settings
+      const settings = await this.getSiteSettings();
+      if (
+        settings.festivalDiscountActive &&
+        settings.festivalCouponCode &&
+        cleanCode === settings.festivalCouponCode.trim().toUpperCase()
+      ) {
+        if (settings.festivalExpiresAt && new Date(settings.festivalExpiresAt) < new Date()) {
+          return { valid: false, message: "This festival special discount offer has expired." };
+        }
+
+        const pct = Number(String(settings.festivalDiscountPercentage || "20").replace(/%/g, "").trim()) || 20;
+        const discountAmount = Number(((cartAmount * pct) / 100).toFixed(2));
+
+        return {
+          valid: true,
+          coupon: {
+            id: "festival_special_coupon",
+            code: settings.festivalCouponCode.trim().toUpperCase(),
+            discountType: "percentage",
+            discountValue: String(pct),
+            minCartAmount: "0",
+            maxDiscount: null,
+            isActive: true,
+          },
+          discountAmount,
+        };
+      }
+
+      return { valid: false, message: "Invalid coupon code." };
+    }
     if (!coupon.isActive) return { valid: false, message: "This coupon is no longer active." };
 
     if (coupon.expiryDate && new Date(coupon.expiryDate) < new Date()) {

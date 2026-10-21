@@ -148,9 +148,26 @@ export default function CartPage() {
                         <span>Gift Wrapped</span>
                       </span>
                     )}
-                    <p className="text-xs font-bold text-[#2C332D] mt-1 sm:hidden">
-                      ₹{(item.price * item.quantity).toFixed(2)}
-                    </p>
+                    {item.isFestivalSpecial && (
+                      <span className="inline-flex items-center space-x-1 text-[10px] bg-[#FFF0F4] text-[#800020] border border-[#D4AF37]/40 px-2 py-0.5 rounded font-bold mt-1">
+                        <Sparkles className="w-2.5 h-2.5 text-[#D4AF37]" />
+                        <span>
+                          {item.festivalDiscountPercentage
+                            ? `${String(item.festivalDiscountPercentage).replace(/%/g, "")}% Festive Deal`
+                            : "Festive Deal"}
+                        </span>
+                      </span>
+                    )}
+                    <div className="sm:hidden mt-1 flex items-baseline space-x-2">
+                      <p className="text-xs font-bold text-[#2C332D]">
+                        ₹{(item.price * item.quantity).toFixed(2)}
+                      </p>
+                      {item.originalPrice && item.originalPrice > item.price && (
+                        <p className="text-[10px] text-[#A69E96] line-through">
+                          ₹{(item.originalPrice * item.quantity).toFixed(2)}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -181,7 +198,14 @@ export default function CartPage() {
                     <p className="text-sm font-bold text-[#2C332D]">
                       ₹{(item.price * item.quantity).toFixed(2)}
                     </p>
-                    <p className="text-[11px] text-[#A69E96]">₹{item.price.toFixed(2)} each</p>
+                    <div className="flex items-center justify-end space-x-1.5 mt-0.5">
+                      <p className="text-[11px] text-[#A69E96]">₹{item.price.toFixed(2)} each</p>
+                      {item.originalPrice && item.originalPrice > item.price && (
+                        <p className="text-[11px] text-[#C04E6C] line-through font-medium">
+                          ₹{item.originalPrice.toFixed(2)}
+                        </p>
+                      )}
+                    </div>
                   </div>
 
                   {/* Delete */}
@@ -250,6 +274,17 @@ export default function CartPage() {
                 <span>Subtotal</span>
                 <span className="font-semibold text-[#2C332D]">₹{subtotal.toFixed(2)}</span>
               </div>
+              {items.some((i) => i.originalPrice && i.originalPrice > i.price) && (
+                <div className="flex justify-between text-[#800020] font-semibold bg-[#FFF0F4] px-2.5 py-1.5 rounded-lg border border-[#D4AF37]/30">
+                  <span className="flex items-center space-x-1">
+                    <Sparkles className="w-3 h-3 text-[#D4AF37]" />
+                    <span>Festive Savings</span>
+                  </span>
+                  <span>
+                    -₹{items.reduce((sum, i) => i.originalPrice && i.originalPrice > i.price ? sum + (i.originalPrice - i.price) * i.quantity : sum, 0).toFixed(2)}
+                  </span>
+                </div>
+              )}
               {appliedCoupon && (
                 <div className="flex justify-between text-[#2E7D32]">
                   <span>Coupon Discount</span>

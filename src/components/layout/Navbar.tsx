@@ -240,6 +240,14 @@ export function Navbar() {
             </div>
 
             <Link
+              href="/shop?festival=true"
+              className="text-xs font-bold uppercase tracking-wider text-[#8C1D38] hover:text-[#D4AF37] transition-colors py-1 flex items-center space-x-1.5 border-b-2 border-transparent hover:border-[#D4AF37]"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />
+              <span>Festive Specials</span>
+            </Link>
+
+            <Link
               href="/custom-orders"
               className="text-xs font-semibold uppercase tracking-wider text-[#3A1823] hover:text-[#B84A67] transition-colors py-1 border-b-2 border-transparent hover:border-[#D4AF37]"
             >
@@ -406,6 +414,20 @@ export function Navbar() {
                   >
                     <span>Shop All Boutique</span>
                     <ArrowRight className="w-4 h-4 text-[#B84A67] group-hover:translate-x-1 transition-transform" />
+                  </Link>
+
+                  <Link
+                    href="/shop?festival=true"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center justify-between p-3 rounded-xl bg-gradient-to-r from-[#FAF0F3] to-[#FFF5F8] border-2 border-[#D4AF37] text-[#6A162B] font-serif font-bold text-base tracking-wide group shadow-xs active:scale-98"
+                  >
+                    <span className="flex items-center space-x-2">
+                      <Sparkles className="w-4 h-4 text-[#D4AF37]" />
+                      <span>✨ Festive Specials</span>
+                    </span>
+                    <span className="text-[10px] bg-[#D4AF37] text-[#2D121C] px-2 py-0.5 rounded-full font-black">
+                      OFFERS
+                    </span>
                   </Link>
 
                   {/* 4. Browse Collections with dynamic categories */}

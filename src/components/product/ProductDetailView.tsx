@@ -57,17 +57,34 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailPro
   const [added, setAdded] = useState(false);
 
   // Pricing calculations
-  const baseRegular = Number(product.regularPrice);
+  const baseRegular = Number(product.regularPrice) || 0;
   const baseSale = product.salePrice ? Number(product.salePrice) : null;
+  const isFestive = Boolean(product.isFestivalSpecial);
+  const rawFestPct = product.festivalDiscountPercentage
+    ? Number(String(product.festivalDiscountPercentage).replace(/%/g, "").trim())
+    : 0;
+  const festDiscount = rawFestPct > 0 ? String(rawFestPct) : null;
+
+  let discountedBase = baseRegular;
+  let hasDiscount = false;
+
+  if (isFestive && rawFestPct > 0) {
+    const festDiscountAmount = (baseRegular * rawFestPct) / 100;
+    discountedBase = Math.max(0, Number((baseRegular - festDiscountAmount).toFixed(2)));
+    hasDiscount = discountedBase < baseRegular;
+  } else if (baseSale && baseSale < baseRegular) {
+    discountedBase = baseSale;
+    hasDiscount = true;
+  }
+
   const variantAdj = selectedVariant ? Number(selectedVariant.priceAdjustment || 0) : 0;
   const persSurcharge =
     product.enablePersonalization && customName.trim()
       ? Number(product.personalizationSurcharge || 0)
       : 0;
 
-  const currentUnitPrice = (baseSale || baseRegular) + variantAdj + persSurcharge;
+  const currentUnitPrice = discountedBase + variantAdj + persSurcharge;
   const regularUnitPrice = baseRegular + variantAdj + persSurcharge;
-  const hasDiscount = baseSale && baseSale < baseRegular;
   const giftWrapCharge = product.giftWrappingAvailable ? Number(product.giftWrappingCharge || 49) : 0;
 
   // Stock calculations
@@ -128,6 +145,9 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailPro
       name: product.name,
       slug: product.slug,
       price: currentUnitPrice,
+      originalPrice: hasDiscount ? regularUnitPrice : undefined,
+      isFestivalSpecial: isFestive,
+      festivalDiscountPercentage: rawFestPct > 0 ? rawFestPct : null,
       image: activeImage,
       quantity,
       variantId: selectedVariant?.id || null,
@@ -161,11 +181,16 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailPro
               alt={product.name}
               className="w-full h-full object-cover transition-all duration-300"
             />
-            {hasDiscount && (
-              <span className="absolute top-4 left-4 text-xs font-bold uppercase tracking-wider bg-[#DF4C4C] text-white px-3 py-1 rounded-full shadow-sm">
-                Save ₹{(baseRegular - (baseSale || 0)).toFixed(0)}
+            {isFestive ? (
+              <span className="absolute top-4 left-4 text-xs font-black uppercase tracking-wider bg-gradient-to-r from-[#6A162B] via-[#8F223D] to-[#6A162B] text-[#FFDF78] border border-[#FFDF78]/70 px-3.5 py-1.5 rounded-full shadow-lg flex items-center space-x-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-[#FFDF78]" />
+                <span>{rawFestPct > 0 ? `${rawFestPct}% FESTIVE OFF` : "Festive Special"}</span>
               </span>
-            )}
+            ) : hasDiscount ? (
+              <span className="absolute top-4 left-4 text-xs font-bold uppercase tracking-wider bg-[#DF4C4C] text-white px-3 py-1 rounded-full shadow-sm">
+                Save ₹{(regularUnitPrice - currentUnitPrice).toFixed(0)}
+              </span>
+            ) : null}
           </div>
 
           {/* Thumbnails */}
@@ -226,6 +251,12 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailPro
               {hasDiscount && (
                 <span className="text-base text-[#A69E96] line-through">
                   ₹{regularUnitPrice.toFixed(2)}
+                </span>
+              )}
+              {isFestive && (
+                <span className="text-xs font-black uppercase tracking-wider bg-[#FFF0F4] text-[#800020] border border-[#D4AF37]/50 px-2.5 py-0.5 rounded-full shadow-xs flex items-center space-x-1 font-mono">
+                  <Sparkles className="w-3 h-3 text-[#D4AF37]" />
+                  <span>{rawFestPct > 0 ? `${rawFestPct}% FESTIVE DEAL` : "Festive Special"}</span>
                 </span>
               )}
             </div>
@@ -568,9 +599,20 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailPro
                   >
                     {rel.name}
                   </a>
-                  <p className="text-xs font-bold text-[#2C332D] mt-1">
-                    ₹{Number(rel.salePrice || rel.regularPrice).toFixed(2)}
-                  </p>
+                  {rel.isFestivalSpecial && (rel.festivalDiscountPercentage ? Number(String(rel.festivalDiscountPercentage).replace(/%/g, "")) > 0 : false) ? (
+                    <div className="flex items-baseline space-x-1.5 mt-1">
+                      <p className="text-xs font-bold text-[#6A162B]">
+                        ₹{(Number(rel.regularPrice) * (1 - Number(String(rel.festivalDiscountPercentage).replace(/%/g, "")) / 100)).toFixed(2)}
+                      </p>
+                      <p className="text-[10px] text-[#A69E96] line-through">
+                        ₹{Number(rel.regularPrice).toFixed(2)}
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-xs font-bold text-[#2C332D] mt-1">
+                      ₹{Number(rel.salePrice || rel.regularPrice).toFixed(2)}
+                    </p>
+                  )}
                 </div>
               </div>
             ))}

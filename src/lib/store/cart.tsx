@@ -8,6 +8,9 @@ export interface CartItem {
   name: string;
   slug: string;
   price: number;
+  originalPrice?: number;
+  isFestivalSpecial?: boolean;
+  festivalDiscountPercentage?: number | string | null;
   image: string;
   quantity: number;
   variantId?: string | null;
@@ -75,7 +78,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       const existingIdx = prev.findIndex((i) => i.id === newItem.id);
       if (existingIdx !== -1) {
         const updated = [...prev];
-        updated[existingIdx].quantity += newItem.quantity;
+        updated[existingIdx] = {
+          ...updated[existingIdx],
+          ...newItem,
+          quantity: updated[existingIdx].quantity + newItem.quantity,
+        };
         return updated;
       }
       return [...prev, newItem];

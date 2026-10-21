@@ -1013,12 +1013,34 @@ export default function CheckoutPage() {
                         Custom: "{item.personalizationDetails.customName}"
                       </span>
                     )}
+                    {item.isFestivalSpecial && (
+                      <span className="inline-flex items-center space-x-1 text-[10px] bg-[#FFF0F4] text-[#800020] border border-[#D4AF37]/40 px-2 py-0.5 rounded font-bold mt-0.5">
+                        <Sparkles className="w-2.5 h-2.5 text-[#D4AF37]" />
+                        <span>
+                          {item.festivalDiscountPercentage
+                            ? `${String(item.festivalDiscountPercentage).replace(/%/g, "")}% Festive Deal`
+                            : "Festive Deal"}
+                        </span>
+                      </span>
+                    )}
                     <p className="text-[11px] text-[#736C66] mt-0.5">
                       Qty: {item.quantity} × ₹{Number(item.price).toFixed(2)}
+                      {item.originalPrice && item.originalPrice > item.price && (
+                        <span className="line-through text-[#A69E96] ml-1.5 font-medium">
+                          ₹{Number(item.originalPrice).toFixed(2)}
+                        </span>
+                      )}
                     </p>
                   </div>
-                  <div className="text-xs font-bold text-[#2C332D]">
-                    ₹{(item.price * item.quantity).toFixed(2)}
+                  <div className="text-right">
+                    <div className="text-xs font-bold text-[#2C332D]">
+                      ₹{(item.price * item.quantity).toFixed(2)}
+                    </div>
+                    {item.originalPrice && item.originalPrice > item.price && (
+                      <div className="text-[10px] text-[#2E7D32] font-semibold">
+                        Saved ₹{((item.originalPrice - item.price) * item.quantity).toFixed(2)}
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -1071,6 +1093,17 @@ export default function CheckoutPage() {
                 <span>Subtotal</span>
                 <span className="font-semibold text-[#2C332D]">₹{subtotal.toFixed(2)}</span>
               </div>
+              {items.some((i) => i.originalPrice && i.originalPrice > i.price) && (
+                <div className="flex justify-between text-[#800020] font-semibold bg-[#FFF0F4] px-2.5 py-1.5 rounded-lg border border-[#D4AF37]/30">
+                  <span className="flex items-center space-x-1">
+                    <Sparkles className="w-3 h-3 text-[#D4AF37]" />
+                    <span>Festive Product Discount Savings</span>
+                  </span>
+                  <span>
+                    -₹{items.reduce((sum, i) => i.originalPrice && i.originalPrice > i.price ? sum + (i.originalPrice - i.price) * i.quantity : sum, 0).toFixed(2)}
+                  </span>
+                </div>
+              )}
               {appliedCoupon && (
                 <div className="flex justify-between text-[#2E7D32]">
                   <span>Discount</span>

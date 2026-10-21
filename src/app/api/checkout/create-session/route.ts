@@ -33,7 +33,10 @@ export async function POST(request: Request) {
       items,
     } = result.data;
 
-    // 1. Server-side product & price revalidation
+    // 1. Fetch site settings for shipping, thresholds & festival rules
+    const settings = await dbStore.getSiteSettings();
+
+    // 2. Server-side product & price revalidation
     let subtotal = 0;
     const validatedItems: any[] = [];
 
@@ -56,7 +59,30 @@ export async function POST(request: Request) {
         }
       }
 
-      let unitPrice = Number(product.salePrice || product.regularPrice);
+      const regularPrice = Number(product.regularPrice) || 0;
+      let baseUnitPrice = Number(product.salePrice || product.regularPrice);
+
+      const festPct = product.isFestivalSpecial && product.festivalDiscountPercentage
+        ? Number(String(product.festivalDiscountPercentage).replace(/%/g, "").trim())
+        : 0;
+
+      if (product.isFestivalSpecial && festPct > 0) {
+        const festDiscount = (regularPrice * festPct) / 100;
+        baseUnitPrice = Math.max(0, Number((regularPrice - festDiscount).toFixed(2)));
+      } else if (
+        product.isFestivalSpecial &&
+        settings.festivalDiscountActive &&
+        settings.festivalDiscountPercentage &&
+        (!settings.festivalExpiresAt || new Date(settings.festivalExpiresAt) >= new Date())
+      ) {
+        const globalFestPct = Number(String(settings.festivalDiscountPercentage).replace(/%/g, "").trim()) || 0;
+        if (globalFestPct > 0) {
+          const festDiscount = (regularPrice * globalFestPct) / 100;
+          baseUnitPrice = Math.max(0, Number((regularPrice - festDiscount).toFixed(2)));
+        }
+      }
+
+      let unitPrice = baseUnitPrice;
       let variantName: string | null = null;
 
       // Check variant
@@ -110,8 +136,6 @@ export async function POST(request: Request) {
       });
     }
 
-    // 2. Fetch site settings for shipping & thresholds
-    const settings = await dbStore.getSiteSettings();
     const freeShippingThreshold = Number(settings.freeShippingThreshold || 999);
     const defaultShippingCharge = Number(settings.defaultShippingCharge || 79);
 
