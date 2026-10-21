@@ -242,3 +242,76 @@ html.admin-dark .admin-main-wrapper button[class*="bg-white"]:hover,
   background-color: #26332A !important;
 }
 
+/* ==========================================================
+   Festival Special News Strip & Highlight Animations
+   ========================================================== */
+@keyframes festivalMarquee {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes festivalMarqueeRight {
+  0% {
+    transform: translateX(-50%);
+  }
+  100% {
+    transform: translateX(0%);
+  }
+}
+
+@keyframes marqueeRight {
+  0% {
+    transform: translateX(-50%);
+  }
+  100% {
+    transform: translateX(0%);
+  }
+}
+
+.animate-festival-marquee {
+  display: flex;
+  width: max-content;
+  animation: festivalMarquee 38s linear infinite;
+  will-change: transform;
+}
+
+.animate-festival-marquee:hover {
+  animation-play-state: paused;
+}
+
+.animate-festival-marquee-right {
+  display: flex;
+  width: max-content;
+  animation: festivalMarqueeRight 36s linear infinite;
+  will-change: transform;
+}
+
+.animate-festival-marquee-right:hover {
+  animation-play-state: paused;
+}
+
+@keyframes festivalGlow {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(212, 175, 55, 0.25), inset 0 0 12px rgba(212, 175, 55, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(212, 175, 55, 0.45), inset 0 0 18px rgba(212, 175, 55, 0.2);
+  }
+}
+
+.festival-card-highlight {
+  position: relative;
+  border: 2px solid #D4AF37 !important;
+  background: linear-gradient(180deg, #FFF6F8 0%, #FFFFFF 30%, #FFF8FA 100%) !important;
+  box-shadow: 0 4px 20px -2px rgba(212, 175, 55, 0.22);
+}
+
+.festival-card-highlight:hover {
+  box-shadow: 0 8px 30px -4px rgba(212, 175, 55, 0.4), 0 0 20px rgba(184, 74, 103, 0.2) !important;
+  border-color: #C59B4E !important;
+}
+

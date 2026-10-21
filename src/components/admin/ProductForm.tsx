@@ -43,6 +43,8 @@ export function ProductForm({ initialData, isEditing = false }: ProductFormProps
     status: initialData?.status || "published",
     isFeatured: initialData?.isFeatured || false,
     isBestseller: initialData?.isBestseller || false,
+    isFestivalSpecial: initialData?.isFestivalSpecial || false,
+    festivalDiscountPercentage: initialData?.festivalDiscountPercentage || "",
 
     regularPrice: initialData?.regularPrice || "",
     salePrice: initialData?.salePrice || "",
@@ -504,6 +506,63 @@ export function ProductForm({ initialData, isEditing = false }: ProductFormProps
                   Studio Bestseller Badge
                 </label>
               </div>
+            </div>
+
+            {/* Festival Special Promotion Box */}
+            <div className="p-4 sm:p-5 rounded-2xl border-2 border-[#D4AF37]/50 bg-gradient-to-r from-[#FFFDF9] via-[#FFF9F5] to-[#FFF3F6] space-y-4 shadow-xs">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center space-x-2">
+                  <div className="w-8 h-8 rounded-full bg-[#6A162B] text-[#FFDF78] flex items-center justify-center shadow-xs">
+                    <Sparkles className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-[#3A1823] uppercase tracking-wider">
+                      Festival Special Promotion
+                    </h4>
+                    <p className="text-[11px] text-[#7A5E68]">
+                      Highlight this product with royal festive borders, badges, and exclusive festival discounts.
+                    </p>
+                  </div>
+                </div>
+
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.isFestivalSpecial}
+                    onChange={(e) => setFormData({ ...formData, isFestivalSpecial: e.target.checked })}
+                    className="sr-only peer"
+                  />
+                  <div className="w-10 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#6A162B]"></div>
+                  <span className="ml-2.5 text-xs font-bold text-[#3A1823]">
+                    {formData.isFestivalSpecial ? "Active Festive Item" : "Standard Product"}
+                  </span>
+                </label>
+              </div>
+
+              {formData.isFestivalSpecial && (
+                <div className="pt-3 border-t border-[#F2DECE] grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-semibold text-[#2C332D] block mb-1">
+                      Festival Discount Percentage (%)
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        placeholder="e.g. 20 (for 20% OFF)"
+                        value={formData.festivalDiscountPercentage}
+                        onChange={(e) => setFormData({ ...formData, festivalDiscountPercentage: e.target.value })}
+                        className="w-full pl-3.5 pr-8 py-2 text-xs bg-white border border-[#D4AF37] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#D4AF37] font-semibold text-[#6A162B]"
+                      />
+                      <span className="absolute right-3 top-2 text-xs font-bold text-[#D4AF37]">%</span>
+                    </div>
+                    <p className="text-[10px] text-[#7A5E68] mt-1">
+                      Will display as a highlighted badge on the product card (e.g., 20% FESTIVE OFF).
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}

@@ -27,6 +27,10 @@ export async function PUT(request: Request) {
     try {
       revalidatePath("/", "layout");
       revalidatePath("/checkout");
+      revalidatePath("/policies/shipping");
+      revalidatePath("/policies/returns");
+      revalidatePath("/policies/care");
+      revalidatePath("/policies/privacy");
     } catch {
       // ignore
     }

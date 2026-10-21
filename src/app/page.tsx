@@ -2,6 +2,7 @@ import React from "react";
 import Link from "next/link";
 import { dbStore } from "@/lib/db";
 import { ProductCard } from "@/components/product/ProductCard";
+import { FestivalNewsHeader } from "@/components/home/FestivalNewsHeader";
 import {
   Sparkles,
   ArrowRight,
@@ -18,6 +19,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export default async function HomePage() {
+  const settings = await dbStore.getSiteSettings();
   const categories = await dbStore.getCategories(true);
   const featuredRes = await dbStore.getProducts({
     isFeatured: true,
@@ -29,15 +31,24 @@ export default async function HomePage() {
     status: "published",
     limit: 4,
   });
+  const festivalRes = await dbStore.getProducts({
+    isFestivalSpecial: true,
+    status: "published",
+    limit: 8,
+  });
 
   const featuredProducts = featuredRes.products;
   const bestsellers = bestsellersRes.products;
+  const festivalProducts = festivalRes.products;
 
   return (
-    <div className="flex flex-col space-y-20 sm:space-y-24 pb-20">
-      
-      {/* ---------------- 1. HERO SECTION (Themed from resin_logo.png) ---------------- */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-[#FDF2F4] via-[#FCFAF8] to-[#FCFAF8] pt-12 sm:pt-20 pb-16 sm:pb-24 px-4 sm:px-6 lg:px-8 border-b border-[#EFE3E7]">
+    <div className="flex flex-col pb-20">
+      {/* ---------------- FESTIVAL NEWS HEADER (Above Hero, Below Navbar) ---------------- */}
+      <FestivalNewsHeader settings={settings} />
+
+      <div className="flex flex-col space-y-20 sm:space-y-24">
+        {/* ---------------- 1. HERO SECTION (Themed from resin_logo.png) ---------------- */}
+        <section className="relative overflow-hidden bg-gradient-to-b from-[#FDF2F4] via-[#FCFAF8] to-[#FCFAF8] pt-12 sm:pt-20 pb-16 sm:pb-24 px-4 sm:px-6 lg:px-8 border-b border-[#EFE3E7]">
         {/* Soft Decorative Ambient Petal & Rose Circles */}
         <div className="absolute top-10 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-[#FDE8EC]/70 rounded-full blur-3xl pointer-events-none -z-0" />
         <div className="absolute -bottom-10 right-10 w-[400px] h-[400px] bg-[#FAF0F3]/80 rounded-full blur-2xl pointer-events-none -z-0" />
@@ -201,6 +212,38 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* ---------------- FESTIVAL SPECIAL SHOWCASE ---------------- */}
+      {festivalProducts.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="p-6 sm:p-10 rounded-3xl bg-gradient-to-r from-[#FFF9F6] via-[#FFFDF9] to-[#FFF5F8] border-2 border-[#D4AF37]/50 shadow-md">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 space-y-2 sm:space-y-0">
+              <div>
+                <span className="text-xs uppercase font-extrabold tracking-widest text-[#A83250] flex items-center space-x-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />
+                  <span>Limited Period Celebrations</span>
+                </span>
+                <h2 className="font-serif text-2xl sm:text-3xl font-bold text-[#3A1823]">
+                  {settings.festivalName || "Festival Special Editions"}
+                </h2>
+              </div>
+              <Link
+                href="/shop?filter=festival"
+                className="text-xs font-bold text-[#6A162B] hover:text-[#D4AF37] flex items-center space-x-1 transition-colors"
+              >
+                <span>View All Festive Offers</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+              {festivalProducts.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* ---------------- 4. FEATURED PRODUCTS ---------------- */}
       {featuredProducts.length > 0 && (
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -353,6 +396,7 @@ export default async function HomePage() {
           </p>
         </div>
       </section>
+      </div>
     </div>
   );
 }

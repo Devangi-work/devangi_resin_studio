@@ -19,6 +19,17 @@ if (sql) {
   sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_screenshot_url TEXT;`.catch(() => {});
   sql`ALTER TABLE customers ADD COLUMN IF NOT EXISTS avatar_url TEXT;`.catch(() => {});
   sql`ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS avatar_url TEXT;`.catch(() => {});
+  sql`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS festival_discount_active BOOLEAN DEFAULT FALSE;`.catch(() => {});
+  sql`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS festival_name TEXT DEFAULT '';`.catch(() => {});
+  sql`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS festival_tagline TEXT DEFAULT '';`.catch(() => {});
+  sql`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS festival_discount_percentage TEXT DEFAULT '';`.catch(() => {});
+  sql`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS festival_coupon_code TEXT DEFAULT '';`.catch(() => {});
+  sql`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS festival_expires_at TIMESTAMP;`.catch(() => {});
+  sql`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS festival_banner_bg TEXT DEFAULT 'royal_wine';`.catch(() => {});
+  sql`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS festival_cta_text TEXT DEFAULT 'Shop Festive Deals';`.catch(() => {});
+  sql`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS festival_cta_url TEXT DEFAULT '/shop?filter=festival';`.catch(() => {});
+  sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS is_festival_special BOOLEAN DEFAULT FALSE;`.catch(() => {});
+  sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS festival_discount_percentage NUMERIC(5, 2);`.catch(() => {});
   sql`CREATE TABLE IF NOT EXISTS media_items (
     id TEXT PRIMARY KEY,
     file_name TEXT NOT NULL,
@@ -95,6 +106,15 @@ function getInitialStoreState(): StoreState {
       privacyPolicy: "We value your privacy and never sell or share your personal information with third parties.",
       termsPolicy: "All custom personalised resin orders enter production immediately upon payment confirmation.",
       careInstructionsDefault: "Keep away from prolonged direct high heat. Clean gently with a soft microfiber cloth and mild soap. Avoid harsh chemical cleaners.",
+      festivalDiscountActive: true,
+      festivalName: "Festive Sparkle Celebration",
+      festivalTagline: "✨ FESTIVAL SPECIAL: Enjoy Flat 20% OFF on all Handcrafted Keepsakes, Geode Clocks & Floral Frames! Use Code FESTIVE20 at checkout ✨ Free Express Delivery across India over ₹999 ✨ Limited Period Festive Treats! ✨",
+      festivalDiscountPercentage: "20%",
+      festivalCouponCode: "FESTIVE20",
+      festivalExpiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      festivalBannerBg: "royal_wine",
+      festivalCtaText: "Shop Festive Collection",
+      festivalCtaUrl: "/shop?filter=festival",
       updatedAt: new Date(),
     },
     customRequests: [],
@@ -293,6 +313,7 @@ export const dbStore = {
     search?: string;
     isFeatured?: boolean;
     isBestseller?: boolean;
+    isFestivalSpecial?: boolean;
     minPrice?: number;
     maxPrice?: number;
     inStockOnly?: boolean;
@@ -308,6 +329,7 @@ export const dbStore = {
             p.id, p.name, p.slug, p.short_description as "shortDescription", p.description,
             p.category_id as "categoryId", p.sku, p.product_type as "productType", p.status,
             p.is_featured as "isFeatured", p.is_bestseller as "isBestseller",
+            p.is_festival_special as "isFestivalSpecial", p.festival_discount_percentage as "festivalDiscountPercentage",
             p.regular_price as "regularPrice", p.sale_price as "salePrice", p.cost_price as "costPrice",
             p.currency, p.track_inventory as "trackInventory", p.stock_quantity as "stockQuantity",
             p.low_stock_threshold as "lowStockThreshold", p.allow_backorders as "allowBackorders",
@@ -383,12 +405,15 @@ export const dbStore = {
       );
     }
 
-    // Featured / Bestseller
+    // Featured / Bestseller / Festival Special
     if (filters?.isFeatured !== undefined) {
       prods = prods.filter((p) => Boolean(p.isFeatured) === Boolean(filters.isFeatured));
     }
     if (filters?.isBestseller !== undefined) {
       prods = prods.filter((p) => Boolean(p.isBestseller) === Boolean(filters.isBestseller));
+    }
+    if (filters?.isFestivalSpecial !== undefined) {
+      prods = prods.filter((p) => Boolean(p.isFestivalSpecial) === Boolean(filters.isFestivalSpecial));
     }
 
     // Price range
@@ -441,6 +466,7 @@ export const dbStore = {
             p.id, p.name, p.slug, p.short_description as "shortDescription", p.description,
             p.category_id as "categoryId", p.sku, p.product_type as "productType", p.status,
             p.is_featured as "isFeatured", p.is_bestseller as "isBestseller",
+            p.is_festival_special as "isFestivalSpecial", p.festival_discount_percentage as "festivalDiscountPercentage",
             p.regular_price as "regularPrice", p.sale_price as "salePrice", p.cost_price as "costPrice",
             p.currency, p.track_inventory as "trackInventory", p.stock_quantity as "stockQuantity",
             p.low_stock_threshold as "lowStockThreshold", p.allow_backorders as "allowBackorders",
@@ -498,6 +524,7 @@ export const dbStore = {
             p.id, p.name, p.slug, p.short_description as "shortDescription", p.description,
             p.category_id as "categoryId", p.sku, p.product_type as "productType", p.status,
             p.is_featured as "isFeatured", p.is_bestseller as "isBestseller",
+            p.is_festival_special as "isFestivalSpecial", p.festival_discount_percentage as "festivalDiscountPercentage",
             p.regular_price as "regularPrice", p.sale_price as "salePrice", p.cost_price as "costPrice",
             p.currency, p.track_inventory as "trackInventory", p.stock_quantity as "stockQuantity",
             p.low_stock_threshold as "lowStockThreshold", p.allow_backorders as "allowBackorders",
@@ -561,7 +588,8 @@ export const dbStore = {
         await sql`
           INSERT INTO products (
             id, name, slug, short_description, description, category_id, sku,
-            product_type, status, is_featured, is_bestseller, regular_price, sale_price, cost_price,
+            product_type, status, is_featured, is_bestseller, is_festival_special, festival_discount_percentage,
+            regular_price, sale_price, cost_price,
             currency, track_inventory, stock_quantity, low_stock_threshold, allow_backorders,
             enable_variants, enable_personalization, custom_name_enabled, custom_initials_enabled,
             custom_color_enabled, custom_design_enabled, custom_image_upload_enabled,
@@ -572,7 +600,8 @@ export const dbStore = {
           ) VALUES (
             ${id}, ${data.name}, ${slug}, ${data.shortDescription || null}, ${data.description},
             ${data.categoryId}, ${sku}, ${data.productType || 'ready_made'}, ${data.status || 'published'},
-            ${Boolean(data.isFeatured)}, ${Boolean(data.isBestseller)},
+            ${Boolean(data.isFeatured)}, ${Boolean(data.isBestseller)}, ${Boolean(data.isFestivalSpecial)},
+            ${data.festivalDiscountPercentage ? String(Number(data.festivalDiscountPercentage)) : null},
             ${regularPrice}, ${salePrice}, ${costPrice},
             ${data.currency || 'INR'}, ${data.trackInventory !== false}, ${stockQuantity},
             ${Number(data.lowStockThreshold) || 3}, ${Boolean(data.allowBackorders)},
@@ -619,6 +648,8 @@ export const dbStore = {
       salePrice,
       costPrice,
       stockQuantity,
+      isFestivalSpecial: Boolean(data.isFestivalSpecial),
+      festivalDiscountPercentage: data.festivalDiscountPercentage || null,
       images: data.images || [],
       variants: data.variants || [],
       createdAt: new Date(),
@@ -648,6 +679,8 @@ export const dbStore = {
             status = COALESCE(${data.status || null}, status),
             is_featured = COALESCE(${data.isFeatured !== undefined ? Boolean(data.isFeatured) : null}, is_featured),
             is_bestseller = COALESCE(${data.isBestseller !== undefined ? Boolean(data.isBestseller) : null}, is_bestseller),
+            is_festival_special = COALESCE(${data.isFestivalSpecial !== undefined ? Boolean(data.isFestivalSpecial) : null}, is_festival_special),
+            festival_discount_percentage = ${data.festivalDiscountPercentage !== undefined ? (data.festivalDiscountPercentage ? String(Number(data.festivalDiscountPercentage)) : null) : sql`festival_discount_percentage`},
             regular_price = COALESCE(${regularPriceVal}, regular_price),
             sale_price = ${salePriceVal !== undefined ? salePriceVal : sql`sale_price`},
             cost_price = ${costPriceVal !== undefined ? costPriceVal : sql`cost_price`},
@@ -684,6 +717,8 @@ export const dbStore = {
         regularPrice: data.regularPrice !== undefined ? Number(data.regularPrice).toFixed(2) : prev.regularPrice,
         salePrice: data.salePrice !== undefined && data.salePrice !== null ? Number(data.salePrice).toFixed(2) : data.salePrice === null ? null : prev.salePrice,
         stockQuantity: data.stockQuantity !== undefined ? Number(data.stockQuantity) : prev.stockQuantity,
+        isFestivalSpecial: data.isFestivalSpecial !== undefined ? Boolean(data.isFestivalSpecial) : prev.isFestivalSpecial,
+        festivalDiscountPercentage: data.festivalDiscountPercentage !== undefined ? data.festivalDiscountPercentage : prev.festivalDiscountPercentage,
         updatedAt: new Date(),
       };
       return store.products[idx];
@@ -757,6 +792,26 @@ export const dbStore = {
       }
     });
     return true;
+  },
+
+  async bulkUpdateFestivalSpecial(ids: string[], isFestivalSpecial: boolean) {
+    if (sql && ids.length > 0) {
+      try {
+        for (const pid of ids) {
+          await sql`UPDATE products SET is_festival_special = ${isFestivalSpecial}, updated_at = NOW() WHERE id = ${pid};`;
+        }
+      } catch (e) {
+        console.error("DB bulkUpdateFestivalSpecial error:", e);
+      }
+    }
+    const idSet = new Set(ids);
+    store.products.forEach((p) => {
+      if (idSet.has(p.id)) {
+        p.isFestivalSpecial = isFestivalSpecial;
+        p.updatedAt = new Date();
+      }
+    });
+    return { success: true, count: ids.length, isFestivalSpecial };
   },
 
   // ---------------- INVENTORY ----------------
@@ -1408,6 +1463,15 @@ export const dbStore = {
             privacy_policy as "privacyPolicy",
             terms_policy as "termsPolicy",
             care_instructions_default as "careInstructionsDefault",
+            festival_discount_active as "festivalDiscountActive",
+            festival_name as "festivalName",
+            festival_tagline as "festivalTagline",
+            festival_discount_percentage as "festivalDiscountPercentage",
+            festival_coupon_code as "festivalCouponCode",
+            festival_expires_at as "festivalExpiresAt",
+            festival_banner_bg as "festivalBannerBg",
+            festival_cta_text as "festivalCtaText",
+            festival_cta_url as "festivalCtaUrl",
             updated_at as "updatedAt"
           FROM site_settings
           WHERE id = 'default'
@@ -1443,6 +1507,8 @@ export const dbStore = {
             contact_phone, whatsapp_number, instagram_url, facebook_url, pinterest_url,
             default_shipping_charge, free_shipping_threshold, production_time_message,
             shipping_policy, return_policy, privacy_policy, terms_policy, care_instructions_default,
+            festival_discount_active, festival_name, festival_tagline, festival_discount_percentage,
+            festival_coupon_code, festival_expires_at, festival_banner_bg, festival_cta_text, festival_cta_url,
             upi_id, upi_qr_code_url, account_holder_name, updated_at
           ) VALUES (
             'default',
@@ -1463,6 +1529,15 @@ export const dbStore = {
             ${data.privacyPolicy ?? store.siteSettings.privacyPolicy},
             ${data.termsPolicy ?? store.siteSettings.termsPolicy},
             ${data.careInstructionsDefault ?? store.siteSettings.careInstructionsDefault},
+            ${data.festivalDiscountActive !== undefined ? Boolean(data.festivalDiscountActive) : Boolean(store.siteSettings.festivalDiscountActive)},
+            ${data.festivalName ?? store.siteSettings.festivalName},
+            ${data.festivalTagline ?? store.siteSettings.festivalTagline},
+            ${data.festivalDiscountPercentage ?? store.siteSettings.festivalDiscountPercentage},
+            ${data.festivalCouponCode ?? store.siteSettings.festivalCouponCode},
+            ${data.festivalExpiresAt !== undefined ? (data.festivalExpiresAt ? new Date(data.festivalExpiresAt) : null) : (store.siteSettings.festivalExpiresAt ? new Date(store.siteSettings.festivalExpiresAt) : null)},
+            ${data.festivalBannerBg ?? store.siteSettings.festivalBannerBg ?? 'royal_wine'},
+            ${data.festivalCtaText ?? store.siteSettings.festivalCtaText ?? 'Shop Festive Deals'},
+            ${data.festivalCtaUrl ?? store.siteSettings.festivalCtaUrl ?? '/shop?filter=festival'},
             ${data.upiId ?? store.siteSettings.upiId ?? 'devangi0403@okaxis'},
             ${data.upiQrCodeUrl ?? store.siteSettings.upiQrCodeUrl ?? ''},
             ${data.accountHolderName ?? store.siteSettings.accountHolderName ?? 'Devangi Resin Studio'},
@@ -1486,6 +1561,15 @@ export const dbStore = {
             privacy_policy = EXCLUDED.privacy_policy,
             terms_policy = EXCLUDED.terms_policy,
             care_instructions_default = EXCLUDED.care_instructions_default,
+            festival_discount_active = EXCLUDED.festival_discount_active,
+            festival_name = EXCLUDED.festival_name,
+            festival_tagline = EXCLUDED.festival_tagline,
+            festival_discount_percentage = EXCLUDED.festival_discount_percentage,
+            festival_coupon_code = EXCLUDED.festival_coupon_code,
+            festival_expires_at = EXCLUDED.festival_expires_at,
+            festival_banner_bg = EXCLUDED.festival_banner_bg,
+            festival_cta_text = EXCLUDED.festival_cta_text,
+            festival_cta_url = EXCLUDED.festival_cta_url,
             upi_id = EXCLUDED.upi_id,
             upi_qr_code_url = EXCLUDED.upi_qr_code_url,
             account_holder_name = EXCLUDED.account_holder_name,

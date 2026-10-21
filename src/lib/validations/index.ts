@@ -35,6 +35,11 @@ export const productSchema = z.object({
   status: z.enum(["draft", "published", "archived"]).default("published"),
   isFeatured: z.boolean().default(false),
   isBestseller: z.boolean().default(false),
+  isFestivalSpecial: z.boolean().default(false),
+  festivalDiscountPercentage: z.preprocess(
+    (val) => (val === "" || val === null || val === undefined ? null : Number(val)),
+    z.number().nonnegative().nullable().optional()
+  ),
 
   regularPrice: z.coerce.number().positive("Regular price must be greater than 0."),
   salePrice: z.preprocess(

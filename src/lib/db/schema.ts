@@ -92,6 +92,8 @@ export const products = pgTable(
     status: text("status").default("draft").notNull(), // 'draft' | 'published' | 'archived'
     isFeatured: boolean("is_featured").default(false).notNull(),
     isBestseller: boolean("is_bestseller").default(false).notNull(),
+    isFestivalSpecial: boolean("is_festival_special").default(false).notNull(),
+    festivalDiscountPercentage: numeric("festival_discount_percentage", { precision: 5, scale: 2 }),
 
     // Pricing (Stored as numeric string in DB, 2 decimal places)
     regularPrice: numeric("regular_price", { precision: 10, scale: 2 }).notNull(),
@@ -147,6 +149,7 @@ export const products = pgTable(
     index("products_status_idx").on(table.status),
     index("products_featured_idx").on(table.isFeatured),
     index("products_bestseller_idx").on(table.isBestseller),
+    index("products_festival_idx").on(table.isFestivalSpecial),
   ]
 );
 
@@ -547,6 +550,18 @@ export const siteSettings = pgTable("site_settings", {
   privacyPolicy: text("privacy_policy").default("We value your privacy and never sell or share your personal information with third parties."),
   termsPolicy: text("terms_policy").default("All custom personalised resin orders enter production immediately upon payment confirmation."),
   careInstructionsDefault: text("care_instructions_default").default("Keep away from prolonged direct high heat. Clean gently with a soft microfiber cloth and mild soap. Avoid harsh chemical cleaners."),
+
+  // Festival Special Banner & Discounts
+  festivalDiscountActive: boolean("festival_discount_active").default(false).notNull(),
+  festivalName: text("festival_name").default("Festival Special Celebration"),
+  festivalTagline: text("festival_tagline").default("✨ FESTIVAL SPECIAL: Enjoy Flat 20% OFF on all Handcrafted Keepsakes & Geode Clocks! Use Code FESTIVE20 ✨ Limited Period Offer! ✨"),
+  festivalDiscountPercentage: text("festival_discount_percentage").default("20%"),
+  festivalCouponCode: text("festival_coupon_code").default("FESTIVE20"),
+  festivalExpiresAt: timestamp("festival_expires_at"),
+  festivalBannerBg: text("festival_banner_bg").default("royal_wine"),
+  festivalCtaText: text("festival_cta_text").default("Shop Festive Collection"),
+  festivalCtaUrl: text("festival_cta_url").default("/shop?filter=festival"),
+
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 

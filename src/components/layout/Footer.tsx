@@ -281,23 +281,15 @@ export function Footer() {
         </div>
 
         {/* Bottom Trust & Copyright */}
-        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-[#8C6E79] space-y-4 sm:space-y-0">
-          <div className="flex items-center space-x-1.5">
-            <span>© {new Date().getFullYear()} {settings?.storeName || "Devangi Resin Studio"}. Handcrafted with Love in India.</span>
-          </div>
-
-          {/* Secure Payment Badges */}
-          <div className="flex items-center space-x-3 text-[#D1BFC6]">
-            <span className="flex items-center space-x-1">
-              <Lock className="w-3.5 h-3.5 text-[#D4AF37]" />
-              <span>256-Bit SSL Encrypted</span>
-            </span>
-            <span>•</span>
-            <span className="flex items-center space-x-1">
-              <ShieldCheck className="w-3.5 h-3.5 text-[#66BB6A]" />
+        <div className="pt-8 border-t border-[#4E2230] flex flex-col items-center justify-center text-center text-xs text-[#D1BFC6] space-y-2">
+          <p className="flex flex-wrap items-center justify-center gap-1.5 font-medium tracking-wide">
+            <span>© 2026 {settings?.storeName || "Devangi Resin Studio"}. Handcrafted with Love in India.</span>
+            <span className="hidden sm:inline text-[#D4AF37]">•</span>
+            <span className="inline-flex items-center space-x-1.5 text-[#E8D08D]">
+              <ShieldCheck className="w-4 h-4 text-[#66BB6A] inline-block" />
               <span>UPI & QR Verified Payment</span>
             </span>
-          </div>
+          </p>
         </div>
       </div>
     </footer>
