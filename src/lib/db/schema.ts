@@ -339,6 +339,10 @@ export const orders = pgTable(
     // Offline / Online Source
     orderSource: text("order_source").default("online").notNull(),
 
+    // Packing & Product Photos (Admin verified / Manual order images)
+    packingImages: jsonb("packing_images"), // array of string URLs
+    productImages: jsonb("product_images"), // array of string URLs
+
     // Cancellation & Discarding
     cancellationReason: text("cancellation_reason"),
     cancelledAt: timestamp("cancelled_at"),
@@ -530,6 +534,7 @@ export const siteSettings = pgTable("site_settings", {
   storeTagline: text("store_tagline").default("Handmade Resin Elegance, Preserved Forever").notNull(),
   storeDescription: text("store_description").default("Boutique handmade resin art, bespoke jewellery, personalized gifts, keychains, and coasters crafted with passion.").notNull(),
   logoUrl: text("logo_url").default("/images/logo/resin_logo.png"),
+  signatureUrl: text("signature_url").default(""),
   contactEmail: text("contact_email").default("hello@devangiresinstudio.com").notNull(),
   contactPhone: text("contact_phone").default("+91 98765 43210").notNull(),
   whatsappNumber: text("whatsapp_number").default("+919876543210").notNull(),

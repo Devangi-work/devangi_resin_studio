@@ -26,6 +26,7 @@ export function Navbar() {
   const [categories, setCategories] = useState<any[]>([]);
   const [settings, setSettings] = useState<any>(null);
   const [customer, setCustomer] = useState<any>(null);
+  const [avatarError, setAvatarError] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -35,7 +36,7 @@ export function Navbar() {
       .then((data) => {
         if (data && !data.error) setSettings(data);
       })
-      .catch(() => {});
+      .catch(() => { });
 
     // 2. Fetch categories dynamically from database
     fetch("/api/categories")
@@ -45,17 +46,30 @@ export function Navbar() {
           setCategories(data);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
 
     // 3. Check customer session for avatar display
-    fetch("/api/customer/me")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data?.authenticated && data?.customer) {
-          setCustomer(data.customer);
-        }
-      })
-      .catch(() => {});
+    const checkCustomer = () => {
+      fetch("/api/customer/me")
+        .then((res) => res.json())
+        .then((data) => {
+          if (data?.authenticated && data?.customer) {
+            setCustomer(data.customer);
+            setAvatarError(false);
+          } else {
+            setCustomer(null);
+          }
+        })
+        .catch(() => { });
+    };
+
+    checkCustomer();
+    window.addEventListener("customer-profile-updated", checkCustomer);
+    window.addEventListener("customer-auth-changed", checkCustomer);
+    return () => {
+      window.removeEventListener("customer-profile-updated", checkCustomer);
+      window.removeEventListener("customer-auth-changed", checkCustomer);
+    };
   }, []);
 
   // Close dropdown on outside click
@@ -106,7 +120,7 @@ export function Navbar() {
       {/* Main Navbar - Solid porcelain cream in mobile view (never transparent), logo colors */}
       <nav className="bg-[#FCFAF8] sm:bg-[#FCFAF8]/95 sm:backdrop-blur-md border-b border-[#EFE3E7] px-3 sm:px-6 lg:px-8 transition-colors duration-200 shadow-[0_1px_3px_rgba(58,24,35,0.04)]">
         <div className="max-w-7xl mx-auto flex items-center justify-between h-16 sm:h-20 lg:h-24 gap-2 sm:gap-4 w-full">
-          
+
           {/* Mobile Menu Button with smooth icon rotation animation */}
           <div className="flex items-center lg:hidden flex-shrink-0">
             <button
@@ -116,14 +130,12 @@ export function Navbar() {
             >
               <div className="relative w-5 h-5 flex items-center justify-center">
                 <Menu
-                  className={`w-5 h-5 absolute transition-all duration-300 transform ${
-                    isMobileMenuOpen ? "rotate-90 opacity-0 scale-75" : "rotate-0 opacity-100 scale-100"
-                  }`}
+                  className={`w-5 h-5 absolute transition-all duration-300 transform ${isMobileMenuOpen ? "rotate-90 opacity-0 scale-75" : "rotate-0 opacity-100 scale-100"
+                    }`}
                 />
                 <X
-                  className={`w-5 h-5 absolute transition-all duration-300 transform ${
-                    isMobileMenuOpen ? "rotate-0 opacity-100 scale-100" : "-rotate-90 opacity-0 scale-75"
-                  }`}
+                  className={`w-5 h-5 absolute transition-all duration-300 transform ${isMobileMenuOpen ? "rotate-0 opacity-100 scale-100" : "-rotate-90 opacity-0 scale-75"
+                    }`}
                 />
               </div>
             </button>
@@ -166,9 +178,8 @@ export function Navbar() {
               >
                 <span>Collections</span>
                 <ChevronDown
-                  className={`w-3.5 h-3.5 transition-transform duration-200 text-[#8C6E79] group-hover:text-[#B84A67] ${
-                    isCollectionsOpen ? "rotate-180 text-[#B84A67]" : ""
-                  }`}
+                  className={`w-3.5 h-3.5 transition-transform duration-200 text-[#8C6E79] group-hover:text-[#B84A67] ${isCollectionsOpen ? "rotate-180 text-[#B84A67]" : ""
+                    }`}
                 />
               </button>
 
@@ -254,6 +265,13 @@ export function Navbar() {
               Custom Studio
             </Link>
 
+            <Link
+              href="/devangiresinstudio/orderscatalogue"
+              className="text-xs font-semibold uppercase tracking-wider text-[#3A1823] hover:text-[#B84A67] transition-colors py-1 border-b-2 border-transparent hover:border-[#D4AF37]"
+            >
+              Orders Showcase
+            </Link>
+
             {/* Don't show Track Order for logged in user */}
             {customer ? (
               <Link
@@ -290,10 +308,12 @@ export function Navbar() {
               className="p-1 sm:p-1.5 text-[#7A5E68] hover:text-[#3A1823] hover:bg-[#FAF0F3] rounded-full transition-colors hidden sm:inline-flex items-center"
               title={customer ? `My Account (${customer.name})` : "My Account & Orders"}
             >
-              {customer?.avatarUrl ? (
+              {customer?.avatarUrl && !avatarError ? (
                 <img
                   src={customer.avatarUrl}
                   alt={customer.name}
+                  referrerPolicy="no-referrer"
+                  onError={() => setAvatarError(true)}
                   className="w-7 h-7 rounded-full object-cover border border-[#D4AF37]"
                 />
               ) : customer ? (
@@ -450,13 +470,13 @@ export function Navbar() {
                       {(categories.length > 0
                         ? categories
                         : [
-                            { name: "Resin Coasters", slug: "resin-coasters" },
-                            { name: "Resin Keychains", slug: "resin-keychains" },
-                            { name: "Resin Jewellery", slug: "resin-jewellery" },
-                            { name: "Phone Charms", slug: "resin-phone-charms" },
-                            { name: "Resin Nameplates", slug: "resin-nameplates" },
-                            { name: "Personalised Gifts", slug: "resin-photo-frames" },
-                          ]
+                          { name: "Resin Coasters", slug: "resin-coasters" },
+                          { name: "Resin Keychains", slug: "resin-keychains" },
+                          { name: "Resin Jewellery", slug: "resin-jewellery" },
+                          { name: "Phone Charms", slug: "resin-phone-charms" },
+                          { name: "Resin Nameplates", slug: "resin-nameplates" },
+                          { name: "Personalised Gifts", slug: "resin-photo-frames" },
+                        ]
                       ).map((cat) => (
                         <Link
                           key={cat.id || cat.slug}
@@ -488,6 +508,22 @@ export function Navbar() {
                     <Sparkles className="w-4 h-4 text-[#D4AF37] group-hover:scale-110 transition-transform flex-shrink-0 ml-2" />
                   </Link>
 
+                  <Link
+                    href="/devangiresinstudio/orderscatalogue"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="p-3 bg-gradient-to-r from-[#FAF4EC] to-white border border-[#E8E0D5] rounded-xl flex items-center justify-between group hover:border-[#D4AF37] transition-all shadow-xs active:scale-98"
+                  >
+                    <div>
+                      <p className="font-serif font-bold text-sm text-[#2C332D] group-hover:text-[#B8972E] transition-colors">
+                        Orders Showcase &amp; Catalogue
+                      </p>
+                      <p className="text-[10px] text-[#736C66]">
+                        Browse real custom orders &amp; tap to order same piece
+                      </p>
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-[#B8972E] group-hover:translate-x-1 transition-transform flex-shrink-0 ml-2" />
+                  </Link>
+
                   {/* 6. Account & Order Footer - Don't show Track Order for logged in user */}
                   <div className={`pt-2 grid ${customer ? "grid-cols-1" : "grid-cols-2"} gap-2 text-xs`}>
                     {!customer && (
@@ -506,10 +542,12 @@ export function Navbar() {
                       onClick={() => setIsMobileMenuOpen(false)}
                       className="p-2.5 bg-white border border-[#EFE3E7] rounded-xl flex items-center justify-center space-x-2 text-[#7A5E68] hover:text-[#3A1823] hover:border-[#7A5E68] transition-all shadow-xs active:scale-98"
                     >
-                      {customer?.avatarUrl ? (
+                      {customer?.avatarUrl && !avatarError ? (
                         <img
                           src={customer.avatarUrl}
                           alt={customer.name}
+                          referrerPolicy="no-referrer"
+                          onError={() => setAvatarError(true)}
                           className="w-4 h-4 rounded-full object-cover border border-[#D4AF37] flex-shrink-0"
                         />
                       ) : (

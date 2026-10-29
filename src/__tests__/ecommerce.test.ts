@@ -255,4 +255,138 @@ test("E-Commerce Test Suite", async (t) => {
     assert.equal(afterP1, null);
     assert.equal(afterP2, null);
   });
+
+  // 11. Order Shipping Update & Total Recalculation (Edit Order)
+  await t.test("Admin can edit order shipping yes/no, update amount and recalculate total", async () => {
+    const newOrd = await dbStore.createOrder({
+      customerName: "Shipping Test User",
+      customerEmail: "shiptest@example.com",
+      customerPhone: "9876543210",
+      shippingAddressLine1: "Studio Pick-up / Walk-in",
+      shippingCity: "Mumbai",
+      shippingState: "Maharashtra",
+      shippingPostalCode: "400001",
+      shippingCountry: "India",
+      subtotal: 1000,
+      discountAmount: 100,
+      shippingCharge: 0,
+      totalAmount: 900,
+      orderStatus: "confirmed",
+      paymentStatus: "paid",
+      paymentMethod: "upi",
+      orderSource: "offline",
+      items: [
+        {
+          productId: "test-prod",
+          productName: "Resin Coaster Set",
+          quantity: 2,
+          unitPrice: 500,
+          totalPrice: 1000,
+        },
+      ],
+    });
+
+    assert.ok(newOrd.id);
+    assert.equal(Number(newOrd.shippingCharge), 0);
+    assert.equal(Number(newOrd.totalAmount), 900);
+
+    // Edit Order: Toggle Shipping to Yes (₹79) and update address
+    const updatedWithShipping = await dbStore.updateOrderShipping(newOrd.id, 79, {
+      shippingAddressLine1: "404 Marine Drive",
+      shippingCity: "Mumbai",
+      shippingState: "Maharashtra",
+      shippingPostalCode: "400020",
+    });
+
+    assert.ok(updatedWithShipping);
+    assert.equal(Number(updatedWithShipping?.shippingCharge), 79);
+    // Total should be subtotal (1000) - discount (100) + shipping (79) = 979
+    assert.equal(Number(updatedWithShipping?.totalAmount), 979);
+    assert.equal(updatedWithShipping?.shippingAddressLine1, "404 Marine Drive");
+    assert.equal(updatedWithShipping?.shippingPostalCode, "400020");
+
+    // Edit Order: Toggle Shipping back to No (₹0 Pickup)
+    const updatedBackToPickup = await dbStore.updateOrderShipping(newOrd.id, 0, {
+      shippingAddressLine1: "Studio Pick-up / Direct Handover",
+    });
+
+    assert.ok(updatedBackToPickup);
+    assert.equal(Number(updatedBackToPickup?.shippingCharge), 0);
+    assert.equal(Number(updatedBackToPickup?.totalAmount), 900);
+    assert.equal(updatedBackToPickup?.shippingAddressLine1, "Studio Pick-up / Direct Handover");
+  });
+
+  // 12. Custom Studio Inquiry Persistence & Management
+  await t.test("Custom Studio form persists inquiry with user reference photo and details", async () => {
+    const customReq = await dbStore.createCustomRequest({
+      customerName: "Aishwarya Rai",
+      customerEmail: "aishwarya@example.com",
+      customerPhone: "9820011223",
+      productType: "Preserved Wedding Garland Keepsake Block",
+      budget: "₹3,000 - ₹5,000",
+      description: "Preserve red roses from varmala in a 9-inch hexagonal resin block with gold leaf accents.",
+      referenceImageUrl: "https://rus9f71hta9djnrh.public.blob.vercel-storage.com/reference-images/sample-garland.jpg",
+    });
+
+    assert.ok(customReq.id);
+    assert.equal(customReq.customerName, "Aishwarya Rai");
+    assert.equal(customReq.productType, "Preserved Wedding Garland Keepsake Block");
+    assert.equal(customReq.referenceImageUrl, "https://rus9f71hta9djnrh.public.blob.vercel-storage.com/reference-images/sample-garland.jpg");
+    assert.equal(customReq.status, "new");
+
+    const allRequests = await dbStore.getCustomRequests();
+    const found = allRequests.find((r) => r.id === customReq.id);
+    assert.ok(found);
+    assert.equal(found?.customerPhone, "9820011223");
+
+    // Admin updates status to quoted
+    const updated = await dbStore.updateCustomRequestStatus(customReq.id, "quoted", "Quoted ₹3,500 with gold foil", 3500);
+    assert.equal(updated?.status, "quoted");
+    assert.equal(updated?.adminNotes, "Quoted ₹3,500 with gold foil");
+    assert.equal(Number(updated?.quoteAmount), 3500);
+  });
+
+  // 13. Orders Listing includes Products Ordered with Images
+  await t.test("Orders retrieval includes items with product name and image thumbnail for admin", async () => {
+    const ordersList = await dbStore.getOrders();
+    assert.ok(Array.isArray(ordersList));
+    assert.ok(ordersList.length > 0);
+    // Ensure orders have items array attached
+    for (const ord of ordersList) {
+      assert.ok(Array.isArray(ord.items));
+    }
+  });
+
+  // 14. Custom Studio Inquiry Conversion to Order
+  await t.test("Custom Studio inquiry converted to order marks status as converted and retains reference details", async () => {
+    const customInquiry = await dbStore.createCustomRequest({
+      customerName: "Meera Patel",
+      customerEmail: "meera@example.com",
+      customerPhone: "9820456789",
+      productType: "Floral Resin Wall Clock",
+      budget: "₹2,500",
+      description: "Custom floral wall clock with Roman numerals and preserved carnations",
+      referenceImageUrl: "https://example.com/meera-floral-clock.jpg",
+    });
+
+    assert.ok(customInquiry.id);
+    assert.equal(customInquiry.status, "new");
+
+    // Convert to order: Admin creates order and updates inquiry status to converted
+    const convertedReq = await dbStore.updateCustomRequestStatus(
+      customInquiry.id,
+      "converted",
+      "Converted to Order #ORD-2026-TEST"
+    );
+
+    assert.ok(convertedReq);
+    assert.equal(convertedReq?.status, "converted");
+    assert.equal(convertedReq?.adminNotes, "Converted to Order #ORD-2026-TEST");
+
+    // Verify retrieval reflects converted status
+    const retrieved = await dbStore.getCustomRequestById(customInquiry.id);
+    assert.ok(retrieved);
+    assert.equal(retrieved?.status, "converted");
+    assert.equal(retrieved?.adminNotes, "Converted to Order #ORD-2026-TEST");
+  });
 });

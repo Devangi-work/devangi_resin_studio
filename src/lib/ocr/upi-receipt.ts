@@ -26,44 +26,65 @@ export function parseUpiReceiptText(rawText: string): ParsedUpiDetails {
   else if (/amazon\s*pay/i.test(clean)) detectedApp = "Amazon Pay";
 
   // 2. Detect 12-digit UPI UTR / Reference Number
-  // Common patterns:
-  // "UPI Ref No: 428901234567"
-  // "UPI transaction ID: 428901234567"
-  // "UTR: 428901234567"
-  // "Ref No. 428901234567"
   let detectedUtr: string | null = null;
 
   // Specific contextual patterns first
   const utrContextPatterns = [
-    /(?:upi\s*ref(?:erence)?\s*(?:no|num|id)?|utr|txn\s*id|transaction\s*id|reference\s*id)[:\s#]*([A-Za-z0-9]{12,24})/i,
-    /(?:upi\s*ref(?:\s*no)?)[:\s]*(\d{12})/i,
-    /(?:upi\s*transaction\s*id)[:\s]*(\d{12})/i,
-    /(?:google\s*transaction\s*id)[:\s]*([A-Za-z0-9_-]{10,30})/i,
-    /(?:utr)[:\s]*(\d{12})/i,
+    /(?:upi\s*transaction\s*id)[:\s#]*([0-9\s-]{12,20})/i,
+    /(?:upi\s*ref(?:erence)?\s*(?:no|num|id)?|utr|rrn|ref\s*no)[:\s#]*([0-9\s-]{12,20})/i,
+    /(?:bank\s*ref(?:erence)?\s*(?:no|num)?|rrn)[:\s#]*([0-9\s-]{12,20})/i,
+    /(?:txn\s*id|transaction\s*id)[:\s#]*([0-9\s-]{12,20})/i,
   ];
 
   for (const regex of utrContextPatterns) {
     const match = clean.match(regex);
     if (match && match[1]) {
-      const candidate = match[1].trim();
-      // If candidate contains a 12 digit sequence, prefer that
-      const twelveDigit = candidate.match(/\d{12}/);
-      detectedUtr = twelveDigit ? twelveDigit[0] : candidate;
-      break;
+      const candidateDigits = match[1].replace(/[\s-]/g, "");
+      const twelve = candidateDigits.match(/\d{12}/);
+      if (twelve) {
+        detectedUtr = twelve[0];
+        break;
+      }
     }
   }
 
-  // Fallback: any standalone 12-digit number (standard RBI/NPCI UPI UTR length)
+  // Next: Check for any line or pattern containing 12 digits near UPI keywords
+  if (!detectedUtr) {
+    const lines = clean.split("\n");
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      if (/upi|ref|utr|rrn|txn|transfer|id/i.test(line)) {
+        // Check current line and next line
+        const combined = `${line} ${lines[i + 1] || ""}`;
+        const digits = combined.replace(/[^0-9]/g, "");
+        const m = digits.match(/\d{12}/);
+        if (m && !m[0].startsWith("9967313355") && !m[0].startsWith("9876543210")) {
+          detectedUtr = m[0];
+          break;
+        }
+      }
+    }
+  }
+
+  // Fallback 1: Spaced 12 digits like "4289 0123 4567"
+  if (!detectedUtr) {
+    const spacedMatch = clean.match(/\b(\d{4}\s\d{4}\s\d{4})\b/);
+    if (spacedMatch) {
+      detectedUtr = spacedMatch[1].replace(/\s/g, "");
+    }
+  }
+
+  // Fallback 2: Standalone 12-digit number (RBI standard UPI reference numbers)
   if (!detectedUtr) {
     const twelveDigits = clean.match(/\b\d{12}\b/g);
     if (twelveDigits && twelveDigits.length > 0) {
-      // Pick the first 12-digit number (or one not resembling 9967313355 phone)
-      detectedUtr = twelveDigits[0];
+      // Pick the first 12-digit number not matching known phone numbers
+      const valid = twelveDigits.find(num => !num.startsWith("9967313355") && !num.startsWith("9876543210"));
+      detectedUtr = valid || twelveDigits[0];
     }
   }
 
   // 3. Detect Amount
-  // Patterns like ₹1,200.00, ₹ 1200, Rs. 1200, 1200.00
   let detectedAmount: string | null = null;
   const amountPatterns = [
     /(?:₹|rs\.?|inr)\s*([\d,]+(?:\.\d{2})?)/i,
@@ -110,22 +131,43 @@ export function parseUpiReceiptText(rawText: string): ParsedUpiDetails {
     detectedApp,
     payeeMatched,
     statusMatched,
-    rawText: rawText.trim().slice(0, 800), // snippet for auditing
+    rawText: rawText.trim().slice(0, 800),
   };
 }
 
+let cachedWorker: any = null;
+let workerInitPromise: Promise<any> | null = null;
+
+async function getWorker() {
+  if (cachedWorker) return cachedWorker;
+  if (workerInitPromise) return workerInitPromise;
+
+  workerInitPromise = (async () => {
+    try {
+      const worker = await createWorker("eng");
+      cachedWorker = worker;
+      return worker;
+    } catch (err) {
+      workerInitPromise = null;
+      throw err;
+    }
+  })();
+
+  return workerInitPromise;
+}
+
 /**
- * Perform OCR on image buffer using Tesseract.js
+ * Perform OCR on image buffer using high-speed singleton Tesseract.js worker
  */
 export async function extractReceiptDetails(imageBuffer: Buffer): Promise<ParsedUpiDetails> {
   try {
-    const worker = await createWorker("eng");
+    const worker = await getWorker();
     const ret = await worker.recognize(imageBuffer);
-    await worker.terminate();
-
     return parseUpiReceiptText(ret.data.text || "");
   } catch (err) {
     console.error("[OCR Extraction Error]", err);
+    cachedWorker = null;
+    workerInitPromise = null;
     return {
       detectedUtr: null,
       detectedAmount: null,

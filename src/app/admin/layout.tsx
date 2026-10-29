@@ -47,6 +47,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   // If on login or setup page, render plain container
   const isAuthPage = pathname === "/admin/login" || pathname === "/admin/setup";
+  const isReceiptPage = pathname.includes("/receipt");
 
   // Sync theme with shared utility and listen to changes from settings or other tabs
   useEffect(() => {
@@ -179,6 +180,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
   };
 
+  if (isReceiptPage) {
+    return <>{children}</>;
+  }
+
   if (isAuthPage) {
     return (
       <div className="min-h-screen bg-[#FAF8F5] flex flex-col justify-center py-12 sm:px-6 lg:px-8">
@@ -192,6 +197,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { name: "Products", href: "/admin/products", icon: Package },
     { name: "Categories", href: "/admin/categories", icon: FolderTree },
     { name: "Orders", href: "/admin/orders", icon: ShoppingBag },
+    { name: "Custom Studio", href: "/admin/custom-requests", icon: Sparkles },
     { name: "Inventory", href: "/admin/inventory", icon: Boxes },
     { name: "Coupons", href: "/admin/coupons", icon: Tag },
     { name: "Customers", href: "/admin/customers", icon: Users },

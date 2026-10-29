@@ -25,6 +25,7 @@ import {
   RotateCcw,
   Lock,
   FileText,
+  PenTool,
 } from "lucide-react";
 import { MediaPickerModal } from "@/components/admin/MediaPickerModal";
 import { getStoredAdminTheme, applyAdminTheme, AdminTheme } from "@/lib/admin-theme";
@@ -47,6 +48,7 @@ export default function AdminSettingsPage() {
     storeTagline: "Handmade Resin Elegance, Preserved Forever",
     storeDescription: "Boutique handmade resin art, bespoke jewellery, personalized gifts, keychains, and coasters crafted with passion.",
     logoUrl: "/images/logo/resin_logo.png",
+    signatureUrl: "",
     contactEmail: "hello@devangiresinstudio.com",
     contactPhone: "+91 98765 43210",
     whatsappNumber: "+919876543210",
@@ -82,6 +84,11 @@ export default function AdminSettingsPage() {
   const [isMediaPickerOpen, setIsMediaPickerOpen] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [avatarMsg, setAvatarMsg] = useState("");
+
+  // Signature and Logo upload state
+  const [uploadingSignature, setUploadingSignature] = useState(false);
+  const [signatureMsg, setSignatureMsg] = useState("");
+  const [uploadingLogo, setUploadingLogo] = useState(false);
 
   useEffect(() => {
     fetch("/api/admin/settings")
@@ -183,6 +190,56 @@ export default function AdminSettingsPage() {
 
   const handleThemeChange = (newTheme: AdminTheme) => {
     applyAdminTheme(newTheme);
+  };
+
+  const handleSignatureUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingSignature(true);
+    setSignatureMsg("");
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/admin/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.url) {
+        setSettings((prev: any) => ({ ...prev, signatureUrl: data.url }));
+        setSignatureMsg("Signature uploaded successfully! Remember to click 'Save Settings' to apply across all generated receipts.");
+      } else {
+        alert(data.error || "Failed to upload signature image.");
+      }
+    } catch {
+      alert("Signature upload error.");
+    } finally {
+      setUploadingSignature(false);
+    }
+  };
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingLogo(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/admin/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.url) {
+        setSettings((prev: any) => ({ ...prev, logoUrl: data.url }));
+      } else {
+        alert(data.error || "Failed to upload logo image.");
+      }
+    } catch {
+      alert("Logo upload error.");
+    } finally {
+      setUploadingLogo(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -453,6 +510,187 @@ export default function AdminSettingsPage() {
               onChange={(e) => setSettings({ ...settings, storeDescription: e.target.value })}
               className="w-full px-3.5 py-2 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl"
             />
+          </div>
+
+          {/* Store Logo Customizer */}
+          <div className="pt-3 border-t border-[#F4EBE6]">
+            <label className="text-xs font-semibold text-[#2C332D] block mb-2">
+              Official Store Brand Logo
+            </label>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              <div className="w-20 h-20 rounded-2xl border border-[#E8E0D5] bg-[#FAF8F5] p-2 flex items-center justify-center overflow-hidden shrink-0 shadow-xs">
+                {settings.logoUrl ? (
+                  <img
+                    src={settings.logoUrl}
+                    alt="Store Logo"
+                    className="max-h-full max-w-full object-contain"
+                  />
+                ) : (
+                  <ImageIcon className="w-8 h-8 text-[#A89F91]" />
+                )}
+              </div>
+              <div className="space-y-1.5">
+                <input
+                  type="file"
+                  id="logoUploadInput"
+                  accept="image/png, image/jpeg, image/webp, image/svg+xml"
+                  className="hidden"
+                  onChange={handleLogoUpload}
+                  disabled={uploadingLogo}
+                />
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => document.getElementById("logoUploadInput")?.click()}
+                    disabled={uploadingLogo}
+                    className="px-3.5 py-2 bg-[#2C332D] text-white text-xs font-semibold rounded-xl hover:bg-[#3D473E] flex items-center space-x-1.5 transition shadow-sm disabled:opacity-50"
+                  >
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>{uploadingLogo ? "Uploading..." : settings.logoUrl ? "Change Store Logo" : "Upload Store Logo"}</span>
+                  </button>
+                  {settings.logoUrl && settings.logoUrl !== "/images/logo/resin_logo.png" && (
+                    <button
+                      type="button"
+                      onClick={() => setSettings({ ...settings, logoUrl: "/images/logo/resin_logo.png" })}
+                      className="px-3 py-2 bg-gray-100 text-gray-600 hover:bg-gray-200 text-xs font-semibold rounded-xl transition"
+                    >
+                      Reset to Default
+                    </button>
+                  )}
+                </div>
+                <p className="text-[11px] text-[#736C66]">
+                  Rendered prominently on the website header and printed on official customer payment receipts.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Authorized Signature with Stamp */}
+        <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#E8E0D5] shadow-sm space-y-5">
+          <div className="border-b border-[#F4EBE6] pb-3 flex items-center justify-between">
+            <div className="flex items-center space-x-2.5">
+              <div className="w-9 h-9 rounded-xl bg-[#FAF0F3] text-[#800020] flex items-center justify-center border border-[#E8C568]/40">
+                <PenTool className="w-4 h-4 text-[#800020]" />
+              </div>
+              <div>
+                <h2 className="font-serif text-base font-bold text-[#2C332D]">
+                  Authorized Signature with Stamp
+                </h2>
+                <p className="text-xs text-[#736C66] mt-0.5">
+                  Uploaded signature with stamp is automatically fetched and placed on official customer payment receipts and PDF invoices for paid orders.
+                </p>
+              </div>
+            </div>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-[#2E7D32] bg-[#E8EFE8] px-2.5 py-0.5 rounded-full border border-[#C5D8C5]">
+              Receipt Ready
+            </span>
+          </div>
+
+          {signatureMsg && (
+            <div className="p-3 bg-[#E8EFE8] border border-[#C5D8C5] rounded-xl text-xs text-[#2E7D32] flex items-center justify-between">
+              <span>{signatureMsg}</span>
+              <button type="button" onClick={() => setSignatureMsg("")} className="underline text-[11px]">
+                Dismiss
+              </button>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+            {/* Signature with Stamp Upload & Preview Card */}
+            <div className="p-5 bg-[#FAF8F5] border border-[#E8E0D5] rounded-2xl space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold uppercase tracking-wider text-[#2C332D]">
+                  Signature with Stamp
+                </span>
+                <span className="text-[10px] text-[#8C7A72]">
+                  {settings.signatureUrl ? "Configured" : "Not Set"}
+                </span>
+              </div>
+
+              <div className="h-40 rounded-xl border border-dashed border-[#D4AF37]/60 bg-white flex flex-col items-center justify-center p-3 relative overflow-hidden shadow-inner">
+                {settings.signatureUrl ? (
+                  <div className="flex flex-col items-center">
+                    <img
+                      src={settings.signatureUrl}
+                      alt="Authorized Signature with Stamp"
+                      className="max-h-24 max-w-full object-contain filter contrast-125"
+                    />
+                    <div className="w-48 border-t border-gray-400 mt-2 pt-1 text-center">
+                      <span className="text-[10px] font-serif text-[#736C66] tracking-widest uppercase block font-semibold">
+                        Authorized Signatory &amp; Stamp
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center text-[#8C7A72] space-y-1.5">
+                    <PenTool className="w-7 h-7 mx-auto text-[#C5B8B0]" />
+                    <p className="text-xs font-medium text-[#2C332D]">No Signature with Stamp Uploaded Yet</p>
+                    <p className="text-[11px] text-[#A89F91]">
+                      Upload a photo or transparent PNG of your signature together with your official rubber stamp
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2 pt-1">
+                <input
+                  type="file"
+                  id="signatureUploadInput"
+                  accept="image/png, image/jpeg, image/webp"
+                  className="hidden"
+                  onChange={handleSignatureUpload}
+                  disabled={uploadingSignature}
+                />
+                <button
+                  type="button"
+                  onClick={() => document.getElementById("signatureUploadInput")?.click()}
+                  disabled={uploadingSignature}
+                  className="px-4 py-2 bg-[#2C332D] text-white text-xs font-semibold rounded-xl hover:bg-[#3D473E] flex items-center space-x-1.5 transition shadow-sm disabled:opacity-50"
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>
+                    {uploadingSignature
+                      ? "Uploading..."
+                      : settings.signatureUrl
+                      ? "Replace Signature with Stamp"
+                      : "Upload Signature with Stamp"}
+                  </span>
+                </button>
+
+                {settings.signatureUrl && (
+                  <button
+                    type="button"
+                    onClick={() => setSettings({ ...settings, signatureUrl: "" })}
+                    className="px-3.5 py-2 bg-red-50 text-red-600 hover:bg-red-100 text-xs font-semibold rounded-xl transition flex items-center space-x-1"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Remove</span>
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Receipt Integration Guide */}
+            <div className="p-5 bg-[#FAF8F5] border border-[#E8E0D5] rounded-2xl space-y-3">
+              <span className="text-xs font-bold uppercase tracking-wider text-[#2C332D] block">
+                Automatic Receipt Integration
+              </span>
+
+              <div className="p-4 bg-white rounded-xl border border-[#E8E0D5] space-y-2 text-xs">
+                <p className="font-semibold text-[#800020]">How it appears on customer receipts:</p>
+                <ul className="space-y-1.5 text-[11px] text-[#736C66] list-disc list-inside">
+                  <li>Positioned cleanly in the authorized signatory space at the bottom right.</li>
+                  <li>Seamlessly integrated without inner partitioning lines.</li>
+                  <li>Accompanied by the studio logo rendered as a subtle background watermark.</li>
+                  <li>Ready to download as PDF or print immediately for paid orders.</li>
+                </ul>
+              </div>
+
+              <p className="text-[11px] text-[#736C66] leading-relaxed">
+                When an order is marked as <strong>Paid</strong> in Admin Orders, clicking <strong>&ldquo;Receipt (PDF)&rdquo;</strong> generates the complete receipt featuring this official signature with stamp.
+              </p>
+            </div>
           </div>
         </div>
 

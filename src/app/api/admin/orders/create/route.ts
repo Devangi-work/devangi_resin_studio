@@ -32,6 +32,8 @@ const createOfflineOrderSchema = z.object({
   totalAmount: z.number().min(0),
   orderNotes: z.string().optional().default(""),
   internalNotes: z.string().optional().default(""),
+  packingImages: z.array(z.string()).optional().default([]),
+  productImages: z.array(z.string()).optional().default([]),
 });
 
 export async function POST(request: NextRequest) {
@@ -71,6 +73,8 @@ export async function POST(request: NextRequest) {
       taxAmount: 0,
       totalAmount: data.totalAmount,
       orderNotes: data.orderNotes,
+      packingImages: data.packingImages,
+      productImages: data.productImages,
       internalNotes: `Created manually by admin (${admin.email}) [Source: ${data.orderSource}]\n${data.internalNotes}`.trim(),
       items: data.items,
     });

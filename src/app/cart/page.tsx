@@ -274,23 +274,22 @@ export default function CartPage() {
                 <span>Subtotal</span>
                 <span className="font-semibold text-[#2C332D]">₹{subtotal.toFixed(2)}</span>
               </div>
-              {items.some((i) => i.originalPrice && i.originalPrice > i.price) && (
+              {appliedCoupon && appliedCoupon.code.toUpperCase().includes("FESTIVE") ? (
                 <div className="flex justify-between text-[#800020] font-semibold bg-[#FFF0F4] px-2.5 py-1.5 rounded-lg border border-[#D4AF37]/30">
                   <span className="flex items-center space-x-1">
                     <Sparkles className="w-3 h-3 text-[#D4AF37]" />
-                    <span>Festive Savings</span>
+                    <span>Festive Deal Savings ({appliedCoupon.code})</span>
                   </span>
                   <span>
-                    -₹{items.reduce((sum, i) => i.originalPrice && i.originalPrice > i.price ? sum + (i.originalPrice - i.price) * i.quantity : sum, 0).toFixed(2)}
+                    -₹{appliedCoupon.discountAmount.toFixed(2)}
                   </span>
                 </div>
-              )}
-              {appliedCoupon && (
-                <div className="flex justify-between text-[#2E7D32]">
-                  <span>Coupon Discount</span>
+              ) : appliedCoupon ? (
+                <div className="flex justify-between text-[#2E7D32] font-semibold">
+                  <span>Coupon Discount ({appliedCoupon.code})</span>
                   <span>-₹{appliedCoupon.discountAmount.toFixed(2)}</span>
                 </div>
-              )}
+              ) : null}
               <div className="flex justify-between">
                 <span>Shipping</span>
                 <span className="font-semibold text-[#2C332D]">

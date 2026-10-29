@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useCart } from "@/lib/store/cart";
 import {
   User,
   Package,
@@ -30,9 +31,11 @@ import {
 
 export default function CustomerAccountPage() {
   const router = useRouter();
+  const { clearCart } = useCart();
   const [customer, setCustomer] = useState<any>(null);
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [avatarLoadFailed, setAvatarLoadFailed] = useState(false);
 
   // Active Tab
   const [activeTab, setActiveTab] = useState<"orders" | "profile" | "care">("orders");
@@ -102,8 +105,14 @@ export default function CustomerAccountPage() {
   }, []);
 
   const handleLogout = async () => {
-    await fetch("/api/customer/logout", { method: "POST" });
-    router.push("/");
+    try {
+      await fetch("/api/customer/logout", { method: "POST" });
+    } catch (e) {
+      console.error(e);
+    }
+    clearCart();
+    window.dispatchEvent(new Event("customer-auth-changed"));
+    window.location.href = "/account/login";
   };
 
   // Avatar Upload Handler
@@ -142,7 +151,9 @@ export default function CustomerAccountPage() {
       }
 
       setCustomer((prev: any) => ({ ...prev, avatarUrl: data.avatarUrl }));
+      setAvatarLoadFailed(false);
       setAvatarSuccess("Profile picture updated successfully!");
+      window.dispatchEvent(new Event("customer-profile-updated"));
       setTimeout(() => setAvatarSuccess(""), 3500);
     } catch {
       setAvatarError("Unexpected error uploading profile picture.");
@@ -244,10 +255,12 @@ export default function CustomerAccountPage() {
           {/* Avatar with Camera Overlay & File Input */}
           <div className="relative group shrink-0">
             <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-[#D4AF37] bg-[#FAF4EC] flex items-center justify-center text-[#2C332D] shadow-sm">
-              {customer?.avatarUrl ? (
+              {customer?.avatarUrl && !avatarLoadFailed ? (
                 <img
                   src={customer.avatarUrl}
                   alt={customer.name}
+                  referrerPolicy="no-referrer"
+                  onError={() => setAvatarLoadFailed(true)}
                   className="w-full h-full object-cover"
                 />
               ) : (

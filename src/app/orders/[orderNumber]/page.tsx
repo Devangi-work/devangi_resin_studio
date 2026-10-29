@@ -3,6 +3,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { dbStore } from "@/lib/db";
 import { OrderCancellationCard } from "@/components/orders/OrderCancellationCard";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 import {
   CheckCircle2,
   Package,
@@ -62,24 +65,70 @@ export default async function OrderConfirmationPage({ params, searchParams }: Or
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16 space-y-8">
       
-      {/* Success Banner */}
+      {/* Dynamic Status Banner */}
       <div className="bg-white p-8 rounded-3xl border border-[#E8E0D5] shadow-sm text-center space-y-3">
-        <div className="w-16 h-16 rounded-full bg-[#E8EFE8] text-[#2E7D32] flex items-center justify-center mx-auto shadow-sm">
-          <CheckCircle2 className="w-9 h-9" />
+        <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto shadow-sm ${
+          order.orderStatus === "delivered"
+            ? "bg-[#E8EFE8] text-[#2E7D32]"
+            : order.orderStatus === "shipped"
+            ? "bg-[#EBF3FA] text-[#1E5B94]"
+            : order.orderStatus === "cancelled"
+            ? "bg-[#FDF2F2] text-[#DF4C4C]"
+            : "bg-[#FAF4EC] text-[#B8972E]"
+        }`}>
+          {order.orderStatus === "delivered" ? (
+            <CheckCircle2 className="w-9 h-9" />
+          ) : order.orderStatus === "shipped" ? (
+            <Truck className="w-9 h-9" />
+          ) : order.orderStatus === "cancelled" ? (
+            <Clock className="w-9 h-9" />
+          ) : (
+            <Sparkles className="w-9 h-9" />
+          )}
         </div>
         <span className="text-xs uppercase font-bold tracking-widest text-[#B8972E] block">
-          Order Placed Successfully
+          {order.orderStatus === "delivered"
+            ? "Order Delivered"
+            : order.orderStatus === "shipped"
+            ? "Order In Transit / Dispatched"
+            : order.orderStatus === "ready_to_ship"
+            ? "Packed & Ready to Ship"
+            : order.orderStatus === "processing"
+            ? "Crafting & Curing in Progress"
+            : order.orderStatus === "confirmed"
+            ? "Order Confirmed"
+            : order.orderStatus === "cancelled"
+            ? "Order Cancelled"
+            : "Payment Verification in Progress"}
         </span>
         <h1 className="font-serif text-2xl sm:text-3xl font-bold text-[#2C332D]">
-          Thank you for shopping!
+          {order.orderStatus === "delivered"
+            ? "Your Resin Artwork has Arrived!"
+            : order.orderStatus === "shipped"
+            ? "Your Package is on the Way!"
+            : order.orderStatus === "cancelled"
+            ? "Order Cancelled"
+            : "Thank you for shopping!"}
         </h1>
         <div className="p-4 bg-[#FAF4EC] border border-[#E8E0D5] rounded-2xl max-w-lg mx-auto">
           <p className="text-xs sm:text-sm font-medium text-[#2C332D] leading-relaxed">
-            Your payment is getting validated. After confirmation, your order will start processing.
+            {order.orderStatus === "delivered"
+              ? "Your package has been successfully delivered! We hope you love your handcrafted creation."
+              : order.orderStatus === "shipped"
+              ? `Dispatched with courier ${order.courierName || "Express Courier"}${order.trackingNumber ? ` (AWB Tracking: ${order.trackingNumber})` : ""}.`
+              : order.orderStatus === "ready_to_ship"
+              ? "Your order has passed quality inspection and is packaged with boutique gift wrapping, ready for courier pickup."
+              : order.orderStatus === "processing"
+              ? "Our artisan is handcrafting and curing your piece in the studio with high-grade UV-resistant resin."
+              : order.orderStatus === "confirmed"
+              ? "Payment verified! Your order has been scheduled for handcrafting in the studio."
+              : order.orderStatus === "cancelled"
+              ? `This order was cancelled. ${order.cancellationReason ? `Note: ${order.cancellationReason}` : ""}`
+              : "Your payment details are being verified by our team. After confirmation, your order will start processing."}
           </p>
         </div>
         <p className="text-xs text-[#736C66] max-w-md mx-auto leading-relaxed">
-          An itemized receipt and tracking updates will be dispatched to <strong>{order.customerEmail}</strong>.
+          Updates and notifications are dispatched to <strong>{order.customerEmail}</strong>.
         </p>
         <div className="inline-block bg-[#FAF8F5] px-4 py-2 rounded-xl border border-[#E8E0D5] text-xs">
           <span className="text-[#8C7A72]">Order Number:</span>{" "}
@@ -103,8 +152,8 @@ export default async function OrderConfirmationPage({ params, searchParams }: Or
         <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
           {steps.map((st, idx) => {
             const stepNum = idx + 1; // 1 to 5
-            const isCompleted = currentStepIdx >= stepNum;
-            const isCurrent = currentStepIdx === stepNum;
+            const isCompleted = currentStepIdx > stepNum || (currentStepIdx === 5 && stepNum === 5);
+            const isCurrent = currentStepIdx === stepNum && currentStepIdx < 5;
 
             return (
               <div key={st.key} className="flex sm:flex-col items-center sm:text-center space-x-3 sm:space-x-0 space-y-0 sm:space-y-2">
@@ -226,22 +275,35 @@ export default async function OrderConfirmationPage({ params, searchParams }: Or
         </h3>
         <div className="divide-y divide-[#F4EBE6]">
           {order.items?.map((item: any) => (
-            <div key={item.id} className="py-3 flex items-center justify-between text-xs">
-              <div>
-                <p className="font-semibold text-[#2C332D]">{item.productName}</p>
-                {item.variantName && <p className="text-[#736C66]">{item.variantName}</p>}
-                {item.personalizationDetails?.customName && (
-                  <span className="text-[10px] bg-[#FAF4EC] text-[#B8972E] px-2 py-0.5 rounded font-medium inline-block mt-0.5">
-                    Custom Name: "{item.personalizationDetails.customName}"
-                  </span>
-                )}
-                {item.giftWrapped && (
-                  <span className="text-[10px] text-[#2E7D32] ml-2 font-medium">
-                    • Gift Wrapped
-                  </span>
-                )}
+            <div key={item.id} className="py-3 flex items-center justify-between text-xs gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-[#FAF4EC] border border-[#E8E0D5] overflow-hidden shrink-0 flex items-center justify-center">
+                  {item.productImage || item.referenceImageUrl ? (
+                    <img
+                      src={item.productImage || item.referenceImageUrl}
+                      alt={item.productName}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <Package className="w-5 h-5 text-[#B8972E]" />
+                  )}
+                </div>
+                <div>
+                  <p className="font-semibold text-[#2C332D]">{item.productName}</p>
+                  {item.variantName && <p className="text-[#736C66]">{item.variantName}</p>}
+                  {item.personalizationDetails?.customName && (
+                    <span className="text-[10px] bg-[#FAF4EC] text-[#B8972E] px-2 py-0.5 rounded font-medium inline-block mt-0.5">
+                      Custom Name: &ldquo;{item.personalizationDetails.customName}&rdquo;
+                    </span>
+                  )}
+                  {item.giftWrapped && (
+                    <span className="text-[10px] text-[#2E7D32] ml-2 font-medium">
+                      • Gift Wrapped
+                    </span>
+                  )}
+                </div>
               </div>
-              <div className="text-right">
+              <div className="text-right shrink-0">
                 <p className="font-bold text-[#2C332D]">₹{Number(item.totalPrice).toFixed(2)}</p>
                 <p className="text-[11px] text-[#8C7A72]">Qty: {item.quantity}</p>
               </div>

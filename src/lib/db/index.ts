@@ -17,8 +17,12 @@ export const db = sql ? drizzle(sql, { schema }) : null;
 // Ensure new columns and tables exist on startup without requiring manual migration
 if (sql) {
   sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_screenshot_url TEXT;`.catch(() => {});
+  sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS packing_images JSONB DEFAULT '[]'::jsonb;`.catch(() => {});
+  sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS product_images JSONB DEFAULT '[]'::jsonb;`.catch(() => {});
   sql`ALTER TABLE customers ADD COLUMN IF NOT EXISTS avatar_url TEXT;`.catch(() => {});
   sql`ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS avatar_url TEXT;`.catch(() => {});
+  sql`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS signature_url TEXT DEFAULT '';`.catch(() => {});
+  sql`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS logo_url TEXT DEFAULT '/images/logo/resin_logo.png';`.catch(() => {});
   sql`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS festival_discount_active BOOLEAN DEFAULT FALSE;`.catch(() => {});
   sql`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS festival_name TEXT DEFAULT '';`.catch(() => {});
   sql`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS festival_tagline TEXT DEFAULT '';`.catch(() => {});
@@ -38,6 +42,21 @@ if (sql) {
     mime_type TEXT DEFAULT 'image/png',
     alt_text TEXT DEFAULT '',
     created_at TIMESTAMP DEFAULT NOW()
+  );`.catch(() => {});
+  sql`CREATE TABLE IF NOT EXISTS custom_requests (
+    id TEXT PRIMARY KEY,
+    customer_name TEXT NOT NULL,
+    customer_email TEXT NOT NULL,
+    customer_phone TEXT NOT NULL,
+    product_type TEXT NOT NULL,
+    budget TEXT,
+    description TEXT NOT NULL,
+    reference_image_url TEXT,
+    status TEXT DEFAULT 'new' NOT NULL,
+    quote_amount NUMERIC(10, 2),
+    admin_notes TEXT,
+    created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMP DEFAULT NOW() NOT NULL
   );`.catch(() => {});
 }
 
@@ -86,7 +105,8 @@ function getInitialStoreState(): StoreState {
       storeName: "Devangi Resin Studio",
       storeTagline: "Handcrafted Resin Creations by Devangi",
       storeDescription: "Boutique handmade resin art, bespoke jewellery, personalized gifts, keychains, and coasters crafted with passion.",
-      logoUrl: null,
+      logoUrl: "/images/logo/resin_logo.png",
+      signatureUrl: "",
       contactEmail: "devangi0403@gmail.com",
       contactPhone: "+91 98765 43210",
       whatsappNumber: "+919876543210",
@@ -926,6 +946,8 @@ export const dbStore = {
             courier_name as "courierName",
             internal_notes as "internalNotes",
             order_source as "orderSource",
+            packing_images as "packingImages",
+            product_images as "productImages",
             is_discarded as "isDiscarded",
             discarded_at as "discardedAt",
             secure_lookup_token as "secureLookupToken",
@@ -936,6 +958,52 @@ export const dbStore = {
         `;
 
         if (rows && rows.length > 0) {
+          const orderIds = rows.map((r: any) => r.id);
+          try {
+            const allItems = await sql`
+              SELECT 
+                oi.id,
+                oi.order_id as "orderId",
+                oi.product_id as "productId",
+                oi.variant_id as "variantId",
+                oi.product_name as "productName",
+                oi.variant_name as "variantName",
+                oi.sku,
+                oi.unit_price as "unitPrice",
+                oi.quantity,
+                oi.total_price as "totalPrice",
+                oi.personalization_details as "personalizationDetails",
+                oi.reference_image_url as "referenceImageUrl",
+                COALESCE(
+                  pi.image_url,
+                  pi2.image_url,
+                  oi.reference_image_url
+                ) as "productImage"
+              FROM order_items oi
+              LEFT JOIN LATERAL (
+                SELECT image_url FROM product_images WHERE product_id = oi.product_id ORDER BY is_primary DESC, display_order ASC LIMIT 1
+              ) pi ON true
+              LEFT JOIN products p ON LOWER(p.name) = LOWER(oi.product_name) OR LOWER(p.sku) = LOWER(oi.sku)
+              LEFT JOIN LATERAL (
+                SELECT image_url FROM product_images WHERE product_id = p.id ORDER BY is_primary DESC, display_order ASC LIMIT 1
+              ) pi2 ON true
+              WHERE oi.order_id = ANY(${orderIds});
+            `;
+            const itemsByOrderId: Record<string, any[]> = {};
+            for (const it of (allItems as any[] || [])) {
+              if (!itemsByOrderId[it.orderId]) itemsByOrderId[it.orderId] = [];
+              itemsByOrderId[it.orderId].push(it);
+            }
+            for (const ord of rows as any[]) {
+              ord.items = itemsByOrderId[ord.id] || [];
+            }
+          } catch (itemErr) {
+            console.error("[getOrders] order_items fetch err:", itemErr);
+            for (const ord of rows as any[]) {
+              ord.items = ord.items || [];
+            }
+          }
+
           let list = rows as any[];
           if (filters?.status && filters.status !== "all") {
             list = list.filter((o) => o.orderStatus === filters.status);
@@ -989,8 +1057,7 @@ export const dbStore = {
   },
 
   async getOrderById(id: string) {
-    let ord = store.orders.find((o) => o.id === id);
-    if (!ord && sql) {
+    if (sql) {
       try {
         const rows = await sql`
           SELECT 
@@ -1023,40 +1090,55 @@ export const dbStore = {
             courier_name as "courierName",
             internal_notes as "internalNotes",
             order_source as "orderSource",
+            packing_images as "packingImages",
+            product_images as "productImages",
             is_discarded as "isDiscarded",
             discarded_at as "discardedAt",
             secure_lookup_token as "secureLookupToken",
             created_at as "createdAt",
             updated_at as "updatedAt"
           FROM orders
-          WHERE id = ${id}
+          WHERE id = ${id} OR order_number = ${id}
           LIMIT 1;
         `;
         if (rows && rows.length > 0) {
-          ord = rows[0];
+          const ord = rows[0];
           const items = await sql`
             SELECT 
-              id, product_id as "productId", variant_id as "variantId",
-              product_name as "productName", variant_name as "variantName",
-              sku, unit_price as "unitPrice", quantity, total_price as "totalPrice",
-              personalization_details as "personalizationDetails",
-              reference_image_url as "referenceImageUrl"
-            FROM order_items
-            WHERE order_id = ${ord.id};
+              oi.id, oi.product_id as "productId", oi.variant_id as "variantId",
+              oi.product_name as "productName", oi.variant_name as "variantName",
+              oi.sku, oi.unit_price as "unitPrice", oi.quantity, oi.total_price as "totalPrice",
+              oi.personalization_details as "personalizationDetails",
+              oi.reference_image_url as "referenceImageUrl",
+              COALESCE(
+                pi.image_url,
+                pi2.image_url,
+                oi.reference_image_url
+              ) as "productImage"
+            FROM order_items oi
+            LEFT JOIN LATERAL (
+              SELECT image_url FROM product_images WHERE product_id = oi.product_id ORDER BY is_primary DESC, display_order ASC LIMIT 1
+            ) pi ON true
+            LEFT JOIN products p ON LOWER(p.name) = LOWER(oi.product_name) OR LOWER(p.sku) = LOWER(oi.sku)
+            LEFT JOIN LATERAL (
+              SELECT image_url FROM product_images WHERE product_id = p.id ORDER BY is_primary DESC, display_order ASC LIMIT 1
+            ) pi2 ON true
+            WHERE oi.order_id = ${ord.id};
           `;
           ord.items = items || [];
+          return ord;
         }
       } catch (err) {
         console.error("DB getOrderById error:", err);
       }
     }
-    return ord || null;
+    const memOrd = store.orders.find((o) => o.id === id || o.orderNumber === id);
+    return memOrd || null;
   },
 
   async getOrderByNumber(orderNumber: string, verificationInput?: string) {
-    let ord = store.orders.find((o) => o.orderNumber === orderNumber);
-
-    if (!ord && sql) {
+    let ord = null;
+    if (sql) {
       try {
         const rows = await sql`
           SELECT 
@@ -1088,6 +1170,11 @@ export const dbStore = {
             tracking_number as "trackingNumber",
             courier_name as "courierName",
             internal_notes as "internalNotes",
+            order_source as "orderSource",
+            packing_images as "packingImages",
+            product_images as "productImages",
+            is_discarded as "isDiscarded",
+            discarded_at as "discardedAt",
             secure_lookup_token as "secureLookupToken",
             created_at as "createdAt",
             updated_at as "updatedAt"
@@ -1099,19 +1186,35 @@ export const dbStore = {
           ord = rows[0];
           const items = await sql`
             SELECT 
-              id, product_id as "productId", variant_id as "variantId",
-              product_name as "productName", variant_name as "variantName",
-              sku, unit_price as "unitPrice", quantity, total_price as "totalPrice",
-              personalization_details as "personalizationDetails",
-              reference_image_url as "referenceImageUrl"
-            FROM order_items
-            WHERE order_id = ${ord.id};
+              oi.id, oi.product_id as "productId", oi.variant_id as "variantId",
+              oi.product_name as "productName", oi.variant_name as "variantName",
+              oi.sku, oi.unit_price as "unitPrice", oi.quantity, oi.total_price as "totalPrice",
+              oi.personalization_details as "personalizationDetails",
+              oi.reference_image_url as "referenceImageUrl",
+              COALESCE(
+                pi.image_url,
+                pi2.image_url,
+                oi.reference_image_url
+              ) as "productImage"
+            FROM order_items oi
+            LEFT JOIN LATERAL (
+              SELECT image_url FROM product_images WHERE product_id = oi.product_id ORDER BY is_primary DESC, display_order ASC LIMIT 1
+            ) pi ON true
+            LEFT JOIN products p ON LOWER(p.name) = LOWER(oi.product_name) OR LOWER(p.sku) = LOWER(oi.sku)
+            LEFT JOIN LATERAL (
+              SELECT image_url FROM product_images WHERE product_id = p.id ORDER BY is_primary DESC, display_order ASC LIMIT 1
+            ) pi2 ON true
+            WHERE oi.order_id = ${ord.id};
           `;
           ord.items = items || [];
         }
       } catch (err) {
         console.error("DB getOrderByNumber err:", err);
       }
+    }
+
+    if (!ord) {
+      ord = store.orders.find((o) => o.orderNumber === orderNumber) || null;
     }
 
     if (!ord) return null;
@@ -1148,6 +1251,8 @@ export const dbStore = {
       paymentStatus: data.paymentStatus || "pending_verification",
       paymentMethod: data.paymentMethod || "upi",
       orderSource: data.orderSource || "online",
+      packingImages: data.packingImages || [],
+      productImages: data.productImages || [],
       isDiscarded: false,
       upiTransactionId: data.upiTransactionId || null,
       paymentScreenshotUrl: data.paymentScreenshotUrl || null,
@@ -1166,7 +1271,8 @@ export const dbStore = {
             shipping_address_line1, shipping_address_line2, shipping_city, shipping_state,
             shipping_postal_code, shipping_country, order_notes, subtotal, discount_amount,
             shipping_charge, tax_amount, total_amount, order_status, payment_status,
-            payment_method, upi_transaction_id, payment_screenshot_url, secure_lookup_token, order_source, is_discarded,
+            payment_method, upi_transaction_id, payment_screenshot_url, secure_lookup_token, order_source,
+            packing_images, product_images, is_discarded,
             created_at, updated_at
           ) VALUES (
             ${id}, ${orderNumber}, ${data.customerId || null}, ${data.customerName}, ${data.customerEmail}, ${data.customerPhone},
@@ -1175,7 +1281,8 @@ export const dbStore = {
             ${Number(data.subtotal).toFixed(2)}, ${Number(data.discountAmount || 0).toFixed(2)},
             ${Number(data.shippingCharge || 0).toFixed(2)}, ${Number(data.taxAmount || 0).toFixed(2)},
             ${Number(data.totalAmount).toFixed(2)}, ${newOrder.orderStatus}, ${newOrder.paymentStatus},
-            ${newOrder.paymentMethod}, ${newOrder.upiTransactionId}, ${newOrder.paymentScreenshotUrl}, ${secureLookupToken}, ${newOrder.orderSource}, false,
+            ${newOrder.paymentMethod}, ${newOrder.upiTransactionId}, ${newOrder.paymentScreenshotUrl}, ${secureLookupToken}, ${newOrder.orderSource},
+            ${JSON.stringify(newOrder.packingImages)}::jsonb, ${JSON.stringify(newOrder.productImages)}::jsonb, false,
             NOW(), NOW()
           );
         `;
@@ -1206,11 +1313,104 @@ export const dbStore = {
     return newOrder;
   },
 
-  async updateOrderStatus(id: string, newStatus: string, notes?: string, updatedBy = "admin") {
-    const ord = store.orders.find((o) => o.id === id);
+  async updateOrderStatus(
+    id: string,
+    newStatus: string,
+    notes?: string,
+    updatedBy = "admin",
+    trackingNumber?: string,
+    courierName?: string,
+    packingImages?: string[]
+  ) {
+    const ord = store.orders.find((o) => o.id === id || o.orderNumber === id);
     if (ord) {
       ord.orderStatus = newStatus;
       if (notes) ord.internalNotes = `${ord.internalNotes || ""}\n[${new Date().toISOString()}] ${notes}`.trim();
+      if (trackingNumber !== undefined) ord.trackingNumber = trackingNumber;
+      if (courierName !== undefined) ord.courierName = courierName;
+      if (packingImages !== undefined) ord.packingImages = packingImages;
+      ord.updatedAt = new Date();
+    }
+
+    if (sql) {
+      try {
+        if (packingImages !== undefined && notes) {
+          await sql`
+            UPDATE orders
+            SET 
+              order_status = ${newStatus},
+              tracking_number = COALESCE(${trackingNumber ?? null}, tracking_number),
+              courier_name = COALESCE(${courierName ?? null}, courier_name),
+              packing_images = ${JSON.stringify(packingImages)}::jsonb,
+              internal_notes = CONCAT(COALESCE(internal_notes, ''), E'\n', ${notes}::text),
+              updated_at = NOW()
+            WHERE id = ${id} OR order_number = ${id};
+          `;
+        } else if (packingImages !== undefined) {
+          await sql`
+            UPDATE orders
+            SET 
+              order_status = ${newStatus},
+              tracking_number = COALESCE(${trackingNumber ?? null}, tracking_number),
+              courier_name = COALESCE(${courierName ?? null}, courier_name),
+              packing_images = ${JSON.stringify(packingImages)}::jsonb,
+              updated_at = NOW()
+            WHERE id = ${id} OR order_number = ${id};
+          `;
+        } else if (notes) {
+          await sql`
+            UPDATE orders
+            SET 
+              order_status = ${newStatus},
+              tracking_number = COALESCE(${trackingNumber ?? null}, tracking_number),
+              courier_name = COALESCE(${courierName ?? null}, courier_name),
+              internal_notes = CONCAT(COALESCE(internal_notes, ''), E'\n', ${notes}::text),
+              updated_at = NOW()
+            WHERE id = ${id} OR order_number = ${id};
+          `;
+        } else {
+          await sql`
+            UPDATE orders
+            SET 
+              order_status = ${newStatus},
+              tracking_number = COALESCE(${trackingNumber ?? null}, tracking_number),
+              courier_name = COALESCE(${courierName ?? null}, courier_name),
+              updated_at = NOW()
+            WHERE id = ${id} OR order_number = ${id};
+          `;
+        }
+      } catch (err) {
+        console.error("DB updateOrderStatus err:", err);
+      }
+    }
+
+    return this.getOrderById(id);
+  },
+
+  async updateOrderShipping(
+    id: string,
+    shippingCharge: number,
+    address?: {
+      shippingAddressLine1?: string;
+      shippingAddressLine2?: string;
+      shippingCity?: string;
+      shippingState?: string;
+      shippingPostalCode?: string;
+    }
+  ) {
+    const ord = store.orders.find((o) => o.id === id || o.orderNumber === id);
+    if (ord) {
+      const oldShipping = Number(ord.shippingCharge || 0);
+      const subtotal = Number(ord.subtotal) > 0 ? Number(ord.subtotal) : Math.max(0, Number(ord.totalAmount || 0) - oldShipping + Number(ord.discountAmount || 0));
+      ord.subtotal = subtotal.toFixed(2);
+      ord.shippingCharge = Number(shippingCharge).toFixed(2);
+      const discount = Number(ord.discountAmount || 0);
+      ord.totalAmount = Math.max(0, subtotal - discount + Number(shippingCharge)).toFixed(2);
+      if (address?.shippingAddressLine1 !== undefined) ord.shippingAddressLine1 = address.shippingAddressLine1;
+      if (address?.shippingAddressLine2 !== undefined) ord.shippingAddressLine2 = address.shippingAddressLine2;
+      if (address?.shippingCity !== undefined) ord.shippingCity = address.shippingCity;
+      if (address?.shippingState !== undefined) ord.shippingState = address.shippingState;
+      if (address?.shippingPostalCode !== undefined) ord.shippingPostalCode = address.shippingPostalCode;
       ord.updatedAt = new Date();
     }
 
@@ -1219,22 +1419,29 @@ export const dbStore = {
         await sql`
           UPDATE orders
           SET 
-            order_status = ${newStatus},
-            internal_notes = CASE 
-              WHEN ${notes || null} IS NOT NULL 
-              THEN CONCAT(COALESCE(internal_notes, ''), E'\n', ${notes || ''}) 
-              ELSE internal_notes 
-            END,
+            subtotal = CASE WHEN COALESCE(subtotal, 0) > 0 THEN subtotal ELSE GREATEST(0, (COALESCE(total_amount, 0) - COALESCE(shipping_charge, 0) + COALESCE(discount_amount, 0))) END,
+            shipping_charge = ${Number(shippingCharge).toFixed(2)},
+            total_amount = GREATEST(0, (
+              (CASE WHEN COALESCE(subtotal, 0) > 0 THEN subtotal ELSE (COALESCE(total_amount, 0) - COALESCE(shipping_charge, 0) + COALESCE(discount_amount, 0)) END)
+              - COALESCE(discount_amount, 0)
+              + ${Number(shippingCharge)}
+            )),
+            shipping_address_line1 = COALESCE(${address?.shippingAddressLine1 ?? null}, shipping_address_line1),
+            shipping_address_line2 = COALESCE(${address?.shippingAddressLine2 ?? null}, shipping_address_line2),
+            shipping_city = COALESCE(${address?.shippingCity ?? null}, shipping_city),
+            shipping_state = COALESCE(${address?.shippingState ?? null}, shipping_state),
+            shipping_postal_code = COALESCE(${address?.shippingPostalCode ?? null}, shipping_postal_code),
             updated_at = NOW()
           WHERE id = ${id} OR order_number = ${id};
         `;
       } catch (err) {
-        console.error("DB updateOrderStatus err:", err);
+        console.error("DB updateOrderShipping err:", err);
       }
     }
 
     return this.getOrderById(id);
   },
+
 
   async updateOrderPaymentStatus(orderNumberOrId: string, paymentStatus: string, details?: any) {
     const ord = store.orders.find((o) => o.id === orderNumberOrId || o.orderNumber === orderNumberOrId);
@@ -1344,14 +1551,52 @@ export const dbStore = {
   },
 
   async updateTracking(id: string, trackingNumber: string, courierName: string) {
-    const ord = store.orders.find((o) => o.id === id);
-    if (!ord) return null;
+    const ord = store.orders.find((o) => o.id === id || o.orderNumber === id);
+    if (ord) {
+      ord.trackingNumber = trackingNumber;
+      ord.courierName = courierName;
+      ord.orderStatus = "shipped";
+      ord.updatedAt = new Date();
+    }
 
-    ord.trackingNumber = trackingNumber;
-    ord.courierName = courierName;
-    ord.orderStatus = "shipped";
-    ord.updatedAt = new Date();
-    return ord;
+    if (sql) {
+      try {
+        await sql`
+          UPDATE orders
+          SET 
+            tracking_number = ${trackingNumber},
+            courier_name = ${courierName},
+            order_status = 'shipped',
+            updated_at = NOW()
+          WHERE id = ${id} OR order_number = ${id};
+        `;
+      } catch (err) {
+        console.error("DB updateTracking err:", err);
+      }
+    }
+    return this.getOrderById(id);
+  },
+
+  async updateOrderPackingImages(id: string, packingImages: string[]) {
+    const ord = store.orders.find((o) => o.id === id || o.orderNumber === id);
+    if (ord) {
+      ord.packingImages = packingImages;
+      ord.updatedAt = new Date();
+    }
+    if (sql) {
+      try {
+        await sql`
+          UPDATE orders
+          SET 
+            packing_images = ${JSON.stringify(packingImages)}::jsonb,
+            updated_at = NOW()
+          WHERE id = ${id} OR order_number = ${id};
+        `;
+      } catch (err) {
+        console.error("DB updateOrderPackingImages err:", err);
+      }
+    }
+    return this.getOrderById(id);
   },
 
   // ---------------- COUPONS ----------------
@@ -1489,6 +1734,7 @@ export const dbStore = {
             store_tagline as "storeTagline",
             store_description as "storeDescription",
             logo_url as "logoUrl",
+            signature_url as "signatureUrl",
             contact_email as "contactEmail",
             contact_phone as "contactPhone",
             whatsapp_number as "whatsappNumber",
@@ -1549,7 +1795,7 @@ export const dbStore = {
       try {
         await sql`
           INSERT INTO site_settings (
-            id, store_name, store_tagline, store_description, contact_email,
+            id, store_name, store_tagline, store_description, logo_url, signature_url, contact_email,
             contact_phone, whatsapp_number, instagram_url, facebook_url, pinterest_url,
             default_shipping_charge, free_shipping_threshold, production_time_message,
             shipping_policy, return_policy, privacy_policy, terms_policy, care_instructions_default,
@@ -1561,6 +1807,8 @@ export const dbStore = {
             ${data.storeName ?? store.siteSettings.storeName},
             ${data.storeTagline ?? store.siteSettings.storeTagline},
             ${data.storeDescription ?? store.siteSettings.storeDescription},
+            ${data.logoUrl ?? store.siteSettings.logoUrl ?? '/images/logo/resin_logo.png'},
+            ${data.signatureUrl ?? store.siteSettings.signatureUrl ?? ''},
             ${data.contactEmail ?? store.siteSettings.contactEmail},
             ${data.contactPhone ?? store.siteSettings.contactPhone},
             ${data.whatsappNumber ?? store.siteSettings.whatsappNumber},
@@ -1593,6 +1841,8 @@ export const dbStore = {
             store_name = EXCLUDED.store_name,
             store_tagline = EXCLUDED.store_tagline,
             store_description = EXCLUDED.store_description,
+            logo_url = EXCLUDED.logo_url,
+            signature_url = EXCLUDED.signature_url,
             contact_email = EXCLUDED.contact_email,
             contact_phone = EXCLUDED.contact_phone,
             whatsapp_number = EXCLUDED.whatsapp_number,
@@ -2278,5 +2528,191 @@ export const dbStore = {
       lowStockProducts: watchlist.slice(0, 10),
       recentMovements: store.inventoryMovements.slice(0, 5),
     };
+  },
+
+  // ---------------- BESPOKE CUSTOM REQUESTS ----------------
+  async createCustomRequest(data: {
+    customerName: string;
+    customerEmail: string;
+    customerPhone: string;
+    productType: string;
+    budget?: string;
+    description: string;
+    referenceImageUrl?: string | null;
+  }) {
+    const id = `req_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+    const newReq = {
+      id,
+      customerName: data.customerName,
+      customerEmail: data.customerEmail,
+      customerPhone: data.customerPhone,
+      productType: data.productType,
+      budget: data.budget || "Not Specified",
+      description: data.description,
+      referenceImageUrl: data.referenceImageUrl || null,
+      status: "new",
+      quoteAmount: null,
+      adminNotes: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    store.customRequests.unshift(newReq);
+
+    if (sql) {
+      try {
+        await sql`
+          INSERT INTO custom_requests (
+            id, customer_name, customer_email, customer_phone, product_type, budget,
+            description, reference_image_url, status, created_at, updated_at
+          ) VALUES (
+            ${id}, ${data.customerName}, ${data.customerEmail}, ${data.customerPhone},
+            ${data.productType}, ${data.budget || null}, ${data.description},
+            ${data.referenceImageUrl || null}, 'new', NOW(), NOW()
+          );
+        `;
+      } catch (err) {
+        console.error("DB createCustomRequest err:", err);
+      }
+    }
+
+    return newReq;
+  },
+
+  async getCustomRequests(filters?: { status?: string; search?: string }) {
+    if (sql) {
+      try {
+        const rows = await sql`
+          SELECT 
+            id,
+            customer_name as "customerName",
+            customer_email as "customerEmail",
+            customer_phone as "customerPhone",
+            product_type as "productType",
+            budget,
+            description,
+            reference_image_url as "referenceImageUrl",
+            status,
+            quote_amount as "quoteAmount",
+            admin_notes as "adminNotes",
+            created_at as "createdAt",
+            updated_at as "updatedAt"
+          FROM custom_requests
+          ORDER BY created_at DESC;
+        `;
+        if (rows && rows.length > 0) {
+          let list = rows as any[];
+          if (filters?.status && filters.status !== "all") {
+            list = list.filter((r) => r.status === filters.status);
+          }
+          if (filters?.search && filters.search.trim()) {
+            const q = filters.search.toLowerCase().trim();
+            list = list.filter(
+              (r) =>
+                r.customerName?.toLowerCase().includes(q) ||
+                r.customerEmail?.toLowerCase().includes(q) ||
+                r.customerPhone?.includes(q) ||
+                r.productType?.toLowerCase().includes(q) ||
+                r.description?.toLowerCase().includes(q)
+            );
+          }
+          return list;
+        }
+      } catch (err) {
+        console.error("DB getCustomRequests err:", err);
+      }
+    }
+
+    let list = [...store.customRequests];
+    if (filters?.status && filters.status !== "all") {
+      list = list.filter((r) => r.status === filters.status);
+    }
+    if (filters?.search && filters.search.trim()) {
+      const q = filters.search.toLowerCase().trim();
+      list = list.filter(
+        (r) =>
+          r.customerName?.toLowerCase().includes(q) ||
+          r.customerEmail?.toLowerCase().includes(q) ||
+          r.customerPhone?.includes(q) ||
+          r.productType?.toLowerCase().includes(q) ||
+          r.description?.toLowerCase().includes(q)
+      );
+    }
+    return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  },
+
+  async getCustomRequestById(id: string) {
+    if (sql) {
+      try {
+        const rows = await sql`
+          SELECT 
+            id,
+            customer_name as "customerName",
+            customer_email as "customerEmail",
+            customer_phone as "customerPhone",
+            product_type as "productType",
+            budget,
+            description,
+            reference_image_url as "referenceImageUrl",
+            status,
+            quote_amount as "quoteAmount",
+            admin_notes as "adminNotes",
+            created_at as "createdAt",
+            updated_at as "updatedAt"
+          FROM custom_requests
+          WHERE id = ${id}
+          LIMIT 1;
+        `;
+        if (rows && rows.length > 0) return rows[0];
+      } catch (err) {
+        console.error("DB getCustomRequestById err:", err);
+      }
+    }
+    return store.customRequests.find((r) => r.id === id) || null;
+  },
+
+  async updateCustomRequestStatus(
+    id: string,
+    status?: string,
+    adminNotes?: string,
+    quoteAmount?: number
+  ) {
+    const mem = store.customRequests.find((r) => r.id === id);
+    if (mem) {
+      if (status !== undefined) mem.status = status;
+      if (adminNotes !== undefined) mem.adminNotes = adminNotes;
+      if (quoteAmount !== undefined) mem.quoteAmount = quoteAmount;
+      mem.updatedAt = new Date();
+    }
+
+    if (sql) {
+      try {
+        await sql`
+          UPDATE custom_requests
+          SET 
+            status = COALESCE(${status ?? null}, status),
+            admin_notes = COALESCE(${adminNotes ?? null}, admin_notes),
+            quote_amount = COALESCE(${quoteAmount ?? null}, quote_amount),
+            updated_at = NOW()
+          WHERE id = ${id};
+        `;
+      } catch (err) {
+        console.error("DB updateCustomRequestStatus err:", err);
+      }
+    }
+
+    return this.getCustomRequestById(id);
+  },
+
+  async deleteCustomRequest(id: string) {
+    store.customRequests = store.customRequests.filter((r) => r.id !== id);
+    if (sql) {
+      try {
+        await sql`DELETE FROM custom_requests WHERE id = ${id};`;
+      } catch (err) {
+        console.error("DB deleteCustomRequest err:", err);
+      }
+    }
+    return { success: true };
   },
 };

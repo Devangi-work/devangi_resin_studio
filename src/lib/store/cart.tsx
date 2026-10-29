@@ -48,30 +48,48 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discountAmount: number } | null>(null);
+  const [storageKey, setStorageKey] = useState<string>("resin_cart_guest");
 
-  // Load cart from localStorage
-  useEffect(() => {
+  // Synchronize cart with active customer account
+  const syncUserCart = async () => {
     try {
-      const stored = localStorage.getItem("resin_cart");
+      const res = await fetch("/api/customer/me");
+      const data = await res.json();
+      const key = data?.authenticated && data?.customer?.id ? `resin_cart_${data.customer.id}` : "resin_cart_guest";
+      setStorageKey(key);
+      const stored = localStorage.getItem(key);
       if (stored) {
         setItems(JSON.parse(stored));
+      } else {
+        setItems([]);
       }
     } catch (e) {
-      console.error("Failed to load cart from storage:", e);
+      console.error("Failed to sync cart key:", e);
+      try {
+        const stored = localStorage.getItem("resin_cart_guest");
+        if (stored) setItems(JSON.parse(stored));
+      } catch {}
+    } finally {
+      setIsLoaded(true);
     }
-    setIsLoaded(true);
+  };
+
+  useEffect(() => {
+    syncUserCart();
+    window.addEventListener("customer-auth-changed", syncUserCart);
+    return () => window.removeEventListener("customer-auth-changed", syncUserCart);
   }, []);
 
-  // Save cart to localStorage
+  // Save cart to active account's localStorage key
   useEffect(() => {
     if (isLoaded) {
       try {
-        localStorage.setItem("resin_cart", JSON.stringify(items));
+        localStorage.setItem(storageKey, JSON.stringify(items));
       } catch (e) {
         console.error("Failed to save cart to storage:", e);
       }
     }
-  }, [items, isLoaded]);
+  }, [items, isLoaded, storageKey]);
 
   const addItem = (newItem: CartItem) => {
     setItems((prev) => {
@@ -111,6 +129,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const clearCart = () => {
     setItems([]);
     setAppliedCoupon(null);
+    try {
+      localStorage.removeItem(storageKey);
+      localStorage.removeItem("resin_cart");
+      localStorage.removeItem("resin_cart_guest");
+    } catch {}
   };
 
   const subtotal = items.reduce((sum, item) => {
