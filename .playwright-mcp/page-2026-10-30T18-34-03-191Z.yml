@@ -1,0 +1,341 @@
+- generic [active] [ref=f6e1]:
+  - banner [ref=f6e2]:
+    - generic [ref=f6e3]: Handmade with Love • Complimentary Insured Delivery on orders over ₹999.00
+    - navigation [ref=f6e9]:
+      - generic [ref=f6e10]:
+        - link "Devangi Resin Studio Logo Devangi Resin Studio" [ref=f6e12] [cursor=pointer]:
+          - /url: /
+          - img "Devangi Resin Studio Logo" [ref=f6e13]
+          - generic [ref=f6e14]: Devangi Resin Studio
+        - generic [ref=f6e16]:
+          - link "Home" [ref=f6e17] [cursor=pointer]:
+            - /url: /
+          - link "Shop" [ref=f6e18] [cursor=pointer]:
+            - /url: /shop
+          - button "Collections" [ref=f6e20]
+          - link "Festive" [ref=f6e24] [cursor=pointer]:
+            - /url: /shop?festival=true
+          - link "Custom Studio" [ref=f6e28] [cursor=pointer]:
+            - /url: /custom-orders
+          - link "Showcase" [ref=f6e29] [cursor=pointer]:
+            - /url: /devangiresinstudio/orderscatalogue
+          - link "Track Order" [ref=f6e30] [cursor=pointer]:
+            - /url: /track-order
+        - generic [ref=f6e31]:
+          - button "Search products" [ref=f6e32]
+          - button "User Account Options" [ref=f6e37]
+          - button "View Shopping Cart" [ref=f6e44]
+  - main [ref=f6e48]:
+    - generic [ref=f6e49]:
+      - generic [ref=f6e51]:
+        - generic [ref=f6e52]:
+          - generic [ref=f6e53]: Bespoke Handmade Resin Artistry
+          - heading "Preserving Life's Moments in Glass-like Perfection." [level=1] [ref=f6e57]
+          - paragraph [ref=f6e58]: From shimmering geode coasters and real botanical pendants to bespoke illuminated photo frames, each piece is hand-poured with non-yellowing archival resin in India.
+          - generic [ref=f6e59]:
+            - link "Explore Boutique" [ref=f6e60] [cursor=pointer]:
+              - /url: /shop
+            - link "Order Custom Piece" [ref=f6e64] [cursor=pointer]:
+              - /url: /custom-orders
+          - generic [ref=f6e65]:
+            - generic [ref=f6e66]:
+              - paragraph [ref=f6e67]: 100%
+              - paragraph [ref=f6e68]: Hand-Poured
+            - generic [ref=f6e69]:
+              - paragraph [ref=f6e70]: UV-Stable
+              - paragraph [ref=f6e71]: Non-Yellowing
+            - generic [ref=f6e72]:
+              - paragraph [ref=f6e73]: "4.9"
+              - paragraph [ref=f6e76]: Artisan Rating
+        - img "Devangi Resin Studio - Handmade Keepsakes & Resin Art" [ref=f6e80]
+      - generic [ref=f6e81]:
+        - generic [ref=f6e83]:
+          - generic [ref=f6e84]:
+            - heading "100% Hand-Poured in India" [level=3] [ref=f6e88]
+            - paragraph [ref=f6e89]: Every curve, gold-leaf vein, and crystal petal is cured and hand-finished by studio artisans.
+          - generic [ref=f6e90]:
+            - heading "Archival Non-Yellowing" [level=3] [ref=f6e95]
+            - paragraph [ref=f6e96]: Formulated with advanced HALS UV absorbers ensuring glass-like brilliance and heirloom clarity.
+          - generic [ref=f6e97]:
+            - heading "Bespoke Keepsake Studio" [level=3] [ref=f6e103]
+            - paragraph [ref=f6e104]: Custom initials, wedding flower garland preservation, names, and customer photographs.
+          - generic [ref=f6e105]:
+            - heading "Insured Express Delivery" [level=3] [ref=f6e110]
+            - paragraph [ref=f6e111]: Triple-cushioned drop-safe packaging across all Indian pincodes with live real-time tracking.
+        - generic [ref=f6e112]:
+          - generic [ref=f6e113]:
+            - generic [ref=f6e114]:
+              - generic [ref=f6e115]: Curated Collections
+              - heading "Explore by Art Form" [level=2] [ref=f6e119]
+            - link "View All Collections" [ref=f6e120] [cursor=pointer]:
+              - /url: /shop
+          - generic [ref=f6e124]:
+            - link "Resin Keychains Atelier Series Resin Keychains Handcrafted letter keychains, floral monograms, and personalized name tags with shimmering foils. Discover Pieces →" [ref=f6e125] [cursor=pointer]:
+              - /url: /shop?category=resin-keychains
+              - img "Resin Keychains" [ref=f6e126]
+              - generic [ref=f6e127]:
+                - generic [ref=f6e128]: Atelier Series
+                - heading "Resin Keychains" [level=3] [ref=f6e129]
+                - paragraph [ref=f6e130]: Handcrafted letter keychains, floral monograms, and personalized name tags with shimmering foils.
+                - generic [ref=f6e131]:
+                  - generic [ref=f6e132]: Discover Pieces
+                  - generic [ref=f6e133]: →
+            - link "Resin Jewellery Atelier Series Resin Jewellery Delicate pendants, floral drop earrings, and crystal rings preserving real nature forever. Discover Pieces →" [ref=f6e134] [cursor=pointer]:
+              - /url: /shop?category=resin-jewellery
+              - img "Resin Jewellery" [ref=f6e135]
+              - generic [ref=f6e136]:
+                - generic [ref=f6e137]: Atelier Series
+                - heading "Resin Jewellery" [level=3] [ref=f6e138]
+                - paragraph [ref=f6e139]: Delicate pendants, floral drop earrings, and crystal rings preserving real nature forever.
+                - generic [ref=f6e140]:
+                  - generic [ref=f6e141]: Discover Pieces
+                  - generic [ref=f6e142]: →
+            - link "Resin Phone Charms Atelier Series Resin Phone Charms Handmade crystal resin phone charms with real pressed botanicals, gold leaf accents, and durable aesthetic cords. Discover Pieces →" [ref=f6e143] [cursor=pointer]:
+              - /url: /shop?category=resin-phone-charms
+              - img "Resin Phone Charms" [ref=f6e144]
+              - generic [ref=f6e145]:
+                - generic [ref=f6e146]: Atelier Series
+                - heading "Resin Phone Charms" [level=3] [ref=f6e147]
+                - paragraph [ref=f6e148]: Handmade crystal resin phone charms with real pressed botanicals, gold leaf accents, and durable aesthetic cords.
+                - generic [ref=f6e149]:
+                  - generic [ref=f6e150]: Discover Pieces
+                  - generic [ref=f6e151]: →
+            - link "Resin Photo stands Atelier Series Resin Photo stands Immortalize your most cherished memories with dried floral inlays and embedded warm fairy lights. Discover Pieces →" [ref=f6e152] [cursor=pointer]:
+              - /url: /shop?category=resin-photo-frames
+              - img "Resin Photo stands" [ref=f6e153]
+              - generic [ref=f6e154]:
+                - generic [ref=f6e155]: Atelier Series
+                - heading "Resin Photo stands" [level=3] [ref=f6e156]
+                - paragraph [ref=f6e157]: Immortalize your most cherished memories with dried floral inlays and embedded warm fairy lights.
+                - generic [ref=f6e158]:
+                  - generic [ref=f6e159]: Discover Pieces
+                  - generic [ref=f6e160]: →
+            - link "Personalised Gifts Atelier Series Personalised Gifts Bespoke clocks, preserved wedding garland keepsakes, and personalized anniversary treasures. Discover Pieces →" [ref=f6e161] [cursor=pointer]:
+              - /url: /shop?category=personalised-gifts
+              - img "Personalised Gifts" [ref=f6e162]
+              - generic [ref=f6e163]:
+                - generic [ref=f6e164]: Atelier Series
+                - heading "Personalised Gifts" [level=3] [ref=f6e165]
+                - paragraph [ref=f6e166]: Bespoke clocks, preserved wedding garland keepsakes, and personalized anniversary treasures.
+                - generic [ref=f6e167]:
+                  - generic [ref=f6e168]: Discover Pieces
+                  - generic [ref=f6e169]: →
+        - generic [ref=f6e170]:
+          - generic [ref=f6e171]:
+            - generic [ref=f6e172]:
+              - generic [ref=f6e173]: Handpicked Favorites
+              - heading "Featured Creations" [level=2] [ref=f6e178]
+              - paragraph [ref=f6e179]: Signature handcrafted resin artwork, ready to ship or custom made to your order.
+            - link "Explore Boutique" [ref=f6e180] [cursor=pointer]:
+              - /url: /shop
+          - generic [ref=f6e184]:
+            - generic [ref=f6e185]:
+              - link "Charmistry – Handmade Resin Alphabet Keychains Charmistry – Handmade Resin Alphabet Keychains 45% OFF Bestseller Add to Cart" [ref=f6e186] [cursor=pointer]:
+                - /url: /shop/charmistry-handmade-resin-alphabet-keychains
+                - img "Charmistry – Handmade Resin Alphabet Keychains" [ref=f6e187]
+                - img "Charmistry – Handmade Resin Alphabet Keychains" [ref=f6e188]
+                - generic [ref=f6e189]:
+                  - generic [ref=f6e190]: 45% OFF
+                  - generic [ref=f6e191]: Bestseller
+                - button "Add to Cart" [ref=f6e195]
+              - generic [ref=f6e199]:
+                - generic [ref=f6e200]:
+                  - generic [ref=f6e201]: Resin Keychains
+                  - link "Charmistry – Handmade Resin Alphabet Keychains" [ref=f6e202] [cursor=pointer]:
+                    - /url: /shop/charmistry-handmade-resin-alphabet-keychains
+                - generic [ref=f6e204]:
+                  - generic [ref=f6e205]: ₹99.00
+                  - generic [ref=f6e206]: ₹179.00
+            - generic [ref=f6e207]:
+              - link "Golden Leaf – Glitter Resin Phone Charm Golden Leaf – Glitter Resin Phone Charm 38% OFF Add to Cart" [ref=f6e208] [cursor=pointer]:
+                - /url: /shop/golden-leaf-glitter-resin-phone-charm
+                - img "Golden Leaf – Glitter Resin Phone Charm" [ref=f6e209]
+                - img "Golden Leaf – Glitter Resin Phone Charm" [ref=f6e210]
+                - generic [ref=f6e211]: 38% OFF
+                - button "Add to Cart" [ref=f6e213]
+              - generic [ref=f6e217]:
+                - generic [ref=f6e218]:
+                  - generic [ref=f6e219]: Resin Phone Charms
+                  - link "Golden Leaf – Glitter Resin Phone Charm" [ref=f6e220] [cursor=pointer]:
+                    - /url: /shop/golden-leaf-glitter-resin-phone-charm
+                - generic [ref=f6e222]:
+                  - generic [ref=f6e223]: ₹49.00
+                  - generic [ref=f6e224]: ₹79.00
+            - generic [ref=f6e225]:
+              - link "Ocean Glow – Floral Glitter Resin Keychain Ocean Glow – Floral Glitter Resin Keychain 40% OFF Add to Cart" [ref=f6e226] [cursor=pointer]:
+                - /url: /shop/ocean-glow-floral-glitter-resin-keychain
+                - img "Ocean Glow – Floral Glitter Resin Keychain" [ref=f6e227]
+                - img "Ocean Glow – Floral Glitter Resin Keychain" [ref=f6e228]
+                - generic [ref=f6e229]: 40% OFF
+                - button "Add to Cart" [ref=f6e231]
+              - generic [ref=f6e235]:
+                - generic [ref=f6e236]:
+                  - generic [ref=f6e237]: Resin Keychains
+                  - link "Ocean Glow – Floral Glitter Resin Keychain" [ref=f6e238] [cursor=pointer]:
+                    - /url: /shop/ocean-glow-floral-glitter-resin-keychain
+                - generic [ref=f6e240]:
+                  - generic [ref=f6e241]: ₹59.00
+                  - generic [ref=f6e242]: ₹99.00
+            - generic [ref=f6e243]:
+              - link "Golden Bloom – Pressed Flower Resin Keychain Golden Bloom – Pressed Flower Resin Keychain 40% OFF Add to Cart" [ref=f6e244] [cursor=pointer]:
+                - /url: /shop/golden-bloom-pressed-flower-resin-keychain
+                - img "Golden Bloom – Pressed Flower Resin Keychain" [ref=f6e245]
+                - img "Golden Bloom – Pressed Flower Resin Keychain" [ref=f6e246]
+                - generic [ref=f6e247]: 40% OFF
+                - button "Add to Cart" [ref=f6e249]
+              - generic [ref=f6e253]:
+                - generic [ref=f6e254]:
+                  - generic [ref=f6e255]: Resin Keychains
+                  - link "Golden Bloom – Pressed Flower Resin Keychain" [ref=f6e256] [cursor=pointer]:
+                    - /url: /shop/golden-bloom-pressed-flower-resin-keychain
+                - generic [ref=f6e258]:
+                  - generic [ref=f6e259]: ₹59.00
+                  - generic [ref=f6e260]: ₹99.00
+        - generic [ref=f6e263]:
+          - generic [ref=f6e264]:
+            - generic [ref=f6e265]: Personalised Keepsake Studio
+            - heading "Turn Precious Memories into Everlasting Art." [level=2] [ref=f6e269]
+            - paragraph [ref=f6e270]: Whether you wish to preserve fresh wedding roses into a scalloped ring dish, illuminate family portraits with warm embedded fairy lights, or custom-emboss a wooden house nameplate, our artisans bring your exact vision to life.
+            - generic [ref=f6e271]:
+              - generic [ref=f6e272]:
+                - generic [ref=f6e273]: "1"
+                - generic [ref=f6e274]: Choose custom color palettes, floral petals, 24K gold/silver leafing, or upload high-resolution photos.
+              - generic [ref=f6e275]:
+                - generic [ref=f6e276]: "2"
+                - generic [ref=f6e277]: Our studio artists hand-pour, de-gas in vacuum chambers, and UV-cure your piece over 3–5 days.
+              - generic [ref=f6e278]:
+                - generic [ref=f6e279]: "3"
+                - generic [ref=f6e280]: Carefully packed in luxury velvet or matte gift packaging with a handwritten artisan note.
+            - generic [ref=f6e281]:
+              - link "Start Bespoke Request" [ref=f6e282] [cursor=pointer]:
+                - /url: /custom-orders
+              - link "View Showcase Catalogue" [ref=f6e286] [cursor=pointer]:
+                - /url: /devangiresinstudio/orderscatalogue
+          - generic [ref=f6e288]:
+            - generic [ref=f6e289]:
+              - link "Charmistry – Handmade Resin Alphabet Keychains Charmistry – Handmade Resin Alphabet Keychains" [ref=f6e290] [cursor=pointer]:
+                - /url: /shop/charmistry-handmade-resin-alphabet-keychains
+                - img "Charmistry – Handmade Resin Alphabet Keychains" [ref=f6e291]
+                - generic [ref=f6e292]: Charmistry – Handmade Resin Alphabet Keychains
+              - link "Golden Leaf – Glitter Resin Phone Charm Golden Leaf – Glitter Resin Phone Charm" [ref=f6e293] [cursor=pointer]:
+                - /url: /shop/golden-leaf-glitter-resin-phone-charm
+                - img "Golden Leaf – Glitter Resin Phone Charm" [ref=f6e294]
+                - generic [ref=f6e295]: Golden Leaf – Glitter Resin Phone Charm
+            - generic [ref=f6e296]:
+              - link "Ocean Glow – Floral Glitter Resin Keychain Ocean Glow – Floral Glitter Resin Keychain" [ref=f6e297] [cursor=pointer]:
+                - /url: /shop/ocean-glow-floral-glitter-resin-keychain
+                - img "Ocean Glow – Floral Glitter Resin Keychain" [ref=f6e298]
+                - generic [ref=f6e299]: Ocean Glow – Floral Glitter Resin Keychain
+              - link "Golden Bloom – Pressed Flower Resin Keychain Golden Bloom – Pressed Flower Resin Keychain" [ref=f6e300] [cursor=pointer]:
+                - /url: /shop/golden-bloom-pressed-flower-resin-keychain
+                - img "Golden Bloom – Pressed Flower Resin Keychain" [ref=f6e301]
+                - generic [ref=f6e302]: Golden Bloom – Pressed Flower Resin Keychain
+        - generic [ref=f6e303]:
+          - generic [ref=f6e304]:
+            - generic [ref=f6e305]: Customer Loved
+            - heading "Studio Bestsellers" [level=2] [ref=f6e309]
+            - paragraph [ref=f6e310]: Our most cherished creations, consistently praised for their durability, bubble-free glass clarity, and radiant shine.
+          - generic [ref=f6e312]:
+            - link "Charmistry – Handmade Resin Alphabet Keychains Charmistry – Handmade Resin Alphabet Keychains 45% OFF Bestseller Add to Cart" [ref=f6e313] [cursor=pointer]:
+              - /url: /shop/charmistry-handmade-resin-alphabet-keychains
+              - img "Charmistry – Handmade Resin Alphabet Keychains" [ref=f6e314]
+              - img "Charmistry – Handmade Resin Alphabet Keychains" [ref=f6e315]
+              - generic [ref=f6e316]:
+                - generic [ref=f6e317]: 45% OFF
+                - generic [ref=f6e318]: Bestseller
+              - button "Add to Cart" [ref=f6e322]
+            - generic [ref=f6e326]:
+              - generic [ref=f6e327]:
+                - generic [ref=f6e328]: Resin Keychains
+                - link "Charmistry – Handmade Resin Alphabet Keychains" [ref=f6e329] [cursor=pointer]:
+                  - /url: /shop/charmistry-handmade-resin-alphabet-keychains
+              - generic [ref=f6e331]:
+                - generic [ref=f6e332]: ₹99.00
+                - generic [ref=f6e333]: ₹179.00
+        - generic [ref=f6e335]:
+          - generic [ref=f6e340]: The Studio Philosophy
+          - heading "\"We don't just pour resin — we encapsulate life's ephemeral beauty into forever keepsakes.\"" [level=2] [ref=f6e341]
+          - paragraph [ref=f6e342]: Founded with a deep passion for botanical preservation, raw crystal geodes, and bespoke luxury gifting, Devangi Resin Studio creates heirloom pieces that celebrate milestones, memories, and modern elegance.
+          - generic [ref=f6e343]:
+            - generic [ref=f6e344]: Handmade in India
+            - generic [ref=f6e348]: •
+            - generic [ref=f6e349]: Insured Delivery
+            - generic [ref=f6e354]: •
+            - generic [ref=f6e355]: Luxury Velvet Gifting
+  - contentinfo [ref=f6e361]:
+    - generic [ref=f6e362]:
+      - generic [ref=f6e363]:
+        - generic [ref=f6e364]:
+          - link "Devangi Resin Studio Devangi Resin Studio Handcrafted Resin Creations by Devangi" [ref=f6e365] [cursor=pointer]:
+            - /url: /
+            - img "Devangi Resin Studio" [ref=f6e366]
+            - generic [ref=f6e367]:
+              - generic [ref=f6e368]: Devangi Resin Studio
+              - generic [ref=f6e369]: Handcrafted Resin Creations by Devangi
+          - paragraph [ref=f6e370]: We handcraft bespoke epoxy resin art, botanical floral jewellery, personalized nameplates, and crystal geode homeware in India. Each piece is hand-poured with love, intention, and non-yellowing archival UV-stable resin.
+          - generic [ref=f6e371]:
+            - link "Instagram" [ref=f6e372] [cursor=pointer]:
+              - /url: https://instagram.com/devangiresinstudio
+            - link "WhatsApp Chat" [ref=f6e376] [cursor=pointer]:
+              - /url: https://wa.me/919876543210?text=Hi%20Devangi%20Resin%20Studio,%20I%20have%20an%20inquiry%20about%20a%20custom%20order!
+        - generic [ref=f6e379]:
+          - heading "Collections" [level=3] [ref=f6e380]
+          - list [ref=f6e384]:
+            - listitem [ref=f6e385]:
+              - link "Shop All Boutique" [ref=f6e386] [cursor=pointer]:
+                - /url: /shop
+            - listitem [ref=f6e387]:
+              - link "Geode & Ocean Coasters" [ref=f6e388] [cursor=pointer]:
+                - /url: /shop?category=resin-coasters
+            - listitem [ref=f6e389]:
+              - link "Floral Keychains" [ref=f6e390] [cursor=pointer]:
+                - /url: /shop?category=resin-keychains
+            - listitem [ref=f6e391]:
+              - link "Botanical Jewellery" [ref=f6e392] [cursor=pointer]:
+                - /url: /shop?category=resin-jewellery
+            - listitem [ref=f6e393]:
+              - link "Entrance Nameplates" [ref=f6e394] [cursor=pointer]:
+                - /url: /shop?category=resin-nameplates
+        - generic [ref=f6e395]:
+          - heading "Customer Care" [level=3] [ref=f6e396]
+          - list [ref=f6e397]:
+            - listitem [ref=f6e398]:
+              - link "Track Your Order" [ref=f6e399] [cursor=pointer]:
+                - /url: /track-order
+            - listitem [ref=f6e400]:
+              - link "Sign In / Register" [ref=f6e401] [cursor=pointer]:
+                - /url: /account/login
+            - listitem [ref=f6e402]:
+              - link "Bespoke Custom Orders" [ref=f6e403] [cursor=pointer]:
+                - /url: /custom-orders
+            - listitem [ref=f6e404]:
+              - link "Shipping & Dispatch" [ref=f6e405] [cursor=pointer]:
+                - /url: /policies/shipping
+            - listitem [ref=f6e406]:
+              - link "Returns & Exchange Policy" [ref=f6e407] [cursor=pointer]:
+                - /url: /policies/returns
+            - listitem [ref=f6e408]:
+              - link "Resin Care Guide" [ref=f6e409] [cursor=pointer]:
+                - /url: /policies/care
+            - listitem [ref=f6e410]:
+              - link "Privacy Policy" [ref=f6e411] [cursor=pointer]:
+                - /url: /policies/privacy
+        - generic [ref=f6e412]:
+          - heading "Artisan Newsletter" [level=3] [ref=f6e413]
+          - paragraph [ref=f6e414]:
+            - text: Subscribe to receive new collection drops, preservation guides, and bespoke order slots. Enjoy 10% off with coupon
+            - strong [ref=f6e415]: WELCOME10
+            - text: .
+          - generic [ref=f6e416]:
+            - textbox "Your email address" [ref=f6e417]
+            - button "Get 10% Discount" [ref=f6e418]
+          - generic [ref=f6e419]:
+            - paragraph [ref=f6e420]:
+              - generic [ref=f6e424]: hello@devangiresinstudio.com
+            - paragraph [ref=f6e425]:
+              - generic [ref=f6e428]: +91 98765 43210
+      - paragraph [ref=f6e430]:
+        - generic [ref=f6e431]: © 2026 Devangi Resin Studio. Handcrafted with Love in India.
+        - generic [ref=f6e432]: •
+        - generic [ref=f6e433]: UPI & QR Verified Payment
+  - button "Open Next.js Dev Tools" [ref=f6e443] [cursor=pointer]

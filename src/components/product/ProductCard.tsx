@@ -22,9 +22,10 @@ export interface ProductCardProps {
     images?: Array<{ imageUrl: string; altText?: string; isPrimary?: boolean }>;
     category?: { name: string; slug: string };
   };
+  aspectRatio?: "portrait" | "square";
 }
 
-export function ProductCard({ product }: ProductCardProps) {
+export function ProductCard({ product, aspectRatio = "square" }: ProductCardProps) {
   const { addItem } = useCart();
   const [added, setAdded] = React.useState(false);
   const regular = Number(product.regularPrice) || 0;
@@ -53,7 +54,7 @@ export function ProductCard({ product }: ProductCardProps) {
   const primaryImage =
     product.images?.find((img) => img.isPrimary)?.imageUrl ||
     product.images?.[0]?.imageUrl ||
-    "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=800&auto=format&fit=crop&q=80";
+    "/images/logo/resin_logo.png";
 
   const secondaryImage =
     product.images?.[1]?.imageUrl || primaryImage;
@@ -90,8 +91,8 @@ export function ProductCard({ product }: ProductCardProps) {
     <div
       className={`group flex flex-col transition-all duration-300 relative ${
         isFestive
-          ? "bg-gradient-to-b from-[#FDF0F3] via-[#FAF0F4] to-[#F5E0E7] border-2 border-[#D4AF37] shadow-xl shadow-[#D4AF37]/20 ring-2 ring-[#D4AF37]/40 hover:border-[#C59B27] hover:ring-[#D4AF37]/70 hover:shadow-2xl hover:scale-[1.015] p-2.5 sm:p-3 rounded-3xl"
-          : "bg-white border border-[#EFE3E7] hover:border-[#D4AF37] hover:shadow-lg rounded-2xl overflow-hidden"
+          ? "bg-gradient-to-b from-[#FDF0F3] via-[#FAF0F4] to-[#F5E0E7] border-2 border-[#D4AF37] shadow-xl shadow-[#D4AF37]/20 ring-2 ring-[#D4AF37]/40 hover:border-[#C59B27] hover:ring-[#D4AF37]/70 hover:shadow-2xl hover:-translate-y-1 p-2.5 sm:p-3 rounded-3xl"
+          : "bg-white border border-[#EFE3E7] hover:border-[#D4AF37] hover:shadow-xl hover:-translate-y-1 rounded-2xl overflow-hidden"
       }`}
     >
       {/* Decorative Festive Top Ribbon Glow */}
@@ -99,10 +100,12 @@ export function ProductCard({ product }: ProductCardProps) {
         <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-[#6A162B] via-[#D4AF37] to-[#6A162B] z-20 rounded-t-3xl" />
       )}
 
-      {/* Image Container */}
+      {/* Image Container with generous luxury proportions */}
       <Link
         href={`/shop/${product.slug}`}
-        className={`relative aspect-square overflow-hidden block ${
+        className={`relative ${
+          aspectRatio === "portrait" ? "aspect-[4/5]" : "aspect-square"
+        } overflow-hidden block ${
           isFestive
             ? "rounded-2xl bg-white shadow-xs border border-[#E8C568]/40"
             : "bg-[#FCFAF8]"
@@ -112,7 +115,7 @@ export function ProductCard({ product }: ProductCardProps) {
         <img
           src={primaryImage}
           alt={product.name}
-          className="product-card-image w-full h-full object-cover transition-opacity duration-500 group-hover:opacity-0"
+          className="product-card-image w-full h-full object-cover transition-all duration-700 ease-out group-hover:scale-105 group-hover:opacity-0"
           loading="lazy"
         />
 
@@ -120,7 +123,7 @@ export function ProductCard({ product }: ProductCardProps) {
         <img
           src={secondaryImage}
           alt={product.name}
-          className="product-card-image w-full h-full object-cover absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+          className="product-card-image w-full h-full object-cover absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-700 ease-out group-hover:scale-105"
           loading="lazy"
         />
 

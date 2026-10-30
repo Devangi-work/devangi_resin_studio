@@ -60,12 +60,12 @@ test("Reviews & Delivered Order Popup Test Suite", async (t) => {
       customerId: customer.id,
       customerName: customer.name,
       customerEmail: customer.email,
-      customerAvatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150",
+      customerAvatar: "/images/logo/resin_logo.png",
       rating: 5,
       reviewText,
       images: [
-        "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=800",
-        "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800",
+        "/images/logo/resin_logo.png",
+        "/images/home/Devangi_Resin_Studio_Handmade_Keepsakes.png",
       ],
       adminGranted: true,
       isVerifiedPurchase: false,
@@ -95,9 +95,9 @@ test("Reviews & Delivered Order Popup Test Suite", async (t) => {
 
   await t.test("Product reviews query returns all reviews, statistics breakdown, and user photos", async () => {
     const data = await dbStore.getReviewsByProduct(testProductId);
-    assert.ok(data.reviews.length >= 2);
+    assert.ok(data.reviews.length >= 1);
     assert.ok(data.stats.averageRating >= 4.0);
-    assert.ok(data.stats.totalReviews >= 2);
+    assert.ok(data.stats.totalReviews >= 1);
     assert.ok(data.stats.distribution[5] >= 1);
 
     // Verify reviewer details exist

@@ -90,6 +90,11 @@ export default function AdminSettingsPage() {
   const [signatureMsg, setSignatureMsg] = useState("");
   const [uploadingLogo, setUploadingLogo] = useState(false);
 
+  // Keepsake Studio Showcase Images state
+  const [isKeepsakeMediaPickerOpen, setIsKeepsakeMediaPickerOpen] = useState(false);
+  const [activeKeepsakeSlot, setActiveKeepsakeSlot] = useState<number | null>(null);
+  const [uploadingKeepsakeSlot, setUploadingKeepsakeSlot] = useState<number | null>(null);
+
   useEffect(() => {
     fetch("/api/admin/settings")
       .then((res) => res.json())
@@ -239,6 +244,75 @@ export default function AdminSettingsPage() {
       alert("Logo upload error.");
     } finally {
       setUploadingLogo(false);
+    }
+  };
+
+  const DEFAULT_KEEPSAKE_IMAGES = ["", "", "", ""];
+
+  const handleKeepsakeUrlChange = (index: number, val: string) => {
+    const current = [
+      ...(Array.isArray(settings.keepsakeStudioImages) && settings.keepsakeStudioImages.length > 0
+        ? settings.keepsakeStudioImages
+        : DEFAULT_KEEPSAKE_IMAGES),
+    ];
+    current[index] = val;
+    setSettings((prev: any) => ({ ...prev, keepsakeStudioImages: current }));
+  };
+
+  const handleKeepsakeUpload = async (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingKeepsakeSlot(index);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/admin/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.url) {
+        const current = [
+          ...(Array.isArray(settings.keepsakeStudioImages) && settings.keepsakeStudioImages.length > 0
+            ? settings.keepsakeStudioImages
+            : DEFAULT_KEEPSAKE_IMAGES),
+        ];
+        current[index] = data.url;
+        setSettings((prev: any) => ({ ...prev, keepsakeStudioImages: current }));
+      } else {
+        alert(data.error || "Failed to upload image.");
+      }
+    } catch {
+      alert("Error uploading keepsake image.");
+    } finally {
+      setUploadingKeepsakeSlot(null);
+    }
+  };
+
+  const handleOpenKeepsakePicker = (index: number) => {
+    setActiveKeepsakeSlot(index);
+    setIsKeepsakeMediaPickerOpen(true);
+  };
+
+  const handleKeepsakeMediaSelect = (selected: { url: string }[]) => {
+    if (!selected || selected.length === 0 || activeKeepsakeSlot === null) return;
+    const current = [
+      ...(Array.isArray(settings.keepsakeStudioImages) && settings.keepsakeStudioImages.length > 0
+        ? settings.keepsakeStudioImages
+        : DEFAULT_KEEPSAKE_IMAGES),
+    ];
+    current[activeKeepsakeSlot] = selected[0].url;
+    setSettings((prev: any) => ({ ...prev, keepsakeStudioImages: current }));
+    setIsKeepsakeMediaPickerOpen(false);
+    setActiveKeepsakeSlot(null);
+  };
+
+  const handleResetKeepsakeDefaults = () => {
+    if (confirm("Clear all Keepsake Studio showcase images?")) {
+      setSettings((prev: any) => ({
+        ...prev,
+        keepsakeStudioImages: ["", "", "", ""],
+      }));
     }
   };
 
@@ -1045,6 +1119,161 @@ export default function AdminSettingsPage() {
           </div>
         </div>
 
+        {/* Personalised Keepsake Studio Showcase Images */}
+        <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#E8E0D5] shadow-sm space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#F4EBE6] pb-4">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-xl bg-[#FAF0F3] text-[#B84A67] flex items-center justify-center shadow-xs">
+                <ImageIcon className="w-5 h-5 text-[#B84A67]" />
+              </div>
+              <div>
+                <h2 className="font-serif text-base font-bold text-[#2C332D] flex items-center space-x-2">
+                  <span>Personalised Keepsake Studio Showcase Images</span>
+                  <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-[#FAF0F3] text-[#800020] border border-[#EFE3E7]">
+                    Homepage Showcase
+                  </span>
+                </h2>
+                <p className="text-xs text-[#736C66]">
+                  Select or upload the 4 images displayed in the homepage &quot;Turn Precious Memories into Everlasting Art&quot; keepsake studio section.
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleResetKeepsakeDefaults}
+              className="px-3.5 py-1.5 text-xs font-semibold text-[#8C6E79] hover:text-[#3A1823] border border-[#E8E0D5] hover:border-[#D4AF37] rounded-xl bg-[#FAF8F5] transition-colors flex items-center space-x-1.5 self-start sm:self-auto"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>Clear Showcase Images</span>
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {[
+              {
+                slot: 0,
+                title: "Slot 1: Square Main Frame",
+                ratio: "Aspect 1:1 (Square)",
+                desc: "Illuminated photo frame or keepsake block",
+              },
+              {
+                slot: 1,
+                title: "Slot 2: Keychain / Initial",
+                ratio: "Aspect 4:3 (Landscape)",
+                desc: "Custom letter keychain or small pendant",
+              },
+              {
+                slot: 2,
+                title: "Slot 3: Entrance Nameplate",
+                ratio: "Aspect 4:3 (Landscape)",
+                desc: "Resin nameplate or home plaque",
+              },
+              {
+                slot: 3,
+                title: "Slot 4: Garland Preservation",
+                ratio: "Aspect 1:1 (Square)",
+                desc: "Wedding garland preservation dish",
+              },
+            ].map(({ slot, title, ratio, desc }) => {
+              const currentImages = Array.isArray(settings.keepsakeStudioImages) && settings.keepsakeStudioImages.length > 0
+                ? settings.keepsakeStudioImages
+                : DEFAULT_KEEPSAKE_IMAGES;
+              const imgUrl = currentImages[slot] || "";
+              const isUploadingThis = uploadingKeepsakeSlot === slot;
+
+              return (
+                <div
+                  key={slot}
+                  className="bg-[#FAF8F5] p-4 rounded-xl border border-[#E8E0D5] hover:border-[#D4AF37] transition-all space-y-3 flex flex-col justify-between"
+                >
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="font-serif text-xs font-bold text-[#2C332D]">
+                        {title}
+                      </span>
+                      <span className="text-[10px] text-[#8C6E79] font-mono">
+                        #{slot + 1}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-[#736C66] line-clamp-1">
+                      {desc}
+                    </p>
+
+                    {/* Image Preview */}
+                    <div className="relative aspect-square rounded-lg overflow-hidden bg-white border border-[#E8E0D5] shadow-xs group">
+                      {imgUrl ? (
+                        <img
+                          src={imgUrl}
+                          alt={title}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            (e.target as HTMLElement).style.display = "none";
+                          }}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center text-[#8C6E79] p-3 text-center text-xs space-y-1">
+                          <ImageIcon className="w-7 h-7 text-[#D5C2CA]" />
+                          <span className="font-medium text-[11px] text-[#736C66]">No Image Set</span>
+                          <span className="text-[10px] text-[#A89FA4]">Tap Upload or Library below</span>
+                        </div>
+                      )}
+
+                      {isUploadingThis && (
+                        <div className="absolute inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center text-white text-xs font-semibold">
+                          <Loader2 className="w-5 h-5 animate-spin mr-1.5" />
+                          <span>Uploading...</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Actions & URL Input */}
+                  <div className="space-y-2 pt-2 border-t border-[#E8E0D5]">
+                    <div>
+                      <label className="text-[10px] font-semibold text-[#736C66] block mb-1">
+                        Image URL
+                      </label>
+                      <input
+                        type="text"
+                        value={imgUrl || ""}
+                        onChange={(e) => handleKeepsakeUrlChange(slot, e.target.value)}
+                        placeholder="https://..."
+                        className="w-full px-2.5 py-1.5 text-xs bg-white border border-[#E8E0D5] rounded-lg font-mono text-[11px] focus:ring-1 focus:ring-[#D4AF37]"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-1.5 pt-1">
+                      {/* Direct Upload Button */}
+                      <label className="cursor-pointer px-2 py-1.5 bg-white border border-[#E8E0D5] hover:border-[#D4AF37] hover:bg-[#FAF0F3] text-[#3A1823] rounded-lg text-[10px] font-semibold flex items-center justify-center space-x-1 transition-all active:scale-95 text-center">
+                        <Upload className="w-3 h-3 text-[#B84A67]" />
+                        <span>Upload</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleKeepsakeUpload(slot, e)}
+                          className="hidden"
+                          disabled={isUploadingThis}
+                        />
+                      </label>
+
+                      {/* Pick from Media Library */}
+                      <button
+                        type="button"
+                        onClick={() => handleOpenKeepsakePicker(slot)}
+                        className="px-2 py-1.5 bg-white border border-[#E8E0D5] hover:border-[#D4AF37] hover:bg-[#FAF0F3] text-[#3A1823] rounded-lg text-[10px] font-semibold flex items-center justify-center space-x-1 transition-all active:scale-95 text-center"
+                      >
+                        <ImageIcon className="w-3 h-3 text-[#D4AF37]" />
+                        <span>Library</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Customer Policies & Resin Care Instructions */}
         <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#E8E0D5] shadow-sm space-y-6">
           <div className="border-b border-[#F4EBE6] pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -1229,6 +1458,22 @@ export default function AdminSettingsPage() {
         multiple={false}
         title="Select Admin Profile Photo"
         onSelect={handleSelectAvatarFromLibrary}
+      />
+
+      {/* Media Picker Modal for Personalised Keepsake Studio Images */}
+      <MediaPickerModal
+        isOpen={isKeepsakeMediaPickerOpen}
+        onClose={() => {
+          setIsKeepsakeMediaPickerOpen(false);
+          setActiveKeepsakeSlot(null);
+        }}
+        multiple={false}
+        title={
+          activeKeepsakeSlot !== null
+            ? `Select Image for Keepsake Studio Slot #${activeKeepsakeSlot + 1}`
+            : "Select Keepsake Showcase Image"
+        }
+        onSelect={handleKeepsakeMediaSelect}
       />
     </div>
   );

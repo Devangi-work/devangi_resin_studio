@@ -13,6 +13,9 @@ import {
   Star,
   Layers,
   ChevronRight,
+  Sparkle,
+  Gift,
+  Award,
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -36,25 +39,52 @@ export default async function HomePage() {
     status: "published",
     limit: 8,
   });
+  const keepsakeProductsRes = await dbStore.getProducts({
+    status: "published",
+    limit: 4,
+  });
 
   const featuredProducts = featuredRes.products;
   const bestsellers = bestsellersRes.products;
   const festivalProducts = festivalRes.products;
+  const realKeepsakeProducts = keepsakeProductsRes.products;
+
+  // Resolve dynamic admin-selected keepsake images or fall back to real store products
+  const adminKeepsakeImages = Array.isArray(settings?.keepsakeStudioImages)
+    ? settings.keepsakeStudioImages
+    : [];
+
+  const keepsakeSlots = [0, 1, 2, 3].map((slotIdx) => {
+    const adminImg = adminKeepsakeImages[slotIdx];
+    if (adminImg && typeof adminImg === "string" && adminImg.trim().length > 0) {
+      return {
+        imageUrl: adminImg,
+        title: `Keepsake #${slotIdx + 1}`,
+        link: "/custom-orders",
+      };
+    }
+    const realProd = realKeepsakeProducts[slotIdx];
+    return {
+      imageUrl:
+        realProd?.images?.[0]?.imageUrl ||
+        "/images/home/Devangi_Resin_Studio_Handmade_Keepsakes.png",
+      title: realProd?.name || "Bespoke Resin Art",
+      link: realProd?.slug ? `/shop/${realProd.slug}` : "/custom-orders",
+    };
+  });
 
   return (
-    <div className="flex flex-col pb-20">
+    <div className="flex flex-col pb-24 bg-[#FCFAF8]">
       {/* ---------------- FESTIVAL NEWS HEADER (Above Hero, Below Navbar) ---------------- */}
       <FestivalNewsHeader settings={settings} />
 
-      <div className="flex flex-col space-y-20 sm:space-y-24">
-        {/* ---------------- 1. HERO SECTION (Themed from resin_logo.png) ---------------- */}
-        <section className="relative overflow-hidden bg-gradient-to-b from-[#FDF2F4] via-[#FCFAF8] to-[#FCFAF8] pt-12 sm:pt-20 pb-16 sm:pb-24 px-4 sm:px-6 lg:px-8 border-b border-[#EFE3E7]">
-        {/* Soft Decorative Ambient Petal & Rose Circles */}
+      {/* ---------------- 1. SINGLE HERO SECTION (Preserving Life's Moments in Glass-like Perfection) ---------------- */}
+      <section className="relative overflow-hidden bg-gradient-to-b from-[#FDF2F4] via-[#FCFAF8] to-[#FCFAF8] pt-12 sm:pt-20 pb-16 sm:pb-24 px-4 sm:px-6 lg:px-8 border-b border-[#EFE3E7]">
+        {/* Soft Ambient Glow */}
         <div className="absolute top-10 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-[#FDE8EC]/70 rounded-full blur-3xl pointer-events-none -z-0" />
         <div className="absolute -bottom-10 right-10 w-[400px] h-[400px] bg-[#FAF0F3]/80 rounded-full blur-2xl pointer-events-none -z-0" />
 
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-center relative z-10">
-          
           {/* Hero Copy */}
           <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
             <div className="inline-flex items-center space-x-2 bg-white/95 border border-[#EFE3E7] px-4 py-1.5 rounded-full text-xs font-semibold text-[#3A1823] shadow-xs">
@@ -63,7 +93,7 @@ export default async function HomePage() {
             </div>
 
             <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl font-bold text-[#3A1823] leading-[1.15] tracking-tight">
-              Preserving Life's Moments in{" "}
+              Preserving Life&apos;s Moments in{" "}
               <span className="italic font-normal text-[#B84A67]">Glass-like</span> Perfection.
             </h1>
 
@@ -81,7 +111,7 @@ export default async function HomePage() {
               </Link>
               <Link
                 href="/custom-orders"
-                className="w-full sm:w-auto px-8 py-3.5 bg-white border border-[#EFE3E7] text-[#3A1823] rounded-full font-semibold text-xs tracking-wider uppercase hover:bg-[#FAF0F3] active:scale-98 shadow-sm transition-all text-center"
+                className="w-full sm:w-auto px-8 py-3.5 bg-white border border-[#EFE3E7] text-[#3A1823] rounded-full font-semibold text-xs tracking-wider uppercase hover:bg-[#FAF0F3] active:scale-98 shadow-sm transition-all text-center hover:border-[#D4AF37]"
               >
                 Order Custom Piece
               </Link>
@@ -91,29 +121,29 @@ export default async function HomePage() {
             <div className="pt-6 grid grid-cols-3 gap-4 border-t border-[#EFE3E7] text-center lg:text-left">
               <div>
                 <p className="font-serif text-xl sm:text-2xl font-bold text-[#3A1823]">100%</p>
-                <p className="text-[11px] text-[#7A5E68] uppercase tracking-wider">Hand-Poured</p>
+                <p className="text-[11px] text-[#7A5E68] uppercase tracking-wider font-medium">Hand-Poured</p>
               </div>
               <div>
                 <p className="font-serif text-xl sm:text-2xl font-bold text-[#3A1823]">UV-Stable</p>
-                <p className="text-[11px] text-[#7A5E68] uppercase tracking-wider">Non-Yellowing</p>
+                <p className="text-[11px] text-[#7A5E68] uppercase tracking-wider font-medium">Non-Yellowing</p>
               </div>
               <div>
                 <p className="font-serif text-xl sm:text-2xl font-bold text-[#3A1823] flex items-center justify-center lg:justify-start">
                   4.9 <Star className="w-4 h-4 fill-[#D4AF37] text-[#D4AF37] ml-1 inline" />
                 </p>
-                <p className="text-[11px] text-[#7A5E68] uppercase tracking-wider">Artisan Rating</p>
+                <p className="text-[11px] text-[#7A5E68] uppercase tracking-wider font-medium">Artisan Rating</p>
               </div>
             </div>
           </div>
 
-          {/* Hero Visual Collage */}
+          {/* Hero Visual Display */}
           <div className="lg:col-span-5 relative">
             <div className="relative mx-auto max-w-sm sm:max-w-md lg:max-w-none">
-              <div className="rounded-3xl overflow-hidden shadow-2xl border-4 border-white aspect-square bg-white">
+              <div className="rounded-3xl overflow-hidden shadow-2xl border-4 border-white aspect-square bg-white group">
                 <img
                   src="/images/home/Devangi_Resin_Studio_Handmade_Keepsakes.png"
                   alt="Devangi Resin Studio - Handmade Keepsakes & Resin Art"
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                 />
               </div>
             </div>
@@ -121,281 +151,389 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ---------------- 2. VALUE PROPOSITIONS ---------------- */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-          <div className="bg-white p-6 rounded-2xl border border-[#EFE3E7] shadow-sm flex flex-col items-center text-center space-y-2 hover:border-[#D4AF37] transition-colors">
-            <div className="w-12 h-12 rounded-full bg-[#FAF0F3] flex items-center justify-center text-[#B84A67]">
-              <Heart className="w-5 h-5" />
-            </div>
-            <h3 className="font-serif text-sm font-bold text-[#3A1823]">Handcrafted In India</h3>
-            <p className="text-xs text-[#7A5E68] leading-relaxed">
-              Every curve, bubble-free layer, and floral inlay is poured individually by our studio artists.
-            </p>
-          </div>
-
-          <div className="bg-white p-6 rounded-2xl border border-[#EFE3E7] shadow-sm flex flex-col items-center text-center space-y-2 hover:border-[#D4AF37] transition-colors">
-            <div className="w-12 h-12 rounded-full bg-[#FAF0F3] flex items-center justify-center text-[#B84A67]">
-              <ShieldCheck className="w-5 h-5" />
-            </div>
-            <h3 className="font-serif text-sm font-bold text-[#3A1823]">Archival UV Formula</h3>
-            <p className="text-xs text-[#7A5E68] leading-relaxed">
-              High-clarity epoxy resins infused with HALS UV inhibitors to resist yellowing over time.
-            </p>
-          </div>
-
-          <div className="bg-white p-6 rounded-2xl border border-[#EFE3E7] shadow-sm flex flex-col items-center text-center space-y-2 hover:border-[#D4AF37] transition-colors">
-            <div className="w-12 h-12 rounded-full bg-[#FAF0F3] flex items-center justify-center text-[#B84A67]">
-              <Layers className="w-5 h-5" />
-            </div>
-            <h3 className="font-serif text-sm font-bold text-[#3A1823]">Personalised For You</h3>
-            <p className="text-xs text-[#7A5E68] leading-relaxed">
-              Custom initials, names, wedding garland petals, and customer photo encasements.
-            </p>
-          </div>
-
-          <div className="bg-white p-6 rounded-2xl border border-[#EFE3E7] shadow-sm flex flex-col items-center text-center space-y-2 hover:border-[#D4AF37] transition-colors">
-            <div className="w-12 h-12 rounded-full bg-[#FAF0F3] flex items-center justify-center text-[#B84A67]">
-              <Clock className="w-5 h-5" />
-            </div>
-            <h3 className="font-serif text-sm font-bold text-[#3A1823]">Insured Safe Transit</h3>
-            <p className="text-xs text-[#7A5E68] leading-relaxed">
-              Triple-layer impact-resistant packaging ensures your delicate art arrives in mint condition.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* ---------------- 3. SHOP BY CATEGORY ---------------- */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 space-y-2 sm:space-y-0">
-          <div>
-            <span className="text-xs uppercase font-bold tracking-widest text-[#B84A67]">
-              Curated Collections
-            </span>
-            <h2 className="font-serif text-2xl sm:text-3xl font-bold text-[#3A1823]">
-              Explore by Art Form
-            </h2>
-          </div>
-          <Link
-            href="/shop"
-            className="text-xs font-semibold text-[#3A1823] hover:text-[#B84A67] flex items-center space-x-1 transition-colors"
-          >
-            <span>View All Collections</span>
-            <ChevronRight className="w-3.5 h-3.5" />
-          </Link>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-          {categories.map((cat) => (
-            <Link
-              key={cat.id}
-              href={`/shop?category=${cat.slug}`}
-              className="group relative rounded-2xl overflow-hidden aspect-[4/5] bg-[#FCFAF8] border border-[#EFE3E7] shadow-sm block hover:border-[#D4AF37] transition-all"
-            >
-              <img
-                src={cat.imageUrl || "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=800"}
-                alt={cat.name}
-                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                loading="lazy"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent flex flex-col justify-end p-4 text-white">
-                <h3 className="font-serif text-base font-bold leading-tight group-hover:text-[#D4AF37] transition-colors">
-                  {cat.name}
-                </h3>
-                <p className="text-[11px] text-white/80 line-clamp-1 mt-0.5">
-                  {cat.description}
-                </p>
+      <div className="flex flex-col space-y-20 sm:space-y-28 mt-12 sm:mt-16">
+        {/* ---------------- 2. VALUE PROPOSITIONS ---------------- */}
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            <div className="bg-white p-6 rounded-2xl border border-[#EFE3E7] shadow-xs flex flex-col items-center text-center space-y-2.5 hover:border-[#D4AF37] hover:shadow-md transition-all group">
+              <div className="w-12 h-12 rounded-full bg-[#FAF0F3] flex items-center justify-center text-[#B84A67] group-hover:bg-[#B84A67] group-hover:text-white transition-colors">
+                <Heart className="w-5 h-5" />
               </div>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      {/* ---------------- FESTIVAL SPECIAL SHOWCASE ---------------- */}
-      {festivalProducts.length > 0 && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="p-6 sm:p-10 rounded-3xl bg-gradient-to-r from-[#FFF9F6] via-[#FFFDF9] to-[#FFF5F8] border-2 border-[#D4AF37]/50 shadow-md">
-            <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 space-y-2 sm:space-y-0">
-              <div>
-                <span className="text-xs uppercase font-extrabold tracking-widest text-[#A83250] flex items-center space-x-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />
-                  <span>Limited Period Celebrations</span>
-                </span>
-                <h2 className="font-serif text-2xl sm:text-3xl font-bold text-[#3A1823]">
-                  {settings.festivalName || "Festival Special Editions"}
-                </h2>
-              </div>
-              <Link
-                href="/shop?filter=festival"
-                className="text-xs font-bold text-[#6A162B] hover:text-[#D4AF37] flex items-center space-x-1 transition-colors"
-              >
-                <span>View All Festive Offers</span>
-                <ChevronRight className="w-3.5 h-3.5" />
-              </Link>
+              <h3 className="font-serif text-sm sm:text-base font-bold text-[#3A1823]">
+                100% Hand-Poured in India
+              </h3>
+              <p className="text-xs text-[#7A5E68] leading-relaxed">
+                Every curve, gold-leaf vein, and crystal petal is cured and hand-finished by studio artisans.
+              </p>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-              {festivalProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
+            <div className="bg-white p-6 rounded-2xl border border-[#EFE3E7] shadow-xs flex flex-col items-center text-center space-y-2.5 hover:border-[#D4AF37] hover:shadow-md transition-all group">
+              <div className="w-12 h-12 rounded-full bg-[#FAF0F3] flex items-center justify-center text-[#B84A67] group-hover:bg-[#B84A67] group-hover:text-white transition-colors">
+                <ShieldCheck className="w-5 h-5" />
+              </div>
+              <h3 className="font-serif text-sm sm:text-base font-bold text-[#3A1823]">
+                Archival Non-Yellowing
+              </h3>
+              <p className="text-xs text-[#7A5E68] leading-relaxed">
+                Formulated with advanced HALS UV absorbers ensuring glass-like brilliance and heirloom clarity.
+              </p>
+            </div>
+
+            <div className="bg-white p-6 rounded-2xl border border-[#EFE3E7] shadow-xs flex flex-col items-center text-center space-y-2.5 hover:border-[#D4AF37] hover:shadow-md transition-all group">
+              <div className="w-12 h-12 rounded-full bg-[#FAF0F3] flex items-center justify-center text-[#B84A67] group-hover:bg-[#B84A67] group-hover:text-white transition-colors">
+                <Layers className="w-5 h-5" />
+              </div>
+              <h3 className="font-serif text-sm sm:text-base font-bold text-[#3A1823]">
+                Bespoke Keepsake Studio
+              </h3>
+              <p className="text-xs text-[#7A5E68] leading-relaxed">
+                Custom initials, wedding flower garland preservation, names, and customer photographs.
+              </p>
+            </div>
+
+            <div className="bg-white p-6 rounded-2xl border border-[#EFE3E7] shadow-xs flex flex-col items-center text-center space-y-2.5 hover:border-[#D4AF37] hover:shadow-md transition-all group">
+              <div className="w-12 h-12 rounded-full bg-[#FAF0F3] flex items-center justify-center text-[#B84A67] group-hover:bg-[#B84A67] group-hover:text-white transition-colors">
+                <Clock className="w-5 h-5" />
+              </div>
+              <h3 className="font-serif text-sm sm:text-base font-bold text-[#3A1823]">
+                Insured Express Delivery
+              </h3>
+              <p className="text-xs text-[#7A5E68] leading-relaxed">
+                Triple-cushioned drop-safe packaging across all Indian pincodes with live real-time tracking.
+              </p>
             </div>
           </div>
         </section>
-      )}
 
-      {/* ---------------- 4. FEATURED PRODUCTS ---------------- */}
-      {featuredProducts.length > 0 && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* ---------------- 3. SHOP BY ART FORM / CURATED COLLECTIONS ---------------- */}
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 space-y-2 sm:space-y-0">
             <div>
-              <span className="text-xs uppercase font-bold tracking-widest text-[#B84A67]">
-                Handpicked Favorites
+              <span className="text-xs uppercase font-extrabold tracking-widest text-[#B84A67] flex items-center space-x-1">
+                <Sparkle className="w-3.5 h-3.5 text-[#D4AF37]" />
+                <span>Curated Collections</span>
               </span>
-              <h2 className="font-serif text-2xl sm:text-3xl font-bold text-[#3A1823]">
-                Featured Creations
+              <h2 className="font-serif text-2xl sm:text-4xl font-bold text-[#3A1823] tracking-tight mt-1">
+                Explore by Art Form
               </h2>
             </div>
             <Link
               href="/shop"
-              className="text-xs font-semibold text-[#3A1823] hover:text-[#B84A67] flex items-center space-x-1 transition-colors"
+              className="text-xs font-bold uppercase tracking-wider text-[#3A1823] hover:text-[#B84A67] flex items-center space-x-1.5 transition-colors group"
             >
-              <span>Explore Boutique</span>
-              <ChevronRight className="w-3.5 h-3.5" />
+              <span>View All Collections</span>
+              <ChevronRight className="w-4 h-4 text-[#B84A67] group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-            {featuredProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
+            {categories.map((cat) => (
+              <Link
+                key={cat.id}
+                href={`/shop?category=${cat.slug}`}
+                className="group relative rounded-2xl overflow-hidden aspect-[4/5] bg-[#FAF8F5] border border-[#EFE3E7] shadow-sm block hover:border-[#D4AF37] hover:shadow-xl transition-all"
+              >
+                <img
+                  src={cat.imageUrl || "/images/logo/resin_logo.png"}
+                  alt={cat.name}
+                  className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-108"
+                  loading="lazy"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent flex flex-col justify-end p-5 text-white">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-[#D4AF37] mb-1">
+                    Atelier Series
+                  </span>
+                  <h3 className="font-serif text-base sm:text-lg font-bold leading-tight group-hover:text-[#D4AF37] transition-colors">
+                    {cat.name}
+                  </h3>
+                  {cat.description && (
+                    <p className="text-[11px] text-white/80 line-clamp-1 mt-1 font-light">
+                      {cat.description}
+                    </p>
+                  )}
+                  <span className="mt-2 text-[11px] font-semibold text-white/90 group-hover:text-[#D4AF37] flex items-center space-x-1">
+                    <span>Discover Pieces</span>
+                    <span className="transition-transform group-hover:translate-x-1">→</span>
+                  </span>
+                </div>
+              </Link>
             ))}
           </div>
         </section>
-      )}
 
-      {/* ---------------- 5. CUSTOM GIFT STUDIO SHOWCASE ---------------- */}
-      <section className="bg-gradient-to-r from-[#FAF0F3] via-[#FCFAF8] to-[#FAF0F3] py-16 sm:py-20 border-y border-[#EFE3E7]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
-            
-            <div className="lg:col-span-6 space-y-6">
-              <span className="text-xs uppercase font-bold tracking-widest text-[#B84A67]">
-                Personalised Keepsake Studio
-              </span>
-              <h2 className="font-serif text-3xl sm:text-4xl font-bold text-[#3A1823] leading-tight">
-                Turn Precious Memories into Everlasting Art.
-              </h2>
-              <p className="text-sm text-[#7A5E68] leading-relaxed">
-                Whether you wish to preserve fresh wedding roses into a scalloped ring dish, illuminate family portraits with warm fairy lights, or custom-emboss a wooden house nameplate, our artisans bring your exact vision to life.
-              </p>
+        {/* ---------------- FESTIVAL SPECIAL SHOWCASE (If Festival Products Exist) ---------------- */}
+        {festivalProducts.length > 0 && (
+          <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+            <div className="p-6 sm:p-10 rounded-3xl bg-gradient-to-r from-[#FFF9F6] via-[#FFFDF9] to-[#FFF5F8] border-2 border-[#D4AF37]/60 shadow-lg relative overflow-hidden">
+              <div className="absolute -top-12 -right-12 w-48 h-48 bg-[#D4AF37]/15 rounded-full blur-2xl pointer-events-none" />
 
-              <div className="space-y-3 pt-2">
-                <div className="flex items-start space-x-3 text-xs text-[#3A1823]">
-                  <div className="w-5 h-5 rounded-full bg-[#3A1823] text-white flex items-center justify-center flex-shrink-0 text-[10px] font-bold">1</div>
-                  <span>Choose custom colors, floral petals, gold/silver foils, or upload photos.</span>
+              <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 space-y-3 sm:space-y-0 relative z-10">
+                <div>
+                  <span className="text-xs uppercase font-extrabold tracking-widest text-[#A83250] flex items-center space-x-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />
+                    <span>Limited Period Celebrations</span>
+                  </span>
+                  <h2 className="font-serif text-2xl sm:text-4xl font-bold text-[#3A1823] tracking-tight mt-1">
+                    {settings.festivalName || "Festival Special Editions"}
+                  </h2>
+                  <p className="text-xs sm:text-sm text-[#7A5E68] mt-1 max-w-xl">
+                    Exclusive handcrafted geode pieces, personalized gift hampers, and illuminated art frames on special festival discount.
+                  </p>
                 </div>
-                <div className="flex items-start space-x-3 text-xs text-[#3A1823]">
-                  <div className="w-5 h-5 rounded-full bg-[#3A1823] text-white flex items-center justify-center flex-shrink-0 text-[10px] font-bold">2</div>
-                  <span>Our artists hand-pour, de-gas, and UV-cure your piece over 3-5 days.</span>
-                </div>
-                <div className="flex items-start space-x-3 text-xs text-[#3A1823]">
-                  <div className="w-5 h-5 rounded-full bg-[#3A1823] text-white flex items-center justify-center flex-shrink-0 text-[10px] font-bold">3</div>
-                  <span>Delivered in luxury velvet or matte gift packaging with a handwritten card.</span>
-                </div>
-              </div>
-
-              <div className="pt-4">
                 <Link
-                  href="/custom-orders"
-                  className="inline-flex items-center space-x-2 px-7 py-3 bg-[#3A1823] text-white text-xs font-semibold uppercase tracking-wider rounded-full hover:bg-[#4E2230] shadow-sm transition-all active:scale-98"
+                  href="/shop?festival=true"
+                  className="text-xs font-bold uppercase tracking-wider text-[#6A162B] hover:text-[#D4AF37] flex items-center space-x-1.5 transition-colors group"
                 >
-                  <span>Start Bespoke Request</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
+                  <span>View All Festive Offers</span>
+                  <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </Link>
               </div>
-            </div>
 
-            <div className="lg:col-span-6 grid grid-cols-2 gap-4">
-              <div className="space-y-4">
-                <div className="rounded-2xl overflow-hidden shadow-md aspect-square bg-white border border-[#EFE3E7]">
-                  <img
-                    src="https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?w=800"
-                    alt="Illuminated custom resin photo frame"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div className="rounded-2xl overflow-hidden shadow-md aspect-[4/3] bg-white border border-[#EFE3E7]">
-                  <img
-                    src="https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=800"
-                    alt="Custom initial resin letter keychain"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              </div>
-              <div className="space-y-4 pt-6">
-                <div className="rounded-2xl overflow-hidden shadow-md aspect-[4/3] bg-white border border-[#EFE3E7]">
-                  <img
-                    src="https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=800"
-                    alt="Custom resin nameplate entrance plaque"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div className="rounded-2xl overflow-hidden shadow-md aspect-square bg-white border border-[#EFE3E7]">
-                  <img
-                    src="https://images.unsplash.com/photo-1513201099705-a9742e15a5b6?w=800"
-                    alt="Wedding garland preservation keepsake dish"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
+              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 relative z-10">
+                {festivalProducts.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
               </div>
             </div>
-          </div>
-        </div>
-      </section>
+          </section>
+        )}
 
-      {/* ---------------- 6. BESTSELLERS ---------------- */}
-      {bestsellers.length > 0 && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-xl mx-auto mb-10 space-y-2">
-            <span className="text-xs uppercase font-bold tracking-widest text-[#B84A67]">
-              Customer Loved
-            </span>
-            <h2 className="font-serif text-2xl sm:text-3xl font-bold text-[#3A1823]">
-              Studio Bestsellers
-            </h2>
-            <p className="text-xs text-[#7A5E68]">
-              Our most cherished creations, consistently praised for their durability and radiant clarity.
-            </p>
-          </div>
+        {/* ---------------- 4. FEATURED PRODUCTS ---------------- */}
+        {featuredProducts.length > 0 && (
+          <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 space-y-2 sm:space-y-0">
+              <div>
+                <span className="text-xs uppercase font-extrabold tracking-widest text-[#B84A67] flex items-center space-x-1">
+                  <Award className="w-3.5 h-3.5 text-[#D4AF37]" />
+                  <span>Handpicked Favorites</span>
+                </span>
+                <h2 className="font-serif text-2xl sm:text-4xl font-bold text-[#3A1823] tracking-tight mt-1">
+                  Featured Creations
+                </h2>
+                <p className="text-xs sm:text-sm text-[#7A5E68] mt-1">
+                  Signature handcrafted resin artwork, ready to ship or custom made to your order.
+                </p>
+              </div>
+              <Link
+                href="/shop"
+                className="text-xs font-bold uppercase tracking-wider text-[#3A1823] hover:text-[#B84A67] flex items-center space-x-1.5 transition-colors group"
+              >
+                <span>Explore Boutique</span>
+                <ChevronRight className="w-4 h-4 text-[#B84A67] group-hover:translate-x-1 transition-transform" />
+              </Link>
+            </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-            {bestsellers.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-7">
+              {featuredProducts.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* ---------------- 5. CUSTOM GIFT STUDIO SHOWCASE (Real Products / Admin Configured) ---------------- */}
+        <section className="bg-gradient-to-r from-[#FAF0F3] via-[#FCFAF8] to-[#FAF0F3] py-16 sm:py-24 border-y border-[#EFE3E7]">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
+              
+              {/* Left Column: Bespoke Atelier Copy */}
+              <div className="lg:col-span-6 space-y-6">
+                <div className="inline-flex items-center space-x-2 bg-white border border-[#EFE3E7] px-3.5 py-1 rounded-full text-xs font-semibold text-[#B84A67]">
+                  <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />
+                  <span>Personalised Keepsake Studio</span>
+                </div>
+
+                <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold text-[#3A1823] leading-tight tracking-tight">
+                  Turn Precious Memories into{" "}
+                  <span className="italic font-normal text-[#B84A67]">Everlasting</span> Art.
+                </h2>
+
+                <p className="text-sm sm:text-base text-[#7A5E68] leading-relaxed font-light">
+                  Whether you wish to preserve fresh wedding roses into a scalloped ring dish, illuminate family portraits with warm embedded fairy lights, or custom-emboss a wooden house nameplate, our artisans bring your exact vision to life.
+                </p>
+
+                <div className="space-y-3.5 pt-2">
+                  <div className="flex items-start space-x-3.5 text-xs sm:text-sm text-[#3A1823]">
+                    <div className="w-6 h-6 rounded-full bg-[#3A1823] text-white flex items-center justify-center flex-shrink-0 text-[11px] font-bold">
+                      1
+                    </div>
+                    <span>
+                      Choose custom color palettes, floral petals, 24K gold/silver leafing, or upload high-resolution photos.
+                    </span>
+                  </div>
+
+                  <div className="flex items-start space-x-3.5 text-xs sm:text-sm text-[#3A1823]">
+                    <div className="w-6 h-6 rounded-full bg-[#3A1823] text-white flex items-center justify-center flex-shrink-0 text-[11px] font-bold">
+                      2
+                    </div>
+                    <span>
+                      Our studio artists hand-pour, de-gas in vacuum chambers, and UV-cure your piece over 3–5 days.
+                    </span>
+                  </div>
+
+                  <div className="flex items-start space-x-3.5 text-xs sm:text-sm text-[#3A1823]">
+                    <div className="w-6 h-6 rounded-full bg-[#3A1823] text-white flex items-center justify-center flex-shrink-0 text-[11px] font-bold">
+                      3
+                    </div>
+                    <span>
+                      Carefully packed in luxury velvet or matte gift packaging with a handwritten artisan note.
+                    </span>
+                  </div>
+                </div>
+
+                <div className="pt-4 flex flex-wrap gap-3">
+                  <Link
+                    href="/custom-orders"
+                    className="inline-flex items-center space-x-2 px-8 py-3.5 bg-[#3A1823] text-white text-xs font-semibold uppercase tracking-wider rounded-full hover:bg-[#4E2230] shadow-md hover:shadow-lg transition-all active:scale-98"
+                  >
+                    <span>Start Bespoke Request</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+
+                  <Link
+                    href="/devangiresinstudio/orderscatalogue"
+                    className="inline-flex items-center space-x-2 px-6 py-3.5 bg-white border border-[#EFE3E7] text-[#3A1823] text-xs font-semibold uppercase tracking-wider rounded-full hover:bg-[#FAF0F3] hover:border-[#D4AF37] shadow-xs transition-all active:scale-98"
+                  >
+                    <span>View Showcase Catalogue</span>
+                  </Link>
+                </div>
+              </div>
+
+              {/* Right Column: Real Store / Admin Showcase Images Mosaic */}
+              <div className="lg:col-span-6 grid grid-cols-2 gap-4 sm:gap-5">
+                <div className="space-y-4 sm:space-y-5">
+                  {/* Slot 0: Main Square */}
+                  <Link
+                    href={keepsakeSlots[0].link}
+                    className="rounded-2xl overflow-hidden shadow-md aspect-square bg-white border border-[#EFE3E7] hover:border-[#D4AF37] hover:shadow-xl transition-all group relative block"
+                  >
+                    <img
+                      src={keepsakeSlots[0].imageUrl}
+                      alt={keepsakeSlots[0].title}
+                      className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/70 via-black/20 to-transparent text-white text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                      {keepsakeSlots[0].title}
+                    </div>
+                  </Link>
+
+                  {/* Slot 1: Secondary */}
+                  <Link
+                    href={keepsakeSlots[1].link}
+                    className="rounded-2xl overflow-hidden shadow-md aspect-[4/3] bg-white border border-[#EFE3E7] hover:border-[#D4AF37] hover:shadow-xl transition-all group relative block"
+                  >
+                    <img
+                      src={keepsakeSlots[1].imageUrl}
+                      alt={keepsakeSlots[1].title}
+                      className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/70 via-black/20 to-transparent text-white text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                      {keepsakeSlots[1].title}
+                    </div>
+                  </Link>
+                </div>
+
+                <div className="space-y-4 sm:space-y-5 pt-6 sm:pt-8">
+                  {/* Slot 2: Upper Right */}
+                  <Link
+                    href={keepsakeSlots[2].link}
+                    className="rounded-2xl overflow-hidden shadow-md aspect-[4/3] bg-white border border-[#EFE3E7] hover:border-[#D4AF37] hover:shadow-xl transition-all group relative block"
+                  >
+                    <img
+                      src={keepsakeSlots[2].imageUrl}
+                      alt={keepsakeSlots[2].title}
+                      className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/70 via-black/20 to-transparent text-white text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                      {keepsakeSlots[2].title}
+                    </div>
+                  </Link>
+
+                  {/* Slot 3: Lower Right Square */}
+                  <Link
+                    href={keepsakeSlots[3].link}
+                    className="rounded-2xl overflow-hidden shadow-md aspect-square bg-white border border-[#EFE3E7] hover:border-[#D4AF37] hover:shadow-xl transition-all group relative block"
+                  >
+                    <img
+                      src={keepsakeSlots[3].imageUrl}
+                      alt={keepsakeSlots[3].title}
+                      className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/70 via-black/20 to-transparent text-white text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                      {keepsakeSlots[3].title}
+                    </div>
+                  </Link>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
-      )}
 
-      {/* ---------------- 7. BRAND STORY ---------------- */}
-      <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-white p-8 sm:p-12 rounded-3xl border border-[#EFE3E7] shadow-sm text-center space-y-6 relative overflow-hidden">
-          <div className="w-12 h-12 rounded-full bg-[#FAF0F3] flex items-center justify-center text-[#B84A67] mx-auto">
-            <Gem className="w-6 h-6" />
+        {/* ---------------- 6. BESTSELLERS ---------------- */}
+        {bestsellers.length > 0 && (
+          <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+            <div className="text-center max-w-xl mx-auto mb-10 space-y-2">
+              <span className="text-xs uppercase font-extrabold tracking-widest text-[#B84A67] flex items-center justify-center space-x-1">
+                <Star className="w-3.5 h-3.5 fill-[#D4AF37] text-[#D4AF37]" />
+                <span>Customer Loved</span>
+              </span>
+              <h2 className="font-serif text-2xl sm:text-4xl font-bold text-[#3A1823] tracking-tight">
+                Studio Bestsellers
+              </h2>
+              <p className="text-xs sm:text-sm text-[#7A5E68]">
+                Our most cherished creations, consistently praised for their durability, bubble-free glass clarity, and radiant shine.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-7">
+              {bestsellers.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* ---------------- 7. BRAND STORY & PHILOSOPHY ---------------- */}
+        <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+          <div className="bg-white p-8 sm:p-14 rounded-3xl border border-[#EFE3E7] shadow-sm text-center space-y-6 relative overflow-hidden">
+            <div className="w-14 h-14 rounded-full bg-[#FAF0F3] flex items-center justify-center text-[#B84A67] mx-auto shadow-xs">
+              <Gem className="w-7 h-7" />
+            </div>
+
+            <span className="text-xs uppercase font-bold tracking-widest text-[#B84A67] block">
+              The Studio Philosophy
+            </span>
+
+            <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-bold text-[#3A1823] max-w-2xl mx-auto leading-snug">
+              &quot;We don&apos;t just pour resin — we encapsulate life&apos;s ephemeral beauty into forever keepsakes.&quot;
+            </h2>
+
+            <p className="text-sm sm:text-base text-[#7A5E68] max-w-2xl mx-auto leading-relaxed font-light">
+              Founded with a deep passion for botanical preservation, raw crystal geodes, and bespoke luxury gifting, Devangi Resin Studio creates heirloom pieces that celebrate milestones, memories, and modern elegance.
+            </p>
+
+            <div className="pt-2 flex items-center justify-center space-x-6 text-xs text-[#7A5E68]">
+              <span className="flex items-center space-x-1.5">
+                <Sparkle className="w-3.5 h-3.5 text-[#D4AF37]" />
+                <span>Handmade in India</span>
+              </span>
+              <span>•</span>
+              <span className="flex items-center space-x-1.5">
+                <ShieldCheck className="w-3.5 h-3.5 text-[#2E7D32]" />
+                <span>Insured Delivery</span>
+              </span>
+              <span>•</span>
+              <span className="flex items-center space-x-1.5">
+                <Gift className="w-3.5 h-3.5 text-[#B84A67]" />
+                <span>Luxury Velvet Gifting</span>
+              </span>
+            </div>
           </div>
-
-          <span className="text-xs uppercase font-bold tracking-widest text-[#B84A67] block">
-            The Studio Philosophy
-          </span>
-
-          <h2 className="font-serif text-2xl sm:text-3xl font-bold text-[#3A1823] max-w-2xl mx-auto leading-snug">
-            "We don't just pour resin — we encapsulate life's ephemeral beauty into forever keepsakes."
-          </h2>
-
-          <p className="text-sm text-[#7A5E68] max-w-2xl mx-auto leading-relaxed">
-            Founded with a passion for botanical aesthetics, floral preservation, and crystal geodes, Devangi Resin Studio creates heirloom pieces that celebrate milestones, memories, and modern elegance.
-          </p>
-        </div>
-      </section>
+        </section>
       </div>
     </div>
   );

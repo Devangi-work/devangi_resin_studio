@@ -570,6 +570,9 @@ export const siteSettings = pgTable("site_settings", {
   festivalCtaText: text("festival_cta_text").default("Shop Festive Collection"),
   festivalCtaUrl: text("festival_cta_url").default("/shop?filter=festival"),
 
+  // Personalised Keepsake Studio Showcase Images
+  keepsakeStudioImages: jsonb("keepsake_studio_images").default([]),
+
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 

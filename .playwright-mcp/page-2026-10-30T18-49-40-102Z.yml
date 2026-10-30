@@ -1,0 +1,88 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - complementary [ref=e3]:
+      - generic [ref=e4]:
+        - link "Devangi Resin Studio Logo DEVANGI RESIN STUDIO View Live Store" [ref=e6] [cursor=pointer]:
+          - /url: /
+          - img "Devangi Resin Studio Logo" [ref=e7]
+          - generic [ref=e8]:
+            - generic [ref=e9]: DEVANGI RESIN STUDIO
+            - generic [ref=e10]: View Live Store
+        - navigation [ref=e16]:
+          - link "Dashboard" [ref=e17] [cursor=pointer]:
+            - /url: /admin/dashboard
+          - link "Products" [ref=e24] [cursor=pointer]:
+            - /url: /admin/products
+          - link "Categories" [ref=e30] [cursor=pointer]:
+            - /url: /admin/categories
+          - link "Orders" [ref=e37] [cursor=pointer]:
+            - /url: /admin/orders
+          - link "Reviews" [ref=e42] [cursor=pointer]:
+            - /url: /admin/reviews
+          - link "Custom Studio" [ref=e46] [cursor=pointer]:
+            - /url: /admin/custom-requests
+          - link "Inventory" [ref=e50] [cursor=pointer]:
+            - /url: /admin/inventory
+          - link "Coupons" [ref=e62] [cursor=pointer]:
+            - /url: /admin/coupons
+          - link "Customers" [ref=e67] [cursor=pointer]:
+            - /url: /admin/customers
+          - link "Media Library" [ref=e74] [cursor=pointer]:
+            - /url: /admin/media
+          - link "Store Settings" [ref=e80] [cursor=pointer]:
+            - /url: /admin/settings
+      - generic [ref=e85]:
+        - 'button "Theme: light Mode Switch" [ref=e86]':
+          - generic [ref=e87]:
+            - generic [ref=e94]: "Theme:"
+            - generic [ref=e95]: light Mode
+          - generic [ref=e96]: Switch
+        - generic "Click to manage admin profile & avatar" [ref=e97] [cursor=pointer]:
+          - generic [ref=e98]: A
+          - generic [ref=e105]:
+            - paragraph [ref=e107]: Administrator
+            - paragraph [ref=e108]: admin
+            - paragraph [ref=e109]:
+              - generic [ref=e110]: Change Photo
+        - button "Logout" [ref=e111]
+    - main [ref=e116]:
+      - generic [ref=e118]:
+        - generic [ref=e119]:
+          - generic [ref=e120]:
+            - heading "Inventory & Stock Management" [level=1] [ref=e121]
+            - paragraph [ref=e122]: Live product quantities, inventory tracking, thresholds, and instant batch restocking.
+          - button "Refresh Stock" [ref=e123]
+        - generic [ref=e130]:
+          - generic [ref=e143]:
+            - paragraph [ref=e144]: Total Products
+            - paragraph [ref=e145]: "0"
+          - generic [ref=e153]:
+            - paragraph [ref=e154]: Healthy Stock
+            - paragraph [ref=e155]: "0"
+          - generic [ref=e160]:
+            - paragraph [ref=e161]: Low Stock Alert
+            - paragraph [ref=e162]: "0"
+          - generic [ref=e170]:
+            - paragraph [ref=e171]: Out of Stock
+            - paragraph [ref=e172]: "0"
+        - generic [ref=e173]:
+          - textbox "Search by product name or SKU..." [ref=e178]
+          - generic [ref=e179]:
+            - button "All Items (0)" [ref=e180]
+            - button "In Stock (0)" [ref=e181]
+            - button "Low Stock (0)" [ref=e182]
+            - button "Out of Stock (0)" [ref=e183]
+        - table [ref=e186]:
+          - rowgroup [ref=e187]:
+            - row [ref=e188]:
+              - columnheader "Product" [ref=e189]
+              - columnheader "SKU" [ref=e190]
+              - columnheader "Category" [ref=e191]
+              - columnheader "Tracking" [ref=e192]
+              - columnheader "Stock Level" [ref=e193]
+              - columnheader "Threshold" [ref=e194]
+              - columnheader "Actions" [ref=e195]
+          - rowgroup [ref=e196]:
+            - row [ref=e197]:
+              - cell "Loading stock levels..." [ref=e198]
+  - button "Open Next.js Dev Tools" [ref=e204] [cursor=pointer]

@@ -1,0 +1,89 @@
+- generic [active] [ref=f4e1]:
+  - generic [ref=f4e2]:
+    - complementary [ref=f4e3]:
+      - generic [ref=f4e4]:
+        - link "Devangi Resin Studio Logo DEVANGI RESIN STUDIO View Live Store" [ref=f4e6] [cursor=pointer]:
+          - /url: /
+          - img "Devangi Resin Studio Logo" [ref=f4e7]
+          - generic [ref=f4e8]:
+            - generic [ref=f4e9]: DEVANGI RESIN STUDIO
+            - generic [ref=f4e10]: View Live Store
+        - navigation [ref=f4e16]:
+          - link "Dashboard" [ref=f4e17] [cursor=pointer]:
+            - /url: /admin/dashboard
+          - link "Products" [ref=f4e24] [cursor=pointer]:
+            - /url: /admin/products
+          - link "Categories" [ref=f4e30] [cursor=pointer]:
+            - /url: /admin/categories
+          - link "Orders" [ref=f4e37] [cursor=pointer]:
+            - /url: /admin/orders
+          - link "Reviews" [ref=f4e42] [cursor=pointer]:
+            - /url: /admin/reviews
+          - link "Custom Studio" [ref=f4e46] [cursor=pointer]:
+            - /url: /admin/custom-requests
+          - link "Inventory" [ref=f4e50] [cursor=pointer]:
+            - /url: /admin/inventory
+          - link "Coupons" [ref=f4e62] [cursor=pointer]:
+            - /url: /admin/coupons
+          - link "Customers" [ref=f4e67] [cursor=pointer]:
+            - /url: /admin/customers
+          - link "Media Library" [ref=f4e74] [cursor=pointer]:
+            - /url: /admin/media
+          - link "Store Settings" [ref=f4e80] [cursor=pointer]:
+            - /url: /admin/settings
+      - generic [ref=f4e85]:
+        - 'button "Theme: light Mode Switch" [ref=f4e86]':
+          - generic [ref=f4e87]:
+            - generic [ref=f4e94]: "Theme:"
+            - generic [ref=f4e95]: light Mode
+          - generic [ref=f4e96]: Switch
+        - generic "Click to manage admin profile & avatar" [ref=f4e97] [cursor=pointer]:
+          - generic [ref=f4e98]: A
+          - generic [ref=f4e105]:
+            - paragraph [ref=f4e107]: Administrator
+            - paragraph [ref=f4e108]: admin
+            - paragraph [ref=f4e109]:
+              - generic [ref=f4e110]: Change Photo
+        - button "Logout" [ref=f4e111]
+    - main [ref=f4e116]:
+      - generic [ref=f4e118]:
+        - generic [ref=f4e119]:
+          - generic [ref=f4e120]:
+            - heading "Product Reviews & Permissions" [level=1] [ref=f4e125]
+            - paragraph [ref=f4e126]: Manage client reviews, ratings, user photos, likes count, and grant special review access to any registered user.
+          - button "Refresh" [disabled] [ref=f4e127]
+        - generic [ref=f4e134]:
+          - generic [ref=f4e135]:
+            - generic [ref=f4e136]: Total Reviews
+            - text: "0"
+          - generic [ref=f4e137]:
+            - generic [ref=f4e138]: Average Rating
+            - generic [ref=f4e139]: "5.0"
+          - generic [ref=f4e143]:
+            - generic [ref=f4e144]: Total Helpful Likes
+            - generic [ref=f4e145]: "0"
+          - generic [ref=f4e149]:
+            - generic [ref=f4e150]: Special Permissions
+            - generic [ref=f4e151]: "0"
+        - generic [ref=f4e157]:
+          - button "All Product Reviews (0)" [ref=f4e158]
+          - button "Grant User Review Access (0)" [ref=f4e162]
+        - generic [ref=f4e167]:
+          - generic [ref=f4e168]:
+            - textbox "Search reviews by customer name, email, product, or review text..." [ref=f4e173]
+            - generic [ref=f4e174]:
+              - combobox [ref=f4e175]:
+                - option "All Stars" [selected]
+                - option "5 Stars Only"
+                - option "4 Stars Only"
+                - option "3 Stars Only"
+                - option "2 Stars Only"
+                - option "1 Star Only"
+              - combobox [ref=f4e176]:
+                - option "All Sources" [selected]
+                - option "Verified Purchases Only"
+                - option "Admin Granted Only"
+          - generic [ref=f4e177]:
+            - paragraph [ref=f4e180]: No reviews found
+            - paragraph [ref=f4e181]: Try adjusting your search or filters.
+  - button "Open Next.js Dev Tools" [ref=f4e187] [cursor=pointer]

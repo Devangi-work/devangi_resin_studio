@@ -18,6 +18,7 @@ import {
   MapPin,
   BookOpen,
   LogOut,
+  Home,
 } from "lucide-react";
 
 export function Navbar() {
@@ -33,6 +34,73 @@ export function Navbar() {
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
+  const collectionsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const fallbackCategories = [
+    {
+      id: "cat_keychains",
+      name: "Resin Keychains",
+      slug: "resin-keychains",
+      description: "Handcrafted letter keychains, floral monograms, and personalized name tags with shimmering foils.",
+      imageUrl: "https://rus9f71hta9djnrh.public.blob.vercel-storage.com/admin-media/1792655040533-1000179188-FPtiMddoi54sWXrjAx2pz6Tt6PPwpC.png",
+    },
+    {
+      id: "cat_jewellery",
+      name: "Resin Jewellery",
+      slug: "resin-jewellery",
+      description: "Delicate pendants, floral drop earrings, and crystal rings preserving real nature forever.",
+      imageUrl: "https://rus9f71hta9djnrh.public.blob.vercel-storage.com/admin-media/1793385742791-whatsapp_image_2026-10-31_at_00.10.54-60cxnx8B2NgTJ7zFd8kEruXSsAZ2YA.jpeg",
+    },
+    {
+      id: "cat_bookmarks",
+      name: "Resin Phone Charms",
+      slug: "resin-phone-charms",
+      description: "Handmade crystal resin phone charms with real pressed botanicals, gold leaf accents, and durable cords.",
+      imageUrl: "https://rus9f71hta9djnrh.public.blob.vercel-storage.com/admin-media/1792505053481-golden_resin_charm_keychain_on_white-FqPszUVIREH9Tf87G5548n7ekdd2m4.png",
+    },
+    {
+      id: "cat_photo_frames",
+      name: "Resin Photo stands",
+      slug: "resin-photo-frames",
+      description: "Immortalize your most cherished memories with dried floral inlays and embedded warm fairy lights.",
+      imageUrl: "https://rus9f71hta9djnrh.public.blob.vercel-storage.com/admin-media/1793301137011-whatsapp_image_2026-10-30_at_00.41.51-bc6Oylmd3vKt4Zdr5o6Row3FZBh6Os.jpeg",
+    },
+    {
+      id: "cat_personalised_gifts",
+      name: "Personalised Gifts",
+      slug: "personalised-gifts",
+      description: "Bespoke clocks, preserved wedding garland keepsakes, and personalized anniversary treasures.",
+      imageUrl: "https://rus9f71hta9djnrh.public.blob.vercel-storage.com/admin-media/1793385786267-whatsapp_image_2026-10-30_at_23.50.29__1_-JcpV3epZgQiMWiTD1EZhhjo1qA6aVz.jpeg",
+    },
+  ];
+
+  const displayCategories =
+    categories.length > 0
+      ? categories.map((c) => {
+          const matchedFallback = fallbackCategories.find((f) => f.slug === c.slug);
+          return {
+            ...c,
+            imageUrl: c.imageUrl || matchedFallback?.imageUrl || "/images/logo/resin_logo.png",
+            description: c.description || matchedFallback?.description || "",
+          };
+        })
+      : fallbackCategories;
+
+  const handleCollectionsEnter = () => {
+    if (collectionsTimeoutRef.current) {
+      clearTimeout(collectionsTimeoutRef.current);
+    }
+    setIsCollectionsOpen(true);
+  };
+
+  const handleCollectionsLeave = () => {
+    if (collectionsTimeoutRef.current) {
+      clearTimeout(collectionsTimeoutRef.current);
+    }
+    collectionsTimeoutRef.current = setTimeout(() => {
+      setIsCollectionsOpen(false);
+    }, 220);
+  };
 
   useEffect(() => {
     // 1. Fetch site settings
@@ -139,7 +207,10 @@ export function Navbar() {
       </div>
 
       {/* Main Navbar - Solid porcelain cream in mobile view (never transparent), logo colors */}
-      <nav className="bg-[#FCFAF8] sm:bg-[#FCFAF8]/95 sm:backdrop-blur-md border-b border-[#EFE3E7] px-3 sm:px-6 lg:px-8 transition-colors duration-200 shadow-[0_1px_3px_rgba(58,24,35,0.04)]">
+      <nav
+        ref={dropdownRef}
+        className="relative bg-[#FCFAF8] sm:bg-[#FCFAF8]/95 sm:backdrop-blur-md border-b border-[#EFE3E7] px-3 sm:px-6 lg:px-8 transition-colors duration-200 shadow-[0_1px_3px_rgba(58,24,35,0.04)]"
+      >
         <div className="max-w-7xl mx-auto flex items-center justify-between h-16 sm:h-20 lg:h-24 gap-2 sm:gap-4 w-full">
 
           {/* Mobile Menu Button with smooth icon rotation animation */}
@@ -162,140 +233,86 @@ export function Navbar() {
             </button>
           </div>
 
-          {/* Brand Logo - Full name displayed always, never cut off with "..." */}
+          {/* Brand Logo - Scaled elegantly across screen sizes so it never crowds links */}
           <div className="flex-1 lg:flex-none min-w-0 px-0.5 sm:px-0">
-            <Link href="/" className="flex items-center space-x-2 sm:space-x-3.5 group text-left">
+            <Link href="/" className="flex items-center space-x-2 sm:space-x-3 group text-left">
               <img
                 src="/images/logo/resin_logo.png"
                 alt="Devangi Resin Studio Logo"
-                className="w-9 h-9 sm:w-16 sm:h-16 md:w-20 md:h-20 object-contain drop-shadow-sm group-hover:scale-105 transition-transform flex-shrink-0"
+                className="w-9 h-9 sm:w-12 sm:h-12 lg:w-13 lg:h-13 xl:w-16 xl:h-16 object-contain drop-shadow-xs group-hover:scale-105 transition-transform flex-shrink-0"
               />
               <div className="flex flex-col justify-center">
-                <span className="font-serif text-[15px] sm:text-2xl lg:text-3xl font-bold tracking-tight sm:tracking-wide text-[#3A1823] group-hover:text-[#B84A67] transition-colors whitespace-nowrap block leading-tight">
+                <span className="font-serif text-[15px] sm:text-xl lg:text-[18px] xl:text-2xl 2xl:text-3xl font-bold tracking-tight text-[#3A1823] group-hover:text-[#B84A67] transition-colors whitespace-nowrap block leading-tight">
                   {settings?.storeName || "Devangi Resin Studio"}
                 </span>
-                <span className="hidden sm:block text-[9px] sm:text-[10px] uppercase tracking-[0.25em] text-[#8C6E79] font-sans font-medium">
+                <span className="hidden xl:block text-[9px] sm:text-[10px] uppercase tracking-[0.2em] text-[#8C6E79] font-sans font-medium whitespace-nowrap">
                   {settings?.storeTagline || "Handcrafted Resin Creations by Devangi"}
                 </span>
               </div>
             </Link>
           </div>
 
-          {/* Desktop Nav Links */}
-          <div className="hidden lg:flex items-center space-x-7 xl:space-x-9">
+          {/* Desktop Nav Links - Spacious, uncrowded flex layout */}
+          <div className="hidden lg:flex items-center gap-2 lg:gap-3 xl:gap-5 2xl:gap-6">
             <Link
-              href="/shop"
-              className="text-xs font-semibold uppercase tracking-wider text-[#3A1823] hover:text-[#B84A67] transition-colors py-1 border-b-2 border-transparent hover:border-[#D4AF37]"
+              href="/"
+              className="text-[11px] xl:text-xs font-semibold uppercase tracking-wider text-[#3A1823] hover:text-[#B84A67] transition-colors py-1 border-b-2 border-transparent hover:border-[#D4AF37] whitespace-nowrap"
             >
-              Shop All
+              Home
             </Link>
 
-            {/* Dynamic Collections Dropdown */}
-            <div className="relative" ref={dropdownRef}>
+            <Link
+              href="/shop"
+              className="text-[11px] xl:text-xs font-semibold uppercase tracking-wider text-[#3A1823] hover:text-[#B84A67] transition-colors py-1 border-b-2 border-transparent hover:border-[#D4AF37] whitespace-nowrap"
+            >
+              Shop
+            </Link>
+
+            {/* Dynamic Collections Dropdown Trigger */}
+            <div
+              className="relative py-2"
+              onMouseEnter={handleCollectionsEnter}
+              onMouseLeave={handleCollectionsLeave}
+            >
               <button
+                type="button"
                 onClick={() => setIsCollectionsOpen(!isCollectionsOpen)}
-                onMouseEnter={() => setIsCollectionsOpen(true)}
-                className="flex items-center space-x-1.5 text-xs font-semibold uppercase tracking-wider text-[#3A1823] hover:text-[#B84A67] transition-colors py-1 border-b-2 border-transparent hover:border-[#D4AF37] focus:outline-none group"
+                className="flex items-center space-x-1 text-[11px] xl:text-xs font-semibold uppercase tracking-wider text-[#3A1823] hover:text-[#B84A67] transition-colors py-1 border-b-2 border-transparent hover:border-[#D4AF37] focus:outline-none group whitespace-nowrap cursor-pointer"
               >
                 <span>Collections</span>
                 <ChevronDown
-                  className={`w-3.5 h-3.5 transition-transform duration-200 text-[#8C6E79] group-hover:text-[#B84A67] ${isCollectionsOpen ? "rotate-180 text-[#B84A67]" : ""
-                    }`}
+                  className={`w-3.5 h-3.5 transition-transform duration-200 text-[#8C6E79] group-hover:text-[#B84A67] ${
+                    isCollectionsOpen ? "rotate-180 text-[#B84A67]" : ""
+                  }`}
                 />
               </button>
-
-              {/* Luxury Dropdown Menu */}
-              {isCollectionsOpen && (
-                <div
-                  onMouseLeave={() => setIsCollectionsOpen(false)}
-                  className="absolute top-full -left-6 mt-2 w-80 bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-[#EFE3E7] p-3 z-[60] animate-fadeIn"
-                >
-                  <div className="px-3 py-2 border-b border-[#FAF0F3] flex items-center justify-between">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-[#B84A67] flex items-center gap-1">
-                      <Sparkle className="w-3 h-3 text-[#D4AF37]" />
-                      <span>Artisan Collections</span>
-                    </span>
-                    <Link
-                      href="/shop"
-                      onClick={() => setIsCollectionsOpen(false)}
-                      className="text-[10px] font-semibold text-[#8C6E79] hover:text-[#3A1823] flex items-center gap-1 transition-colors"
-                    >
-                      View All <ArrowRight className="w-2.5 h-2.5" />
-                    </Link>
-                  </div>
-
-                  <div className="py-1.5 max-h-80 overflow-y-auto divide-y divide-[#FAF0F3]/80">
-                    {categories.length > 0 ? (
-                      categories.map((cat) => (
-                        <Link
-                          key={cat.id || cat.slug}
-                          href={`/shop?category=${cat.slug}`}
-                          onClick={() => setIsCollectionsOpen(false)}
-                          className="flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-[#FAF0F3] group transition-all"
-                        >
-                          <div>
-                            <p className="text-xs font-semibold text-[#3A1823] group-hover:text-[#B84A67] transition-colors">
-                              {cat.name}
-                            </p>
-                            {cat.description && (
-                              <p className="text-[10px] text-[#8C6E79] line-clamp-1 mt-0.5">
-                                {cat.description}
-                              </p>
-                            )}
-                          </div>
-                          <span className="text-xs text-[#B84A67] opacity-0 group-hover:opacity-100 transform translate-x-0 group-hover:translate-x-0.5 transition-all">
-                            →
-                          </span>
-                        </Link>
-                      ))
-                    ) : (
-                      [
-                        { name: "Ocean & Geode Coasters", slug: "resin-coasters" },
-                        { name: "Floral Keychains", slug: "resin-keychains" },
-                        { name: "Botanical Jewellery", slug: "resin-jewellery" },
-                        { name: "Resin Phone Charms", slug: "resin-phone-charms" },
-                        { name: "Entrance Nameplates", slug: "resin-nameplates" },
-                      ].map((cat) => (
-                        <Link
-                          key={cat.slug}
-                          href={`/shop?category=${cat.slug}`}
-                          onClick={() => setIsCollectionsOpen(false)}
-                          className="block px-3 py-2 text-xs font-medium text-[#3A1823] hover:text-[#B84A67] hover:bg-[#FAF0F3] rounded-xl transition-colors"
-                        >
-                          {cat.name}
-                        </Link>
-                      ))
-                    )}
-                  </div>
-                </div>
-              )}
             </div>
 
             <Link
               href="/shop?festival=true"
-              className="text-xs font-bold uppercase tracking-wider text-[#8C1D38] hover:text-[#D4AF37] transition-colors py-1 flex items-center space-x-1.5 border-b-2 border-transparent hover:border-[#D4AF37]"
+              className="text-[11px] xl:text-xs font-bold uppercase tracking-wider text-[#8C1D38] hover:text-[#D4AF37] transition-colors py-1 flex items-center space-x-1 border-b-2 border-transparent hover:border-[#D4AF37] whitespace-nowrap"
             >
-              <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />
-              <span>Festive Specials</span>
+              <Sparkles className="w-3.5 h-3.5 text-[#D4AF37] flex-shrink-0" />
+              <span>Festive</span>
             </Link>
 
             <Link
               href="/custom-orders"
-              className="text-xs font-semibold uppercase tracking-wider text-[#3A1823] hover:text-[#B84A67] transition-colors py-1 border-b-2 border-transparent hover:border-[#D4AF37]"
+              className="text-[11px] xl:text-xs font-semibold uppercase tracking-wider text-[#3A1823] hover:text-[#B84A67] transition-colors py-1 border-b-2 border-transparent hover:border-[#D4AF37] whitespace-nowrap"
             >
               Custom Studio
             </Link>
 
             <Link
               href="/devangiresinstudio/orderscatalogue"
-              className="text-xs font-semibold uppercase tracking-wider text-[#3A1823] hover:text-[#B84A67] transition-colors py-1 border-b-2 border-transparent hover:border-[#D4AF37]"
+              className="text-[11px] xl:text-xs font-semibold uppercase tracking-wider text-[#3A1823] hover:text-[#B84A67] transition-colors py-1 border-b-2 border-transparent hover:border-[#D4AF37] whitespace-nowrap"
             >
-              Orders Showcase
+              Showcase
             </Link>
 
             <Link
               href="/track-order"
-              className="text-xs font-semibold uppercase tracking-wider text-[#3A1823] hover:text-[#B84A67] transition-colors py-1 border-b-2 border-transparent hover:border-[#D4AF37]"
+              className="text-[11px] xl:text-xs font-semibold uppercase tracking-wider text-[#3A1823] hover:text-[#B84A67] transition-colors py-1 border-b-2 border-transparent hover:border-[#D4AF37] whitespace-nowrap"
             >
               Track Order
             </Link>
@@ -498,6 +515,116 @@ export function Navbar() {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Full-Width Collections Mega Menu Dropdown */}
+        <AnimatePresence>
+          {isCollectionsOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+              onMouseEnter={handleCollectionsEnter}
+              onMouseLeave={handleCollectionsLeave}
+              className="hidden lg:block absolute top-full left-0 right-0 w-full bg-[#FCFAF8]/98 backdrop-blur-xl border-b border-[#EFE3E7] shadow-[0_25px_50px_-12px_rgba(58,24,35,0.18)] z-50 overflow-hidden"
+            >
+              <div className="max-w-7xl mx-auto px-6 lg:px-8 py-7">
+                {/* Header row inside mega menu */}
+                <div className="flex items-center justify-between pb-5 border-b border-[#EFE3E7]/80">
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-[#B84A67] flex items-center gap-1.5">
+                      <Sparkle className="w-3.5 h-3.5 text-[#D4AF37]" />
+                      <span>Artisan Resin Collections</span>
+                    </span>
+                    <h3 className="font-serif text-lg font-bold text-[#3A1823] mt-0.5">
+                      Handcrafted Keepsakes &amp; Botanical Flora
+                    </h3>
+                  </div>
+
+                  <Link
+                    href="/shop"
+                    onClick={() => setIsCollectionsOpen(false)}
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#8C1D38] hover:text-[#B84A67] bg-[#FAF0F3] hover:bg-[#F3E2E7] px-4 py-2 rounded-xl transition-all border border-[#EFE3E7]"
+                  >
+                    <span>Explore All Products ({displayCategories.length} Collections)</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
+
+                {/* Category Cards Grid with Image + Category Name + Description */}
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5 pt-6">
+                  {displayCategories.map((cat) => (
+                    <Link
+                      key={cat.id || cat.slug}
+                      href={`/shop?category=${cat.slug}`}
+                      onClick={() => setIsCollectionsOpen(false)}
+                      className="group flex flex-col rounded-2xl bg-white border border-[#EFE3E7] hover:border-[#D4AF37] p-3 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 overflow-hidden"
+                    >
+                      {/* Image Thumbnail with zoom on hover */}
+                      <div className="relative aspect-square w-full rounded-xl overflow-hidden bg-[#FAF0F3] mb-3 border border-[#F4EBE6]">
+                        <img
+                          src={cat.imageUrl || "/images/logo/resin_logo.png"}
+                          alt={cat.name}
+                          onError={(e) => {
+                            (e.currentTarget as HTMLImageElement).src = "/images/logo/resin_logo.png";
+                          }}
+                          className="w-full h-full object-cover object-center group-hover:scale-108 transition-transform duration-500 ease-out"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#2C131C]/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-2.5">
+                          <span className="text-[11px] font-medium text-white flex items-center gap-1">
+                            Browse Collection <ArrowRight className="w-3 h-3 text-[#D4AF37]" />
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Category Title & Description */}
+                      <div className="flex-1 flex flex-col justify-between">
+                        <div>
+                          <h4 className="font-serif font-bold text-sm text-[#3A1823] group-hover:text-[#B84A67] transition-colors leading-snug line-clamp-1">
+                            {cat.name}
+                          </h4>
+                          {cat.description && (
+                            <p className="text-[11px] text-[#7A5E68] line-clamp-2 mt-1 leading-relaxed">
+                              {cat.description}
+                            </p>
+                          )}
+                        </div>
+                        <span className="text-[11px] font-semibold text-[#B84A67] mt-2 inline-flex items-center gap-1 opacity-0 group-hover:opacity-100 transform translate-x-0 group-hover:translate-x-0.5 transition-all">
+                          View Items →
+                        </span>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+
+                {/* Bottom announcement strip inside mega menu */}
+                <div className="mt-6 pt-4 border-t border-[#EFE3E7]/80 flex flex-col sm:flex-row sm:items-center justify-between text-xs text-[#7A5E68] gap-3">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-3.5 h-3.5 text-[#D4AF37] shrink-0" />
+                    <span>Every piece is cured for 72+ hours with UV-resistant glass-grade resin.</span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <Link
+                      href="/custom-orders"
+                      onClick={() => setIsCollectionsOpen(false)}
+                      className="text-[#8C1D38] hover:text-[#B84A67] font-semibold flex items-center gap-1"
+                    >
+                      Design Bespoke Piece <ArrowRight className="w-3 h-3" />
+                    </Link>
+                    <span className="text-[#EFE3E7]">•</span>
+                    <Link
+                      href="/track-order"
+                      onClick={() => setIsCollectionsOpen(false)}
+                      className="text-[#7A5E68] hover:text-[#3A1823]"
+                    >
+                      Track Your Order
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </nav>
 
       {/* Mobile Drawer Menu - Smooth animation, solid opaque background, NO duplicate logo */}
@@ -555,6 +682,18 @@ export function Navbar() {
                 {/* 3. Main Navigation Links */}
                 <div className="flex flex-col space-y-2">
                   <Link
+                    href="/"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center justify-between p-3 rounded-xl bg-white border border-[#EFE3E7] hover:border-[#D4AF37] text-[#3A1823] hover:text-[#B84A67] transition-all font-serif font-bold text-base tracking-wide group shadow-xs active:scale-98"
+                  >
+                    <span className="flex items-center space-x-2.5">
+                      <Home className="w-4 h-4 text-[#B84A67]" />
+                      <span>Home</span>
+                    </span>
+                    <ArrowRight className="w-4 h-4 text-[#B84A67] group-hover:translate-x-1 transition-transform" />
+                  </Link>
+
+                  <Link
                     href="/shop"
                     onClick={() => setIsMobileMenuOpen(false)}
                     className="flex items-center justify-between p-3 rounded-xl bg-white border border-[#EFE3E7] hover:border-[#D4AF37] text-[#3A1823] hover:text-[#B84A67] transition-all font-serif font-bold text-base tracking-wide group shadow-xs active:scale-98"
@@ -593,26 +732,33 @@ export function Navbar() {
                       </Link>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2">
-                      {(categories.length > 0
-                        ? categories
-                        : [
-                          { name: "Resin Coasters", slug: "resin-coasters" },
-                          { name: "Resin Keychains", slug: "resin-keychains" },
-                          { name: "Resin Jewellery", slug: "resin-jewellery" },
-                          { name: "Phone Charms", slug: "resin-phone-charms" },
-                          { name: "Resin Nameplates", slug: "resin-nameplates" },
-                          { name: "Personalised Gifts", slug: "resin-photo-frames" },
-                        ]
-                      ).map((cat) => (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      {displayCategories.map((cat) => (
                         <Link
                           key={cat.id || cat.slug}
                           href={`/shop?category=${cat.slug}`}
                           onClick={() => setIsMobileMenuOpen(false)}
-                          className="p-2.5 bg-white border border-[#EFE3E7] hover:border-[#D4AF37] hover:bg-[#FAF0F3] rounded-xl text-xs font-medium text-[#3A1823] hover:text-[#B84A67] transition-all truncate shadow-xs flex items-center justify-between active:scale-98"
+                          className="flex items-center space-x-3 p-2 bg-white border border-[#EFE3E7] hover:border-[#D4AF37] hover:bg-[#FAF0F3] rounded-xl transition-all shadow-xs group"
                         >
-                          <span className="truncate">{cat.name}</span>
-                          <span className="text-[#AFA0A6] text-[10px] ml-1 flex-shrink-0">›</span>
+                          <img
+                            src={cat.imageUrl || "/images/logo/resin_logo.png"}
+                            alt={cat.name}
+                            onError={(e) => {
+                              (e.currentTarget as HTMLImageElement).src = "/images/logo/resin_logo.png";
+                            }}
+                            className="w-10 h-10 rounded-lg object-cover bg-[#FAF0F3] border border-[#EFE3E7] shrink-0 group-hover:scale-105 transition-transform"
+                          />
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs font-semibold text-[#3A1823] group-hover:text-[#B84A67] transition-colors truncate">
+                              {cat.name}
+                            </p>
+                            {cat.description && (
+                              <p className="text-[10px] text-[#8C6E79] line-clamp-1">
+                                {cat.description}
+                              </p>
+                            )}
+                          </div>
+                          <span className="text-xs text-[#B84A67] opacity-60 group-hover:opacity-100 mr-1">›</span>
                         </Link>
                       ))}
                     </div>

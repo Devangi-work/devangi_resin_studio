@@ -11,7 +11,7 @@ const isLiveNeonConfigured = Boolean(
 );
 
 // Neon Drizzle Client instance
-const sql = isLiveNeonConfigured ? neon(process.env.DATABASE_URL!) : null;
+export const sql = isLiveNeonConfigured ? neon(process.env.DATABASE_URL!) : null;
 export const db = sql ? drizzle(sql, { schema }) : null;
 
 // Ensure new columns and tables exist on startup without requiring manual migration
@@ -35,6 +35,7 @@ if (sql) {
   sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS is_festival_special BOOLEAN DEFAULT FALSE;`.catch(() => { });
   sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS festival_discount_percentage NUMERIC(5, 2);`.catch(() => { });
   sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS delivered_popup_seen BOOLEAN DEFAULT FALSE;`.catch(() => { });
+  sql`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS keepsake_studio_images JSONB DEFAULT '[]'::jsonb;`.catch(() => { });
   sql`CREATE TABLE IF NOT EXISTS media_items (
     id TEXT PRIMARY KEY,
     file_name TEXT NOT NULL,
@@ -125,7 +126,7 @@ function getInitialStoreState(): StoreState {
   return {
     categories: JSON.parse(JSON.stringify(initialCategories)),
     products: JSON.parse(JSON.stringify(initialProducts)),
-    orders: JSON.parse(JSON.stringify(initialOrders)),
+    orders: [],
     coupons: JSON.parse(JSON.stringify(initialCoupons)),
     mediaItems: [],
     customers: [
@@ -133,129 +134,28 @@ function getInitialStoreState(): StoreState {
         id: "cust_aarav",
         name: "Aarav Patel",
         email: "aarav.patel@gmail.com",
-        avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
+        avatarUrl: "/images/logo/resin_logo.png",
         isVerified: true,
       },
       {
         id: "cust_ananya",
         name: "Ananya Sharma",
         email: "ananya.s@outlook.com",
-        avatarUrl: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150",
-        isVerified: true,
-      },
-      {
-        id: "cust_priya",
-        name: "Priya Nair",
-        email: "priya.nair@gmail.com",
-        avatarUrl: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150",
+        avatarUrl: "/images/logo/resin_logo.png",
         isVerified: true,
       },
       {
         id: "cust_rohan",
         name: "Rohan Kapoor",
         email: "rohan.kapoor@gmail.com",
-        avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150",
+        avatarUrl: "/images/logo/resin_logo.png",
         isVerified: true,
       },
     ],
-    reviews: [
-      {
-        id: "rev_seed_1",
-        productId: "prod_ocean_coasters",
-        customerId: "cust_aarav",
-        orderId: "ord_sample_delivered_1",
-        customerName: "Aarav Patel",
-        customerEmail: "aarav.patel@gmail.com",
-        customerAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
-        rating: 5,
-        reviewText: "The ocean coasters are truly breathtaking! The depth of the waves, gold foil accents, and ultra-glossy finish look even better in real life than the photos. Packaged with so much care too.",
-        images: [
-          "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800",
-          "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=800"
-        ],
-        likesCount: 14,
-        isVerifiedPurchase: true,
-        adminGranted: false,
-        status: "published",
-        createdAt: new Date("2026-10-18T10:15:00Z"),
-        updatedAt: new Date("2026-10-18T10:15:00Z"),
-      },
-      {
-        id: "rev_seed_2",
-        productId: "prod_ocean_coasters",
-        customerId: "cust_ananya",
-        orderId: null,
-        customerName: "Ananya Sharma",
-        customerEmail: "ananya.s@outlook.com",
-        customerAvatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150",
-        rating: 5,
-        reviewText: "Devangi's resin craftsmanship is second to none. I was invited to review this new batch and the heat resistance and crystal clarity are flawless on my marble dining table. Highly recommended!",
-        images: [
-          "https://images.unsplash.com/photo-1579783902614-a3fb3927b675?w=800"
-        ],
-        likesCount: 8,
-        isVerifiedPurchase: false,
-        adminGranted: true,
-        status: "published",
-        createdAt: new Date("2026-10-22T14:30:00Z"),
-        updatedAt: new Date("2026-10-22T14:30:00Z"),
-      },
-      {
-        id: "rev_seed_3",
-        productId: "prod_botanical_pendant",
-        customerId: "cust_priya",
-        orderId: "ord_sample_delivered_2",
-        customerName: "Priya Nair",
-        customerEmail: "priya.nair@gmail.com",
-        customerAvatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150",
-        rating: 5,
-        reviewText: "The preserved forget-me-not flowers inside the teardrop resin look magical in natural sunlight! Wore it to a family function and received so many compliments. Beautiful gold chain too.",
-        images: [
-          "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=800"
-        ],
-        likesCount: 19,
-        isVerifiedPurchase: true,
-        adminGranted: false,
-        status: "published",
-        createdAt: new Date("2026-10-12T09:00:00Z"),
-        updatedAt: new Date("2026-10-12T09:00:00Z"),
-      },
-      {
-        id: "rev_seed_4",
-        productId: "prod_resin_photo_frame",
-        customerId: "cust_rohan",
-        orderId: null,
-        customerName: "Rohan Kapoor",
-        customerEmail: "rohan.kapoor@gmail.com",
-        customerAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150",
-        rating: 5,
-        reviewText: "Custom framed our wedding picture with preserved baby's breath and fairy lights. The amber glow at night creates such a romantic vibe in our bedroom! 10/10 quality and fast dispatch.",
-        images: [
-          "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=800"
-        ],
-        likesCount: 22,
-        isVerifiedPurchase: true,
-        adminGranted: false,
-        status: "published",
-        createdAt: new Date("2026-10-25T16:45:00Z"),
-        updatedAt: new Date("2026-10-25T16:45:00Z"),
-      }
-    ],
+    reviews: [],
     reviewLikes: [],
     productReviewPermissions: [],
-    inventoryMovements: [
-      {
-        id: "mov_1",
-        productId: "prod_ocean_coasters",
-        variantId: null,
-        previousQuantity: 20,
-        newQuantity: 18,
-        changeAmount: -2,
-        reason: "purchase",
-        adminUserId: "system",
-        createdAt: new Date("2026-10-08T14:22:00Z"),
-      },
-    ],
+    inventoryMovements: [],
     siteSettings: {
       id: "default",
       storeName: "Devangi Resin Studio",
@@ -291,6 +191,7 @@ function getInitialStoreState(): StoreState {
       festivalBannerBg: "royal_wine",
       festivalCtaText: "Shop Festive Collection",
       festivalCtaUrl: "/shop?filter=festival",
+      keepsakeStudioImages: [],
       updatedAt: new Date(),
     },
     customRequests: [],
@@ -298,6 +199,14 @@ function getInitialStoreState(): StoreState {
 }
 
 const store: StoreState = globalForStore.__resinStore || getInitialStoreState();
+if (store) {
+  store.orders = [];
+  store.reviews = [];
+  store.customRequests = [];
+  store.customers = store.customers.filter(
+    (c: any) => !c.name?.toLowerCase().includes("priya") && !c.email?.toLowerCase().includes("priya")
+  );
+}
 if (process.env.NODE_ENV !== "production") {
   globalForStore.__resinStore = store;
 }
@@ -1005,62 +914,186 @@ export const dbStore = {
 
   // ---------------- INVENTORY ----------------
   async getInventoryOverview() {
-    return store.products.map((p) => ({
-      id: p.id,
-      name: p.name,
-      sku: p.sku,
-      category: store.categories.find((c) => c.id === p.categoryId)?.name || "Uncategorized",
-      trackInventory: p.trackInventory,
-      stockQuantity: p.stockQuantity,
-      lowStockThreshold: p.lowStockThreshold,
-      allowBackorders: p.allowBackorders,
-      isLowStock: p.trackInventory && p.stockQuantity <= p.lowStockThreshold && p.stockQuantity > 0,
-      isOutOfStock: p.trackInventory && p.stockQuantity <= 0,
-      variants: p.variants || [],
-    }));
+    // Inventory strictly reflects the real products from the Product Catalogue
+    const { products } = await this.getProducts({ limit: 1000 });
+    return (products || [])
+      .filter((p: any) => p.status !== "archived")
+      .map((p: any) => {
+        const stockQty = Number(p.stockQuantity) || 0;
+        const threshold = Number(p.lowStockThreshold) || 3;
+        const track = Boolean(p.trackInventory);
+        return {
+          id: p.id,
+          name: p.name,
+          sku: p.sku,
+          category: p.category?.name || "Uncategorized",
+          trackInventory: track,
+          stockQuantity: stockQty,
+          lowStockThreshold: threshold,
+          allowBackorders: Boolean(p.allowBackorders),
+          isLowStock: track && stockQty <= threshold && stockQty > 0,
+          isOutOfStock: track && stockQty <= 0,
+          status: p.status,
+          regularPrice: p.regularPrice,
+          salePrice: p.salePrice,
+          images: p.images || [],
+          variants: p.variants || [],
+        };
+      });
   },
 
   async adjustStock(productId: string, variantId: string | null, changeAmount: number, reason: string, adminUserId = "admin") {
-    const prod = store.products.find((p) => p.id === productId);
-    if (!prod) throw new Error("Product not found");
+    let prev = 0;
+    let newQty = 0;
 
-    if (variantId && prod.variants) {
-      const v = prod.variants.find((v: any) => v.id === variantId);
-      if (!v) throw new Error("Variant not found");
-      const prev = v.inventory;
-      v.inventory = Math.max(0, prev + changeAmount);
+    if (sql) {
+      try {
+        const rows = await sql`SELECT stock_quantity, track_inventory FROM products WHERE id = ${productId};`;
+        if (rows && rows.length > 0) {
+          prev = Number(rows[0].stock_quantity) || 0;
+          newQty = Math.max(0, prev + changeAmount);
+          await sql`
+            UPDATE products 
+            SET stock_quantity = ${newQty}, updated_at = NOW() 
+            WHERE id = ${productId};
+          `;
+          const movId = `mov_${Date.now()}`;
+          await sql`
+            INSERT INTO inventory_movements (id, product_id, variant_id, previous_quantity, new_quantity, change_amount, reason, admin_user_id, created_at)
+            VALUES (${movId}, ${productId}, ${variantId || null}, ${prev}, ${newQty}, ${changeAmount}, ${reason}, ${adminUserId}, NOW());
+          `.catch(() => {});
+        }
+      } catch (e) {
+        console.error("DB adjustStock err:", e);
+      }
+    }
+
+    const prod = store.products.find((p) => p.id === productId);
+    if (prod) {
+      prev = Number(prod.stockQuantity) || 0;
+      prod.stockQuantity = Math.max(0, prev + changeAmount);
+      newQty = prod.stockQuantity;
       store.inventoryMovements.unshift({
         id: `mov_${Date.now()}`,
         productId,
-        variantId,
+        variantId: variantId || null,
         previousQuantity: prev,
-        newQuantity: v.inventory,
+        newQuantity: prod.stockQuantity,
         changeAmount,
         reason,
         adminUserId,
         createdAt: new Date(),
       });
-      return { previousQuantity: prev, newQuantity: v.inventory };
     }
 
-    const prev = prod.stockQuantity;
-    prod.stockQuantity = Math.max(0, prev + changeAmount);
-    store.inventoryMovements.unshift({
-      id: `mov_${Date.now()}`,
-      productId,
-      variantId: null,
-      previousQuantity: prev,
-      newQuantity: prod.stockQuantity,
-      changeAmount,
-      reason,
-      adminUserId,
-      createdAt: new Date(),
-    });
+    return { previousQuantity: prev, newQuantity: newQty };
+  },
 
-    return { previousQuantity: prev, newQuantity: prod.stockQuantity };
+  async updateProductInventorySettings(
+    productId: string,
+    data: { stockQuantity?: number; trackInventory?: boolean; lowStockThreshold?: number; allowBackorders?: boolean; reason?: string },
+    adminUserId = "admin"
+  ) {
+    let prevQty = 0;
+    if (sql) {
+      try {
+        const current = await sql`SELECT stock_quantity, track_inventory, low_stock_threshold FROM products WHERE id = ${productId};`;
+        if (current && current.length > 0) {
+          prevQty = Number(current[0].stock_quantity) || 0;
+        }
+
+        await sql`
+          UPDATE products
+          SET 
+            stock_quantity = COALESCE(${data.stockQuantity !== undefined ? Number(data.stockQuantity) : null}, stock_quantity),
+            track_inventory = COALESCE(${data.trackInventory !== undefined ? Boolean(data.trackInventory) : null}, track_inventory),
+            low_stock_threshold = COALESCE(${data.lowStockThreshold !== undefined ? Number(data.lowStockThreshold) : null}, low_stock_threshold),
+            allow_backorders = COALESCE(${data.allowBackorders !== undefined ? Boolean(data.allowBackorders) : null}, allow_backorders),
+            updated_at = NOW()
+          WHERE id = ${productId};
+        `;
+
+        if (data.stockQuantity !== undefined && data.stockQuantity !== prevQty) {
+          const movId = `mov_${Date.now()}`;
+          const diff = Number(data.stockQuantity) - prevQty;
+          await sql`
+            INSERT INTO inventory_movements (id, product_id, variant_id, previous_quantity, new_quantity, change_amount, reason, admin_user_id, created_at)
+            VALUES (${movId}, ${productId}, null, ${prevQty}, ${Number(data.stockQuantity)}, ${diff}, ${data.reason || "Manual Stock Count Update"}, ${adminUserId}, NOW());
+          `.catch(() => {});
+        }
+      } catch (e) {
+        console.error("DB updateProductInventorySettings err:", e);
+      }
+    }
+
+    const prod = store.products.find((p) => p.id === productId);
+    if (prod) {
+      prevQty = Number(prod.stockQuantity) || 0;
+      if (data.stockQuantity !== undefined) {
+        prod.stockQuantity = Number(data.stockQuantity);
+        store.inventoryMovements.unshift({
+          id: `mov_${Date.now()}`,
+          productId,
+          variantId: null,
+          previousQuantity: prevQty,
+          newQuantity: prod.stockQuantity,
+          changeAmount: prod.stockQuantity - prevQty,
+          reason: data.reason || "Manual Stock Count Update",
+          adminUserId,
+          createdAt: new Date(),
+        });
+      }
+      if (data.trackInventory !== undefined) prod.trackInventory = Boolean(data.trackInventory);
+      if (data.lowStockThreshold !== undefined) prod.lowStockThreshold = Number(data.lowStockThreshold);
+      if (data.allowBackorders !== undefined) prod.allowBackorders = Boolean(data.allowBackorders);
+    }
+
+    return { success: true };
   },
 
   async getInventoryMovements(productId?: string) {
+    if (sql) {
+      try {
+        const rows = productId
+          ? await sql`
+              SELECT 
+                m.id,
+                m.product_id as "productId",
+                m.previous_quantity as "previousQuantity",
+                m.new_quantity as "newQuantity",
+                m.change_amount as "changeAmount",
+                m.reason,
+                m.admin_user_id as "adminUserId",
+                m.created_at as "createdAt",
+                p.name as "productName"
+              FROM inventory_movements m
+              JOIN products p ON m.product_id = p.id
+              WHERE m.product_id = ${productId}
+              ORDER BY m.created_at DESC
+              LIMIT 100;
+            `
+          : await sql`
+              SELECT 
+                m.id,
+                m.product_id as "productId",
+                m.previous_quantity as "previousQuantity",
+                m.new_quantity as "newQuantity",
+                m.change_amount as "changeAmount",
+                m.reason,
+                m.admin_user_id as "adminUserId",
+                m.created_at as "createdAt",
+                p.name as "productName"
+              FROM inventory_movements m
+              JOIN products p ON m.product_id = p.id
+              ORDER BY m.created_at DESC
+              LIMIT 100;
+            `;
+        if (rows && rows.length > 0) return rows;
+      } catch (e) {
+        console.error("DB getInventoryMovements err:", e);
+      }
+    }
+
     if (productId) {
       return store.inventoryMovements.filter((m) => m.productId === productId);
     }
@@ -1940,6 +1973,7 @@ export const dbStore = {
             festival_banner_bg as "festivalBannerBg",
             festival_cta_text as "festivalCtaText",
             festival_cta_url as "festivalCtaUrl",
+            COALESCE(keepsake_studio_images, '[]'::jsonb) as "keepsakeStudioImages",
             updated_at as "updatedAt"
           FROM site_settings
           WHERE id = 'default'
@@ -1977,7 +2011,7 @@ export const dbStore = {
             shipping_policy, return_policy, privacy_policy, terms_policy, care_instructions_default,
             festival_discount_active, festival_name, festival_tagline, festival_discount_percentage,
             festival_coupon_code, festival_expires_at, festival_banner_bg, festival_cta_text, festival_cta_url,
-            upi_id, upi_qr_code_url, account_holder_name, updated_at
+            upi_id, upi_qr_code_url, account_holder_name, keepsake_studio_images, updated_at
           ) VALUES (
             'default',
             ${data.storeName ?? store.siteSettings.storeName},
@@ -2011,6 +2045,7 @@ export const dbStore = {
             ${data.upiId ?? store.siteSettings.upiId ?? 'devangi0403@okaxis'},
             ${data.upiQrCodeUrl ?? store.siteSettings.upiQrCodeUrl ?? ''},
             ${data.accountHolderName ?? store.siteSettings.accountHolderName ?? 'Devangi Resin Studio'},
+            ${JSON.stringify(data.keepsakeStudioImages ?? store.siteSettings.keepsakeStudioImages ?? [])}::jsonb,
             NOW()
           )
           ON CONFLICT (id) DO UPDATE SET
@@ -2045,6 +2080,7 @@ export const dbStore = {
             upi_id = EXCLUDED.upi_id,
             upi_qr_code_url = EXCLUDED.upi_qr_code_url,
             account_holder_name = EXCLUDED.account_holder_name,
+            keepsake_studio_images = EXCLUDED.keepsake_studio_images,
             updated_at = NOW();
         `;
       } catch (err) {
