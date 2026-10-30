@@ -18,7 +18,9 @@ import {
   HelpCircle,
   Clock,
   Layers,
+  Star,
 } from "lucide-react";
+import { ProductReviewsSection } from "@/components/product/ProductReviewsSection";
 
 export interface ProductDetailProps {
   product: any;
@@ -230,7 +232,19 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailPro
             <h1 className="font-serif text-2xl sm:text-3xl font-bold text-[#2C332D] leading-snug">
               {product.name}
             </h1>
-            <p className="text-xs text-[#736C66] flex items-center space-x-3">
+            <div className="flex flex-wrap items-center gap-3 text-xs text-[#736C66]">
+              <a
+                href="#product-reviews"
+                className="flex items-center space-x-1.5 text-xs text-[#8C7A72] hover:text-[#B8972E] transition-colors group"
+              >
+                <div className="flex items-center text-[#D4AF37]">
+                  <Star className="w-3.5 h-3.5 fill-[#D4AF37]" />
+                  <span className="font-bold text-xs text-[#2C332D] ml-1">Reviews</span>
+                </div>
+                <span>•</span>
+                <span className="underline group-hover:text-[#B8972E]">Verified Customer Feedback</span>
+              </a>
+              <span>•</span>
               <span>SKU: <strong className="text-[#2C332D]">{selectedVariant?.sku || product.sku}</strong></span>
               <span>•</span>
               <span>
@@ -239,7 +253,7 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailPro
                   {product.productType.replace("_", " ")}
                 </strong>
               </span>
-            </p>
+            </div>
           </div>
 
           {/* Price & Stock Status */}
@@ -572,6 +586,9 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailPro
           <p>{product.description}</p>
         </div>
       </div>
+
+      {/* ---------------- 3.5 PRODUCT REVIEWS SECTION ---------------- */}
+      <ProductReviewsSection productId={product.id} productName={product.name} />
 
       {/* ---------------- 4. RELATED PRODUCTS ---------------- */}
       {relatedProducts.length > 0 && (

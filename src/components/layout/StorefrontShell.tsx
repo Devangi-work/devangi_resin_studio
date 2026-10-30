@@ -6,6 +6,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { CartDrawer } from "@/components/cart/CartDrawer";
 import { UnpaidOrderModal } from "@/components/customer/UnpaidOrderModal";
+import { DeliveredOrderModal } from "@/components/orders/DeliveredOrderModal";
 
 export function StorefrontShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -21,6 +22,7 @@ export function StorefrontShell({ children }: { children: React.ReactNode }) {
       <main className="flex-1">{children}</main>
       <CartDrawer />
       <UnpaidOrderModal />
+      <DeliveredOrderModal />
       <Footer />
     </>
   );

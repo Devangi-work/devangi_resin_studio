@@ -1,0 +1,105 @@
+- generic [active] [ref=f2e1]:
+  - banner [ref=f2e2]:
+    - generic [ref=f2e3]: Handmade with Love • Complimentary Insured Delivery on orders over ₹999.00
+    - navigation [ref=f2e9]:
+      - generic [ref=f2e10]:
+        - link "Devangi Resin Studio Logo Devangi Resin Studio Handcrafted Resin Creations by Devangi" [ref=f2e12] [cursor=pointer]:
+          - /url: /
+          - img "Devangi Resin Studio Logo" [ref=f2e13]
+          - generic [ref=f2e14]:
+            - generic [ref=f2e15]: Devangi Resin Studio
+            - generic [ref=f2e16]: Handcrafted Resin Creations by Devangi
+        - generic [ref=f2e17]:
+          - link "Shop All" [ref=f2e18] [cursor=pointer]:
+            - /url: /shop
+          - button "Collections" [ref=f2e20]
+          - link "Festive Specials" [ref=f2e24] [cursor=pointer]:
+            - /url: /shop?festival=true
+          - link "Custom Studio" [ref=f2e28] [cursor=pointer]:
+            - /url: /custom-orders
+          - link "Orders Showcase" [ref=f2e29] [cursor=pointer]:
+            - /url: /devangiresinstudio/orderscatalogue
+          - link "Track Order" [ref=f2e30] [cursor=pointer]:
+            - /url: /track-order
+        - generic [ref=f2e31]:
+          - button "Search products" [ref=f2e32]
+          - button "User Account Options" [ref=f2e37]
+          - button "View Shopping Cart" [ref=f2e44]
+  - main [ref=f2e48]:
+    - paragraph [ref=f2e52]: Loading your orders and purchases...
+  - contentinfo [ref=f2e53]:
+    - generic [ref=f2e54]:
+      - generic [ref=f2e55]:
+        - generic [ref=f2e56]:
+          - link "Devangi Resin Studio Devangi Resin Studio Handcrafted Resin Creations by Devangi" [ref=f2e57] [cursor=pointer]:
+            - /url: /
+            - img "Devangi Resin Studio" [ref=f2e58]
+            - generic [ref=f2e59]:
+              - generic [ref=f2e60]: Devangi Resin Studio
+              - generic [ref=f2e61]: Handcrafted Resin Creations by Devangi
+          - paragraph [ref=f2e62]: We handcraft bespoke epoxy resin art, botanical floral jewellery, personalized nameplates, and crystal geode homeware in India. Each piece is hand-poured with love, intention, and non-yellowing archival UV-stable resin.
+          - generic [ref=f2e63]:
+            - link "Instagram" [ref=f2e64] [cursor=pointer]:
+              - /url: https://instagram.com/devangiresinstudio
+            - link "WhatsApp Chat" [ref=f2e68] [cursor=pointer]:
+              - /url: https://wa.me/919876543210?text=Hi%20Devangi%20Resin%20Studio,%20I%20have%20an%20inquiry%20about%20a%20custom%20order!
+        - generic [ref=f2e71]:
+          - heading "Collections" [level=3] [ref=f2e72]
+          - list [ref=f2e76]:
+            - listitem [ref=f2e77]:
+              - link "Shop All Boutique" [ref=f2e78] [cursor=pointer]:
+                - /url: /shop
+            - listitem [ref=f2e79]:
+              - link "Geode & Ocean Coasters" [ref=f2e80] [cursor=pointer]:
+                - /url: /shop?category=resin-coasters
+            - listitem [ref=f2e81]:
+              - link "Floral Keychains" [ref=f2e82] [cursor=pointer]:
+                - /url: /shop?category=resin-keychains
+            - listitem [ref=f2e83]:
+              - link "Botanical Jewellery" [ref=f2e84] [cursor=pointer]:
+                - /url: /shop?category=resin-jewellery
+            - listitem [ref=f2e85]:
+              - link "Entrance Nameplates" [ref=f2e86] [cursor=pointer]:
+                - /url: /shop?category=resin-nameplates
+        - generic [ref=f2e87]:
+          - heading "Customer Care" [level=3] [ref=f2e88]
+          - list [ref=f2e89]:
+            - listitem [ref=f2e90]:
+              - link "Track Your Order" [ref=f2e91] [cursor=pointer]:
+                - /url: /track-order
+            - listitem [ref=f2e92]:
+              - link "Sign In / Register" [ref=f2e93] [cursor=pointer]:
+                - /url: /account/login
+            - listitem [ref=f2e94]:
+              - link "Bespoke Custom Orders" [ref=f2e95] [cursor=pointer]:
+                - /url: /custom-orders
+            - listitem [ref=f2e96]:
+              - link "Shipping & Dispatch" [ref=f2e97] [cursor=pointer]:
+                - /url: /policies/shipping
+            - listitem [ref=f2e98]:
+              - link "Returns & Exchange Policy" [ref=f2e99] [cursor=pointer]:
+                - /url: /policies/returns
+            - listitem [ref=f2e100]:
+              - link "Resin Care Guide" [ref=f2e101] [cursor=pointer]:
+                - /url: /policies/care
+            - listitem [ref=f2e102]:
+              - link "Privacy Policy" [ref=f2e103] [cursor=pointer]:
+                - /url: /policies/privacy
+        - generic [ref=f2e104]:
+          - heading "Artisan Newsletter" [level=3] [ref=f2e105]
+          - paragraph [ref=f2e106]:
+            - text: Subscribe to receive new collection drops, preservation guides, and bespoke order slots. Enjoy 10% off with coupon
+            - strong [ref=f2e107]: WELCOME10
+            - text: .
+          - generic [ref=f2e108]:
+            - textbox "Your email address" [ref=f2e109]
+            - button "Get 10% Discount" [ref=f2e110]
+          - generic [ref=f2e111]:
+            - paragraph [ref=f2e112]:
+              - generic [ref=f2e116]: hello@devangiresinstudio.com
+            - paragraph [ref=f2e117]:
+              - generic [ref=f2e120]: +91 98765 43210
+      - paragraph [ref=f2e122]:
+        - generic [ref=f2e123]: © 2026 Devangi Resin Studio. Handcrafted with Love in India.
+        - generic [ref=f2e124]: •
+        - generic [ref=f2e125]: UPI & QR Verified Payment

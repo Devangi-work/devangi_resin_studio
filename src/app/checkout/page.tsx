@@ -97,14 +97,10 @@ export default function CheckoutPage() {
   const [errorMessage, setErrorMessage] = useState("");
   const [orderSuccessMessage, setOrderSuccessMessage] = useState("");
 
-  // Payment Screenshot Upload & OCR Auto-Detection States
+  // Payment Screenshot Upload States
   const [paymentScreenshotUrl, setPaymentScreenshotUrl] = useState<string | null>(null);
   const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
   const [isUploadingScreenshot, setIsUploadingScreenshot] = useState(false);
-  const [ocrDetectedUtr, setOcrDetectedUtr] = useState<string | null>(null);
-  const [ocrDetectedApp, setOcrDetectedApp] = useState<string | null>(null);
-  const [ocrDetectedAmount, setOcrDetectedAmount] = useState<string | null>(null);
-  const [ocrStatusMessage, setOcrStatusMessage] = useState<string>("");
 
   // Google Logged-In Profile Completion States
   const [isSavingProfile, setIsSavingProfile] = useState(false);
@@ -192,7 +188,7 @@ export default function CheckoutPage() {
     setTimeout(() => setCopiedAmount(false), 2500);
   };
 
-  // Upload Payment Screenshot & Run OCR Details Auto-Detection
+  // Upload Payment Screenshot
   const handleScreenshotUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -205,7 +201,6 @@ export default function CheckoutPage() {
     const previewUrl = URL.createObjectURL(file);
     setScreenshotPreview(previewUrl);
     setIsUploadingScreenshot(true);
-    setOcrStatusMessage("Scanning receipt for 12-digit UTR / UPI Reference ID...");
 
     try {
       const data = new FormData();
@@ -217,28 +212,16 @@ export default function CheckoutPage() {
       });
 
       const json = await res.json();
-      if (!res.ok) {
-        setOcrStatusMessage("Screenshot uploaded. Please manually verify or enter your 12-digit UTR below.");
+      if (!res.ok || !json.url) {
+        setErrorMessage(json.error || "Failed to upload screenshot. Please try again.");
         setIsUploadingScreenshot(false);
         return;
       }
 
       setPaymentScreenshotUrl(json.url);
-      if (json.detectedUtr) {
-        const utrString = String(json.detectedUtr).trim();
-        setOcrDetectedUtr(utrString);
-        setOcrDetectedApp(json.detectedApp || null);
-        setOcrDetectedAmount(json.detectedAmount || null);
-        setUpiTransactionId(utrString);
-        setOcrStatusMessage(
-          `✓ Auto-detected 12-Digit UTR: ${utrString}${json.detectedApp ? ` from ${json.detectedApp}` : ""}`
-        );
-      } else {
-        setOcrStatusMessage("Screenshot uploaded! Please enter your 12-digit UTR number below.");
-      }
     } catch (err) {
       console.error("Screenshot upload err:", err);
-      setOcrStatusMessage("Screenshot attached! Please enter your 12-digit UTR number below.");
+      setErrorMessage("Failed to upload screenshot. Please try again.");
     } finally {
       setIsUploadingScreenshot(false);
     }
@@ -1288,12 +1271,12 @@ export default function CheckoutPage() {
                 </p>
               </div>
 
-              {/* ---------------- Screenshot Upload & OCR Auto-Detection Area ---------------- */}
+              {/* ---------------- Screenshot Upload Area ---------------- */}
               <div className="pt-3 border-t border-[#E8E0D5] space-y-3">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-bold text-[#2C332D] flex items-center gap-1.5">
                     <Camera className="w-4 h-4 text-[#B8972E]" />
-                    <span>Upload Payment Screenshot (Auto-Detects Details)</span>
+                    <span>Upload Payment Screenshot</span>
                   </label>
                   <span className="text-[10px] font-semibold text-[#B8972E] bg-white px-2 py-0.5 rounded-full border border-[#E8E0D5]">
                     Recommended
@@ -1317,23 +1300,12 @@ export default function CheckoutPage() {
                         {isUploadingScreenshot ? (
                           <div className="flex items-center space-x-1.5 text-xs text-[#B8972E] font-medium mt-1">
                             <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                            <span>Scanning receipt with OCR...</span>
-                          </div>
-                        ) : ocrDetectedUtr ? (
-                          <div className="mt-1">
-                            <span className="inline-flex items-center space-x-1 text-[11px] text-[#2E7D32] bg-[#E8EFE8] px-2 py-0.5 rounded-md font-semibold">
-                              <Sparkles className="w-3 h-3" />
-                              <span>Detected UTR: {ocrDetectedUtr}</span>
-                            </span>
-                            {ocrDetectedApp && (
-                              <span className="text-[10px] text-[#736C66] ml-1.5">
-                                via {ocrDetectedApp}
-                              </span>
-                            )}
+                            <span>Uploading screenshot...</span>
                           </div>
                         ) : (
-                          <p className="text-[11px] text-[#736C66] mt-0.5">
-                            Image attached successfully!
+                          <p className="text-[11px] text-[#2E7D32] font-semibold mt-0.5 flex items-center gap-1">
+                            <Check className="w-3.5 h-3.5" />
+                            <span>Attached &amp; ready for verification</span>
                           </p>
                         )}
                       </div>
@@ -1347,12 +1319,6 @@ export default function CheckoutPage() {
                         />
                       </label>
                     </div>
-
-                    {ocrStatusMessage && (
-                      <p className={`text-[11px] font-medium ${ocrDetectedUtr ? "text-[#2E7D32]" : "text-[#736C66]"}`}>
-                        {ocrStatusMessage}
-                      </p>
-                    )}
                   </div>
                 ) : (
                   <label className="border-2 border-dashed border-[#D5CEC5] hover:border-[#B8972E] bg-white p-5 rounded-xl flex flex-col items-center justify-center text-center cursor-pointer transition-colors group">
@@ -1362,9 +1328,6 @@ export default function CheckoutPage() {
                     </span>
                     <span className="text-[10.5px] text-[#8C7A72] mt-0.5">
                       PhonePe, Google Pay, or Paytm receipt (JPEG, PNG, WebP)
-                    </span>
-                    <span className="text-[10px] font-semibold text-[#B8972E] mt-1.5 bg-[#FAF4EC] px-2.5 py-0.5 rounded-full">
-                      ✨ Auto-extracts 12-digit UTR &amp; verifies order
                     </span>
                     <input
                       type="file"
@@ -1382,11 +1345,6 @@ export default function CheckoutPage() {
                   <label className="text-xs font-bold text-[#2C332D] block">
                     12-Digit UPI Ref / UTR Number <span className="text-[#DF4C4C]">*</span>
                   </label>
-                  {ocrDetectedUtr && (
-                    <span className="text-[10px] font-bold text-[#2E7D32] bg-[#E8EFE8] px-2 py-0.5 rounded-full flex items-center gap-1">
-                      <Check className="w-3 h-3" /> Auto-filled
-                    </span>
-                  )}
                 </div>
                 <input
                   id="upiTransactionId"
@@ -1395,9 +1353,7 @@ export default function CheckoutPage() {
                   placeholder="e.g. 428901234567"
                   value={upiTransactionId}
                   onChange={(e) => setUpiTransactionId(e.target.value)}
-                  className={`w-full px-3.5 py-2.5 text-xs font-mono bg-white border rounded-xl focus:outline-none focus:ring-1 focus:ring-[#D4AF37] text-[#2C332D] ${
-                    ocrDetectedUtr ? "border-[#2E7D32] bg-[#F9FDF9]" : "border-[#E8E0D5]"
-                  }`}
+                  className="w-full px-3.5 py-2.5 text-xs font-mono bg-white border border-[#E8E0D5] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#D4AF37] text-[#2C332D]"
                 />
                 <p className="text-[10px] text-[#8C7A72] mt-1 leading-relaxed">
                   Look for <strong>&ldquo;UPI Ref No&rdquo;</strong> (PhonePe/Paytm) or <strong>&ldquo;UPI transaction ID&rdquo;</strong> (Google Pay) in your payment receipt.

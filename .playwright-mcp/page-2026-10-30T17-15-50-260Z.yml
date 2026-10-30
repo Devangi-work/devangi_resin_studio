@@ -1,0 +1,585 @@
+- generic [active] [ref=f7e1]:
+  - generic [ref=f7e2]:
+    - complementary [ref=f7e3]:
+      - generic [ref=f7e4]:
+        - link "Devangi Resin Studio Logo DEVANGI RESIN STUDIO View Live Store" [ref=f7e6] [cursor=pointer]:
+          - /url: /
+          - img "Devangi Resin Studio Logo" [ref=f7e7]
+          - generic [ref=f7e8]:
+            - generic [ref=f7e9]: DEVANGI RESIN STUDIO
+            - generic [ref=f7e10]: View Live Store
+        - navigation [ref=f7e16]:
+          - link "Dashboard" [ref=f7e17] [cursor=pointer]:
+            - /url: /admin/dashboard
+          - link "Products" [ref=f7e24] [cursor=pointer]:
+            - /url: /admin/products
+          - link "Categories" [ref=f7e30] [cursor=pointer]:
+            - /url: /admin/categories
+          - link "Orders" [ref=f7e37] [cursor=pointer]:
+            - /url: /admin/orders
+          - link "Reviews" [ref=f7e42] [cursor=pointer]:
+            - /url: /admin/reviews
+          - link "Custom Studio" [ref=f7e46] [cursor=pointer]:
+            - /url: /admin/custom-requests
+          - link "Inventory" [ref=f7e50] [cursor=pointer]:
+            - /url: /admin/inventory
+          - link "Coupons" [ref=f7e62] [cursor=pointer]:
+            - /url: /admin/coupons
+          - link "Customers" [ref=f7e67] [cursor=pointer]:
+            - /url: /admin/customers
+          - link "Media Library" [ref=f7e74] [cursor=pointer]:
+            - /url: /admin/media
+          - link "Store Settings" [ref=f7e80] [cursor=pointer]:
+            - /url: /admin/settings
+      - generic [ref=f7e85]:
+        - 'button "Theme: dark Mode Switch" [ref=f7e176]':
+          - generic [ref=f7e87]:
+            - generic [ref=f7e94]: "Theme:"
+            - generic [ref=f7e95]: dark Mode
+          - generic [ref=f7e96]: Switch
+        - generic "Click to manage admin profile & avatar" [ref=f7e97] [cursor=pointer]:
+          - img "Devangi Resin Studio Admin" [ref=f7e179]
+          - generic [ref=f7e105]:
+            - paragraph [ref=f7e107]: Devangi Resin Studio Admin
+            - paragraph [ref=f7e108]: devangiresin@gmail.com
+            - paragraph [ref=f7e109]:
+              - generic [ref=f7e110]: Change Photo
+        - button "Logout" [ref=f7e111]
+    - main [ref=f7e116]:
+      - generic [ref=f7e118]:
+        - generic [ref=f7e119]:
+          - generic [ref=f7e120]:
+            - heading "Order Management & Fulfilment" [level=1] [ref=f7e121]
+            - paragraph [ref=f7e122]: Track online store sales and offline exhibition / Instagram custom orders in one unified system.
+          - generic [ref=f7e123]:
+            - button "+ Create Offline / Exhibition Order" [ref=f7e124]
+            - link "Export CSV" [ref=f7e127] [cursor=pointer]:
+              - /url: /api/admin/orders/export
+        - generic [ref=f7e132]:
+          - button "Orders Management (17)" [ref=f7e180] [cursor=pointer]
+          - button "Custom Studio Inquiries (1)" [ref=f7e181] [cursor=pointer]
+        - generic [ref=f7e142]:
+          - 'textbox "Search by order #, email, phone..." [ref=f7e147]'
+          - combobox [ref=f7e148]:
+            - option "All Sources (Online & Offline)" [selected]
+            - option "Online Web Store"
+            - option "Offline / Exhibition / Instagram"
+          - combobox [ref=f7e149]:
+            - option "All Fulfilment Statuses" [selected]
+            - option "Pending Payment"
+            - option "Confirmed"
+            - option "Processing (Curing)"
+            - option "Ready to Ship"
+            - option "Shipped"
+            - option "Delivered"
+            - option "Cancelled"
+          - combobox [ref=f7e150]:
+            - option "All Payment Statuses" [selected]
+            - option "Paid"
+            - option "Unpaid"
+            - option "Pending Verification"
+            - option "Failed"
+        - table [ref=f7e153]:
+          - rowgroup [ref=f7e154]:
+            - row [ref=f7e155]:
+              - 'columnheader "Order #" [ref=f7e156]'
+              - columnheader "Source" [ref=f7e157]
+              - columnheader "Customer" [ref=f7e158]
+              - columnheader "Products Ordered" [ref=f7e159]
+              - columnheader "Total" [ref=f7e160]
+              - columnheader "Fulfilment Status" [ref=f7e161]
+              - columnheader "Payment Status (Click to Toggle)" [ref=f7e162]
+              - columnheader "Action" [ref=f7e163]
+          - rowgroup [ref=f7e164]:
+            - row [ref=f7e182]:
+              - cell "RA-20261030-3047 30 Oct" [ref=f7e183]:
+                - generic [ref=f7e184]: RA-20261030-3047
+                - text: 30 Oct
+              - cell "online" [ref=f7e185]
+              - cell [ref=f7e186]:
+                - paragraph [ref=f7e187]: Priya Sharma
+                - paragraph [ref=f7e188]: "9876543210"
+              - 'cell "Golden Leaf – Glitter Resin Phone Charm Golden Leaf – Glitter Resin Phone Charm Qty: 1 • Standard" [ref=f7e189]':
+                - generic [ref=f7e191]:
+                  - img "Golden Leaf – Glitter Resin Phone Charm" [ref=f7e193] [cursor=pointer]
+                  - generic [ref=f7e194]:
+                    - paragraph [ref=f7e195]: Golden Leaf – Glitter Resin Phone Charm
+                    - generic [ref=f7e196]:
+                      - generic [ref=f7e197]: "Qty: 1"
+                      - generic "Standard" [ref=f7e198]: • Standard
+              - cell "₹1850.00" [ref=f7e199]
+              - cell "Processing" [ref=f7e200]:
+                - combobox "Click to change Fulfilment Status" [ref=f7e201] [cursor=pointer]:
+                  - option "Pending Payment"
+                  - option "Confirmed"
+                  - option "Processing" [selected]
+                  - option "Ready to Ship"
+                  - option "Shipped"
+                  - option "Delivered"
+                  - option "Cancelled"
+              - cell [ref=f7e202]:
+                - button "paid (Toggle)" [ref=f7e203]
+              - cell [ref=f7e206]:
+                - generic [ref=f7e207]:
+                  - link "PDF" [ref=f7e208] [cursor=pointer]:
+                    - /url: /admin/orders/ord_1793377390889/receipt
+                  - button "View & Edit" [ref=f7e213]
+            - row [ref=f7e214]:
+              - cell "RA-20261030-2648 30 Oct" [ref=f7e215]:
+                - generic [ref=f7e216]: RA-20261030-2648
+                - text: 30 Oct
+              - cell "online" [ref=f7e217]
+              - cell [ref=f7e218]:
+                - paragraph [ref=f7e219]: Priya Sharma
+                - paragraph [ref=f7e220]: "9876543210"
+              - 'cell "Charmistry – Handmade Resin Alphabet Keychains Charmistry – Handmade Resin Alphabet Keychains Qty: 1 • Standard" [ref=f7e221]':
+                - generic [ref=f7e223]:
+                  - img "Charmistry – Handmade Resin Alphabet Keychains" [ref=f7e225] [cursor=pointer]
+                  - generic [ref=f7e226]:
+                    - paragraph [ref=f7e227]: Charmistry – Handmade Resin Alphabet Keychains
+                    - generic [ref=f7e228]:
+                      - generic [ref=f7e229]: "Qty: 1"
+                      - generic "Standard" [ref=f7e230]: • Standard
+              - cell "₹3500.00" [ref=f7e231]
+              - cell "Delivered" [ref=f7e232]:
+                - combobox "Click to change Fulfilment Status" [ref=f7e233] [cursor=pointer]:
+                  - option "Pending Payment"
+                  - option "Confirmed"
+                  - option "Processing"
+                  - option "Ready to Ship"
+                  - option "Shipped"
+                  - option "Delivered" [selected]
+                  - option "Cancelled"
+              - cell [ref=f7e234]:
+                - button "paid (Toggle)" [ref=f7e235]
+              - cell [ref=f7e238]:
+                - generic [ref=f7e239]:
+                  - link "PDF" [ref=f7e240] [cursor=pointer]:
+                    - /url: /admin/orders/ord_1793377390115/receipt
+                  - button "View & Edit" [ref=f7e245]
+            - row [ref=f7e246]:
+              - cell "RA-20261030-9502 30 Oct" [ref=f7e247]:
+                - generic [ref=f7e248]: RA-20261030-9502
+                - text: 30 Oct
+              - cell "online" [ref=f7e249]
+              - cell [ref=f7e250]:
+                - paragraph [ref=f7e251]: Priya Sharma
+                - paragraph [ref=f7e252]: "9876543210"
+              - cell "Bespoke Order" [ref=f7e253]
+              - cell "₹1850.00" [ref=f7e254]
+              - cell "Processing" [ref=f7e255]:
+                - combobox "Click to change Fulfilment Status" [ref=f7e256] [cursor=pointer]:
+                  - option "Pending Payment"
+                  - option "Confirmed"
+                  - option "Processing" [selected]
+                  - option "Ready to Ship"
+                  - option "Shipped"
+                  - option "Delivered"
+                  - option "Cancelled"
+              - cell [ref=f7e257]:
+                - button "paid (Toggle)" [ref=f7e258]
+              - cell [ref=f7e261]:
+                - generic [ref=f7e262]:
+                  - link "PDF" [ref=f7e263] [cursor=pointer]:
+                    - /url: /admin/orders/ord_1793377318550/receipt
+                  - button "View & Edit" [ref=f7e268]
+            - row [ref=f7e269]:
+              - cell "RA-20261030-7928 30 Oct" [ref=f7e270]:
+                - generic [ref=f7e271]: RA-20261030-7928
+                - text: 30 Oct
+              - cell "online" [ref=f7e272]
+              - cell [ref=f7e273]:
+                - paragraph [ref=f7e274]: Priya Sharma
+                - paragraph [ref=f7e275]: "9876543210"
+              - cell "Bespoke Order" [ref=f7e276]
+              - cell "₹3500.00" [ref=f7e277]
+              - cell "Delivered" [ref=f7e278]:
+                - combobox "Click to change Fulfilment Status" [ref=f7e279] [cursor=pointer]:
+                  - option "Pending Payment"
+                  - option "Confirmed"
+                  - option "Processing"
+                  - option "Ready to Ship"
+                  - option "Shipped"
+                  - option "Delivered" [selected]
+                  - option "Cancelled"
+              - cell [ref=f7e280]:
+                - button "paid (Toggle)" [ref=f7e281]
+              - cell [ref=f7e284]:
+                - generic [ref=f7e285]:
+                  - link "PDF" [ref=f7e286] [cursor=pointer]:
+                    - /url: /admin/orders/ord_1793377317725/receipt
+                  - button "View & Edit" [ref=f7e291]
+            - row [ref=f7e292]:
+              - cell "RA-20261030-9967 30 Oct" [ref=f7e293]:
+                - generic [ref=f7e294]: RA-20261030-9967
+                - text: 30 Oct
+              - cell "online" [ref=f7e295]
+              - cell [ref=f7e296]:
+                - paragraph [ref=f7e297]: Shrikesh Shetty
+                - paragraph [ref=f7e298]: "07045332855"
+              - 'cell "Charmistry – Handmade Resin Alphabet Keychains Charmistry – Handmade Resin Alphabet Keychains Qty: 1" [ref=f7e299]':
+                - generic [ref=f7e301]:
+                  - img "Charmistry – Handmade Resin Alphabet Keychains" [ref=f7e303] [cursor=pointer]
+                  - generic [ref=f7e304]:
+                    - paragraph [ref=f7e305]: Charmistry – Handmade Resin Alphabet Keychains
+                    - generic [ref=f7e306]: "Qty: 1"
+              - cell "₹178.00" [ref=f7e308]
+              - cell "Confirmed" [ref=f7e309]:
+                - combobox "Click to change Fulfilment Status" [ref=f7e310] [cursor=pointer]:
+                  - option "Pending Payment"
+                  - option "Confirmed" [selected]
+                  - option "Processing"
+                  - option "Ready to Ship"
+                  - option "Shipped"
+                  - option "Delivered"
+                  - option "Cancelled"
+              - cell [ref=f7e311]:
+                - button "pending_verification (Toggle)" [ref=f7e312]
+              - cell [ref=f7e315]:
+                - button "View & Edit" [ref=f7e317]
+            - row [ref=f7e318]:
+              - cell "RA-20261029-8724 29 Oct" [ref=f7e319]:
+                - generic [ref=f7e320]: RA-20261029-8724
+                - text: 29 Oct
+              - cell "online" [ref=f7e321]
+              - cell [ref=f7e322]:
+                - paragraph [ref=f7e323]: Shrikesh Shetty
+                - paragraph [ref=f7e324]: "7045332855"
+              - 'cell "Ocean Glow – Floral Glitter Resin Keychain Ocean Glow – Floral Glitter Resin Keychain Qty: 1" [ref=f7e325]':
+                - generic [ref=f7e327]:
+                  - img "Ocean Glow – Floral Glitter Resin Keychain" [ref=f7e329] [cursor=pointer]
+                  - generic [ref=f7e330]:
+                    - paragraph [ref=f7e331]: Ocean Glow – Floral Glitter Resin Keychain
+                    - generic [ref=f7e332]: "Qty: 1"
+              - cell "₹138.00" [ref=f7e334]
+              - cell "Cancelled" [ref=f7e335]:
+                - combobox "Click to change Fulfilment Status" [ref=f7e336] [cursor=pointer]:
+                  - option "Pending Payment"
+                  - option "Confirmed"
+                  - option "Processing"
+                  - option "Ready to Ship"
+                  - option "Shipped"
+                  - option "Delivered"
+                  - option "Cancelled" [selected]
+              - cell [ref=f7e337]:
+                - button "unpaid (Toggle)" [ref=f7e338]
+              - cell [ref=f7e341]:
+                - button "View & Edit" [ref=f7e343]
+            - row [ref=f7e344]:
+              - cell "OFF-20261029-7554 29 Oct" [ref=f7e345]:
+                - generic [ref=f7e346]: OFF-20261029-7554
+                - text: 29 Oct
+              - cell "custom" [ref=f7e347]
+              - cell [ref=f7e348]:
+                - paragraph [ref=f7e349]: Shrikesh Shetty
+                - paragraph [ref=f7e350]: "07045332855"
+              - 'cell "Custom Bulk Wedding Favors / Corporate Gifts Custom Bulk Wedding Favors / Corporate Gifts Qty: 1" [ref=f7e351]':
+                - generic [ref=f7e353]:
+                  - img "Custom Bulk Wedding Favors / Corporate Gifts" [ref=f7e355] [cursor=pointer]
+                  - generic [ref=f7e356]:
+                    - paragraph [ref=f7e357]: Custom Bulk Wedding Favors / Corporate Gifts
+                    - generic [ref=f7e358]: "Qty: 1"
+              - cell "₹1279.00" [ref=f7e360]
+              - cell "Confirmed" [ref=f7e361]:
+                - combobox "Click to change Fulfilment Status" [ref=f7e362] [cursor=pointer]:
+                  - option "Pending Payment"
+                  - option "Confirmed" [selected]
+                  - option "Processing"
+                  - option "Ready to Ship"
+                  - option "Shipped"
+                  - option "Delivered"
+                  - option "Cancelled"
+              - cell [ref=f7e363]:
+                - button "unpaid (Toggle)" [ref=f7e364]
+              - cell [ref=f7e367]:
+                - button "View & Edit" [ref=f7e369]
+            - row [ref=f7e370]:
+              - cell "OFF-20261029-7180 29 Oct" [ref=f7e371]:
+                - generic [ref=f7e372]: OFF-20261029-7180
+                - text: 29 Oct
+              - cell "custom" [ref=f7e373]
+              - cell [ref=f7e374]:
+                - paragraph [ref=f7e375]: Shrikesh Shetty
+                - paragraph [ref=f7e376]: "07045332855"
+              - 'cell "Custom Bulk Wedding Favors / Corporate Gifts Custom Bulk Wedding Favors / Corporate Gifts Qty: 1" [ref=f7e377]':
+                - generic [ref=f7e379]:
+                  - img "Custom Bulk Wedding Favors / Corporate Gifts" [ref=f7e381] [cursor=pointer]
+                  - generic [ref=f7e382]:
+                    - paragraph [ref=f7e383]: Custom Bulk Wedding Favors / Corporate Gifts
+                    - generic [ref=f7e384]: "Qty: 1"
+              - cell "₹8079.00" [ref=f7e386]
+              - cell "Confirmed" [ref=f7e387]:
+                - combobox "Click to change Fulfilment Status" [ref=f7e388] [cursor=pointer]:
+                  - option "Pending Payment"
+                  - option "Confirmed" [selected]
+                  - option "Processing"
+                  - option "Ready to Ship"
+                  - option "Shipped"
+                  - option "Delivered"
+                  - option "Cancelled"
+              - cell [ref=f7e389]:
+                - button "paid (Toggle)" [ref=f7e390]
+              - cell [ref=f7e393]:
+                - generic [ref=f7e394]:
+                  - link "PDF" [ref=f7e395] [cursor=pointer]:
+                    - /url: /admin/orders/ord_1793300287573/receipt
+                  - button "View & Edit" [ref=f7e400]
+            - row [ref=f7e401]:
+              - cell "OFF-20261029-4245 29 Oct" [ref=f7e402]:
+                - generic [ref=f7e403]: OFF-20261029-4245
+                - text: 29 Oct
+              - cell "offline" [ref=f7e404]
+              - cell [ref=f7e405]:
+                - paragraph [ref=f7e406]: Shrikesh Shetty
+                - paragraph [ref=f7e407]: "07045332855"
+              - 'cell "Half-White, Half-Gold Glitter Leaf Charm Half-White, Half-Gold Glitter Leaf Charm Qty: 1" [ref=f7e408]':
+                - generic [ref=f7e410]:
+                  - img "Half-White, Half-Gold Glitter Leaf Charm" [ref=f7e412] [cursor=pointer]
+                  - generic [ref=f7e413]:
+                    - paragraph [ref=f7e414]: Half-White, Half-Gold Glitter Leaf Charm
+                    - generic [ref=f7e415]: "Qty: 1"
+              - cell "₹49.00" [ref=f7e417]
+              - cell "Confirmed" [ref=f7e418]:
+                - combobox "Click to change Fulfilment Status" [ref=f7e419] [cursor=pointer]:
+                  - option "Pending Payment"
+                  - option "Confirmed" [selected]
+                  - option "Processing"
+                  - option "Ready to Ship"
+                  - option "Shipped"
+                  - option "Delivered"
+                  - option "Cancelled"
+              - cell [ref=f7e420]:
+                - button "paid (Toggle)" [ref=f7e421]
+              - cell [ref=f7e424]:
+                - generic [ref=f7e425]:
+                  - link "PDF" [ref=f7e426] [cursor=pointer]:
+                    - /url: /admin/orders/ord_1793296628648/receipt
+                  - button "View & Edit" [ref=f7e431]
+            - row [ref=f7e432]:
+              - cell "RA-20261029-7565 29 Oct" [ref=f7e433]:
+                - generic [ref=f7e434]: RA-20261029-7565
+                - text: 29 Oct
+              - cell "online" [ref=f7e435]
+              - cell [ref=f7e436]:
+                - paragraph [ref=f7e437]: Shrikesh Shetty
+                - paragraph [ref=f7e438]: "7045332855"
+              - 'cell "Golden Leaf – Glitter Resin Phone Charm Golden Leaf – Glitter Resin Phone Charm Qty: 1" [ref=f7e439]':
+                - generic [ref=f7e441]:
+                  - img "Golden Leaf – Glitter Resin Phone Charm" [ref=f7e443] [cursor=pointer]
+                  - generic [ref=f7e444]:
+                    - paragraph [ref=f7e445]: Golden Leaf – Glitter Resin Phone Charm
+                    - generic [ref=f7e446]: "Qty: 1"
+              - cell "₹128.00" [ref=f7e448]
+              - cell "Delivered" [ref=f7e449]:
+                - combobox "Click to change Fulfilment Status" [ref=f7e450] [cursor=pointer]:
+                  - option "Pending Payment"
+                  - option "Confirmed"
+                  - option "Processing"
+                  - option "Ready to Ship"
+                  - option "Shipped"
+                  - option "Delivered" [selected]
+                  - option "Cancelled"
+              - cell [ref=f7e451]:
+                - button "paid (Toggle)" [ref=f7e452]
+              - cell [ref=f7e455]:
+                - generic [ref=f7e456]:
+                  - link "PDF" [ref=f7e457] [cursor=pointer]:
+                    - /url: /admin/orders/ord_1793289032835/receipt
+                  - button "View & Edit" [ref=f7e462]
+            - row [ref=f7e463]:
+              - cell "RA-20261021-2615 21 Oct" [ref=f7e464]:
+                - generic [ref=f7e465]: RA-20261021-2615
+                - text: 21 Oct
+              - cell "online" [ref=f7e466]
+              - cell [ref=f7e467]:
+                - paragraph [ref=f7e468]: Priya Sharma
+                - paragraph [ref=f7e469]: "9876543210"
+              - 'cell "Eternal Bloom Resin Keychain Qty: 2" [ref=f7e470]':
+                - generic [ref=f7e479]:
+                  - paragraph [ref=f7e480]: Eternal Bloom Resin Keychain
+                  - generic [ref=f7e481]: "Qty: 2"
+              - cell "₹589.72" [ref=f7e483]
+              - cell "Confirmed" [ref=f7e484]:
+                - combobox "Click to change Fulfilment Status" [ref=f7e485] [cursor=pointer]:
+                  - option "Pending Payment"
+                  - option "Confirmed" [selected]
+                  - option "Processing"
+                  - option "Ready to Ship"
+                  - option "Shipped"
+                  - option "Delivered"
+                  - option "Cancelled"
+              - cell [ref=f7e486]:
+                - button "paid (Toggle)" [ref=f7e487]
+              - cell [ref=f7e490]:
+                - generic [ref=f7e491]:
+                  - link "PDF" [ref=f7e492] [cursor=pointer]:
+                    - /url: /admin/orders/ord_1792607486604/receipt
+                  - button "View & Edit" [ref=f7e497]
+            - row [ref=f7e498]:
+              - cell "RA-20261021-5176 21 Oct" [ref=f7e499]:
+                - generic [ref=f7e500]: RA-20261021-5176
+                - text: 21 Oct
+              - cell "online" [ref=f7e501]
+              - cell [ref=f7e502]:
+                - paragraph [ref=f7e503]: Priya Sharma
+                - paragraph [ref=f7e504]: "9876543210"
+              - 'cell "Eternal Bloom Resin Keychain Qty: 2" [ref=f7e505]':
+                - generic [ref=f7e514]:
+                  - paragraph [ref=f7e515]: Eternal Bloom Resin Keychain
+                  - generic [ref=f7e516]: "Qty: 2"
+              - cell "₹717.40" [ref=f7e518]
+              - cell "Confirmed" [ref=f7e519]:
+                - combobox "Click to change Fulfilment Status" [ref=f7e520] [cursor=pointer]:
+                  - option "Pending Payment"
+                  - option "Confirmed" [selected]
+                  - option "Processing"
+                  - option "Ready to Ship"
+                  - option "Shipped"
+                  - option "Delivered"
+                  - option "Cancelled"
+              - cell [ref=f7e521]:
+                - button "pending_verification (Toggle)" [ref=f7e522]
+              - cell [ref=f7e525]:
+                - button "View & Edit" [ref=f7e527]
+            - row [ref=f7e528]:
+              - cell "RA-20261021-3641 21 Oct" [ref=f7e529]:
+                - generic [ref=f7e530]: RA-20261021-3641
+                - text: 21 Oct
+              - cell "online" [ref=f7e531]
+              - cell [ref=f7e532]:
+                - paragraph [ref=f7e533]: Shrikesh Shetty
+                - paragraph [ref=f7e534]: "7045332855"
+              - 'cell "Eternal Bloom Resin Keychain Qty: 2" [ref=f7e535]':
+                - generic [ref=f7e544]:
+                  - paragraph [ref=f7e545]: Eternal Bloom Resin Keychain
+                  - generic [ref=f7e546]: "Qty: 2"
+              - cell "₹775.00" [ref=f7e548]
+              - cell "Confirmed" [ref=f7e549]:
+                - combobox "Click to change Fulfilment Status" [ref=f7e550] [cursor=pointer]:
+                  - option "Pending Payment"
+                  - option "Confirmed" [selected]
+                  - option "Processing"
+                  - option "Ready to Ship"
+                  - option "Shipped"
+                  - option "Delivered"
+                  - option "Cancelled"
+              - cell [ref=f7e551]:
+                - button "paid (Toggle)" [ref=f7e552]
+              - cell [ref=f7e555]:
+                - generic [ref=f7e556]:
+                  - link "PDF" [ref=f7e557] [cursor=pointer]:
+                    - /url: /admin/orders/ord_1792551250391/receipt
+                  - button "View & Edit" [ref=f7e562]
+            - row [ref=f7e563]:
+              - cell "RA-20261011-1391 11 Oct" [ref=f7e564]:
+                - generic [ref=f7e565]: RA-20261011-1391
+                - text: 11 Oct
+              - cell "online" [ref=f7e566]
+              - cell [ref=f7e567]:
+                - paragraph [ref=f7e568]: Shrikesh Shetty
+                - paragraph [ref=f7e569]: "7045332855"
+              - 'cell "Bespoke Floral Monogram Resin Keychain Qty: 1" [ref=f7e570]':
+                - generic [ref=f7e579]:
+                  - paragraph [ref=f7e580]: Bespoke Floral Monogram Resin Keychain
+                  - generic [ref=f7e581]: "Qty: 1"
+              - cell "₹349.00" [ref=f7e583]
+              - cell "Confirmed" [ref=f7e584]:
+                - combobox "Click to change Fulfilment Status" [ref=f7e585] [cursor=pointer]:
+                  - option "Pending Payment"
+                  - option "Confirmed" [selected]
+                  - option "Processing"
+                  - option "Ready to Ship"
+                  - option "Shipped"
+                  - option "Delivered"
+                  - option "Cancelled"
+              - cell [ref=f7e586]:
+                - button "paid (Toggle)" [ref=f7e587]
+              - cell [ref=f7e590]:
+                - generic [ref=f7e591]:
+                  - link "PDF" [ref=f7e592] [cursor=pointer]:
+                    - /url: /admin/orders/ord_1791740931087/receipt
+                  - button "View & Edit" [ref=f7e597]
+            - row [ref=f7e598]:
+              - cell "RA-20261011-9951 11 Oct" [ref=f7e599]:
+                - generic [ref=f7e600]: RA-20261011-9951
+                - text: 11 Oct
+              - cell "online" [ref=f7e601]
+              - cell [ref=f7e602]:
+                - paragraph [ref=f7e603]: Shrikesh Shetty
+                - paragraph [ref=f7e604]: "7045332855"
+              - 'cell "Diwali Limited Edition Festive Diya Coasters Qty: 1" [ref=f7e605]':
+                - generic [ref=f7e614]:
+                  - paragraph [ref=f7e615]: Diwali Limited Edition Festive Diya Coasters
+                  - generic [ref=f7e616]: "Qty: 1"
+              - cell "₹1.00" [ref=f7e618]
+              - cell "Cancelled" [ref=f7e619]:
+                - combobox "Click to change Fulfilment Status" [ref=f7e620] [cursor=pointer]:
+                  - option "Pending Payment"
+                  - option "Confirmed"
+                  - option "Processing"
+                  - option "Ready to Ship"
+                  - option "Shipped"
+                  - option "Delivered"
+                  - option "Cancelled" [selected]
+              - cell [ref=f7e621]:
+                - button "unpaid (Toggle)" [ref=f7e622]
+              - cell [ref=f7e625]:
+                - button "View & Edit" [ref=f7e627]
+            - row [ref=f7e628]:
+              - cell "RA-20261011-6659 11 Oct" [ref=f7e629]:
+                - generic [ref=f7e630]: RA-20261011-6659
+                - text: 11 Oct
+              - cell "online" [ref=f7e631]
+              - cell [ref=f7e632]:
+                - paragraph [ref=f7e633]: Shrikesh Shetty
+                - paragraph [ref=f7e634]: "07045332855"
+              - 'cell "Aurora Borealis Ocean Coasters (Set of 4) Qty: 1 • Shape: Classic Square" [ref=f7e635]':
+                - generic [ref=f7e644]:
+                  - paragraph [ref=f7e645]: Aurora Borealis Ocean Coasters (Set of 4)
+                  - generic [ref=f7e646]:
+                    - generic [ref=f7e647]: "Qty: 1"
+                    - 'generic "Shape: Classic Square" [ref=f7e648]': "• Shape: Classic Square"
+              - cell "₹1099.00" [ref=f7e649]
+              - cell "Confirmed" [ref=f7e650]:
+                - combobox "Click to change Fulfilment Status" [ref=f7e651] [cursor=pointer]:
+                  - option "Pending Payment"
+                  - option "Confirmed" [selected]
+                  - option "Processing"
+                  - option "Ready to Ship"
+                  - option "Shipped"
+                  - option "Delivered"
+                  - option "Cancelled"
+              - cell [ref=f7e652]:
+                - button "unpaid (Toggle)" [ref=f7e653]
+              - cell [ref=f7e656]:
+                - button "View & Edit" [ref=f7e658]
+            - row [ref=f7e659]:
+              - cell "RA-20261010-2217 10 Oct" [ref=f7e660]:
+                - generic [ref=f7e661]: RA-20261010-2217
+                - text: 10 Oct
+              - cell "online" [ref=f7e662]
+              - cell [ref=f7e663]:
+                - paragraph [ref=f7e664]: Devangi Banshilal Barai
+                - paragraph [ref=f7e665]: "9967313355"
+              - 'cell "Aurora Borealis Ocean Coasters (Set of 4) Qty: 1 • Shape: Classic Square" [ref=f7e666]':
+                - generic [ref=f7e675]:
+                  - paragraph [ref=f7e676]: Aurora Borealis Ocean Coasters (Set of 4)
+                  - generic [ref=f7e677]:
+                    - generic [ref=f7e678]: "Qty: 1"
+                    - 'generic "Shape: Classic Square" [ref=f7e679]': "• Shape: Classic Square"
+              - cell "₹1099.00" [ref=f7e680]
+              - cell "Processing" [ref=f7e681]:
+                - combobox "Click to change Fulfilment Status" [ref=f7e682] [cursor=pointer]:
+                  - option "Pending Payment"
+                  - option "Confirmed"
+                  - option "Processing" [selected]
+                  - option "Ready to Ship"
+                  - option "Shipped"
+                  - option "Delivered"
+                  - option "Cancelled"
+              - cell [ref=f7e683]:
+                - button "pending_verification (Toggle)" [ref=f7e684]
+              - cell [ref=f7e687]:
+                - button "View & Edit" [ref=f7e689]
+  - button "Open Next.js Dev Tools" [ref=f7e172] [cursor=pointer]
+  - alert [ref=f7e690]

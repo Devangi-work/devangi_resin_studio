@@ -25,6 +25,7 @@ const updateOrderSchema = z.object({
     "failed",
     "cancelled",
   ]).optional(),
+  paymentScreenshotUrl: z.string().optional().nullable(),
   trackingNumber: z.string().optional(),
   courierName: z.string().optional(),
   internalNotes: z.string().optional(),
@@ -80,6 +81,7 @@ export async function PUT(
     const {
       orderStatus,
       paymentStatus,
+      paymentScreenshotUrl,
       trackingNumber,
       courierName,
       internalNotes,
@@ -119,6 +121,10 @@ export async function PUT(
 
     if (paymentStatus && paymentStatus !== order?.paymentStatus) {
       order = await dbStore.updateOrderPaymentStatus(id, paymentStatus);
+    }
+
+    if (paymentScreenshotUrl !== undefined) {
+      order = await dbStore.updateOrderPaymentScreenshot(id, paymentScreenshotUrl || "");
     }
 
     if (packingImages) {

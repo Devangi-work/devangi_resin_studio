@@ -80,6 +80,10 @@ export default function AdminOrdersPage() {
   const [uploadingPacking, setUploadingPacking] = useState(false);
   const [uploadingManualProductImg, setUploadingManualProductImg] = useState(false);
   const [uploadingManualPackingImg, setUploadingManualPackingImg] = useState(false);
+  const [uploadingManualReceipt, setUploadingManualReceipt] = useState(false);
+  const [uploadingAdminScreenshot, setUploadingAdminScreenshot] = useState(false);
+  const [adminScreenshotSuccess, setAdminScreenshotSuccess] = useState("");
+  const [viewingScreenshotModal, setViewingScreenshotModal] = useState<string | null>(null);
 
   const [offlineForm, setOfflineForm] = useState({
     customerName: "",
@@ -95,6 +99,8 @@ export default function AdminOrdersPage() {
     orderSource: "offline" as "offline" | "exhibition" | "instagram" | "custom",
     paymentMethod: "cash" as "cash" | "upi" | "card" | "bank_transfer",
     paymentStatus: "paid" as "paid" | "unpaid",
+    paymentScreenshotUrl: "",
+    upiTransactionId: "",
     orderStatus: "confirmed" as "confirmed" | "processing" | "ready_to_ship" | "delivered",
     items: [
       { productName: "Handmade Resin Ocean Coasters (Set of 4)", quantity: 1, unitPrice: 799 },
@@ -124,8 +130,8 @@ export default function AdminOrdersPage() {
     const unitPrice = req.quoteAmount
       ? Number(req.quoteAmount)
       : req.budget
-      ? Number(String(req.budget).replace(/[^0-9]/g, "")) || 1500
-      : 1500;
+        ? Number(String(req.budget).replace(/[^0-9]/g, "")) || 1500
+        : 1500;
     setOfflineForm({
       customerName: req.customerName || "",
       customerEmail: req.customerEmail || "",
@@ -140,6 +146,8 @@ export default function AdminOrdersPage() {
       orderSource: "custom",
       paymentMethod: "upi",
       paymentStatus: "unpaid",
+      paymentScreenshotUrl: "",
+      upiTransactionId: "",
       orderStatus: "confirmed",
       items: [
         {
@@ -268,7 +276,7 @@ export default function AdminOrdersPage() {
             setSelectedOrder((prev: any) => (prev ? { ...prev, ...data } : data));
           }
         })
-        .catch(() => {});
+        .catch(() => { });
     }
   };
 
@@ -401,6 +409,83 @@ export default function AdminOrdersPage() {
     }
   };
 
+  const handleUploadManualReceipt = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingManualReceipt(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
+      const data = await res.json();
+      if (data.url) {
+        setOfflineForm((prev) => ({
+          ...prev,
+          paymentScreenshotUrl: data.url,
+        }));
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setUploadingManualReceipt(false);
+      e.target.value = "";
+    }
+  };
+
+  const handleAdminScreenshotUpload = async (e: React.ChangeEvent<HTMLInputElement>, orderId: string) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      alert("Please upload a valid image file (JPEG, PNG, WebP).");
+      return;
+    }
+
+    setUploadingAdminScreenshot(true);
+    setAdminScreenshotSuccess("");
+
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+
+      const res = await fetch("/api/admin/upload", {
+        method: "POST",
+        body: fd,
+      });
+
+      const json = await res.json();
+      if (!res.ok || !json.url) {
+        throw new Error(json.error || "Failed to upload payment screenshot");
+      }
+
+      const uploadedUrl = json.url;
+
+      // Persist to order
+      const updateRes = await fetch(`/api/admin/orders/${orderId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ paymentScreenshotUrl: uploadedUrl }),
+      });
+
+      if (!updateRes.ok) {
+        throw new Error("Failed to save screenshot on order");
+      }
+
+      setSelectedOrder((prev: any) => (prev ? { ...prev, paymentScreenshotUrl: uploadedUrl } : null));
+      setOrders((prev) =>
+        prev.map((o) => (o.id === orderId ? { ...o, paymentScreenshotUrl: uploadedUrl } : o))
+      );
+      setAdminScreenshotSuccess("Payment screenshot updated successfully!");
+      setTimeout(() => setAdminScreenshotSuccess(""), 4000);
+    } catch (err: any) {
+      console.error("Admin screenshot upload error:", err);
+      alert(err.message || "Failed to upload payment screenshot");
+    } finally {
+      setUploadingAdminScreenshot(false);
+      e.target.value = "";
+    }
+  };
+
   // Quick Payment Status Toggle (paid <-> unpaid)
   const handleTogglePayment = async (ord: any, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -451,8 +536,8 @@ export default function AdminOrdersPage() {
     const finalAddressLine1 = editHasShipping
       ? (editAddressLine1.trim() || "Customer Delivery Address")
       : (editAddressLine1 && !editAddressLine1.toLowerCase().includes("pick-up") && !editAddressLine1.toLowerCase().includes("pickup") && !editAddressLine1.toLowerCase().includes("walk-in")
-          ? editAddressLine1
-          : "Studio Pick-up / Direct Handover");
+        ? editAddressLine1
+        : "Studio Pick-up / Direct Handover");
 
     try {
       const res = await fetch(`/api/admin/orders/${selectedOrder.id}`, {
@@ -582,10 +667,10 @@ export default function AdminOrdersPage() {
             prev.map((c) =>
               c.id === reqId
                 ? {
-                    ...c,
-                    status: "converted",
-                    adminNotes: `Converted to Order ${orderNum}`.trim(),
-                  }
+                  ...c,
+                  status: "converted",
+                  adminNotes: `Converted to Order ${orderNum}`.trim(),
+                }
                 : c
             )
           );
@@ -616,6 +701,8 @@ export default function AdminOrdersPage() {
         orderSource: "offline",
         paymentMethod: "cash",
         paymentStatus: "paid",
+        paymentScreenshotUrl: "",
+        upiTransactionId: "",
         orderStatus: "confirmed",
         items: [
           { productName: "Handmade Resin Ocean Coasters (Set of 4)", quantity: 1, unitPrice: 799 },
@@ -636,7 +723,7 @@ export default function AdminOrdersPage() {
 
   return (
     <div className="space-y-6">
-      
+
       {/* Top Header & Actions */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -674,11 +761,10 @@ export default function AdminOrdersPage() {
         <button
           type="button"
           onClick={() => setActiveTab("orders")}
-          className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center space-x-2 transition cursor-pointer ${
-            activeTab === "orders"
-              ? "bg-[#3A1823] text-white shadow-xs"
-              : "bg-white text-[#736C66] hover:bg-[#FAF8F5] border border-[#E8E0D5]"
-          }`}
+          className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center space-x-2 transition cursor-pointer ${activeTab === "orders"
+            ? "bg-[#3A1823] text-white shadow-xs"
+            : "bg-white text-[#736C66] hover:bg-[#FAF8F5] border border-[#E8E0D5]"
+            }`}
         >
           <ShoppingBag className="w-4 h-4" />
           <span>Orders Management ({orders.length})</span>
@@ -687,11 +773,10 @@ export default function AdminOrdersPage() {
         <button
           type="button"
           onClick={() => setActiveTab("custom_requests")}
-          className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center space-x-2 transition cursor-pointer relative ${
-            activeTab === "custom_requests"
-              ? "bg-[#3A1823] text-white shadow-xs"
-              : "bg-white text-[#736C66] hover:bg-[#FAF8F5] border border-[#E8E0D5]"
-          }`}
+          className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center space-x-2 transition cursor-pointer relative ${activeTab === "custom_requests"
+            ? "bg-[#3A1823] text-white shadow-xs"
+            : "bg-white text-[#736C66] hover:bg-[#FAF8F5] border border-[#E8E0D5]"
+            }`}
         >
           <Sparkles className="w-4 h-4 text-[#D4AF37]" />
           <span>Custom Studio Inquiries ({customRequests.length})</span>
@@ -707,277 +792,276 @@ export default function AdminOrdersPage() {
         <>
           {/* Filters Bar */}
           <div className="bg-white p-4 rounded-2xl border border-[#E8E0D5] shadow-sm flex flex-wrap items-center gap-3">
-        <div className="relative w-full sm:w-64">
-          <Search className="w-3.5 h-3.5 text-[#8C7A72] absolute left-3 top-3" />
-          <input
-            type="text"
-            placeholder="Search by order #, email, phone..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-8 pr-3 py-2 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
-          />
-        </div>
+            <div className="relative w-full sm:w-64">
+              <Search className="w-3.5 h-3.5 text-[#8C7A72] absolute left-3 top-3" />
+              <input
+                type="text"
+                placeholder="Search by order #, email, phone..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full pl-8 pr-3 py-2 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
+              />
+            </div>
 
-        <select
-          value={sourceFilter}
-          onChange={(e) => setSourceFilter(e.target.value)}
-          className="py-2 px-3 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl text-[#2C332D]"
-        >
-          <option value="all">All Sources (Online & Offline)</option>
-          <option value="online">Online Web Store</option>
-          <option value="offline">Offline / Exhibition / Instagram</option>
-        </select>
+            <select
+              value={sourceFilter}
+              onChange={(e) => setSourceFilter(e.target.value)}
+              className="py-2 px-3 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl text-[#2C332D]"
+            >
+              <option value="all">All Sources (Online & Offline)</option>
+              <option value="online">Online Web Store</option>
+              <option value="offline">Offline / Exhibition / Instagram</option>
+            </select>
 
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="py-2 px-3 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl text-[#2C332D]"
-        >
-          <option value="all">All Fulfilment Statuses</option>
-          <option value="pending_payment">Pending Payment</option>
-          <option value="confirmed">Confirmed</option>
-          <option value="processing">Processing (Curing)</option>
-          <option value="ready_to_ship">Ready to Ship</option>
-          <option value="shipped">Shipped</option>
-          <option value="delivered">Delivered</option>
-          <option value="cancelled">Cancelled</option>
-        </select>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="py-2 px-3 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl text-[#2C332D]"
+            >
+              <option value="all">All Fulfilment Statuses</option>
+              <option value="pending_payment">Pending Payment</option>
+              <option value="confirmed">Confirmed</option>
+              <option value="processing">Processing (Curing)</option>
+              <option value="ready_to_ship">Ready to Ship</option>
+              <option value="shipped">Shipped</option>
+              <option value="delivered">Delivered</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
 
-        <select
-          value={paymentFilter}
-          onChange={(e) => setPaymentFilter(e.target.value)}
-          className="py-2 px-3 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl text-[#2C332D]"
-        >
-          <option value="all">All Payment Statuses</option>
-          <option value="paid">Paid</option>
-          <option value="unpaid">Unpaid</option>
-          <option value="pending_verification">Pending Verification</option>
-          <option value="failed">Failed</option>
-        </select>
-      </div>
+            <select
+              value={paymentFilter}
+              onChange={(e) => setPaymentFilter(e.target.value)}
+              className="py-2 px-3 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl text-[#2C332D]"
+            >
+              <option value="all">All Payment Statuses</option>
+              <option value="paid">Paid</option>
+              <option value="unpaid">Unpaid</option>
+              <option value="pending_verification">Pending Verification</option>
+              <option value="failed">Failed</option>
+            </select>
+          </div>
 
-      {/* Orders Table */}
-      <div className="bg-white rounded-2xl border border-[#E8E0D5] shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-[#FAF8F5] text-[#736C66] border-b border-[#E8E0D5]">
-              <tr>
-                <th className="py-3 px-4 font-semibold">Order #</th>
-                <th className="py-3 px-4 font-semibold">Source</th>
-                <th className="py-3 px-4 font-semibold">Customer</th>
-                <th className="py-3 px-4 font-semibold">Products Ordered</th>
-                <th className="py-3 px-4 font-semibold">Total</th>
-                <th className="py-3 px-4 font-semibold">Fulfilment Status</th>
-                <th className="py-3 px-4 font-semibold">Payment Status (Click to Toggle)</th>
-                <th className="py-3 px-4 font-semibold text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#F4EBE6] text-[#2C332D]">
-              {loading ? (
-                <tr>
-                  <td colSpan={8} className="py-8 text-center text-[#736C66]">
-                    Loading orders...
-                  </td>
-                </tr>
-              ) : filteredOrders.length === 0 ? (
-                <tr>
-                  <td colSpan={8} className="py-8 text-center text-[#736C66]">
-                    No orders found.
-                  </td>
-                </tr>
-              ) : (
-                filteredOrders.map((o) => (
-                  <tr key={o.id} className="hover:bg-[#FAF8F5] transition-colors">
-                    <td className="py-3 px-4 font-mono font-bold text-[#2C332D]">
-                      <div>{o.orderNumber}</div>
-                      <span className="text-[10px] font-normal text-[#8C7A72]">
-                        {new Date(o.createdAt).toLocaleDateString("en-IN", {
-                          day: "numeric",
-                          month: "short",
-                        })}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4">
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider ${
-                        o.orderSource && o.orderSource !== "online"
-                          ? "bg-[#FAF4EC] text-[#B8972E] border border-[#E8E0D5]"
-                          : "bg-[#F0F4F8] text-[#334E68]"
-                      }`}>
-                        {o.orderSource || "online"}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4">
-                      <p className="font-semibold">{o.customerName}</p>
-                      <p className="text-[10px] text-[#736C66]">{o.customerPhone || o.customerEmail}</p>
-                    </td>
+          {/* Orders Table */}
+          <div className="bg-white rounded-2xl border border-[#E8E0D5] shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-[#FAF8F5] text-[#736C66] border-b border-[#E8E0D5]">
+                  <tr>
+                    <th className="py-3 px-4 font-semibold">Order #</th>
+                    <th className="py-3 px-4 font-semibold">Source</th>
+                    <th className="py-3 px-4 font-semibold">Customer</th>
+                    <th className="py-3 px-4 font-semibold">Products Ordered</th>
+                    <th className="py-3 px-4 font-semibold">Total</th>
+                    <th className="py-3 px-4 font-semibold">Fulfilment Status</th>
+                    <th className="py-3 px-4 font-semibold">Payment Status (Click to Toggle)</th>
+                    <th className="py-3 px-4 font-semibold text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#F4EBE6] text-[#2C332D]">
+                  {loading ? (
+                    <tr>
+                      <td colSpan={8} className="py-8 text-center text-[#736C66]">
+                        Loading orders...
+                      </td>
+                    </tr>
+                  ) : filteredOrders.length === 0 ? (
+                    <tr>
+                      <td colSpan={8} className="py-8 text-center text-[#736C66]">
+                        No orders found.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredOrders.map((o) => (
+                      <tr key={o.id} className="hover:bg-[#FAF8F5] transition-colors">
+                        <td className="py-3 px-4 font-mono font-bold text-[#2C332D]">
+                          <div>{o.orderNumber}</div>
+                          <span className="text-[10px] font-normal text-[#8C7A72]">
+                            {new Date(o.createdAt).toLocaleDateString("en-IN", {
+                              day: "numeric",
+                              month: "short",
+                            })}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider ${o.orderSource && o.orderSource !== "online"
+                            ? "bg-[#FAF4EC] text-[#B8972E] border border-[#E8E0D5]"
+                            : "bg-[#F0F4F8] text-[#334E68]"
+                            }`}>
+                            {o.orderSource || "online"}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4">
+                          <p className="font-semibold">{o.customerName}</p>
+                          <p className="text-[10px] text-[#736C66]">{o.customerPhone || o.customerEmail}</p>
+                        </td>
 
-                    {/* Products Ordered with Image */}
-                    <td className="py-3 px-4 min-w-[210px] max-w-[280px]">
-                      {o.items && o.items.length > 0 ? (
-                        <div className="space-y-2">
-                          {o.items.map((it: any, idx: number) => {
-                            const itemImg = it.productImage || it.referenceImageUrl || o.productImages?.[0] || null;
-                            return (
-                              <div key={idx} className="flex items-center gap-2.5 group">
-                                <div className="relative w-11 h-11 rounded-lg overflow-hidden border border-[#E8E0D5] bg-[#FAF4EC] shrink-0 shadow-2xs">
-                                  {itemImg ? (
-                                    <img
-                                      src={itemImg}
-                                      alt={it.productName}
-                                      className="w-full h-full object-cover group-hover:scale-110 transition cursor-pointer"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        window.open(itemImg, "_blank");
-                                      }}
-                                      title="Click to view photo full-screen"
-                                    />
-                                  ) : (
-                                    <div className="w-full h-full flex items-center justify-center text-[#B8972E]">
-                                      <Package className="w-5 h-5" />
+                        {/* Products Ordered with Image */}
+                        <td className="py-3 px-4 min-w-[210px] max-w-[280px]">
+                          {o.items && o.items.length > 0 ? (
+                            <div className="space-y-2">
+                              {o.items.map((it: any, idx: number) => {
+                                const itemImg = it.productImage || it.referenceImageUrl || o.productImages?.[0] || null;
+                                return (
+                                  <div key={idx} className="flex items-center gap-2.5 group">
+                                    <div className="relative w-11 h-11 rounded-lg overflow-hidden border border-[#E8E0D5] bg-[#FAF4EC] shrink-0 shadow-2xs">
+                                      {itemImg ? (
+                                        <img
+                                          src={itemImg}
+                                          alt={it.productName}
+                                          className="w-full h-full object-cover group-hover:scale-110 transition cursor-pointer"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            window.open(itemImg, "_blank");
+                                          }}
+                                          title="Click to view photo full-screen"
+                                        />
+                                      ) : (
+                                        <div className="w-full h-full flex items-center justify-center text-[#B8972E]">
+                                          <Package className="w-5 h-5" />
+                                        </div>
+                                      )}
                                     </div>
-                                  )}
-                                </div>
-                                <div className="min-w-0 flex-1 leading-snug">
-                                  <p
-                                    className="font-bold text-xs text-[#2C332D] truncate group-hover:text-[#800020] transition-colors"
-                                    title={it.productName}
-                                  >
-                                    {it.productName}
-                                  </p>
-                                  <div className="flex items-center gap-1.5 text-[10px] text-[#736C66] mt-0.5">
-                                    <span className="font-semibold text-[#800020] bg-[#FAF0F3] px-1.5 py-0.5 rounded">
-                                      Qty: {it.quantity}
-                                    </span>
-                                    {it.variantName && (
-                                      <span className="truncate text-[#736C66]" title={it.variantName}>
-                                        • {it.variantName}
-                                      </span>
-                                    )}
+                                    <div className="min-w-0 flex-1 leading-snug">
+                                      <p
+                                        className="font-bold text-xs text-[#2C332D] truncate group-hover:text-[#800020] transition-colors"
+                                        title={it.productName}
+                                      >
+                                        {it.productName}
+                                      </p>
+                                      <div className="flex items-center gap-1.5 text-[10px] text-[#736C66] mt-0.5">
+                                        <span className="font-semibold text-[#800020] bg-[#FAF0F3] px-1.5 py-0.5 rounded">
+                                          Qty: {it.quantity}
+                                        </span>
+                                        {it.variantName && (
+                                          <span className="truncate text-[#736C66]" title={it.variantName}>
+                                            • {it.variantName}
+                                          </span>
+                                        )}
+                                      </div>
+                                      {it.personalizationDetails?.customName && (
+                                        <span className="text-[10px] text-[#B8972E] font-medium block truncate mt-0.5">
+                                          Custom: &ldquo;{it.personalizationDetails.customName}&rdquo;
+                                        </span>
+                                      )}
+                                    </div>
                                   </div>
-                                  {it.personalizationDetails?.customName && (
-                                    <span className="text-[10px] text-[#B8972E] font-medium block truncate mt-0.5">
-                                      Custom: &ldquo;{it.personalizationDetails.customName}&rdquo;
-                                    </span>
-                                  )}
-                                </div>
+                                );
+                              })}
+                            </div>
+                          ) : o.productImages && o.productImages.length > 0 ? (
+                            <div className="flex items-center gap-2.5 group">
+                              <div className="w-11 h-11 rounded-lg overflow-hidden border border-[#E8E0D5] bg-[#FAF4EC] shrink-0 shadow-2xs">
+                                <img
+                                  src={o.productImages[0]}
+                                  alt="Piece photo"
+                                  className="w-full h-full object-cover group-hover:scale-110 transition cursor-pointer"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    window.open(o.productImages[0], "_blank");
+                                  }}
+                                  title="Click to view piece photo"
+                                />
                               </div>
-                            );
-                          })}
-                        </div>
-                      ) : o.productImages && o.productImages.length > 0 ? (
-                        <div className="flex items-center gap-2.5 group">
-                          <div className="w-11 h-11 rounded-lg overflow-hidden border border-[#E8E0D5] bg-[#FAF4EC] shrink-0 shadow-2xs">
-                            <img
-                              src={o.productImages[0]}
-                              alt="Piece photo"
-                              className="w-full h-full object-cover group-hover:scale-110 transition cursor-pointer"
+                              <div>
+                                <p className="font-semibold text-xs text-[#2C332D]">Custom Finished Piece</p>
+                                <span className="text-[10px] text-[#8C7A72] block">
+                                  {o.productImages.length} photo(s) attached
+                                </span>
+                              </div>
+                            </div>
+                          ) : (
+                            <span className="text-[#8C7A72] italic text-[11px]">Bespoke Order</span>
+                          )}
+                        </td>
+
+                        <td className="py-3 px-4 font-bold">₹{o.totalAmount}</td>
+                        <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
+                          {/* Interactive Fulfilment Status Selector for Admin */}
+                          <select
+                            value={o.orderStatus}
+                            onChange={(e) => handleUpdateOrderStatus(o, e.target.value, e)}
+                            title="Click to change Fulfilment Status"
+                            className={`capitalize px-2.5 py-1 rounded-full text-[10px] font-bold border transition-colors cursor-pointer focus:outline-none shadow-xs ${o.orderStatus === "delivered"
+                              ? "bg-[#E8EFE8] text-[#2E7D32] border-[#C5D8C5]"
+                              : o.orderStatus === "shipped"
+                                ? "bg-[#EBF3FA] text-[#1E5B94] border-[#BDD7EE]"
+                                : o.orderStatus === "ready_to_ship"
+                                  ? "bg-[#F3E8FF] text-[#6B21A8] border-[#E9D5FF]"
+                                  : o.orderStatus === "processing"
+                                    ? "bg-[#FFF8E6] text-[#B8860B] border-[#FDE047]"
+                                    : o.orderStatus === "cancelled"
+                                      ? "bg-[#FDF2F2] text-[#DF4C4C] border-[#FADBD8]"
+                                      : "bg-[#FAF4EC] text-[#B8972E] border-[#E8E0D5]"
+                              }`}
+                          >
+                            <option value="pending_payment">Pending Payment</option>
+                            <option value="confirmed">Confirmed</option>
+                            <option value="processing">Processing</option>
+                            <option value="ready_to_ship">Ready to Ship</option>
+                            <option value="shipped">Shipped</option>
+                            <option value="delivered">Delivered</option>
+                            <option value="cancelled">Cancelled</option>
+                          </select>
+                        </td>
+                        <td className="py-3 px-4">
+                          {/* Interactive Toggle for Admin */}
+                          <button
+                            type="button"
+                            onClick={(e) => handleTogglePayment(o, e)}
+                            title="Click to toggle Paid / Unpaid"
+                            className={`capitalize px-2.5 py-1 rounded-full text-[10px] font-bold transition-all border flex items-center gap-1 ${o.paymentStatus === "paid"
+                              ? "bg-[#E8EFE8] text-[#2E7D32] border-[#C5D8C5] hover:bg-[#D5E5D5]"
+                              : "bg-[#FDF2F2] text-[#DF4C4C] border-[#FADBD8] hover:bg-[#FBE5E5]"
+                              }`}
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                            <span>{o.paymentStatus} (Toggle)</span>
+                          </button>
+                          {o.paymentScreenshotUrl && (
+                            <button
+                              type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                window.open(o.productImages[0], "_blank");
+                                setViewingScreenshotModal(o.paymentScreenshotUrl);
                               }}
-                              title="Click to view piece photo"
-                            />
+                              title="View Payment Screenshot Proof"
+                              className="mt-1 inline-flex items-center gap-1 text-[9.5px] font-bold text-[#2E7D32] bg-[#E8EFE8] px-2 py-0.5 rounded-full border border-[#C5D8C5] hover:bg-[#D5E5D5] cursor-pointer"
+                            >
+                              <Camera className="w-2.5 h-2.5" />
+                              <span>Receipt Attached</span>
+                            </button>
+                          )}
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          <div className="flex items-center justify-end space-x-1.5">
+                            {o.paymentStatus === "paid" && (
+                              <a
+                                href={`/admin/orders/${o.id}/receipt`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                title="Generate Payment Receipt (PDF)"
+                                className="p-1.5 bg-[#FAF0F3] hover:bg-[#F3E0E6] text-[#800020] border border-[#800020]/20 rounded-lg transition shadow-xs flex items-center gap-1"
+                              >
+                                <FileText className="w-3.5 h-3.5" />
+                                <span className="text-[10px] font-bold">PDF</span>
+                              </a>
+                            )}
+                            <button
+                              onClick={() => openOrderModal(o)}
+                              className="px-3 py-1 bg-white border border-[#E8E0D5] text-[#2C332D] text-xs font-semibold rounded-lg hover:bg-[#FAF8F5] shadow-xs"
+                            >
+                              View & Edit
+                            </button>
                           </div>
-                          <div>
-                            <p className="font-semibold text-xs text-[#2C332D]">Custom Finished Piece</p>
-                            <span className="text-[10px] text-[#8C7A72] block">
-                              {o.productImages.length} photo(s) attached
-                            </span>
-                          </div>
-                        </div>
-                      ) : (
-                        <span className="text-[#8C7A72] italic text-[11px]">Bespoke Order</span>
-                      )}
-                    </td>
-
-                    <td className="py-3 px-4 font-bold">₹{o.totalAmount}</td>
-                    <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
-                      {/* Interactive Fulfilment Status Selector for Admin */}
-                      <select
-                        value={o.orderStatus}
-                        onChange={(e) => handleUpdateOrderStatus(o, e.target.value, e)}
-                        title="Click to change Fulfilment Status"
-                        className={`capitalize px-2.5 py-1 rounded-full text-[10px] font-bold border transition-colors cursor-pointer focus:outline-none shadow-xs ${
-                          o.orderStatus === "delivered"
-                            ? "bg-[#E8EFE8] text-[#2E7D32] border-[#C5D8C5]"
-                            : o.orderStatus === "shipped"
-                            ? "bg-[#EBF3FA] text-[#1E5B94] border-[#BDD7EE]"
-                            : o.orderStatus === "ready_to_ship"
-                            ? "bg-[#F3E8FF] text-[#6B21A8] border-[#E9D5FF]"
-                            : o.orderStatus === "processing"
-                            ? "bg-[#FFF8E6] text-[#B8860B] border-[#FDE047]"
-                            : o.orderStatus === "cancelled"
-                            ? "bg-[#FDF2F2] text-[#DF4C4C] border-[#FADBD8]"
-                            : "bg-[#FAF4EC] text-[#B8972E] border-[#E8E0D5]"
-                        }`}
-                      >
-                        <option value="pending_payment">Pending Payment</option>
-                        <option value="confirmed">Confirmed</option>
-                        <option value="processing">Processing</option>
-                        <option value="ready_to_ship">Ready to Ship</option>
-                        <option value="shipped">Shipped</option>
-                        <option value="delivered">Delivered</option>
-                        <option value="cancelled">Cancelled</option>
-                      </select>
-                    </td>
-                    <td className="py-3 px-4">
-                      {/* Interactive Toggle for Admin */}
-                      <button
-                        type="button"
-                        onClick={(e) => handleTogglePayment(o, e)}
-                        title="Click to toggle Paid / Unpaid"
-                        className={`capitalize px-2.5 py-1 rounded-full text-[10px] font-bold transition-all border flex items-center gap-1 ${
-                          o.paymentStatus === "paid"
-                            ? "bg-[#E8EFE8] text-[#2E7D32] border-[#C5D8C5] hover:bg-[#D5E5D5]"
-                            : "bg-[#FDF2F2] text-[#DF4C4C] border-[#FADBD8] hover:bg-[#FBE5E5]"
-                        }`}
-                      >
-                        <span className="w-1.5 h-1.5 rounded-full bg-current" />
-                        <span>{o.paymentStatus} (Toggle)</span>
-                      </button>
-                      {o.paymentScreenshotUrl && (
-                        <a
-                          href={o.paymentScreenshotUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          title="View Payment Screenshot"
-                          className="mt-1 inline-flex items-center gap-1 text-[9.5px] font-bold text-[#2E7D32] bg-[#E8EFE8] px-2 py-0.5 rounded-full border border-[#C5D8C5] hover:bg-[#D5E5D5]"
-                        >
-                          <Camera className="w-2.5 h-2.5" />
-                          <span>Receipt Attached</span>
-                        </a>
-                      )}
-                    </td>
-                    <td className="py-3 px-4 text-right">
-                      <div className="flex items-center justify-end space-x-1.5">
-                        {o.paymentStatus === "paid" && (
-                          <a
-                            href={`/admin/orders/${o.id}/receipt`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={(e) => e.stopPropagation()}
-                            title="Generate Payment Receipt (PDF)"
-                            className="p-1.5 bg-[#FAF0F3] hover:bg-[#F3E0E6] text-[#800020] border border-[#800020]/20 rounded-lg transition shadow-xs flex items-center gap-1"
-                          >
-                            <FileText className="w-3.5 h-3.5" />
-                            <span className="text-[10px] font-bold">PDF</span>
-                          </a>
-                        )}
-                        <button
-                          onClick={() => openOrderModal(o)}
-                          className="px-3 py-1 bg-white border border-[#E8E0D5] text-[#2C332D] text-xs font-semibold rounded-lg hover:bg-[#FAF8F5] shadow-xs"
-                        >
-                          View & Edit
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </>
       ) : (
         /* Custom Studio Inquiries View */
@@ -1072,17 +1156,16 @@ export default function AdminOrdersPage() {
                       <div className="flex items-center justify-between text-xs border-b border-[#F4EBE6] pb-3">
                         <div className="flex items-center gap-2">
                           <span
-                            className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                              req.status === "new"
-                                ? "bg-[#FAF0F3] text-[#800020] border border-[#800020]/30"
-                                : req.status === "accepted" || req.status === "converted" || req.status === "converted_to_order"
+                            className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${req.status === "new"
+                              ? "bg-[#FAF0F3] text-[#800020] border border-[#800020]/30"
+                              : req.status === "accepted" || req.status === "converted" || req.status === "converted_to_order"
                                 ? "bg-[#E8EFE8] text-[#2E7D32] border border-[#C5D8C5]"
                                 : req.status === "quoted"
-                                ? "bg-[#EBF3FA] text-[#1E5B94] border border-[#BDD7EE]"
-                                : req.status === "in_review"
-                                ? "bg-[#FFF8E6] text-[#B8860B] border border-[#FDE047]"
-                                : "bg-[#FAF8F5] text-[#736C66] border border-[#E8E0D5]"
-                            }`}
+                                  ? "bg-[#EBF3FA] text-[#1E5B94] border border-[#BDD7EE]"
+                                  : req.status === "in_review"
+                                    ? "bg-[#FFF8E6] text-[#B8860B] border border-[#FDE047]"
+                                    : "bg-[#FAF8F5] text-[#736C66] border border-[#E8E0D5]"
+                              }`}
                           >
                             {req.status === "converted" || req.status === "converted_to_order"
                               ? "✓ Converted to Order"
@@ -1351,6 +1434,59 @@ export default function AdminOrdersPage() {
                     <option value="unpaid">Unpaid</option>
                   </select>
                 </div>
+
+                <div className="sm:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                  <div>
+                    <label className="font-semibold text-[#2C332D] block mb-1">
+                      Payment Screenshot / Receipt (Optional)
+                    </label>
+                    {offlineForm.paymentScreenshotUrl ? (
+                      <div className="flex items-center space-x-2 bg-[#FAF8F5] p-2 rounded-xl border border-[#E8E0D5]">
+                        <img
+                          src={offlineForm.paymentScreenshotUrl}
+                          alt="Receipt Preview"
+                          className="w-10 h-10 object-cover rounded-lg border border-[#E8E0D5]"
+                        />
+                        <span className="text-[11px] text-[#2E7D32] font-semibold flex-1 truncate">
+                          Receipt attached
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setOfflineForm((prev) => ({ ...prev, paymentScreenshotUrl: "" }))}
+                          className="p-1 text-[#DF4C4C] hover:bg-[#FDF2F2] rounded"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ) : (
+                      <label className="w-full px-3 py-2 bg-[#FAF8F5] hover:bg-[#FAF4EC] border border-[#E8E0D5] rounded-xl flex items-center justify-between cursor-pointer transition">
+                        <span className="text-[11px] text-[#736C66]">
+                          {uploadingManualReceipt ? "Uploading receipt..." : "Tap to attach receipt image"}
+                        </span>
+                        <Camera className="w-4 h-4 text-[#B8972E]" />
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          disabled={uploadingManualReceipt}
+                          onChange={handleUploadManualReceipt}
+                        />
+                      </label>
+                    )}
+                  </div>
+                  <div>
+                    <label className="font-semibold text-[#2C332D] block mb-1">
+                      UPI Ref / UTR / Transaction ID (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. 428901234567"
+                      value={offlineForm.upiTransactionId}
+                      onChange={(e) => setOfflineForm({ ...offlineForm, upiTransactionId: e.target.value })}
+                      className="w-full px-3 py-2 bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl text-xs font-mono"
+                    />
+                  </div>
+                </div>
               </div>
 
               {/* Items Section */}
@@ -1510,11 +1646,10 @@ export default function AdminOrdersPage() {
                     <button
                       type="button"
                       onClick={() => setOfflineForm({ ...offlineForm, hasShipping: false, shippingCharge: 0 })}
-                      className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                        !offlineForm.hasShipping
-                          ? "bg-white text-[#2C332D] shadow-xs border border-[#E8E0D5]"
-                          : "text-[#736C66] hover:text-[#2C332D]"
-                      }`}
+                      className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${!offlineForm.hasShipping
+                        ? "bg-white text-[#2C332D] shadow-xs border border-[#E8E0D5]"
+                        : "text-[#736C66] hover:text-[#2C332D]"
+                        }`}
                     >
                       No (Pickup)
                     </button>
@@ -1527,11 +1662,10 @@ export default function AdminOrdersPage() {
                           shippingCharge: offlineForm.shippingCharge || 79,
                         })
                       }
-                      className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                        offlineForm.hasShipping
-                          ? "bg-[#800020] text-white shadow-xs"
-                          : "text-[#736C66] hover:text-[#2C332D]"
-                      }`}
+                      className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${offlineForm.hasShipping
+                        ? "bg-[#800020] text-white shadow-xs"
+                        : "text-[#736C66] hover:text-[#2C332D]"
+                        }`}
                     >
                       Yes (Shipping)
                     </button>
@@ -1695,7 +1829,7 @@ export default function AdminOrdersPage() {
       {selectedOrder && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 space-y-6 border border-[#E8E0D5] shadow-2xl max-h-[90vh] overflow-y-auto">
-            
+
             <div className="flex items-center justify-between border-b border-[#F4EBE6] pb-4">
               <div>
                 <span className="text-xs uppercase font-bold text-[#8C7A72]">
@@ -1894,11 +2028,10 @@ export default function AdminOrdersPage() {
                   <CheckCircle2 className="w-4 h-4 text-[#B8972E]" />
                   <span>Payment &amp; Screenshot Verification</span>
                 </span>
-                <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase ${
-                  selectedOrder.paymentStatus === "paid"
-                    ? "bg-[#E8EFE8] text-[#2E7D32]"
-                    : "bg-[#FDF2F2] text-[#DF4C4C]"
-                }`}>
+                <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase ${selectedOrder.paymentStatus === "paid"
+                  ? "bg-[#E8EFE8] text-[#2E7D32]"
+                  : "bg-[#FDF2F2] text-[#DF4C4C]"
+                  }`}>
                   {selectedOrder.paymentStatus}
                 </span>
               </div>
@@ -1917,44 +2050,77 @@ export default function AdminOrdersPage() {
                 </div>
 
                 <div>
-                  <span className="text-[10px] uppercase font-bold text-[#8C7A72] block mb-1">
-                    Payment Receipt Screenshot:
-                  </span>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[10px] uppercase font-bold text-[#8C7A72] block">
+                      Payment Receipt Screenshot:
+                    </span>
+                    <label className="text-[11px] font-bold text-[#800020] hover:text-[#B84A67] cursor-pointer inline-flex items-center gap-1 transition-colors">
+                      <Camera className="w-3 h-3 text-[#B8972E]" />
+                      <span>{uploadingAdminScreenshot ? "Uploading..." : selectedOrder.paymentScreenshotUrl ? "Replace Screenshot" : "Upload Screenshot"}</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        disabled={uploadingAdminScreenshot}
+                        onChange={(e) => handleAdminScreenshotUpload(e, selectedOrder.id)}
+                      />
+                    </label>
+                  </div>
+
+                  {adminScreenshotSuccess && (
+                    <div className="mb-2 p-1.5 bg-[#E8EFE8] border border-[#C5D8C5] rounded-lg text-[11px] text-[#2E7D32] font-semibold flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3" />
+                      <span>{adminScreenshotSuccess}</span>
+                    </div>
+                  )}
+
                   {selectedOrder.paymentScreenshotUrl ? (
-                    <div className="flex items-center space-x-3 bg-white p-2 rounded-xl border border-[#E8E0D5]">
-                      <a
-                        href={selectedOrder.paymentScreenshotUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="group relative block w-14 h-14 rounded-lg overflow-hidden border border-[#E8E0D5] shrink-0"
+                    <div className="flex items-center space-x-3 bg-white p-2.5 rounded-xl border border-[#E8E0D5]">
+                      <button
+                        type="button"
+                        onClick={() => setViewingScreenshotModal(selectedOrder.paymentScreenshotUrl)}
+                        className="group relative block w-14 h-14 rounded-lg overflow-hidden border border-[#E8E0D5] shrink-0 cursor-pointer"
+                        title="Click to view full image"
                       >
                         <img
                           src={selectedOrder.paymentScreenshotUrl}
-                          alt="Customer Payment Receipt"
+                          alt="Payment Receipt"
                           className="w-full h-full object-cover group-hover:scale-105 transition"
                         />
-                        <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition">
-                          <ExternalLink className="w-4 h-4 text-white" />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition">
+                          <Eye className="w-4 h-4 text-white" />
                         </div>
-                      </a>
+                      </button>
                       <div className="flex-1 min-w-0">
-                        <a
-                          href={selectedOrder.paymentScreenshotUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-xs font-bold text-[#2E7D32] hover:underline flex items-center gap-1"
+                        <button
+                          type="button"
+                          onClick={() => setViewingScreenshotModal(selectedOrder.paymentScreenshotUrl)}
+                          className="text-xs font-bold text-[#2E7D32] hover:underline flex items-center gap-1 cursor-pointer"
                         >
-                          <span>Open Screenshot</span>
-                          <ExternalLink className="w-3 h-3" />
-                        </a>
+                          <Eye className="w-3.5 h-3.5" />
+                          <span>View Receipt Screenshot</span>
+                        </button>
                         <p className="text-[10px] text-[#8C7A72] mt-0.5">
-                          Tap thumbnail to view full image in high resolution
+                          Tap thumbnail to inspect payment proof in full resolution
                         </p>
                       </div>
                     </div>
                   ) : (
-                    <div className="bg-white p-3 rounded-xl border border-[#E8E0D5] text-xs text-[#8C7A72] italic">
-                      No screenshot uploaded by customer.
+                    <div className="bg-white p-3 rounded-xl border border-[#E8E0D5] flex items-center justify-between text-xs">
+                      <span className="text-[#8C7A72] italic">
+                        No screenshot attached yet.
+                      </span>
+                      <label className="text-xs font-bold text-[#800020] bg-[#FAF0F3] hover:bg-[#F3E0E6] px-2.5 py-1 rounded-lg border border-[#800020]/20 cursor-pointer inline-flex items-center gap-1">
+                        <Camera className="w-3.5 h-3.5 text-[#B84A67]" />
+                        <span>Upload Screenshot</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          disabled={uploadingAdminScreenshot}
+                          onChange={(e) => handleAdminScreenshotUpload(e, selectedOrder.id)}
+                        />
+                      </label>
                     </div>
                   )}
                 </div>
@@ -2055,11 +2221,10 @@ export default function AdminOrdersPage() {
                         setEditHasShipping(false);
                         setEditShippingCharge(0);
                       }}
-                      className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                        !editHasShipping
-                          ? "bg-white text-[#2C332D] shadow-xs border border-[#E8E0D5]"
-                          : "text-[#736C66] hover:text-[#2C332D]"
-                      }`}
+                      className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${!editHasShipping
+                        ? "bg-white text-[#2C332D] shadow-xs border border-[#E8E0D5]"
+                        : "text-[#736C66] hover:text-[#2C332D]"
+                        }`}
                     >
                       No (Pickup)
                     </button>
@@ -2069,11 +2234,10 @@ export default function AdminOrdersPage() {
                         setEditHasShipping(true);
                         if (!editShippingCharge) setEditShippingCharge(79);
                       }}
-                      className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                        editHasShipping
-                          ? "bg-[#800020] text-white shadow-xs"
-                          : "text-[#736C66] hover:text-[#2C332D]"
-                      }`}
+                      className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${editHasShipping
+                        ? "bg-[#800020] text-white shadow-xs"
+                        : "text-[#736C66] hover:text-[#2C332D]"
+                        }`}
                     >
                       Yes (Shipping)
                     </button>
@@ -2402,6 +2566,55 @@ export default function AdminOrdersPage() {
                   Close
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* High-Resolution Screenshot Lightbox Modal */}
+      {viewingScreenshotModal && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200"
+          onClick={() => setViewingScreenshotModal(null)}
+        >
+          <div
+            className="relative bg-white rounded-3xl max-w-3xl w-full max-h-[90vh] overflow-hidden p-5 sm:p-6 space-y-4 border border-[#E8E0D5] shadow-2xl flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-[#E8E0D5] pb-3">
+              <div className="flex items-center space-x-2">
+                <Camera className="w-4 h-4 text-[#B8972E]" />
+                <h3 className="font-serif text-lg font-bold text-[#2C332D]">
+                  Payment Receipt Proof
+                </h3>
+              </div>
+              <div className="flex items-center space-x-2">
+                <a
+                  href={viewingScreenshotModal}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-1.5 bg-[#FAF8F5] hover:bg-[#FAF0F3] text-[#3A1823] border border-[#E8E0D5] rounded-xl text-xs font-semibold flex items-center gap-1.5 transition"
+                >
+                  <span>Open Full Size</span>
+                  <ExternalLink className="w-3.5 h-3.5 text-[#B84A67]" />
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setViewingScreenshotModal(null)}
+                  className="p-1.5 text-[#736C66] hover:text-[#2C332D] rounded-full hover:bg-[#FAF8F5] transition"
+                  aria-label="Close"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-auto flex items-center justify-center bg-[#FAF8F5] rounded-2xl p-3 min-h-[300px]">
+              <img
+                src={viewingScreenshotModal}
+                alt="Payment Receipt Screenshot"
+                className="max-w-full max-h-[70vh] object-contain rounded-xl shadow-md border border-[#E8E0D5]"
+              />
             </div>
           </div>
         </div>

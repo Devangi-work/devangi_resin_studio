@@ -1,0 +1,57 @@
+- generic [active] [ref=f6e1]:
+  - generic [ref=f6e2]:
+    - complementary [ref=f6e41]:
+      - generic [ref=f6e42]:
+        - link "Devangi Resin Studio Logo DEVANGI RESIN STUDIO View Live Store" [ref=f6e44] [cursor=pointer]:
+          - /url: /
+          - img "Devangi Resin Studio Logo" [ref=f6e45]
+          - generic [ref=f6e46]:
+            - generic [ref=f6e47]: DEVANGI RESIN STUDIO
+            - generic [ref=f6e48]: View Live Store
+        - navigation [ref=f6e54]:
+          - link "Dashboard" [ref=f6e55] [cursor=pointer]:
+            - /url: /admin/dashboard
+          - link "Products" [ref=f6e62] [cursor=pointer]:
+            - /url: /admin/products
+          - link "Categories" [ref=f6e68] [cursor=pointer]:
+            - /url: /admin/categories
+          - link "Orders" [ref=f6e75] [cursor=pointer]:
+            - /url: /admin/orders
+          - link "Reviews" [ref=f6e80] [cursor=pointer]:
+            - /url: /admin/reviews
+          - link "Custom Studio" [ref=f6e84] [cursor=pointer]:
+            - /url: /admin/custom-requests
+          - link "Inventory" [ref=f6e88] [cursor=pointer]:
+            - /url: /admin/inventory
+          - link "Coupons" [ref=f6e100] [cursor=pointer]:
+            - /url: /admin/coupons
+          - link "Customers" [ref=f6e105] [cursor=pointer]:
+            - /url: /admin/customers
+          - link "Media Library" [ref=f6e112] [cursor=pointer]:
+            - /url: /admin/media
+          - link "Store Settings" [ref=f6e118] [cursor=pointer]:
+            - /url: /admin/settings
+      - generic [ref=f6e123]:
+        - 'button "Theme: dark Mode Switch" [ref=f6e124]':
+          - generic [ref=f6e125]:
+            - generic [ref=f6e128]: "Theme:"
+            - generic [ref=f6e129]: dark Mode
+          - generic [ref=f6e130]: Switch
+        - generic "Click to manage admin profile & avatar" [ref=f6e131] [cursor=pointer]:
+          - generic [ref=f6e132]: A
+          - generic [ref=f6e139]:
+            - paragraph [ref=f6e141]: Administrator
+            - paragraph [ref=f6e142]: admin
+            - paragraph [ref=f6e143]:
+              - generic [ref=f6e144]: Change Photo
+        - button "Logout" [ref=f6e145]
+    - main [ref=f6e150]:
+      - generic [ref=f6e151]: Loading studio analytics & database records...
+  - button "Open Next.js Dev Tools" [ref=f6e153] [cursor=pointer]:
+    - generic [ref=f6e156]:
+      - text: Rendering
+      - generic [ref=f6e157]:
+        - generic [ref=f6e158]: .
+        - generic [ref=f6e159]: .
+        - generic [ref=f6e160]: .
+  - alert [ref=f6e40]

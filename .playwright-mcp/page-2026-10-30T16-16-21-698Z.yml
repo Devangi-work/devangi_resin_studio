@@ -1,0 +1,134 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]: Handmade with Love • Complimentary Insured Delivery on orders over ₹999.00
+    - navigation [ref=e9]:
+      - generic [ref=e10]:
+        - link "Devangi Resin Studio Logo Devangi Resin Studio Handcrafted Resin Creations by Devangi" [ref=e12] [cursor=pointer]:
+          - /url: /
+          - img "Devangi Resin Studio Logo" [ref=e13]
+          - generic [ref=e14]:
+            - generic [ref=e15]: Devangi Resin Studio
+            - generic [ref=e16]: Handcrafted Resin Creations by Devangi
+        - generic [ref=e17]:
+          - link "Shop All" [ref=e18] [cursor=pointer]:
+            - /url: /shop
+          - button "Collections" [ref=e20]
+          - link "Festive Specials" [ref=e24] [cursor=pointer]:
+            - /url: /shop?festival=true
+          - link "Custom Studio" [ref=e28] [cursor=pointer]:
+            - /url: /custom-orders
+          - link "Orders Showcase" [ref=e29] [cursor=pointer]:
+            - /url: /devangiresinstudio/orderscatalogue
+          - link "My Orders" [ref=e139] [cursor=pointer]:
+            - /url: /account/orders
+        - generic [ref=e31]:
+          - button "Search products" [ref=e32]
+          - button "User Account Options" [ref=e37]:
+            - generic [ref=e38]: P
+          - button "View Shopping Cart" [ref=e44]
+  - main [ref=e48]:
+    - generic [ref=e159]:
+      - generic [ref=e161]:
+        - generic [ref=e162]:
+          - generic [ref=e163]:
+            - generic [ref=e164]: P
+            - generic "Change Profile Photo" [ref=e166] [cursor=pointer]: Change
+          - generic [ref=e171]:
+            - generic [ref=e172]:
+              - heading "Priya Sharma" [level=1] [ref=e173]
+              - generic [ref=e174]: Verified Client
+            - paragraph [ref=e179]: priya.sharma@example.com
+            - paragraph [ref=e180]:
+              - generic [ref=e184]: Mumbai, Maharashtra
+        - button "Sign Out" [ref=e186]
+      - generic [ref=e191]:
+        - link "View Orders" [ref=e192] [cursor=pointer]:
+          - /url: /account/orders
+        - link "Shipping Details" [ref=e198] [cursor=pointer]:
+          - /url: /account/profile
+        - link "Care Guide" [ref=e203] [cursor=pointer]:
+          - /url: /account/guide
+      - generic [ref=e209]:
+        - generic [ref=e214]:
+          - heading "No Orders Placed Yet" [level=3] [ref=e215]
+          - paragraph [ref=e216]: Your bespoke resin journey begins here. Explore our handcrafted collection of geode clocks, preserved floral jewellery, and personalised gifts.
+        - link "Explore Collection" [ref=e217] [cursor=pointer]:
+          - /url: /shop
+  - contentinfo [ref=e53]:
+    - generic [ref=e54]:
+      - generic [ref=e55]:
+        - generic [ref=e56]:
+          - link "Devangi Resin Studio Devangi Resin Studio Handcrafted Resin Creations by Devangi" [ref=e57] [cursor=pointer]:
+            - /url: /
+            - img "Devangi Resin Studio" [ref=e58]
+            - generic [ref=e59]:
+              - generic [ref=e60]: Devangi Resin Studio
+              - generic [ref=e61]: Handcrafted Resin Creations by Devangi
+          - paragraph [ref=e62]: Boutique handmade resin art, bespoke jewellery, personalized gifts, keychains, and coasters crafted with passion.
+          - generic [ref=e63]:
+            - link "Instagram" [ref=e64] [cursor=pointer]:
+              - /url: https://instagram.com/auraresinart
+            - link "WhatsApp Chat" [ref=e68] [cursor=pointer]:
+              - /url: https://wa.me/919967313355?text=Hi%20Devangi%20Resin%20Studio,%20I%20have%20an%20inquiry%20about%20a%20custom%20order!
+        - generic [ref=e71]:
+          - heading "Collections" [level=3] [ref=e72]
+          - list [ref=e76]:
+            - listitem [ref=e140]:
+              - link "Resin Keychains" [ref=e141] [cursor=pointer]:
+                - /url: /shop?category=resin-keychains
+            - listitem [ref=e142]:
+              - link "Resin Jewellery" [ref=e143] [cursor=pointer]:
+                - /url: /shop?category=resin-jewellery
+            - listitem [ref=e144]:
+              - link "Resin Phone Charms" [ref=e145] [cursor=pointer]:
+                - /url: /shop?category=resin-phone-charms
+            - listitem [ref=e146]:
+              - link "Resin Photo stands" [ref=e147] [cursor=pointer]:
+                - /url: /shop?category=resin-photo-frames
+            - listitem [ref=e148]:
+              - link "Personalised Gifts" [ref=e149] [cursor=pointer]:
+                - /url: /shop?category=personalised-gifts
+        - generic [ref=e87]:
+          - heading "Customer Care" [level=3] [ref=e88]
+          - list [ref=e89]:
+            - listitem [ref=e90]:
+              - link "My Account (Priya Sharma)" [ref=e221] [cursor=pointer]:
+                - /url: /account
+            - listitem [ref=e92]:
+              - link "My Orders & Status" [ref=e224] [cursor=pointer]:
+                - /url: /account
+            - listitem [ref=e94]:
+              - link "Bespoke Custom Orders" [ref=e95] [cursor=pointer]:
+                - /url: /custom-orders
+            - listitem [ref=e96]:
+              - link "Shipping & Dispatch" [ref=e97] [cursor=pointer]:
+                - /url: /policies/shipping
+            - listitem [ref=e98]:
+              - link "Returns & Exchange Policy" [ref=e99] [cursor=pointer]:
+                - /url: /policies/returns
+            - listitem [ref=e100]:
+              - link "Resin Care Guide" [ref=e101] [cursor=pointer]:
+                - /url: /policies/care
+            - listitem [ref=e102]:
+              - link "Privacy Policy" [ref=e103] [cursor=pointer]:
+                - /url: /policies/privacy
+        - generic [ref=e104]:
+          - heading "Artisan Newsletter" [level=3] [ref=e105]
+          - paragraph [ref=e106]:
+            - text: Subscribe to receive new collection drops, preservation guides, and bespoke order slots. Enjoy 10% off with coupon
+            - strong [ref=e107]: WELCOME10
+            - text: .
+          - generic [ref=e108]:
+            - textbox "Your email address" [ref=e109]
+            - button "Get 10% Discount" [ref=e110]
+          - generic [ref=e111]:
+            - paragraph [ref=e112]:
+              - generic [ref=e116]: devangiresinstudioofficial@gmail.com
+            - paragraph [ref=e117]:
+              - generic [ref=e120]: +91 9967313355
+      - paragraph [ref=e122]:
+        - generic [ref=e123]: © 2026 Devangi Resin Studio. Handcrafted with Love in India.
+        - generic [ref=e124]: •
+        - generic [ref=e125]: UPI & QR Verified Payment
+  - button "Open Next.js Dev Tools" [ref=e135] [cursor=pointer]
+  - alert [ref=e158]

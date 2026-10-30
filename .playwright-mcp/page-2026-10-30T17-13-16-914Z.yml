@@ -1,0 +1,259 @@
+- generic [active] [ref=f5e1]:
+  - banner [ref=f5e2]:
+    - generic [ref=f5e3]: Handmade with Love • Complimentary Insured Delivery on orders over ₹999.00
+    - navigation [ref=f5e9]:
+      - generic [ref=f5e10]:
+        - link "Devangi Resin Studio Logo Devangi Resin Studio Handcrafted Resin Creations by Devangi" [ref=f5e12] [cursor=pointer]:
+          - /url: /
+          - img "Devangi Resin Studio Logo" [ref=f5e13]
+          - generic [ref=f5e14]:
+            - generic [ref=f5e15]: Devangi Resin Studio
+            - generic [ref=f5e16]: Handcrafted Resin Creations by Devangi
+        - generic [ref=f5e17]:
+          - link "Shop All" [ref=f5e18] [cursor=pointer]:
+            - /url: /shop
+          - button "Collections" [ref=f5e20]
+          - link "Festive Specials" [ref=f5e24] [cursor=pointer]:
+            - /url: /shop?festival=true
+          - link "Custom Studio" [ref=f5e28] [cursor=pointer]:
+            - /url: /custom-orders
+          - link "Orders Showcase" [ref=f5e29] [cursor=pointer]:
+            - /url: /devangiresinstudio/orderscatalogue
+          - link "Track Order" [ref=f5e30] [cursor=pointer]:
+            - /url: /track-order
+        - generic [ref=f5e31]:
+          - button "Search products" [ref=f5e32]
+          - button "User Account Options" [ref=f5e37]:
+            - generic [ref=f5e38]: P
+          - button "View Shopping Cart" [ref=f5e41]:
+            - generic [ref=f5e349]: "1"
+  - main [ref=f5e45]:
+    - generic [ref=f5e350]:
+      - generic [ref=f5e351]:
+        - heading "Complete Your Order" [level=1] [ref=f5e352]
+        - paragraph [ref=f5e353]:
+          - generic [ref=f5e357]:
+            - text: Logged in as
+            - strong [ref=f5e358]: Priya Sharma (priya.sharma@example.com)
+            - text: • Direct UPI Payment
+      - generic [ref=f5e359]:
+        - generic [ref=f5e360]:
+          - generic [ref=f5e361]:
+            - generic [ref=f5e362]:
+              - heading "1. Contact Information" [level=2] [ref=f5e363]
+              - generic [ref=f5e364]: Verified Account
+            - generic [ref=f5e365]:
+              - generic [ref=f5e366]:
+                - generic [ref=f5e367]: Full Name *
+                - textbox "e.g. Priya Sharma" [ref=f5e368]: Priya Sharma
+              - generic [ref=f5e369]:
+                - generic [ref=f5e370]: Mobile Number (for delivery updates) *
+                - textbox "e.g. 9820154321" [ref=f5e371]: "9876543210"
+            - generic [ref=f5e372]:
+              - generic [ref=f5e373]: Email Address (for order receipts & tracking) *
+              - textbox "e.g. priya@example.com" [ref=f5e374]: priya.sharma@example.com
+          - generic [ref=f5e375]:
+            - generic [ref=f5e376]:
+              - heading "2. Shipping & Delivery Address" [level=2] [ref=f5e377]
+              - generic [ref=f5e378]: Auto-fetched • Editable
+            - generic [ref=f5e379]:
+              - generic [ref=f5e380]: House / Flat / Building & Street Address *
+              - textbox "e.g. Flat 402, Green Meadows, 5th Main Road" [ref=f5e381]: Flat 505 Rosewood Luxury Towers
+            - generic [ref=f5e382]:
+              - generic [ref=f5e383]: Apartment, Suite, Landmark (Optional)
+              - textbox "e.g. Near Metro Station, Indiranagar" [ref=f5e384]: Bandra West
+            - generic [ref=f5e385]:
+              - generic [ref=f5e386]:
+                - generic [ref=f5e387]: City *
+                - textbox "e.g. Bengaluru" [ref=f5e388]: Mumbai
+              - generic [ref=f5e389]:
+                - generic [ref=f5e390]: State *
+                - textbox "e.g. Karnataka" [ref=f5e391]: Maharashtra
+              - generic [ref=f5e392]:
+                - generic [ref=f5e393]: Pincode (6 digits) *
+                - textbox "e.g. 560038" [ref=f5e394]: "400050"
+            - generic [ref=f5e395]:
+              - generic [ref=f5e396]: Order Notes / Delivery Instructions (Optional)
+              - textbox "e.g. Please ring bell twice or leave with security." [ref=f5e397]
+        - generic [ref=f5e399]:
+          - heading "Order Summary (1 items)" [level=2] [ref=f5e400]
+          - generic [ref=f5e402]:
+            - img "Charmistry – Handmade Resin Alphabet Keychains" [ref=f5e404]
+            - generic [ref=f5e405]:
+              - paragraph [ref=f5e406]: Charmistry – Handmade Resin Alphabet Keychains
+              - paragraph [ref=f5e407]:
+                - text: "Qty: 1 × ₹99.00"
+                - generic [ref=f5e408]: ₹179.00
+            - generic [ref=f5e409]:
+              - generic [ref=f5e410]: ₹99.00
+              - generic [ref=f5e411]: Saved ₹80.00
+          - generic [ref=f5e413]:
+            - textbox "Coupon Code" [ref=f5e418]
+            - button "Apply" [ref=f5e419]
+          - generic [ref=f5e420]:
+            - generic [ref=f5e421]:
+              - generic [ref=f5e422]: Subtotal
+              - generic [ref=f5e423]: ₹99.00
+            - generic [ref=f5e424]:
+              - generic [ref=f5e425]: Insured Shipping
+              - generic [ref=f5e426]: ₹79.00
+            - generic [ref=f5e427]:
+              - generic [ref=f5e428]: Total Payable
+              - generic [ref=f5e429]: ₹178.00
+          - generic [ref=f5e430]:
+            - generic [ref=f5e431]:
+              - generic [ref=f5e432]:
+                - generic [ref=f5e433]: Pay via UPI & Upload Screenshot
+                - paragraph [ref=f5e437]: Fast & secure manual transfer with AI screenshot verification
+              - generic [ref=f5e438]: Zero Convenience Fee
+            - generic [ref=f5e439]:
+              - paragraph [ref=f5e440]:
+                - generic [ref=f5e444]: "How to complete your payment:"
+              - generic [ref=f5e445]:
+                - generic [ref=f5e446]:
+                  - generic [ref=f5e447]: "1"
+                  - paragraph [ref=f5e448]:
+                    - strong [ref=f5e449]: "Copy Details / Scan QR:"
+                    - text: Copy Mobile
+                    - strong [ref=f5e450]: "9967313355"
+                    - text: ", UPI ID, or scan the QR below."
+                - generic [ref=f5e451]:
+                  - generic [ref=f5e452]: "2"
+                  - paragraph [ref=f5e453]:
+                    - strong [ref=f5e454]: "Pay Exact Amount:"
+                    - text: Open
+                    - strong [ref=f5e455]: PhonePe, Google Pay, or Paytm
+                    - text: and transfer
+                    - strong [ref=f5e456]: ₹178.00
+                    - text: .
+                - generic [ref=f5e457]:
+                  - generic [ref=f5e458]: "3"
+                  - paragraph [ref=f5e459]:
+                    - strong [ref=f5e460]: "Take a Screenshot:"
+                    - text: Capture the payment success screen showing the 12-digit UTR/Ref ID.
+                - generic [ref=f5e461]:
+                  - generic [ref=f5e462]: "4"
+                  - paragraph [ref=f5e463]:
+                    - strong [ref=f5e464]: "Upload Below:"
+                    - text: Our system will automatically read your UTR from the image!
+            - generic [ref=f5e465]:
+              - generic [ref=f5e466]:
+                - generic [ref=f5e467]: "Amount to Enter in UPI App:"
+                - generic [ref=f5e468]: ₹178.00
+              - button "Copy Amount" [ref=f5e469] [cursor=pointer]
+            - generic [ref=f5e474]:
+              - generic [ref=f5e475]:
+                - generic [ref=f5e476]:
+                  - generic [ref=f5e477]: "Pay to Mobile Number (PhonePe / Google Pay / Paytm):"
+                  - generic [ref=f5e478]: "9967313355"
+                  - generic [ref=f5e479]: Devangi Banshilal Barai
+                - button "Copy Phone" [ref=f5e480] [cursor=pointer]
+              - generic [ref=f5e485]:
+                - generic [ref=f5e486]:
+                  - generic [ref=f5e487]: "Or Pay to UPI ID / VPA:"
+                  - generic [ref=f5e488]: devangibarai0403@okhdfcbank
+                  - generic [ref=f5e489]: Devangi Banshilal Barai
+                - button "Copy UPI ID" [ref=f5e490] [cursor=pointer]
+            - generic [ref=f5e495]:
+              - img "Scan UPI QR Code to Pay" [ref=f5e497]
+              - paragraph [ref=f5e498]: "Pay to: Devangi Banshilal Barai"
+              - paragraph [ref=f5e499]:
+                - text: "Scan and enter amount:"
+                - strong [ref=f5e500]: ₹178.00
+            - generic [ref=f5e501]:
+              - generic [ref=f5e502]:
+                - generic [ref=f5e503]: Upload Payment Screenshot
+                - generic [ref=f5e508]: Recommended
+              - generic [ref=f5e509] [cursor=pointer]:
+                - generic [ref=f5e513]: Tap to Upload Payment Screenshot
+                - generic [ref=f5e514]: PhonePe, Google Pay, or Paytm receipt (JPEG, PNG, WebP)
+            - generic [ref=f5e515]:
+              - generic [ref=f5e516]: 12-Digit UPI Ref / UTR Number *
+              - textbox "e.g. 428901234567" [ref=f5e518]
+              - paragraph [ref=f5e519]:
+                - text: Look for
+                - strong [ref=f5e520]: “UPI Ref No”
+                - text: (PhonePe/Paytm) or
+                - strong [ref=f5e521]: “UPI transaction ID”
+                - text: (Google Pay) in your payment receipt.
+          - button "Confirm Payment & Place Order (₹178.00)" [ref=f5e522] [cursor=pointer]
+          - paragraph [ref=f5e527]:
+            - generic [ref=f5e531]: 1-Hour Free Cancellation • Handcrafted Quality Guarantee
+  - contentinfo [ref=f5e260]:
+    - generic [ref=f5e261]:
+      - generic [ref=f5e262]:
+        - generic [ref=f5e263]:
+          - link "Devangi Resin Studio Devangi Resin Studio Handcrafted Resin Creations by Devangi" [ref=f5e264] [cursor=pointer]:
+            - /url: /
+            - img "Devangi Resin Studio" [ref=f5e265]
+            - generic [ref=f5e266]:
+              - generic [ref=f5e267]: Devangi Resin Studio
+              - generic [ref=f5e268]: Handcrafted Resin Creations by Devangi
+          - paragraph [ref=f5e269]: Boutique handmade resin art, bespoke jewellery, personalized gifts, keychains, and coasters crafted with passion.
+          - generic [ref=f5e270]:
+            - link "Instagram" [ref=f5e271] [cursor=pointer]:
+              - /url: https://instagram.com/auraresinart
+            - link "WhatsApp Chat" [ref=f5e275] [cursor=pointer]:
+              - /url: https://wa.me/919967313355?text=Hi%20Devangi%20Resin%20Studio,%20I%20have%20an%20inquiry%20about%20a%20custom%20order!
+        - generic [ref=f5e278]:
+          - heading "Collections" [level=3] [ref=f5e279]
+          - list [ref=f5e283]:
+            - listitem [ref=f5e284]:
+              - link "Resin Keychains" [ref=f5e285] [cursor=pointer]:
+                - /url: /shop?category=resin-keychains
+            - listitem [ref=f5e286]:
+              - link "Resin Jewellery" [ref=f5e287] [cursor=pointer]:
+                - /url: /shop?category=resin-jewellery
+            - listitem [ref=f5e288]:
+              - link "Resin Phone Charms" [ref=f5e289] [cursor=pointer]:
+                - /url: /shop?category=resin-phone-charms
+            - listitem [ref=f5e290]:
+              - link "Resin Photo stands" [ref=f5e291] [cursor=pointer]:
+                - /url: /shop?category=resin-photo-frames
+            - listitem [ref=f5e292]:
+              - link "Personalised Gifts" [ref=f5e293] [cursor=pointer]:
+                - /url: /shop?category=personalised-gifts
+        - generic [ref=f5e294]:
+          - heading "Customer Care" [level=3] [ref=f5e295]
+          - list [ref=f5e296]:
+            - listitem [ref=f5e297]:
+              - link "My Account (Priya Sharma)" [ref=f5e298] [cursor=pointer]:
+                - /url: /account
+            - listitem [ref=f5e301]:
+              - link "My Orders & Status" [ref=f5e302] [cursor=pointer]:
+                - /url: /account
+            - listitem [ref=f5e303]:
+              - link "Bespoke Custom Orders" [ref=f5e304] [cursor=pointer]:
+                - /url: /custom-orders
+            - listitem [ref=f5e305]:
+              - link "Shipping & Dispatch" [ref=f5e306] [cursor=pointer]:
+                - /url: /policies/shipping
+            - listitem [ref=f5e307]:
+              - link "Returns & Exchange Policy" [ref=f5e308] [cursor=pointer]:
+                - /url: /policies/returns
+            - listitem [ref=f5e309]:
+              - link "Resin Care Guide" [ref=f5e310] [cursor=pointer]:
+                - /url: /policies/care
+            - listitem [ref=f5e311]:
+              - link "Privacy Policy" [ref=f5e312] [cursor=pointer]:
+                - /url: /policies/privacy
+        - generic [ref=f5e313]:
+          - heading "Artisan Newsletter" [level=3] [ref=f5e314]
+          - paragraph [ref=f5e315]:
+            - text: Subscribe to receive new collection drops, preservation guides, and bespoke order slots. Enjoy 10% off with coupon
+            - strong [ref=f5e316]: WELCOME10
+            - text: .
+          - generic [ref=f5e317]:
+            - textbox "Your email address" [ref=f5e318]
+            - button "Get 10% Discount" [ref=f5e319]
+          - generic [ref=f5e320]:
+            - paragraph [ref=f5e321]:
+              - generic [ref=f5e325]: devangiresinstudioofficial@gmail.com
+            - paragraph [ref=f5e326]:
+              - generic [ref=f5e329]: +91 9967313355
+      - paragraph [ref=f5e331]:
+        - generic [ref=f5e332]: © 2026 Devangi Resin Studio. Handcrafted with Love in India.
+        - generic [ref=f5e333]: •
+        - generic [ref=f5e334]: UPI & QR Verified Payment
+  - button "Open Next.js Dev Tools" [ref=f5e344] [cursor=pointer]
+  - alert [ref=f5e348]: Complete Your Order

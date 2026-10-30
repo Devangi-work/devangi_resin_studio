@@ -25,6 +25,7 @@ import {
   Check,
   Trash2,
   Upload,
+  Star,
 } from "lucide-react";
 import { MediaPickerModal } from "@/components/admin/MediaPickerModal";
 import { getStoredAdminTheme, applyAdminTheme, AdminTheme } from "@/lib/admin-theme";
@@ -197,6 +198,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { name: "Products", href: "/admin/products", icon: Package },
     { name: "Categories", href: "/admin/categories", icon: FolderTree },
     { name: "Orders", href: "/admin/orders", icon: ShoppingBag },
+    { name: "Reviews", href: "/admin/reviews", icon: Star },
     { name: "Custom Studio", href: "/admin/custom-requests", icon: Sparkles },
     { name: "Inventory", href: "/admin/inventory", icon: Boxes },
     { name: "Coupons", href: "/admin/coupons", icon: Tag },

@@ -349,6 +349,9 @@ export const orders = pgTable(
     discardedAt: timestamp("discarded_at"),
     isDiscarded: boolean("is_discarded").default(false).notNull(),
 
+    // Delivered order popup notification state
+    deliveredPopupSeen: boolean("delivered_popup_seen").default(false).notNull(),
+
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
@@ -633,6 +636,78 @@ export const newsletterSubscribers = pgTable(
 );
 
 // -------------------------------------------------------------
+// 14. PRODUCT REVIEWS & LIKES
+// -------------------------------------------------------------
+export const reviews = pgTable(
+  "reviews",
+  {
+    id: text("id").primaryKey(),
+    productId: text("product_id")
+      .notNull()
+      .references(() => products.id, { onDelete: "cascade" }),
+    customerId: text("customer_id").references(() => customers.id, { onDelete: "set null" }),
+    orderId: text("order_id").references(() => orders.id, { onDelete: "set null" }),
+    customerName: text("customer_name").notNull(),
+    customerEmail: text("customer_email").notNull(),
+    customerAvatar: text("customer_avatar"),
+    rating: integer("rating").notNull(), // 1 to 5
+    reviewText: text("review_text").notNull(), // Limit 900 chars
+    images: jsonb("images").default([]).notNull(), // array of image URLs
+    likesCount: integer("likes_count").default(0).notNull(),
+    isVerifiedPurchase: boolean("is_verified_purchase").default(false).notNull(),
+    adminGranted: boolean("admin_granted").default(false).notNull(),
+    status: text("status").default("published").notNull(), // 'published' | 'hidden'
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("reviews_product_idx").on(table.productId),
+    index("reviews_customer_idx").on(table.customerId),
+    index("reviews_order_idx").on(table.orderId),
+    index("reviews_created_idx").on(table.createdAt),
+  ]
+);
+
+export const reviewLikes = pgTable(
+  "review_likes",
+  {
+    id: text("id").primaryKey(),
+    reviewId: text("review_id")
+      .notNull()
+      .references(() => reviews.id, { onDelete: "cascade" }),
+    userIdentifier: text("user_identifier").notNull(), // customerId, email, or token
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("review_likes_unique_idx").on(table.reviewId, table.userIdentifier),
+    index("review_likes_review_idx").on(table.reviewId),
+  ]
+);
+
+export const productReviewPermissions = pgTable(
+  "product_review_permissions",
+  {
+    id: text("id").primaryKey(),
+    productId: text("product_id")
+      .notNull()
+      .references(() => products.id, { onDelete: "cascade" }),
+    customerId: text("customer_id")
+      .notNull()
+      .references(() => customers.id, { onDelete: "cascade" }),
+    customerEmail: text("customer_email").notNull(),
+    customerName: text("customer_name").notNull(),
+    grantedByAdminId: text("granted_by_admin_id"),
+    hasReviewed: boolean("has_reviewed").default(false).notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("review_permissions_product_customer_idx").on(table.productId, table.customerId),
+    index("review_permissions_customer_idx").on(table.customerId),
+    index("review_permissions_product_idx").on(table.productId),
+  ]
+);
+
+// -------------------------------------------------------------
 // RELATIONS
 // -------------------------------------------------------------
 export const categoriesRelations = relations(categories, ({ many }) => ({
@@ -648,6 +723,8 @@ export const productsRelations = relations(products, ({ one, many }) => ({
   variants: many(productVariants),
   inventoryMovements: many(inventoryMovements),
   orderItems: many(orderItems),
+  reviews: many(reviews),
+  reviewPermissions: many(productReviewPermissions),
 }));
 
 export const productImagesRelations = relations(productImages, ({ one }) => ({
@@ -674,6 +751,7 @@ export const ordersRelations = relations(orders, ({ one, many }) => ({
   payments: many(payments),
   statusHistory: many(orderStatusHistory),
   couponRedemptions: many(couponRedemptions),
+  reviews: many(reviews),
 }));
 
 export const orderItemsRelations = relations(orderItems, ({ one }) => ({
@@ -688,5 +766,39 @@ export const orderItemsRelations = relations(orderItems, ({ one }) => ({
   variant: one(productVariants, {
     fields: [orderItems.variantId],
     references: [productVariants.id],
+  }),
+}));
+
+export const reviewsRelations = relations(reviews, ({ one, many }) => ({
+  product: one(products, {
+    fields: [reviews.productId],
+    references: [products.id],
+  }),
+  customer: one(customers, {
+    fields: [reviews.customerId],
+    references: [customers.id],
+  }),
+  order: one(orders, {
+    fields: [reviews.orderId],
+    references: [orders.id],
+  }),
+  likes: many(reviewLikes),
+}));
+
+export const reviewLikesRelations = relations(reviewLikes, ({ one }) => ({
+  review: one(reviews, {
+    fields: [reviewLikes.reviewId],
+    references: [reviews.id],
+  }),
+}));
+
+export const productReviewPermissionsRelations = relations(productReviewPermissions, ({ one }) => ({
+  product: one(products, {
+    fields: [productReviewPermissions.productId],
+    references: [products.id],
+  }),
+  customer: one(customers, {
+    fields: [productReviewPermissions.customerId],
+    references: [customers.id],
   }),
 }));

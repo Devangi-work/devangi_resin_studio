@@ -15,6 +15,9 @@ import {
   ChevronDown,
   ArrowRight,
   Sparkle,
+  MapPin,
+  BookOpen,
+  LogOut,
 } from "lucide-react";
 
 export function Navbar() {
@@ -27,7 +30,9 @@ export function Navbar() {
   const [settings, setSettings] = useState<any>(null);
   const [customer, setCustomer] = useState<any>(null);
   const [avatarError, setAvatarError] = useState(false);
+  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const profileDropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // 1. Fetch site settings
@@ -72,28 +77,44 @@ export function Navbar() {
     };
   }, []);
 
-  // Close dropdown on outside click
+  // Close dropdowns on outside click
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsCollectionsOpen(false);
+      }
+      if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target as Node)) {
+        setIsProfileDropdownOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Close mobile menu on ESC
+  // Close menus on ESC
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         setIsMobileMenuOpen(false);
         setIsSearchOpen(false);
+        setIsProfileDropdownOpen(false);
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
+
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/customer/logout", { method: "POST" });
+    } catch (e) {
+      console.error("Logout error", e);
+    }
+    setCustomer(null);
+    setIsProfileDropdownOpen(false);
+    window.dispatchEvent(new Event("customer-auth-changed"));
+    window.location.href = "/";
+  };
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -272,22 +293,12 @@ export function Navbar() {
               Orders Showcase
             </Link>
 
-            {/* Don't show Track Order for logged in user */}
-            {customer ? (
-              <Link
-                href="/account"
-                className="text-xs font-semibold uppercase tracking-wider text-[#3A1823] hover:text-[#B84A67] transition-colors py-1 border-b-2 border-transparent hover:border-[#D4AF37]"
-              >
-                My Orders
-              </Link>
-            ) : (
-              <Link
-                href="/track-order"
-                className="text-xs font-semibold uppercase tracking-wider text-[#3A1823] hover:text-[#B84A67] transition-colors py-1 border-b-2 border-transparent hover:border-[#D4AF37]"
-              >
-                Track Order
-              </Link>
-            )}
+            <Link
+              href="/track-order"
+              className="text-xs font-semibold uppercase tracking-wider text-[#3A1823] hover:text-[#B84A67] transition-colors py-1 border-b-2 border-transparent hover:border-[#D4AF37]"
+            >
+              Track Order
+            </Link>
           </div>
 
           {/* Right Action Icons */}
@@ -302,28 +313,144 @@ export function Navbar() {
               <Search className="w-5 h-5" />
             </button>
 
-            {/* Customer Account / Avatar */}
-            <Link
-              href="/account"
-              className="p-1 sm:p-1.5 text-[#7A5E68] hover:text-[#3A1823] hover:bg-[#FAF0F3] rounded-full transition-colors hidden sm:inline-flex items-center"
-              title={customer ? `My Account (${customer.name})` : "My Account & Orders"}
-            >
-              {customer?.avatarUrl && !avatarError ? (
-                <img
-                  src={customer.avatarUrl}
-                  alt={customer.name}
-                  referrerPolicy="no-referrer"
-                  onError={() => setAvatarError(true)}
-                  className="w-7 h-7 rounded-full object-cover border border-[#D4AF37]"
+            {/* Customer Account / Avatar Dropdown */}
+            <div className="relative" ref={profileDropdownRef}>
+              <button
+                type="button"
+                onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
+                className="p-1 sm:p-1.5 text-[#7A5E68] hover:text-[#3A1823] hover:bg-[#FAF0F3] rounded-full transition-all inline-flex items-center gap-1 focus:outline-none"
+                aria-label="User Account Options"
+                aria-expanded={isProfileDropdownOpen}
+                title={customer ? `Account Menu (${customer.name})` : "Account Menu"}
+              >
+                {customer?.avatarUrl && !avatarError ? (
+                  <img
+                    src={customer.avatarUrl}
+                    alt={customer.name}
+                    referrerPolicy="no-referrer"
+                    onError={() => setAvatarError(true)}
+                    className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border border-[#D4AF37] shadow-xs"
+                  />
+                ) : customer ? (
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#FAF0F3] border border-[#EFE3E7] flex items-center justify-center text-[#B84A67] font-bold text-xs font-serif shadow-xs">
+                    {customer.name?.charAt(0)?.toUpperCase() || "U"}
+                  </div>
+                ) : (
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#FAF0F3] border border-[#EFE3E7] flex items-center justify-center text-[#7A5E68]">
+                    <User className="w-4 h-4 sm:w-5 sm:h-5" />
+                  </div>
+                )}
+                <ChevronDown
+                  className={`w-3 h-3 text-[#8C6E79] transition-transform duration-200 hidden sm:block ${
+                    isProfileDropdownOpen ? "rotate-180 text-[#3A1823]" : ""
+                  }`}
                 />
-              ) : customer ? (
-                <div className="w-7 h-7 rounded-full bg-[#FAF0F3] border border-[#EFE3E7] flex items-center justify-center text-[#B84A67] font-bold text-xs font-serif">
-                  {customer.name?.charAt(0)?.toUpperCase() || "U"}
-                </div>
-              ) : (
-                <User className="w-5 h-5" />
-              )}
-            </Link>
+              </button>
+
+              {/* 4 Direct Options Dropdown Menu */}
+              <AnimatePresence>
+                {isProfileDropdownOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                    transition={{ duration: 0.15, ease: "easeOut" }}
+                    className="absolute right-0 top-full mt-2 w-64 bg-white rounded-2xl shadow-xl border border-[#EFE3E7] py-2 z-50 overflow-hidden text-left"
+                  >
+                    {/* User info banner if logged in */}
+                    {customer && (
+                      <div className="px-4 py-2.5 border-b border-[#FAF0F3] bg-[#FAF8F5]/70 mb-1">
+                        <div className="flex items-center space-x-2">
+                          <span className="w-2 h-2 rounded-full bg-[#2E7D32]"></span>
+                          <p className="text-xs font-bold text-[#3A1823] truncate">{customer.name}</p>
+                        </div>
+                        <p className="text-[11px] text-[#8C6E79] truncate mt-0.5">{customer.email}</p>
+                      </div>
+                    )}
+
+                    <div className="py-1 space-y-0.5 px-1.5">
+                      {/* Option 1: View Orders */}
+                      <Link
+                        href={customer ? "/account/orders" : "/account/login?redirect=/account/orders"}
+                        onClick={() => setIsProfileDropdownOpen(false)}
+                        className="flex items-center space-x-3 px-3 py-2.5 rounded-xl hover:bg-[#FAF0F3] text-[#3A1823] hover:text-[#B84A67] transition-all group"
+                      >
+                        <div className="w-8 h-8 rounded-lg bg-[#FAF0F3] group-hover:bg-white text-[#B84A67] flex items-center justify-center transition-colors shrink-0">
+                          <Package className="w-4 h-4" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-bold leading-snug">View Orders</p>
+                          <p className="text-[10px] text-[#8C6E79] leading-snug">Track parcels & order history</p>
+                        </div>
+                      </Link>
+
+                      {/* Option 2: Shipping Details */}
+                      <Link
+                        href={customer ? "/account/profile" : "/account/login?redirect=/account/profile"}
+                        onClick={() => setIsProfileDropdownOpen(false)}
+                        className="flex items-center space-x-3 px-3 py-2.5 rounded-xl hover:bg-[#FAF0F3] text-[#3A1823] hover:text-[#B84A67] transition-all group"
+                      >
+                        <div className="w-8 h-8 rounded-lg bg-[#FAF0F3] group-hover:bg-white text-[#B84A67] flex items-center justify-center transition-colors shrink-0">
+                          <MapPin className="w-4 h-4" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-bold leading-snug">Shipping Details</p>
+                          <p className="text-[10px] text-[#8C6E79] leading-snug">Delivery address & phone</p>
+                        </div>
+                      </Link>
+
+                      {/* Option 3: Guide */}
+                      <Link
+                        href={customer ? "/account/guide" : "/policies/care"}
+                        onClick={() => setIsProfileDropdownOpen(false)}
+                        className="flex items-center space-x-3 px-3 py-2.5 rounded-xl hover:bg-[#FAF0F3] text-[#3A1823] hover:text-[#B84A67] transition-all group"
+                      >
+                        <div className="w-8 h-8 rounded-lg bg-[#FAF0F3] group-hover:bg-white text-[#B84A67] flex items-center justify-center transition-colors shrink-0">
+                          <BookOpen className="w-4 h-4" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-bold leading-snug">Guide</p>
+                          <p className="text-[10px] text-[#8C6E79] leading-snug">Resin art care & maintenance</p>
+                        </div>
+                      </Link>
+
+                      {/* Option 4: Sign Out (or Sign In if guest) */}
+                      <div className="pt-1 border-t border-[#FAF0F3] mt-1">
+                        {customer ? (
+                          <button
+                            type="button"
+                            onClick={handleLogout}
+                            className="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl hover:bg-[#FDF2F2] text-[#DF4C4C] transition-all text-left group cursor-pointer"
+                          >
+                            <div className="w-8 h-8 rounded-lg bg-[#FDF2F2] group-hover:bg-white text-[#DF4C4C] flex items-center justify-center transition-colors shrink-0">
+                              <LogOut className="w-4 h-4" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-bold leading-snug">Sign Out</p>
+                              <p className="text-[10px] text-[#DF4C4C]/70 leading-snug">Log out of your account</p>
+                            </div>
+                          </button>
+                        ) : (
+                          <Link
+                            href="/account/login"
+                            onClick={() => setIsProfileDropdownOpen(false)}
+                            className="flex items-center space-x-3 px-3 py-2.5 rounded-xl hover:bg-[#FAF0F3] text-[#3A1823] hover:text-[#B84A67] transition-all group"
+                          >
+                            <div className="w-8 h-8 rounded-lg bg-[#FAF0F3] group-hover:bg-white text-[#B84A67] flex items-center justify-center transition-colors shrink-0">
+                              <User className="w-4 h-4" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-bold leading-snug">Sign In</p>
+                              <p className="text-[10px] text-[#8C6E79] leading-snug">Log in to your account</p>
+                            </div>
+                          </Link>
+                        )}
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
 
             {/* Cart Trigger Button */}
             <button
@@ -524,9 +651,69 @@ export function Navbar() {
                     <ArrowRight className="w-4 h-4 text-[#B8972E] group-hover:translate-x-1 transition-transform flex-shrink-0 ml-2" />
                   </Link>
 
-                  {/* 6. Account & Order Footer - Don't show Track Order for logged in user */}
-                  <div className={`pt-2 grid ${customer ? "grid-cols-1" : "grid-cols-2"} gap-2 text-xs`}>
-                    {!customer && (
+                  {/* 6. Account & Order Options */}
+                  {customer ? (
+                    <div className="pt-2 space-y-2 text-xs">
+                      <div className="p-3 bg-[#FAF8F5] rounded-xl border border-[#EFE3E7] flex items-center justify-between">
+                        <div className="flex items-center space-x-2.5 min-w-0">
+                          {customer.avatarUrl && !avatarError ? (
+                            <img
+                              src={customer.avatarUrl}
+                              alt={customer.name}
+                              referrerPolicy="no-referrer"
+                              onError={() => setAvatarError(true)}
+                              className="w-7 h-7 rounded-full object-cover border border-[#D4AF37] shrink-0"
+                            />
+                          ) : (
+                            <div className="w-7 h-7 rounded-full bg-[#B84A67] text-white flex items-center justify-center font-bold text-xs shrink-0">
+                              {customer.name?.charAt(0)?.toUpperCase() || "U"}
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <p className="font-bold text-xs text-[#3A1823] truncate">{customer.name}</p>
+                            <p className="text-[10px] text-[#8C6E79] truncate">{customer.email}</p>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={handleLogout}
+                          className="text-[11px] font-bold text-[#DF4C4C] bg-[#FDF2F2] hover:bg-[#FCE8E8] px-2.5 py-1 rounded-lg border border-[#FADBD8] flex items-center space-x-1 shrink-0 ml-2"
+                        >
+                          <LogOut className="w-3 h-3" />
+                          <span>Sign Out</span>
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-2">
+                        <Link
+                          href="/account/orders"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                          className="p-2.5 bg-white border border-[#EFE3E7] hover:border-[#D4AF37] rounded-xl text-center shadow-xs flex flex-col items-center justify-center"
+                        >
+                          <Package className="w-4 h-4 text-[#B84A67] mb-1" />
+                          <span className="text-[10px] font-bold text-[#3A1823] truncate block">Orders</span>
+                        </Link>
+                        <Link
+                          href="/account/profile"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                          className="p-2.5 bg-white border border-[#EFE3E7] hover:border-[#D4AF37] rounded-xl text-center shadow-xs flex flex-col items-center justify-center"
+                        >
+                          <MapPin className="w-4 h-4 text-[#B84A67] mb-1" />
+                          <span className="text-[10px] font-bold text-[#3A1823] truncate block">Shipping</span>
+                        </Link>
+                        <Link
+                          href="/account/guide"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                          className="p-2.5 bg-white border border-[#EFE3E7] hover:border-[#D4AF37] rounded-xl text-center shadow-xs flex flex-col items-center justify-center"
+                        >
+                          <BookOpen className="w-4 h-4 text-[#B84A67] mb-1" />
+                          <span className="text-[10px] font-bold text-[#3A1823] truncate block">Guide</span>
+                        </Link>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="pt-2 grid grid-cols-2 gap-2 text-xs">
                       <Link
                         href="/track-order"
                         onClick={() => setIsMobileMenuOpen(false)}
@@ -535,29 +722,17 @@ export function Navbar() {
                         <Package className="w-4 h-4 flex-shrink-0 text-[#B84A67]" />
                         <span className="font-medium text-[11px] truncate">Track Order</span>
                       </Link>
-                    )}
 
-                    <Link
-                      href="/account"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      className="p-2.5 bg-white border border-[#EFE3E7] rounded-xl flex items-center justify-center space-x-2 text-[#7A5E68] hover:text-[#3A1823] hover:border-[#7A5E68] transition-all shadow-xs active:scale-98"
-                    >
-                      {customer?.avatarUrl && !avatarError ? (
-                        <img
-                          src={customer.avatarUrl}
-                          alt={customer.name}
-                          referrerPolicy="no-referrer"
-                          onError={() => setAvatarError(true)}
-                          className="w-4 h-4 rounded-full object-cover border border-[#D4AF37] flex-shrink-0"
-                        />
-                      ) : (
+                      <Link
+                        href="/account/login"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="p-2.5 bg-white border border-[#EFE3E7] rounded-xl flex items-center justify-center space-x-2 text-[#7A5E68] hover:text-[#3A1823] hover:border-[#7A5E68] transition-all shadow-xs active:scale-98"
+                      >
                         <User className="w-4 h-4 flex-shrink-0 text-[#B84A67]" />
-                      )}
-                      <span className="font-medium text-[11px] truncate">
-                        {customer ? `My Account (${customer.name})` : "Sign In / Account"}
-                      </span>
-                    </Link>
-                  </div>
+                        <span className="font-medium text-[11px] truncate">Sign In</span>
+                      </Link>
+                    </div>
+                  )}
                 </div>
               </div>
             </motion.div>

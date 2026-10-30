@@ -1,0 +1,17 @@
+- generic [active] [ref=f6e1]:
+  - generic [ref=f6e4]:
+    - generic [ref=f6e5]:
+      - img "Devangi Resin Studio Logo" [ref=f6e7]
+      - heading "Devangi Resin Studio" [level=1] [ref=f6e8]
+      - paragraph [ref=f6e9]: Sign in to manage products, orders, inventory, and resin art settings.
+    - generic [ref=f6e10]:
+      - generic [ref=f6e11]:
+        - generic [ref=f6e12]: Admin Email Address
+        - textbox "admin@devangiresinstudio.com" [ref=f6e17]
+      - generic [ref=f6e18]:
+        - generic [ref=f6e19]: Master Password
+        - textbox "••••••••••••" [ref=f6e24]
+      - button "Sign In to Dashboard" [ref=f6e25]
+    - link "← Return to Customer Storefront" [ref=f6e30] [cursor=pointer]:
+      - /url: /
+  - button "Open Next.js Dev Tools" [ref=f6e36] [cursor=pointer]

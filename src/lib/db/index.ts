@@ -16,24 +16,25 @@ export const db = sql ? drizzle(sql, { schema }) : null;
 
 // Ensure new columns and tables exist on startup without requiring manual migration
 if (sql) {
-  sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_screenshot_url TEXT;`.catch(() => {});
-  sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS packing_images JSONB DEFAULT '[]'::jsonb;`.catch(() => {});
-  sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS product_images JSONB DEFAULT '[]'::jsonb;`.catch(() => {});
-  sql`ALTER TABLE customers ADD COLUMN IF NOT EXISTS avatar_url TEXT;`.catch(() => {});
-  sql`ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS avatar_url TEXT;`.catch(() => {});
-  sql`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS signature_url TEXT DEFAULT '';`.catch(() => {});
-  sql`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS logo_url TEXT DEFAULT '/images/logo/resin_logo.png';`.catch(() => {});
-  sql`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS festival_discount_active BOOLEAN DEFAULT FALSE;`.catch(() => {});
-  sql`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS festival_name TEXT DEFAULT '';`.catch(() => {});
-  sql`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS festival_tagline TEXT DEFAULT '';`.catch(() => {});
-  sql`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS festival_discount_percentage TEXT DEFAULT '';`.catch(() => {});
-  sql`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS festival_coupon_code TEXT DEFAULT '';`.catch(() => {});
-  sql`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS festival_expires_at TIMESTAMP;`.catch(() => {});
-  sql`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS festival_banner_bg TEXT DEFAULT 'royal_wine';`.catch(() => {});
-  sql`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS festival_cta_text TEXT DEFAULT 'Shop Festive Deals';`.catch(() => {});
-  sql`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS festival_cta_url TEXT DEFAULT '/shop?filter=festival';`.catch(() => {});
-  sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS is_festival_special BOOLEAN DEFAULT FALSE;`.catch(() => {});
-  sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS festival_discount_percentage NUMERIC(5, 2);`.catch(() => {});
+  sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_screenshot_url TEXT;`.catch(() => { });
+  sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS packing_images JSONB DEFAULT '[]'::jsonb;`.catch(() => { });
+  sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS product_images JSONB DEFAULT '[]'::jsonb;`.catch(() => { });
+  sql`ALTER TABLE customers ADD COLUMN IF NOT EXISTS avatar_url TEXT;`.catch(() => { });
+  sql`ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS avatar_url TEXT;`.catch(() => { });
+  sql`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS signature_url TEXT DEFAULT '';`.catch(() => { });
+  sql`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS logo_url TEXT DEFAULT '/images/logo/resin_logo.png';`.catch(() => { });
+  sql`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS festival_discount_active BOOLEAN DEFAULT FALSE;`.catch(() => { });
+  sql`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS festival_name TEXT DEFAULT '';`.catch(() => { });
+  sql`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS festival_tagline TEXT DEFAULT '';`.catch(() => { });
+  sql`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS festival_discount_percentage TEXT DEFAULT '';`.catch(() => { });
+  sql`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS festival_coupon_code TEXT DEFAULT '';`.catch(() => { });
+  sql`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS festival_expires_at TIMESTAMP;`.catch(() => { });
+  sql`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS festival_banner_bg TEXT DEFAULT 'royal_wine';`.catch(() => { });
+  sql`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS festival_cta_text TEXT DEFAULT 'Shop Festive Deals';`.catch(() => { });
+  sql`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS festival_cta_url TEXT DEFAULT '/shop?filter=festival';`.catch(() => { });
+  sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS is_festival_special BOOLEAN DEFAULT FALSE;`.catch(() => { });
+  sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS festival_discount_percentage NUMERIC(5, 2);`.catch(() => { });
+  sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS delivered_popup_seen BOOLEAN DEFAULT FALSE;`.catch(() => { });
   sql`CREATE TABLE IF NOT EXISTS media_items (
     id TEXT PRIMARY KEY,
     file_name TEXT NOT NULL,
@@ -42,7 +43,7 @@ if (sql) {
     mime_type TEXT DEFAULT 'image/png',
     alt_text TEXT DEFAULT '',
     created_at TIMESTAMP DEFAULT NOW()
-  );`.catch(() => {});
+  );`.catch(() => { });
   sql`CREATE TABLE IF NOT EXISTS custom_requests (
     id TEXT PRIMARY KEY,
     customer_name TEXT NOT NULL,
@@ -57,7 +58,43 @@ if (sql) {
     admin_notes TEXT,
     created_at TIMESTAMP DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMP DEFAULT NOW() NOT NULL
-  );`.catch(() => {});
+  );`.catch(() => { });
+  sql`CREATE TABLE IF NOT EXISTS reviews (
+    id TEXT PRIMARY KEY,
+    product_id TEXT NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+    customer_id TEXT REFERENCES customers(id) ON DELETE SET NULL,
+    order_id TEXT REFERENCES orders(id) ON DELETE SET NULL,
+    customer_name TEXT NOT NULL,
+    customer_email TEXT NOT NULL,
+    customer_avatar TEXT,
+    rating INTEGER NOT NULL,
+    review_text TEXT NOT NULL,
+    images JSONB DEFAULT '[]'::jsonb NOT NULL,
+    likes_count INTEGER DEFAULT 0 NOT NULL,
+    is_verified_purchase BOOLEAN DEFAULT FALSE NOT NULL,
+    admin_granted BOOLEAN DEFAULT FALSE NOT NULL,
+    status TEXT DEFAULT 'published' NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMP DEFAULT NOW() NOT NULL
+  );`.catch(() => { });
+  sql`CREATE TABLE IF NOT EXISTS review_likes (
+    id TEXT PRIMARY KEY,
+    review_id TEXT NOT NULL REFERENCES reviews(id) ON DELETE CASCADE,
+    user_identifier TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+    CONSTRAINT review_likes_unique UNIQUE (review_id, user_identifier)
+  );`.catch(() => { });
+  sql`CREATE TABLE IF NOT EXISTS product_review_permissions (
+    id TEXT PRIMARY KEY,
+    product_id TEXT NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+    customer_id TEXT NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
+    customer_email TEXT NOT NULL,
+    customer_name TEXT NOT NULL,
+    granted_by_admin_id TEXT,
+    has_reviewed BOOLEAN DEFAULT FALSE NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+    CONSTRAINT review_permissions_unique UNIQUE (product_id, customer_id)
+  );`.catch(() => { });
 }
 
 // =========================================================================
@@ -74,6 +111,10 @@ interface StoreState {
   siteSettings: any;
   customRequests: any[];
   mediaItems: any[];
+  customers: any[];
+  reviews: any[];
+  reviewLikes: any[];
+  productReviewPermissions: any[];
 }
 
 const globalForStore = globalThis as unknown as {
@@ -87,6 +128,121 @@ function getInitialStoreState(): StoreState {
     orders: JSON.parse(JSON.stringify(initialOrders)),
     coupons: JSON.parse(JSON.stringify(initialCoupons)),
     mediaItems: [],
+    customers: [
+      {
+        id: "cust_aarav",
+        name: "Aarav Patel",
+        email: "aarav.patel@gmail.com",
+        avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
+        isVerified: true,
+      },
+      {
+        id: "cust_ananya",
+        name: "Ananya Sharma",
+        email: "ananya.s@outlook.com",
+        avatarUrl: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150",
+        isVerified: true,
+      },
+      {
+        id: "cust_priya",
+        name: "Priya Nair",
+        email: "priya.nair@gmail.com",
+        avatarUrl: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150",
+        isVerified: true,
+      },
+      {
+        id: "cust_rohan",
+        name: "Rohan Kapoor",
+        email: "rohan.kapoor@gmail.com",
+        avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150",
+        isVerified: true,
+      },
+    ],
+    reviews: [
+      {
+        id: "rev_seed_1",
+        productId: "prod_ocean_coasters",
+        customerId: "cust_aarav",
+        orderId: "ord_sample_delivered_1",
+        customerName: "Aarav Patel",
+        customerEmail: "aarav.patel@gmail.com",
+        customerAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
+        rating: 5,
+        reviewText: "The ocean coasters are truly breathtaking! The depth of the waves, gold foil accents, and ultra-glossy finish look even better in real life than the photos. Packaged with so much care too.",
+        images: [
+          "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800",
+          "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=800"
+        ],
+        likesCount: 14,
+        isVerifiedPurchase: true,
+        adminGranted: false,
+        status: "published",
+        createdAt: new Date("2026-10-18T10:15:00Z"),
+        updatedAt: new Date("2026-10-18T10:15:00Z"),
+      },
+      {
+        id: "rev_seed_2",
+        productId: "prod_ocean_coasters",
+        customerId: "cust_ananya",
+        orderId: null,
+        customerName: "Ananya Sharma",
+        customerEmail: "ananya.s@outlook.com",
+        customerAvatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150",
+        rating: 5,
+        reviewText: "Devangi's resin craftsmanship is second to none. I was invited to review this new batch and the heat resistance and crystal clarity are flawless on my marble dining table. Highly recommended!",
+        images: [
+          "https://images.unsplash.com/photo-1579783902614-a3fb3927b675?w=800"
+        ],
+        likesCount: 8,
+        isVerifiedPurchase: false,
+        adminGranted: true,
+        status: "published",
+        createdAt: new Date("2026-10-22T14:30:00Z"),
+        updatedAt: new Date("2026-10-22T14:30:00Z"),
+      },
+      {
+        id: "rev_seed_3",
+        productId: "prod_botanical_pendant",
+        customerId: "cust_priya",
+        orderId: "ord_sample_delivered_2",
+        customerName: "Priya Nair",
+        customerEmail: "priya.nair@gmail.com",
+        customerAvatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150",
+        rating: 5,
+        reviewText: "The preserved forget-me-not flowers inside the teardrop resin look magical in natural sunlight! Wore it to a family function and received so many compliments. Beautiful gold chain too.",
+        images: [
+          "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=800"
+        ],
+        likesCount: 19,
+        isVerifiedPurchase: true,
+        adminGranted: false,
+        status: "published",
+        createdAt: new Date("2026-10-12T09:00:00Z"),
+        updatedAt: new Date("2026-10-12T09:00:00Z"),
+      },
+      {
+        id: "rev_seed_4",
+        productId: "prod_resin_photo_frame",
+        customerId: "cust_rohan",
+        orderId: null,
+        customerName: "Rohan Kapoor",
+        customerEmail: "rohan.kapoor@gmail.com",
+        customerAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150",
+        rating: 5,
+        reviewText: "Custom framed our wedding picture with preserved baby's breath and fairy lights. The amber glow at night creates such a romantic vibe in our bedroom! 10/10 quality and fast dispatch.",
+        images: [
+          "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=800"
+        ],
+        likesCount: 22,
+        isVerifiedPurchase: true,
+        adminGranted: false,
+        status: "published",
+        createdAt: new Date("2026-10-25T16:45:00Z"),
+        updatedAt: new Date("2026-10-25T16:45:00Z"),
+      }
+    ],
+    reviewLikes: [],
+    productReviewPermissions: [],
     inventoryMovements: [
       {
         id: "mov_1",
@@ -1493,6 +1649,26 @@ export const dbStore = {
     return this.getOrderById(orderNumberOrId);
   },
 
+  async updateOrderPaymentScreenshot(orderNumberOrId: string, paymentScreenshotUrl: string) {
+    const ord = store.orders.find((o) => o.id === orderNumberOrId || o.orderNumber === orderNumberOrId);
+    if (ord) {
+      ord.paymentScreenshotUrl = paymentScreenshotUrl;
+      ord.updatedAt = new Date();
+    }
+    if (sql) {
+      try {
+        await sql`
+          UPDATE orders
+          SET payment_screenshot_url = ${paymentScreenshotUrl}, updated_at = NOW()
+          WHERE id = ${orderNumberOrId} OR order_number = ${orderNumberOrId};
+        `;
+      } catch (err) {
+        console.error("DB updateOrderPaymentScreenshot err:", err);
+      }
+    }
+    return this.getOrderById(orderNumberOrId);
+  },
+
   async getCustomerLatestUnpaidOrder(customerIdOrEmail: string) {
     const clean = customerIdOrEmail.trim().toLowerCase();
     if (sql) {
@@ -1968,7 +2144,7 @@ export const dbStore = {
         console.error("DB getCustomerByEmail err:", e);
       }
     }
-    return null;
+    return store.customers?.find((c) => c.email.toLowerCase() === cleanEmail) || null;
   },
 
   async getCustomerById(id: string) {
@@ -1995,7 +2171,7 @@ export const dbStore = {
         console.error("DB getCustomerById err:", e);
       }
     }
-    return null;
+    return store.customers?.find((c) => c.id === id) || null;
   },
 
   async createCustomer(data: {
@@ -2014,22 +2190,7 @@ export const dbStore = {
   }) {
     const id = `cust_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
     const cleanEmail = data.email.trim().toLowerCase();
-    if (sql) {
-      await sql`
-        INSERT INTO customers (
-          id, name, email, phone, password_hash, google_id, avatar_url,
-          address_line1, address_line2, city, state, postal_code, country,
-          is_verified, created_at, updated_at
-        ) VALUES (
-          ${id}, ${data.name.trim()}, ${cleanEmail}, ${data.phone?.trim() || null},
-          ${data.passwordHash || null}, ${data.googleId || null}, ${data.avatarUrl || null},
-          ${data.addressLine1 || null}, ${data.addressLine2 || null}, ${data.city || null},
-          ${data.state || null}, ${data.postalCode || null}, ${data.country || 'India'},
-          true, NOW(), NOW()
-        );
-      `;
-    }
-    return {
+    const newCust = {
       id,
       name: data.name.trim(),
       email: cleanEmail,
@@ -2045,6 +2206,37 @@ export const dbStore = {
       isVerified: true,
       createdAt: new Date(),
     };
+
+    if (!store.customers) store.customers = [];
+    store.customers.push(newCust);
+
+    if (sql) {
+      try {
+        await sql`
+          INSERT INTO customers (
+            id, name, email, phone, password_hash, google_id, avatar_url,
+            address_line1, address_line2, city, state, postal_code, country,
+            is_verified, created_at, updated_at
+          ) VALUES (
+            ${id}, ${data.name.trim()}, ${cleanEmail}, ${data.phone?.trim() || null},
+            ${data.passwordHash || null}, ${data.googleId || null}, ${data.avatarUrl || null},
+            ${data.addressLine1 || null}, ${data.addressLine2 || null}, ${data.city || null},
+            ${data.state || null}, ${data.postalCode || null}, ${data.country || 'India'},
+            true, NOW(), NOW()
+          );
+        `;
+      } catch (err) {
+        console.error("DB createCustomer error:", err);
+      }
+    }
+
+    return newCust;
+  },
+
+  async createCustomerOrGet(data: { name: string; email: string; phone?: string; avatarUrl?: string }) {
+    const existing = await this.getCustomerByEmail(data.email);
+    if (existing) return existing;
+    return this.createCustomer(data);
   },
 
   async findOrCreateGoogleCustomer(data: {
@@ -2083,22 +2275,39 @@ export const dbStore = {
   },
 
   async updateCustomerProfile(id: string, data: any) {
+    const mem = store.customers?.find((c) => c.id === id);
+    if (mem) {
+      if (data.name !== undefined) mem.name = data.name;
+      if (data.phone !== undefined) mem.phone = data.phone;
+      if (data.avatarUrl !== undefined) mem.avatarUrl = data.avatarUrl;
+      if (data.addressLine1 !== undefined) mem.addressLine1 = data.addressLine1;
+      if (data.addressLine2 !== undefined) mem.addressLine2 = data.addressLine2;
+      if (data.city !== undefined) mem.city = data.city;
+      if (data.state !== undefined) mem.state = data.state;
+      if (data.postalCode !== undefined) mem.postalCode = data.postalCode;
+      if (data.country !== undefined) mem.country = data.country;
+    }
+
     if (sql) {
-      await sql`
-        UPDATE customers
-        SET
-          name = COALESCE(${data.name || null}, name),
-          phone = COALESCE(${data.phone || null}, phone),
-          avatar_url = COALESCE(${data.avatarUrl || null}, avatar_url),
-          address_line1 = COALESCE(${data.addressLine1 || null}, address_line1),
-          address_line2 = COALESCE(${data.addressLine2 || null}, address_line2),
-          city = COALESCE(${data.city || null}, city),
-          state = COALESCE(${data.state || null}, state),
-          postal_code = COALESCE(${data.postalCode || null}, postal_code),
-          country = COALESCE(${data.country || null}, country),
-          updated_at = NOW()
-        WHERE id = ${id};
-      `;
+      try {
+        await sql`
+          UPDATE customers
+          SET
+            name = COALESCE(${data.name || null}, name),
+            phone = COALESCE(${data.phone || null}, phone),
+            avatar_url = COALESCE(${data.avatarUrl || null}, avatar_url),
+            address_line1 = COALESCE(${data.addressLine1 || null}, address_line1),
+            address_line2 = COALESCE(${data.addressLine2 || null}, address_line2),
+            city = COALESCE(${data.city || null}, city),
+            state = COALESCE(${data.state || null}, state),
+            postal_code = COALESCE(${data.postalCode || null}, postal_code),
+            country = COALESCE(${data.country || null}, country),
+            updated_at = NOW()
+          WHERE id = ${id};
+        `;
+      } catch (err) {
+        console.error("DB updateCustomerProfile err:", err);
+      }
     }
     return this.getCustomerById(id);
   },
@@ -2711,6 +2920,661 @@ export const dbStore = {
         await sql`DELETE FROM custom_requests WHERE id = ${id};`;
       } catch (err) {
         console.error("DB deleteCustomRequest err:", err);
+      }
+    }
+    return { success: true };
+  },
+
+  // ---------------- PRODUCT REVIEWS & DELIVERED POPUP ----------------
+  async createReview(data: {
+    productId: string;
+    customerId?: string | null;
+    orderId?: string | null;
+    customerName: string;
+    customerEmail: string;
+    customerAvatar?: string | null;
+    rating: number;
+    reviewText: string;
+    images?: string[];
+    isVerifiedPurchase?: boolean;
+    adminGranted?: boolean;
+  }) {
+    const id = `rev_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    const newRev = {
+      id,
+      productId: data.productId,
+      customerId: data.customerId || null,
+      orderId: data.orderId || null,
+      customerName: data.customerName.trim(),
+      customerEmail: data.customerEmail.trim().toLowerCase(),
+      customerAvatar: data.customerAvatar || null,
+      rating: Math.min(5, Math.max(1, Math.round(data.rating))),
+      reviewText: data.reviewText.trim().slice(0, 900),
+      images: Array.isArray(data.images) ? data.images : [],
+      likesCount: 0,
+      isVerifiedPurchase: Boolean(data.isVerifiedPurchase),
+      adminGranted: Boolean(data.adminGranted),
+      status: "published",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    // Update in-memory
+    store.reviews.unshift(newRev);
+
+    // If there was an admin permission, mark it as reviewed
+    const perm = store.productReviewPermissions.find(
+      (p) =>
+        p.productId === data.productId &&
+        (p.customerId === data.customerId || p.customerEmail?.toLowerCase() === data.customerEmail.toLowerCase())
+    );
+    if (perm) {
+      perm.hasReviewed = true;
+    }
+
+    // If there was an order, mark deliveredPopupSeen if needed
+    if (data.orderId) {
+      const ord = store.orders.find((o) => o.id === data.orderId || o.orderNumber === data.orderId);
+      if (ord) {
+        ord.deliveredPopupSeen = true;
+      }
+    }
+
+    if (sql) {
+      try {
+        await sql`
+          INSERT INTO reviews (
+            id, product_id, customer_id, order_id, customer_name,
+            customer_email, customer_avatar, rating, review_text,
+            images, likes_count, is_verified_purchase, admin_granted,
+            status, created_at, updated_at
+          ) VALUES (
+            ${newRev.id}, ${newRev.productId}, ${newRev.customerId}, ${newRev.orderId},
+            ${newRev.customerName}, ${newRev.customerEmail}, ${newRev.customerAvatar},
+            ${newRev.rating}, ${newRev.reviewText}, ${JSON.stringify(newRev.images)}::jsonb,
+            0, ${newRev.isVerifiedPurchase}, ${newRev.adminGranted},
+            ${newRev.status}, ${newRev.createdAt}, ${newRev.updatedAt}
+          );
+        `;
+
+        if (data.customerId || data.customerEmail) {
+          await sql`
+            UPDATE product_review_permissions
+            SET has_reviewed = TRUE
+            WHERE product_id = ${data.productId}
+              AND (customer_id = ${data.customerId || ""} OR LOWER(customer_email) = ${data.customerEmail.toLowerCase()});
+          `.catch(() => {});
+        }
+
+        if (data.orderId) {
+          await sql`
+            UPDATE orders
+            SET delivered_popup_seen = TRUE
+            WHERE id = ${data.orderId} OR order_number = ${data.orderId};
+          `.catch(() => {});
+        }
+      } catch (err) {
+        console.error("DB createReview err:", err);
+      }
+    }
+
+    return newRev;
+  },
+
+  async getReviewsByProduct(productId: string, userIdentifier?: string) {
+    let revs: any[] = [];
+
+    if (sql) {
+      try {
+        const rows = await sql`
+          SELECT 
+            r.id,
+            r.product_id as "productId",
+            r.customer_id as "customerId",
+            r.order_id as "orderId",
+            r.customer_name as "customerName",
+            r.customer_email as "customerEmail",
+            r.customer_avatar as "customerAvatar",
+            r.rating,
+            r.review_text as "reviewText",
+            r.images,
+            r.likes_count as "likesCount",
+            r.is_verified_purchase as "isVerifiedPurchase",
+            r.admin_granted as "adminGranted",
+            r.status,
+            r.created_at as "createdAt",
+            r.updated_at as "updatedAt"
+          FROM reviews r
+          WHERE r.product_id = ${productId} AND r.status = 'published'
+          ORDER BY r.created_at DESC;
+        `;
+        if (rows) {
+          revs = rows.map((r: any) => ({
+            ...r,
+            images: Array.isArray(r.images) ? r.images : typeof r.images === "string" ? JSON.parse(r.images) : [],
+          }));
+        }
+      } catch (err) {
+        console.error("DB getReviewsByProduct err:", err);
+      }
+    }
+
+    if (revs.length === 0) {
+      revs = store.reviews.filter((r) => r.productId === productId && r.status === "published");
+    }
+
+    // Attach userHasLiked if userIdentifier is provided
+    let likedReviewIds = new Set<string>();
+    if (userIdentifier) {
+      if (sql) {
+        try {
+          const likes = await sql`
+            SELECT review_id as "reviewId" FROM review_likes WHERE user_identifier = ${userIdentifier};
+          `;
+          likedReviewIds = new Set(likes.map((l: any) => l.reviewId));
+        } catch {}
+      } else {
+        likedReviewIds = new Set(
+          store.reviewLikes.filter((l) => l.userIdentifier === userIdentifier).map((l) => l.reviewId)
+        );
+      }
+    }
+
+    const reviewsWithLikes = revs.map((r) => ({
+      ...r,
+      userHasLiked: likedReviewIds.has(r.id),
+    }));
+
+    // Calculate rating distribution & average
+    const totalReviews = reviewsWithLikes.length;
+    const distribution: Record<number, number> = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+    let sumRating = 0;
+
+    for (const r of reviewsWithLikes) {
+      const star = Math.min(5, Math.max(1, r.rating || 5));
+      distribution[star] = (distribution[star] || 0) + 1;
+      sumRating += star;
+    }
+
+    const averageRating = totalReviews > 0 ? Number((sumRating / totalReviews).toFixed(1)) : 0;
+
+    return {
+      reviews: reviewsWithLikes,
+      stats: {
+        totalReviews,
+        averageRating,
+        distribution,
+      },
+    };
+  },
+
+  async getAllReviews() {
+    let revs: any[] = [];
+
+    if (sql) {
+      try {
+        const rows = await sql`
+          SELECT 
+            r.id,
+            r.product_id as "productId",
+            r.customer_id as "customerId",
+            r.order_id as "orderId",
+            r.customer_name as "customerName",
+            r.customer_email as "customerEmail",
+            r.customer_avatar as "customerAvatar",
+            r.rating,
+            r.review_text as "reviewText",
+            r.images,
+            r.likes_count as "likesCount",
+            r.is_verified_purchase as "isVerifiedPurchase",
+            r.admin_granted as "adminGranted",
+            r.status,
+            r.created_at as "createdAt",
+            p.name as "productName",
+            p.slug as "productSlug",
+            p.sku as "productSku"
+          FROM reviews r
+          LEFT JOIN products p ON r.product_id = p.id
+          ORDER BY r.created_at DESC;
+        `;
+        if (rows) {
+          revs = rows.map((r: any) => ({
+            ...r,
+            images: Array.isArray(r.images) ? r.images : typeof r.images === "string" ? JSON.parse(r.images) : [],
+          }));
+        }
+      } catch (err) {
+        console.error("DB getAllReviews err:", err);
+      }
+    }
+
+    if (revs.length === 0) {
+      revs = store.reviews.map((r) => {
+        const p = store.products.find((prod) => prod.id === r.productId);
+        return {
+          ...r,
+          productName: p?.name || "Product",
+          productSlug: p?.slug || "",
+          productSku: p?.sku || "",
+        };
+      });
+    }
+
+    return revs;
+  },
+
+  async deleteReview(id: string) {
+    store.reviews = store.reviews.filter((r) => r.id !== id);
+    store.reviewLikes = store.reviewLikes.filter((l) => l.reviewId !== id);
+
+    if (sql) {
+      try {
+        await sql`DELETE FROM reviews WHERE id = ${id};`;
+      } catch (err) {
+        console.error("DB deleteReview err:", err);
+      }
+    }
+    return { success: true };
+  },
+
+  async toggleReviewLike(reviewId: string, userIdentifier: string) {
+    let liked = false;
+    let likesCount = 0;
+
+    // In-memory check
+    const existingIndex = store.reviewLikes.findIndex(
+      (l) => l.reviewId === reviewId && l.userIdentifier === userIdentifier
+    );
+    const targetRev = store.reviews.find((r) => r.id === reviewId);
+
+    if (existingIndex > -1) {
+      // Remove like
+      store.reviewLikes.splice(existingIndex, 1);
+      if (targetRev) {
+        targetRev.likesCount = Math.max(0, (targetRev.likesCount || 1) - 1);
+        likesCount = targetRev.likesCount;
+      }
+      liked = false;
+    } else {
+      // Add like
+      store.reviewLikes.push({
+        id: `like_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+        reviewId,
+        userIdentifier,
+        createdAt: new Date(),
+      });
+      if (targetRev) {
+        targetRev.likesCount = (targetRev.likesCount || 0) + 1;
+        likesCount = targetRev.likesCount;
+      }
+      liked = true;
+    }
+
+    if (sql) {
+      try {
+        const existingSql = await sql`
+          SELECT id FROM review_likes WHERE review_id = ${reviewId} AND user_identifier = ${userIdentifier};
+        `;
+        if (existingSql && existingSql.length > 0) {
+          await sql`
+            DELETE FROM review_likes WHERE review_id = ${reviewId} AND user_identifier = ${userIdentifier};
+          `;
+          await sql`
+            UPDATE reviews SET likes_count = GREATEST(0, likes_count - 1) WHERE id = ${reviewId};
+          `;
+          liked = false;
+        } else {
+          const newLikeId = `like_${Date.now()}`;
+          await sql`
+            INSERT INTO review_likes (id, review_id, user_identifier, created_at)
+            VALUES (${newLikeId}, ${reviewId}, ${userIdentifier}, NOW());
+          `;
+          await sql`
+            UPDATE reviews SET likes_count = likes_count + 1 WHERE id = ${reviewId};
+          `;
+          liked = true;
+        }
+        const updated = await sql`SELECT likes_count as "likesCount" FROM reviews WHERE id = ${reviewId};`;
+        if (updated && updated.length > 0) {
+          likesCount = updated[0].likesCount;
+        }
+      } catch (err) {
+        console.error("DB toggleReviewLike err:", err);
+      }
+    }
+
+    return { success: true, liked, likesCount };
+  },
+
+  async checkUserReviewEligibility(productId: string, customerId?: string | null, customerEmail?: string | null) {
+    if (!customerId && !customerEmail) {
+      return {
+        canReview: false,
+        reason: "Please sign in to write a verified review.",
+        hasAlreadyReviewed: false,
+        isVerifiedPurchase: false,
+        adminGranted: false,
+      };
+    }
+
+    const cleanEmail = (customerEmail || "").trim().toLowerCase();
+
+    // 1. Check if user already reviewed this product
+    let userReview = store.reviews.find(
+      (r) =>
+        r.productId === productId &&
+        ((customerId && r.customerId === customerId) || (cleanEmail && r.customerEmail?.toLowerCase() === cleanEmail))
+    );
+
+    if (!userReview && sql) {
+      try {
+        const rows = await sql`
+          SELECT id FROM reviews
+          WHERE product_id = ${productId}
+            AND (customer_id = ${customerId || ""} OR LOWER(customer_email) = ${cleanEmail});
+        `;
+        if (rows && rows.length > 0) {
+          userReview = rows[0];
+        }
+      } catch {}
+    }
+
+    if (userReview) {
+      return {
+        canReview: false,
+        hasAlreadyReviewed: true,
+        reason: "You have already submitted a review for this product. Thank you for your feedback!",
+        isVerifiedPurchase: userReview.isVerifiedPurchase ?? true,
+        adminGranted: userReview.adminGranted ?? false,
+      };
+    }
+
+    // 2. Check if customer has an order containing this product with order_status = 'delivered'
+    let deliveredOrder: any = null;
+
+    if (sql) {
+      try {
+        const rows = await sql`
+          SELECT o.id, o.order_number as "orderNumber"
+          FROM orders o
+          JOIN order_items oi ON oi.order_id = o.id
+          WHERE (o.customer_id = ${customerId || ""} OR LOWER(o.customer_email) = ${cleanEmail})
+            AND o.order_status = 'delivered'
+            AND oi.product_id = ${productId}
+          ORDER BY o.created_at DESC
+          LIMIT 1;
+        `;
+        if (rows && rows.length > 0) {
+          deliveredOrder = rows[0];
+        }
+      } catch (err) {
+        console.error("DB checkUserReviewEligibility order check err:", err);
+      }
+    }
+
+    if (!deliveredOrder) {
+      deliveredOrder = store.orders.find((o) => {
+        const isUserOrder = (customerId && o.customerId === customerId) || (cleanEmail && o.customerEmail?.toLowerCase() === cleanEmail);
+        const isDelivered = o.orderStatus === "delivered";
+        const hasItem = o.items?.some((i: any) => i.productId === productId);
+        return isUserOrder && isDelivered && hasItem;
+      });
+    }
+
+    if (deliveredOrder) {
+      return {
+        canReview: true,
+        hasAlreadyReviewed: false,
+        isVerifiedPurchase: true,
+        adminGranted: false,
+        orderId: deliveredOrder.id,
+      };
+    }
+
+    // 3. Check if admin granted review permission to this registered customer for this product
+    let grantedPerm = store.productReviewPermissions.find(
+      (p) =>
+        p.productId === productId &&
+        ((customerId && p.customerId === customerId) || (cleanEmail && p.customerEmail?.toLowerCase() === cleanEmail))
+    );
+
+    if (!grantedPerm && sql) {
+      try {
+        const rows = await sql`
+          SELECT id, has_reviewed as "hasReviewed"
+          FROM product_review_permissions
+          WHERE product_id = ${productId}
+            AND (customer_id = ${customerId || ""} OR LOWER(customer_email) = ${cleanEmail});
+        `;
+        if (rows && rows.length > 0) {
+          grantedPerm = rows[0];
+        }
+      } catch {}
+    }
+
+    if (grantedPerm) {
+      return {
+        canReview: !grantedPerm.hasReviewed,
+        hasAlreadyReviewed: Boolean(grantedPerm.hasReviewed),
+        reason: grantedPerm.hasReviewed ? "You have already submitted your invited review." : undefined,
+        isVerifiedPurchase: false,
+        adminGranted: true,
+      };
+    }
+
+    return {
+      canReview: false,
+      hasAlreadyReviewed: false,
+      reason: "Only verified buyers who have received delivery or reviewers invited by the studio can submit a review.",
+      isVerifiedPurchase: false,
+      adminGranted: false,
+    };
+  },
+
+  async getDeliveredUnreviewedOrders(customerIdOrEmail: string) {
+    const clean = customerIdOrEmail.trim().toLowerCase();
+    let deliveredOrders: any[] = [];
+
+    if (sql) {
+      try {
+        const rows = await sql`
+          SELECT 
+            id,
+            order_number as "orderNumber",
+            customer_name as "customerName",
+            customer_email as "customerEmail",
+            total_amount as "totalAmount",
+            order_status as "orderStatus",
+            delivered_popup_seen as "deliveredPopupSeen",
+            created_at as "createdAt",
+            updated_at as "updatedAt"
+          FROM orders
+          WHERE (customer_id = ${customerIdOrEmail} OR LOWER(customer_email) = ${clean})
+            AND order_status = 'delivered'
+            AND (delivered_popup_seen IS FALSE OR delivered_popup_seen IS NULL)
+          ORDER BY updated_at DESC, created_at DESC
+          LIMIT 1;
+        `;
+
+        if (rows && rows.length > 0) {
+          const ord = rows[0];
+          const items = await sql`
+            SELECT 
+              oi.id,
+              oi.product_id as "productId",
+              oi.product_name as "productName",
+              oi.quantity,
+              oi.unit_price as "unitPrice",
+              (SELECT image_url FROM product_images WHERE product_id = oi.product_id ORDER BY display_order ASC LIMIT 1) as "imageUrl",
+              EXISTS (
+                SELECT 1 FROM reviews 
+                WHERE product_id = oi.product_id 
+                  AND (customer_id = ${customerIdOrEmail} OR LOWER(customer_email) = ${clean})
+              ) as "hasReviewed"
+            FROM order_items oi
+            WHERE oi.order_id = ${ord.id};
+          `;
+          ord.items = items || [];
+          deliveredOrders.push(ord);
+        }
+      } catch (err) {
+        console.error("DB getDeliveredUnreviewedOrders err:", err);
+      }
+    }
+
+    if (deliveredOrders.length === 0) {
+      const memOrd = store.orders.find(
+        (o) =>
+          (o.customerId === customerIdOrEmail || o.customerEmail?.toLowerCase() === clean) &&
+          o.orderStatus === "delivered" &&
+          !o.deliveredPopupSeen
+      );
+
+      if (memOrd) {
+        const itemsWithStatus = (memOrd.items || []).map((item: any) => {
+          const prod = store.products.find((p) => p.id === item.productId);
+          const hasReviewed = store.reviews.some(
+            (r) =>
+              r.productId === item.productId &&
+              (r.customerId === customerIdOrEmail || r.customerEmail?.toLowerCase() === clean)
+          );
+          return {
+            ...item,
+            imageUrl: prod?.images?.[0]?.imageUrl || "",
+            hasReviewed,
+          };
+        });
+
+        deliveredOrders.push({
+          ...memOrd,
+          items: itemsWithStatus,
+        });
+      }
+    }
+
+    return deliveredOrders[0] || null;
+  },
+
+  async markOrderDeliveredPopupSeen(orderIdOrNumber: string) {
+    const mem = store.orders.find((o) => o.id === orderIdOrNumber || o.orderNumber === orderIdOrNumber);
+    if (mem) {
+      mem.deliveredPopupSeen = true;
+    }
+
+    if (sql) {
+      try {
+        await sql`
+          UPDATE orders
+          SET delivered_popup_seen = TRUE
+          WHERE id = ${orderIdOrNumber} OR order_number = ${orderIdOrNumber};
+        `;
+      } catch (err) {
+        console.error("DB markOrderDeliveredPopupSeen err:", err);
+      }
+    }
+    return { success: true };
+  },
+
+  async grantReviewPermission(customerId: string, productId: string, adminId?: string) {
+    const customer = await this.getCustomerById(customerId);
+    const product = await this.getProductById(productId);
+
+    if (!customer || !product) {
+      throw new Error("Customer or Product not found");
+    }
+
+    const permId = `perm_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+    const newPerm = {
+      id: permId,
+      productId: product.id,
+      customerId: customer.id,
+      customerEmail: customer.email.toLowerCase(),
+      customerName: customer.name,
+      grantedByAdminId: adminId || "admin",
+      hasReviewed: false,
+      createdAt: new Date(),
+    };
+
+    // Remove existing permission if any in memory
+    store.productReviewPermissions = store.productReviewPermissions.filter(
+      (p) => !(p.productId === productId && p.customerId === customerId)
+    );
+    store.productReviewPermissions.unshift(newPerm);
+
+    if (sql) {
+      try {
+        await sql`
+          INSERT INTO product_review_permissions (
+            id, product_id, customer_id, customer_email, customer_name,
+            granted_by_admin_id, has_reviewed, created_at
+          ) VALUES (
+            ${newPerm.id}, ${newPerm.productId}, ${newPerm.customerId}, ${newPerm.customerEmail},
+            ${newPerm.customerName}, ${newPerm.grantedByAdminId}, FALSE, NOW()
+          )
+          ON CONFLICT (product_id, customer_id)
+          DO UPDATE SET 
+            has_reviewed = FALSE,
+            created_at = NOW();
+        `;
+      } catch (err) {
+        console.error("DB grantReviewPermission err:", err);
+      }
+    }
+
+    return newPerm;
+  },
+
+  async getReviewPermissions() {
+    let perms: any[] = [];
+
+    if (sql) {
+      try {
+        const rows = await sql`
+          SELECT 
+            p.id,
+            p.product_id as "productId",
+            p.customer_id as "customerId",
+            p.customer_email as "customerEmail",
+            p.customer_name as "customerName",
+            p.granted_by_admin_id as "grantedByAdminId",
+            p.has_reviewed as "hasReviewed",
+            p.created_at as "createdAt",
+            prod.name as "productName",
+            prod.slug as "productSlug",
+            prod.sku as "productSku"
+          FROM product_review_permissions p
+          LEFT JOIN products prod ON p.product_id = prod.id
+          ORDER BY p.created_at DESC;
+        `;
+        if (rows) perms = rows;
+      } catch (err) {
+        console.error("DB getReviewPermissions err:", err);
+      }
+    }
+
+    if (perms.length === 0) {
+      perms = store.productReviewPermissions.map((perm) => {
+        const prod = store.products.find((p) => p.id === perm.productId);
+        return {
+          ...perm,
+          productName: prod?.name || "Product",
+          productSlug: prod?.slug || "",
+          productSku: prod?.sku || "",
+        };
+      });
+    }
+
+    return perms;
+  },
+
+  async revokeReviewPermission(id: string) {
+    store.productReviewPermissions = store.productReviewPermissions.filter((p) => p.id !== id);
+
+    if (sql) {
+      try {
+        await sql`DELETE FROM product_review_permissions WHERE id = ${id};`;
+      } catch (err) {
+        console.error("DB revokeReviewPermission err:", err);
       }
     }
     return { success: true };

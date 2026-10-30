@@ -1,0 +1,232 @@
+- generic [active] [ref=f2e1]:
+  - banner [ref=f2e2]:
+    - generic [ref=f2e3]: Handmade with Love • Complimentary Insured Delivery on orders over ₹999.00
+    - navigation [ref=f2e9]:
+      - generic [ref=f2e10]:
+        - link "Devangi Resin Studio Logo Devangi Resin Studio Handcrafted Resin Creations by Devangi" [ref=f2e12] [cursor=pointer]:
+          - /url: /
+          - img "Devangi Resin Studio Logo" [ref=f2e13]
+          - generic [ref=f2e14]:
+            - generic [ref=f2e15]: Devangi Resin Studio
+            - generic [ref=f2e16]: Handcrafted Resin Creations by Devangi
+        - generic [ref=f2e17]:
+          - link "Shop All" [ref=f2e18] [cursor=pointer]:
+            - /url: /shop
+          - button "Collections" [ref=f2e20]
+          - link "Festive Specials" [ref=f2e24] [cursor=pointer]:
+            - /url: /shop?festival=true
+          - link "Custom Studio" [ref=f2e28] [cursor=pointer]:
+            - /url: /custom-orders
+          - link "Orders Showcase" [ref=f2e29] [cursor=pointer]:
+            - /url: /devangiresinstudio/orderscatalogue
+          - link "My Orders" [ref=f2e139] [cursor=pointer]:
+            - /url: /account/orders
+        - generic [ref=f2e31]:
+          - button "Search products" [ref=f2e32]
+          - button "User Account Options" [ref=f2e37]:
+            - generic [ref=f2e38]: P
+          - button "View Shopping Cart" [ref=f2e44]
+  - main [ref=f2e48]:
+    - generic [ref=f2e140]:
+      - generic [ref=f2e142]:
+        - generic [ref=f2e143]:
+          - generic [ref=f2e144]:
+            - generic [ref=f2e145]: P
+            - generic "Change Profile Photo" [ref=f2e147] [cursor=pointer]: Change
+          - generic [ref=f2e152]:
+            - generic [ref=f2e153]:
+              - heading "Priya Sharma" [level=1] [ref=f2e154]
+              - generic [ref=f2e155]: Verified Client
+            - paragraph [ref=f2e160]: priya.sharma@example.com
+            - paragraph [ref=f2e161]:
+              - generic [ref=f2e165]: Mumbai, Maharashtra
+        - button "Sign Out" [ref=f2e167]
+      - generic [ref=f2e172]:
+        - link "View Orders 4" [ref=f2e173] [cursor=pointer]:
+          - /url: /account/orders
+          - generic [ref=f2e178]: View Orders
+          - generic [ref=f2e179]: "4"
+        - link "Shipping Details" [ref=f2e180] [cursor=pointer]:
+          - /url: /account/profile
+        - link "Care Guide" [ref=f2e185] [cursor=pointer]:
+          - /url: /account/guide
+      - generic [ref=f2e191]:
+        - generic [ref=f2e192]:
+          - heading "Order History & Status" [level=2] [ref=f2e193]
+          - generic [ref=f2e194]:
+            - text: "Total Orders:"
+            - strong [ref=f2e195]: "4"
+        - generic [ref=f2e196]:
+          - generic [ref=f2e197]:
+            - generic [ref=f2e198]:
+              - generic [ref=f2e199]:
+                - generic [ref=f2e200]:
+                  - generic [ref=f2e201]: "Order #RA-20261030-3047"
+                  - generic [ref=f2e202]: processing
+                - paragraph [ref=f2e203]: Placed on 30 Oct 2026, 04:23 pm
+              - generic [ref=f2e204]:
+                - generic [ref=f2e205]: ₹1850.00
+                - link "Track Status" [ref=f2e206] [cursor=pointer]:
+                  - /url: /orders/RA-20261030-3047
+            - generic [ref=f2e214]:
+              - generic [ref=f2e219]:
+                - paragraph [ref=f2e220]: Golden Leaf – Glitter Resin Phone Charm
+                - paragraph [ref=f2e221]: Standard
+                - paragraph [ref=f2e222]: "Qty: 1 × ₹1850.00"
+              - generic [ref=f2e223]: ₹1850.00
+          - generic [ref=f2e224]:
+            - generic [ref=f2e225]:
+              - generic [ref=f2e226]:
+                - generic [ref=f2e227]: "Order #RA-20261030-2648"
+                - paragraph [ref=f2e229]: Placed on 30 Oct 2026, 04:23 pm
+              - generic [ref=f2e230]:
+                - generic [ref=f2e231]: ₹3500.00
+                - generic [ref=f2e232]: Order Delivered
+            - generic [ref=f2e238]:
+              - generic [ref=f2e243]:
+                - paragraph [ref=f2e244]: Charmistry – Handmade Resin Alphabet Keychains
+                - paragraph [ref=f2e245]: Standard
+                - paragraph [ref=f2e246]: "Qty: 1 × ₹3500.00"
+              - generic [ref=f2e247]: ₹3500.00
+          - generic [ref=f2e249]:
+            - generic [ref=f2e250]:
+              - generic [ref=f2e251]:
+                - generic [ref=f2e252]: "Order #RA-20261030-9502"
+                - generic [ref=f2e253]: processing
+              - paragraph [ref=f2e254]: Placed on 30 Oct 2026, 04:21 pm
+            - generic [ref=f2e255]:
+              - generic [ref=f2e256]: ₹1850.00
+              - link "Track Status" [ref=f2e257] [cursor=pointer]:
+                - /url: /orders/RA-20261030-9502
+          - generic [ref=f2e265]:
+            - generic [ref=f2e266]:
+              - generic [ref=f2e267]: "Order #RA-20261030-7928"
+              - paragraph [ref=f2e269]: Placed on 30 Oct 2026, 04:21 pm
+            - generic [ref=f2e270]:
+              - generic [ref=f2e271]: ₹3500.00
+              - generic [ref=f2e272]: Order Delivered
+  - generic [ref=f2e278]:
+    - generic [ref=f2e279]:
+      - button "Close modal" [ref=f2e280]
+      - generic [ref=f2e291]:
+        - generic [ref=f2e292]:
+          - generic [ref=f2e293]: Delivered Successfully
+          - generic [ref=f2e294]: "Order #RA-20261030-2648"
+        - heading "Your Resin Art Has Arrived! 🎉" [level=2] [ref=f2e295]
+      - paragraph [ref=f2e296]: We hope your handcrafted resin keepsakes bring elegance and joy to your home. How was your experience?
+    - generic [ref=f2e297]:
+      - generic [ref=f2e298]:
+        - generic [ref=f2e299]: Select Item to Review (1)
+        - button "Charmistry – Handmade Resin Alphabet Keychains Charmistry – Handmade Resin Alphabet Keychains Tap to review" [ref=f2e301]:
+          - img "Charmistry – Handmade Resin Alphabet Keychains" [ref=f2e303]
+          - generic [ref=f2e304]:
+            - paragraph [ref=f2e305]: Charmistry – Handmade Resin Alphabet Keychains
+            - generic [ref=f2e306]: Tap to review
+      - generic [ref=f2e308]:
+        - generic [ref=f2e309]:
+          - generic [ref=f2e310]:
+            - text: Reviewing Product
+            - heading "Charmistry – Handmade Resin Alphabet Keychains" [level=3] [ref=f2e311]
+          - generic [ref=f2e312]: Verified Purchase
+        - generic [ref=f2e317]:
+          - generic [ref=f2e318]:
+            - generic [ref=f2e319]: Your Rating (Max 5 Stars) *
+            - generic [ref=f2e320]:
+              - generic [ref=f2e321]:
+                - button "Rate 1 star" [ref=f2e322]
+                - button "Rate 2 star" [ref=f2e325]
+                - button "Rate 3 star" [ref=f2e328]
+                - button "Rate 4 star" [ref=f2e331]
+                - button "Rate 5 star" [ref=f2e334]
+              - generic [ref=f2e337]: Exceptional Masterpiece! ★★★★★
+          - generic [ref=f2e338]:
+            - generic [ref=f2e339]:
+              - generic [ref=f2e340]: Your Review *
+              - generic [ref=f2e341]: 0 / 900 characters
+            - textbox "How do you like the resin clarity, gloss, details, and packaging? Your honest thoughts mean the world to us..." [ref=f2e342]
+          - generic [ref=f2e343]:
+            - generic [ref=f2e344]:
+              - generic [ref=f2e345]: Upload Photos of Your Delivered Piece (Optional)
+              - generic [ref=f2e350]: 0 / 5 photos
+            - generic [ref=f2e351]: + Add
+          - generic [ref=f2e357]:
+            - button "Submit Verified Review" [ref=f2e358]
+            - button "Review Later" [ref=f2e362]
+  - contentinfo [ref=f2e53]:
+    - generic [ref=f2e54]:
+      - generic [ref=f2e55]:
+        - generic [ref=f2e56]:
+          - link "Devangi Resin Studio Devangi Resin Studio Handcrafted Resin Creations by Devangi" [ref=f2e57] [cursor=pointer]:
+            - /url: /
+            - img "Devangi Resin Studio" [ref=f2e58]
+            - generic [ref=f2e59]:
+              - generic [ref=f2e60]: Devangi Resin Studio
+              - generic [ref=f2e61]: Handcrafted Resin Creations by Devangi
+          - paragraph [ref=f2e62]: Boutique handmade resin art, bespoke jewellery, personalized gifts, keychains, and coasters crafted with passion.
+          - generic [ref=f2e63]:
+            - link "Instagram" [ref=f2e64] [cursor=pointer]:
+              - /url: https://instagram.com/auraresinart
+            - link "WhatsApp Chat" [ref=f2e68] [cursor=pointer]:
+              - /url: https://wa.me/919967313355?text=Hi%20Devangi%20Resin%20Studio,%20I%20have%20an%20inquiry%20about%20a%20custom%20order!
+        - generic [ref=f2e71]:
+          - heading "Collections" [level=3] [ref=f2e72]
+          - list [ref=f2e76]:
+            - listitem [ref=f2e363]:
+              - link "Resin Keychains" [ref=f2e364] [cursor=pointer]:
+                - /url: /shop?category=resin-keychains
+            - listitem [ref=f2e365]:
+              - link "Resin Jewellery" [ref=f2e366] [cursor=pointer]:
+                - /url: /shop?category=resin-jewellery
+            - listitem [ref=f2e367]:
+              - link "Resin Phone Charms" [ref=f2e368] [cursor=pointer]:
+                - /url: /shop?category=resin-phone-charms
+            - listitem [ref=f2e369]:
+              - link "Resin Photo stands" [ref=f2e370] [cursor=pointer]:
+                - /url: /shop?category=resin-photo-frames
+            - listitem [ref=f2e371]:
+              - link "Personalised Gifts" [ref=f2e372] [cursor=pointer]:
+                - /url: /shop?category=personalised-gifts
+        - generic [ref=f2e87]:
+          - heading "Customer Care" [level=3] [ref=f2e88]
+          - list [ref=f2e89]:
+            - listitem [ref=f2e90]:
+              - link "My Account (Priya Sharma)" [ref=f2e373] [cursor=pointer]:
+                - /url: /account
+            - listitem [ref=f2e92]:
+              - link "My Orders & Status" [ref=f2e376] [cursor=pointer]:
+                - /url: /account
+            - listitem [ref=f2e94]:
+              - link "Bespoke Custom Orders" [ref=f2e95] [cursor=pointer]:
+                - /url: /custom-orders
+            - listitem [ref=f2e96]:
+              - link "Shipping & Dispatch" [ref=f2e97] [cursor=pointer]:
+                - /url: /policies/shipping
+            - listitem [ref=f2e98]:
+              - link "Returns & Exchange Policy" [ref=f2e99] [cursor=pointer]:
+                - /url: /policies/returns
+            - listitem [ref=f2e100]:
+              - link "Resin Care Guide" [ref=f2e101] [cursor=pointer]:
+                - /url: /policies/care
+            - listitem [ref=f2e102]:
+              - link "Privacy Policy" [ref=f2e103] [cursor=pointer]:
+                - /url: /policies/privacy
+        - generic [ref=f2e104]:
+          - heading "Artisan Newsletter" [level=3] [ref=f2e105]
+          - paragraph [ref=f2e106]:
+            - text: Subscribe to receive new collection drops, preservation guides, and bespoke order slots. Enjoy 10% off with coupon
+            - strong [ref=f2e107]: WELCOME10
+            - text: .
+          - generic [ref=f2e108]:
+            - textbox "Your email address" [ref=f2e109]
+            - button "Get 10% Discount" [ref=f2e110]
+          - generic [ref=f2e111]:
+            - paragraph [ref=f2e112]:
+              - generic [ref=f2e116]: devangiresinstudioofficial@gmail.com
+            - paragraph [ref=f2e117]:
+              - generic [ref=f2e120]: +91 9967313355
+      - paragraph [ref=f2e122]:
+        - generic [ref=f2e123]: © 2026 Devangi Resin Studio. Handcrafted with Love in India.
+        - generic [ref=f2e124]: •
+        - generic [ref=f2e125]: UPI & QR Verified Payment
+  - button "Open Next.js Dev Tools" [ref=f2e135] [cursor=pointer]
+  - alert [ref=f2e377]
