@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
     const newOrder = await dbStore.createOrder({
       orderNumber,
       customerName: data.customerName,
-      customerEmail: data.customerEmail || `offline_${Date.now()}@devangiresinstudio.com`,
+      customerEmail: data.customerEmail && data.customerEmail.trim() ? data.customerEmail.trim() : null,
       customerPhone: data.customerPhone,
       shippingAddressLine1: data.shippingAddressLine1,
       shippingAddressLine2: data.shippingAddressLine2,

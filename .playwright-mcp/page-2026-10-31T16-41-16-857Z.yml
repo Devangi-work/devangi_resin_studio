@@ -1,0 +1,84 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e14]:
+      - generic [ref=e15]:
+        - link "Back to Orders" [ref=e16] [cursor=pointer]:
+          - /url: /admin/orders
+        - generic [ref=e19]:
+          - 'heading "Payment Receipt #OFF-20261031-6531" [level=1] [ref=e20]':
+            - generic [ref=e21]: Payment Receipt
+            - generic [ref=e22]: "#OFF-20261031-6531"
+          - paragraph [ref=e23]: Payment verified. Ready to print or download as PDF.
+      - button "Print / Download PDF" [ref=e25]
+    - generic [ref=e31]:
+      - generic [ref=e32]:
+        - generic [ref=e33]:
+          - img "Devangi Resin Studio" [ref=e35]
+          - generic [ref=e36]:
+            - heading "Devangi Resin Studio" [level=2] [ref=e37]
+            - paragraph [ref=e38]: Handcrafted Resin Creations by Devangi
+            - generic [ref=e39]:
+              - paragraph [ref=e40]:
+                - generic [ref=e44]: devangiresinstudioofficial@gmail.com
+              - paragraph [ref=e45]:
+                - generic [ref=e48]: "WhatsApp/Phone: +91 9967313355"
+        - generic [ref=e49]:
+          - generic [ref=e50]: Official Payment Receipt
+          - heading "REC-OFF-20261031-6531" [level=3] [ref=e51]
+          - paragraph [ref=e52]:
+            - text: "Date:"
+            - strong [ref=e53]: 31 Oct 2026
+          - generic [ref=e54]: PAID IN FULL
+      - generic [ref=e60]:
+        - generic [ref=e61]:
+          - generic [ref=e62]: Billed To (Customer)
+          - paragraph [ref=e63]: Anisha Jain
+          - paragraph [ref=e64]: "Contact: +91 88981 24208"
+          - generic [ref=e65]: "Payment Method: upi"
+        - generic [ref=e66]:
+          - generic [ref=e67]: Delivery Destination
+          - paragraph [ref=e68]: Studio Pick-up / Walk-inMumbai, Maharashtra - 400001
+          - paragraph [ref=e70]: "Shipping Mode: Self"
+      - generic [ref=e71]:
+        - heading "Order Particulars & Bespoke Specifications" [level=4] [ref=e72]
+        - table [ref=e74]:
+          - rowgroup [ref=e75]:
+            - row [ref=e76]:
+              - columnheader "#" [ref=e77]
+              - columnheader "Item & Customization Details" [ref=e78]
+              - columnheader "Qty" [ref=e79]
+              - columnheader "Unit Price" [ref=e80]
+              - columnheader "Amount" [ref=e81]
+          - rowgroup [ref=e82]:
+            - row [ref=e83]:
+              - cell "1" [ref=e84]
+              - cell [ref=e85]:
+                - paragraph [ref=e86]: Custom Rosé Aura Keychain
+              - cell "1" [ref=e87]
+              - cell "₹149.00" [ref=e88]
+              - cell "₹149.00" [ref=e89]
+      - generic [ref=e90]:
+        - generic [ref=e91]:
+          - generic [ref=e92]: Amount in Words
+          - paragraph [ref=e93]: Indian Rupees One Hundred and Forty Nine Only.
+          - generic [ref=e94]:
+            - paragraph [ref=e95]: "Artisan Keepsake Guarantee:"
+            - text: Thank you for supporting Devangi Resin Studio! Each bespoke piece is handcrafted with premium non-yellowing epoxy resin, preserved botanicals, and hand-finished with meticulous precision.
+        - generic [ref=e96]:
+          - generic [ref=e97]:
+            - generic [ref=e98]: Items Subtotal
+            - generic [ref=e99]: ₹149.00
+          - generic [ref=e100]:
+            - generic [ref=e101]: Insured Shipping & Handling
+            - generic [ref=e102]: FREE
+          - generic [ref=e103]:
+            - generic [ref=e104]: Total Amount Paid
+            - generic [ref=e105]: ₹149.00
+      - generic [ref=e108]:
+        - img "Authorized Signature with Stamp" [ref=e110]
+        - generic [ref=e111]:
+          - paragraph [ref=e112]: Authorized Signatory & Stamp
+          - paragraph [ref=e113]: Devangi Resin Studio
+      - generic [ref=e114]: This is a computer-generated verified receipt issued by Devangi Resin Studio. For order inquiries, contact devangiresinstudioofficial@gmail.com.
+  - button "Open Next.js Dev Tools" [ref=e10] [cursor=pointer]
+  - alert [ref=e115]

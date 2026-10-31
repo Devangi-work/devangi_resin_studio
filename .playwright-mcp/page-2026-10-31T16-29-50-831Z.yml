@@ -1,0 +1,96 @@
+- generic [active] [ref=f1e1]:
+  - generic [ref=f1e2]:
+    - complementary [ref=f1e3]:
+      - generic [ref=f1e4]:
+        - link "Devangi Resin Studio Logo DEVANGI RESIN STUDIO View Live Store" [ref=f1e6] [cursor=pointer]:
+          - /url: /
+          - img "Devangi Resin Studio Logo" [ref=f1e7]
+          - generic [ref=f1e8]:
+            - generic [ref=f1e9]: DEVANGI RESIN STUDIO
+            - generic [ref=f1e10]: View Live Store
+        - navigation [ref=f1e16]:
+          - link "Dashboard" [ref=f1e17] [cursor=pointer]:
+            - /url: /admin/dashboard
+          - link "Products" [ref=f1e24] [cursor=pointer]:
+            - /url: /admin/products
+          - link "Categories" [ref=f1e30] [cursor=pointer]:
+            - /url: /admin/categories
+          - link "Orders" [ref=f1e37] [cursor=pointer]:
+            - /url: /admin/orders
+          - link "Reviews" [ref=f1e42] [cursor=pointer]:
+            - /url: /admin/reviews
+          - link "Custom Studio" [ref=f1e46] [cursor=pointer]:
+            - /url: /admin/custom-requests
+          - link "Inventory" [ref=f1e50] [cursor=pointer]:
+            - /url: /admin/inventory
+          - link "Coupons" [ref=f1e62] [cursor=pointer]:
+            - /url: /admin/coupons
+          - link "Customers" [ref=f1e67] [cursor=pointer]:
+            - /url: /admin/customers
+          - link "Media Library" [ref=f1e74] [cursor=pointer]:
+            - /url: /admin/media
+          - link "Store Settings" [ref=f1e80] [cursor=pointer]:
+            - /url: /admin/settings
+      - generic [ref=f1e85]:
+        - 'button "Theme: light Mode Switch" [ref=f1e86]':
+          - generic [ref=f1e87]:
+            - generic [ref=f1e94]: "Theme:"
+            - generic [ref=f1e95]: light Mode
+          - generic [ref=f1e96]: Switch
+        - generic "Click to manage admin profile & avatar" [ref=f1e97] [cursor=pointer]:
+          - generic [ref=f1e98]: A
+          - generic [ref=f1e105]:
+            - paragraph [ref=f1e107]: Administrator
+            - paragraph [ref=f1e108]: admin
+            - paragraph [ref=f1e109]:
+              - generic [ref=f1e110]: Change Photo
+        - button "Logout" [ref=f1e111]
+    - main [ref=f1e116]:
+      - generic [ref=f1e118]:
+        - generic [ref=f1e119]:
+          - generic [ref=f1e120]:
+            - heading "Order Management & Fulfilment" [level=1] [ref=f1e121]
+            - paragraph [ref=f1e122]: Track online store sales and offline exhibition / Instagram custom orders in one unified system.
+          - generic [ref=f1e123]:
+            - button "+ Create Offline / Exhibition Order" [ref=f1e124]
+            - link "Export CSV" [ref=f1e127] [cursor=pointer]:
+              - /url: /api/admin/orders/export
+        - generic [ref=f1e132]:
+          - button "Orders Management (0)" [ref=f1e133] [cursor=pointer]
+          - button "Custom Studio Inquiries (0)" [ref=f1e138] [cursor=pointer]
+        - generic [ref=f1e142]:
+          - 'textbox "Search by order #, email, phone..." [ref=f1e147]'
+          - combobox [ref=f1e148]:
+            - option "All Sources (Online & Offline)" [selected]
+            - option "Online Web Store"
+            - option "Offline / Exhibition / Instagram"
+          - combobox [ref=f1e149]:
+            - option "All Fulfilment Statuses" [selected]
+            - option "Pending Payment"
+            - option "Confirmed"
+            - option "Processing (Curing)"
+            - option "Ready to Ship"
+            - option "Shipped"
+            - option "Delivered"
+            - option "Cancelled"
+          - combobox [ref=f1e150]:
+            - option "All Payment Statuses" [selected]
+            - option "Paid"
+            - option "Unpaid"
+            - option "Pending Verification"
+            - option "Failed"
+        - table [ref=f1e153]:
+          - rowgroup [ref=f1e154]:
+            - row [ref=f1e155]:
+              - 'columnheader "Order #" [ref=f1e156]'
+              - columnheader "Source" [ref=f1e157]
+              - columnheader "Customer" [ref=f1e158]
+              - columnheader "Products Ordered" [ref=f1e159]
+              - columnheader "Total" [ref=f1e160]
+              - columnheader "Fulfilment Status" [ref=f1e161]
+              - columnheader "Payment Status (Click to Toggle)" [ref=f1e162]
+              - columnheader "Action" [ref=f1e163]
+          - rowgroup [ref=f1e164]:
+            - row [ref=f1e165]:
+              - cell "Loading orders..." [ref=f1e166]
+  - button "Open Next.js Dev Tools" [ref=f1e172] [cursor=pointer]

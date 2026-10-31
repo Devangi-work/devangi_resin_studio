@@ -6,6 +6,7 @@ import {
   Filter,
   Download,
   Eye,
+  Edit2,
   Truck,
   CheckCircle2,
   Clock,
@@ -108,6 +109,55 @@ export default function AdminOrdersPage() {
     productImages: [] as string[],
     packingImages: [] as string[],
     discountAmount: 0,
+    orderNotes: "",
+    internalNotes: "",
+  });
+
+  // Edit Order Modal State
+  const [editingOrder, setEditingOrder] = useState<any | null>(null);
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [editError, setEditError] = useState("");
+  const [uploadingEditReceipt, setUploadingEditReceipt] = useState(false);
+  const [uploadingEditProductImg, setUploadingEditProductImg] = useState(false);
+  const [uploadingEditPackingImg, setUploadingEditPackingImg] = useState(false);
+
+  const [editForm, setEditForm] = useState({
+    customerName: "",
+    customerEmail: "",
+    customerPhone: "",
+    hasShipping: false,
+    shippingCharge: 0,
+    shippingAddressLine1: "Studio Pick-up / Walk-in",
+    shippingAddressLine2: "",
+    shippingCity: "Mumbai",
+    shippingState: "Maharashtra",
+    shippingPostalCode: "400001",
+    shippingCountry: "India",
+    orderSource: "offline",
+    paymentMethod: "cash",
+    paymentStatus: "paid",
+    paymentScreenshotUrl: "",
+    upiTransactionId: "",
+    orderStatus: "confirmed",
+    trackingNumber: "",
+    courierName: "Delhivery",
+    items: [] as Array<{
+      id?: string;
+      productId?: string | null;
+      productName: string;
+      variantName?: string | null;
+      quantity: number;
+      unitPrice: number;
+      price?: number;
+      totalPrice?: number;
+      personalizationDetails?: any;
+      referenceImageUrl?: string | null;
+    }>,
+    productImages: [] as string[],
+    packingImages: [] as string[],
+    discountAmount: 0,
+    subtotal: 0,
+    totalAmount: 0,
     orderNotes: "",
     internalNotes: "",
   });
@@ -234,10 +284,11 @@ export default function AdminOrdersPage() {
     }
     if (search.trim()) {
       const q = search.toLowerCase();
+      const cleanEmail = o.customerEmail && !o.customerEmail.startsWith("offline_") ? o.customerEmail.toLowerCase() : "";
       return (
         o.orderNumber?.toLowerCase().includes(q) ||
         o.customerName?.toLowerCase().includes(q) ||
-        o.customerEmail?.toLowerCase().includes(q) ||
+        cleanEmail.includes(q) ||
         o.customerPhone?.includes(q)
       );
     }
@@ -277,6 +328,287 @@ export default function AdminOrdersPage() {
           }
         })
         .catch(() => { });
+    }
+  };
+
+  const openEditModal = (ord: any) => {
+    const addr1 = ord.shippingAddressLine1 || "";
+    const hasShip = Number(ord.shippingCharge) > 0 || (
+      Boolean(addr1) &&
+      !addr1.toLowerCase().includes("pick-up") &&
+      !addr1.toLowerCase().includes("pickup") &&
+      !addr1.toLowerCase().includes("walk-in")
+    );
+
+    const cleanEmail = ord.customerEmail && !ord.customerEmail.startsWith("offline_") ? ord.customerEmail : "";
+
+    const items = ord.items && ord.items.length > 0
+      ? ord.items.map((it: any) => ({
+          id: it.id,
+          productId: it.productId || null,
+          productName: it.productName || "Custom Resin Piece",
+          variantName: it.variantName || "",
+          quantity: Number(it.quantity) || 1,
+          unitPrice: Number(it.unitPrice || it.price || 0),
+          price: Number(it.unitPrice || it.price || 0),
+          totalPrice: Number(it.totalPrice || (it.unitPrice || it.price || 0) * (it.quantity || 1)),
+          personalizationDetails: it.personalizationDetails,
+          referenceImageUrl: it.referenceImageUrl,
+        }))
+      : [{ productName: "Custom Resin Piece", quantity: 1, unitPrice: Number(ord.subtotal || ord.totalAmount || 0) }];
+
+    const subtotal = items.reduce((sum: number, it: any) => sum + (Number(it.unitPrice) * Number(it.quantity)), 0);
+    const discount = Number(ord.discountAmount) || 0;
+    const shipping = Number(ord.shippingCharge) || 0;
+    const total = Math.max(0, subtotal - discount + (hasShip ? shipping : 0));
+
+    setEditForm({
+      customerName: ord.customerName || "",
+      customerEmail: cleanEmail,
+      customerPhone: ord.customerPhone || "",
+      hasShipping: hasShip,
+      shippingCharge: shipping,
+      shippingAddressLine1: ord.shippingAddressLine1 || "",
+      shippingAddressLine2: ord.shippingAddressLine2 || "",
+      shippingCity: ord.shippingCity || "Mumbai",
+      shippingState: ord.shippingState || "Maharashtra",
+      shippingPostalCode: ord.shippingPostalCode || "400001",
+      shippingCountry: ord.shippingCountry || "India",
+      orderSource: ord.orderSource || "offline",
+      paymentMethod: ord.paymentMethod || "cash",
+      paymentStatus: ord.paymentStatus || "paid",
+      paymentScreenshotUrl: ord.paymentScreenshotUrl || "",
+      upiTransactionId: ord.upiTransactionId || "",
+      orderStatus: ord.orderStatus || "confirmed",
+      trackingNumber: ord.trackingNumber || "",
+      courierName: ord.courierName || "Delhivery",
+      items,
+      productImages: ord.productImages || [],
+      packingImages: ord.packingImages || [],
+      discountAmount: discount,
+      subtotal,
+      totalAmount: total,
+      orderNotes: ord.orderNotes || "",
+      internalNotes: ord.internalNotes || "",
+    });
+
+    setEditError("");
+    setEditingOrder(ord);
+
+    if (!ord.items || ord.items.length === 0) {
+      fetch(`/api/admin/orders/${ord.id}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data && data.items && data.items.length > 0) {
+            const freshItems = data.items.map((it: any) => ({
+              id: it.id,
+              productId: it.productId || null,
+              productName: it.productName || "Custom Resin Piece",
+              variantName: it.variantName || "",
+              quantity: Number(it.quantity) || 1,
+              unitPrice: Number(it.unitPrice || it.price || 0),
+              price: Number(it.unitPrice || it.price || 0),
+              totalPrice: Number(it.totalPrice || (it.unitPrice || it.price || 0) * (it.quantity || 1)),
+              personalizationDetails: it.personalizationDetails,
+              referenceImageUrl: it.referenceImageUrl,
+            }));
+            const freshSub = freshItems.reduce((s: number, i: any) => s + (Number(i.unitPrice) * Number(i.quantity)), 0);
+            setEditForm((prev) => ({
+              ...prev,
+              items: freshItems,
+              subtotal: freshSub,
+              totalAmount: Math.max(0, freshSub - prev.discountAmount + (prev.hasShipping ? prev.shippingCharge : 0)),
+            }));
+          }
+        })
+        .catch(() => {});
+    }
+  };
+
+  const handleEditItemChange = (idx: number, field: string, value: any) => {
+    const updated = [...editForm.items];
+    updated[idx] = { ...updated[idx], [field]: value };
+    const sub = updated.reduce((sum, it) => sum + (Number(it.unitPrice || 0) * Number(it.quantity || 1)), 0);
+    const ship = editForm.hasShipping ? Number(editForm.shippingCharge || 0) : 0;
+    const total = Math.max(0, sub - Number(editForm.discountAmount || 0) + ship);
+    setEditForm({
+      ...editForm,
+      items: updated,
+      subtotal: sub,
+      totalAmount: total,
+    });
+  };
+
+  const handleAddEditItem = () => {
+    const updated = [...editForm.items, { productName: "Custom Resin Item", quantity: 1, unitPrice: 0 }];
+    const sub = updated.reduce((sum, it) => sum + (Number(it.unitPrice || 0) * Number(it.quantity || 1)), 0);
+    const ship = editForm.hasShipping ? Number(editForm.shippingCharge || 0) : 0;
+    const total = Math.max(0, sub - Number(editForm.discountAmount || 0) + ship);
+    setEditForm({
+      ...editForm,
+      items: updated,
+      subtotal: sub,
+      totalAmount: total,
+    });
+  };
+
+  const handleRemoveEditItem = (idx: number) => {
+    if (editForm.items.length <= 1) return;
+    const updated = editForm.items.filter((_, i) => i !== idx);
+    const sub = updated.reduce((sum, it) => sum + (Number(it.unitPrice || 0) * Number(it.quantity || 1)), 0);
+    const ship = editForm.hasShipping ? Number(editForm.shippingCharge || 0) : 0;
+    const total = Math.max(0, sub - Number(editForm.discountAmount || 0) + ship);
+    setEditForm({
+      ...editForm,
+      items: updated,
+      subtotal: sub,
+      totalAmount: total,
+    });
+  };
+
+  const handleUploadEditReceipt = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingEditReceipt(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/admin/upload", { method: "POST", body: formData });
+      const data = await res.json();
+      if (data.url) {
+        setEditForm((prev) => ({ ...prev, paymentScreenshotUrl: data.url }));
+      }
+    } catch {
+      alert("Failed to upload receipt screenshot");
+    } finally {
+      setUploadingEditReceipt(false);
+    }
+  };
+
+  const handleUploadEditProductImages = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    setUploadingEditProductImg(true);
+    try {
+      const urls: string[] = [];
+      for (let i = 0; i < files.length; i++) {
+        const formData = new FormData();
+        formData.append("file", files[i]);
+        const res = await fetch("/api/admin/upload", { method: "POST", body: formData });
+        const data = await res.json();
+        if (data.url) urls.push(data.url);
+      }
+      setEditForm((prev) => ({
+        ...prev,
+        productImages: [...prev.productImages, ...urls],
+      }));
+    } catch {
+      alert("Failed to upload product images");
+    } finally {
+      setUploadingEditProductImg(false);
+    }
+  };
+
+  const handleUploadEditPackingImages = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    setUploadingEditPackingImg(true);
+    try {
+      const urls: string[] = [];
+      for (let i = 0; i < files.length; i++) {
+        const formData = new FormData();
+        formData.append("file", files[i]);
+        const res = await fetch("/api/admin/upload", { method: "POST", body: formData });
+        const data = await res.json();
+        if (data.url) urls.push(data.url);
+      }
+      setEditForm((prev) => ({
+        ...prev,
+        packingImages: [...prev.packingImages, ...urls],
+      }));
+    } catch {
+      alert("Failed to upload packing images");
+    } finally {
+      setUploadingEditPackingImg(false);
+    }
+  };
+
+  const handleRemoveEditProductImg = (index: number) => {
+    setEditForm((prev) => ({
+      ...prev,
+      productImages: prev.productImages.filter((_, i) => i !== index),
+    }));
+  };
+
+  const handleRemoveEditPackingImg = (index: number) => {
+    setEditForm((prev) => ({
+      ...prev,
+      packingImages: prev.packingImages.filter((_, i) => i !== index),
+    }));
+  };
+
+  const handleRemoveEditReceipt = () => {
+    setEditForm((prev) => ({ ...prev, paymentScreenshotUrl: "" }));
+  };
+
+  const handleSaveEditOrder = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingOrder) return;
+    setSavingEdit(true);
+    setEditError("");
+
+    try {
+      const payload = {
+        customerName: editForm.customerName,
+        customerEmail: editForm.customerEmail.trim() ? editForm.customerEmail.trim() : null,
+        customerPhone: editForm.customerPhone,
+        shippingAddressLine1: editForm.hasShipping
+          ? (editForm.shippingAddressLine1 || "Studio Pick-up / Walk-in")
+          : "Studio Pick-up / Walk-in",
+        shippingAddressLine2: editForm.shippingAddressLine2 || null,
+        shippingCity: editForm.shippingCity || "Mumbai",
+        shippingState: editForm.shippingState || "Maharashtra",
+        shippingPostalCode: editForm.shippingPostalCode || "400001",
+        shippingCountry: editForm.shippingCountry || "India",
+        orderSource: editForm.orderSource,
+        paymentMethod: editForm.paymentMethod,
+        paymentStatus: editForm.paymentStatus,
+        orderStatus: editForm.orderStatus,
+        trackingNumber: editForm.trackingNumber || null,
+        courierName: editForm.courierName || null,
+        upiTransactionId: editForm.upiTransactionId || null,
+        paymentScreenshotUrl: editForm.paymentScreenshotUrl || null,
+        orderNotes: editForm.orderNotes || null,
+        internalNotes: editForm.internalNotes || null,
+        items: editForm.items,
+        subtotal: editForm.subtotal,
+        discountAmount: Number(editForm.discountAmount) || 0,
+        shippingCharge: editForm.hasShipping ? Number(editForm.shippingCharge || 0) : 0,
+        totalAmount: editForm.totalAmount,
+        packingImages: editForm.packingImages,
+        productImages: editForm.productImages,
+      };
+
+      const res = await fetch(`/api/admin/orders/${editingOrder.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.order) {
+        setOrders((prev) => prev.map((o) => (o.id === editingOrder.id ? { ...o, ...data.order } : o)));
+        if (selectedOrder?.id === editingOrder.id) {
+          setSelectedOrder(data.order);
+        }
+        setEditingOrder(null);
+      } else {
+        setEditError(data.error || "Failed to save order");
+      }
+    } catch (err: any) {
+      setEditError(err.message || "Network error updating order");
+    } finally {
+      setSavingEdit(false);
     }
   };
 
@@ -892,7 +1224,15 @@ export default function AdminOrdersPage() {
                         </td>
                         <td className="py-3 px-4">
                           <p className="font-semibold">{o.customerName}</p>
-                          <p className="text-[10px] text-[#736C66]">{o.customerPhone || o.customerEmail}</p>
+                          {o.customerPhone && (
+                            <p className="text-[10px] text-[#736C66]">{o.customerPhone}</p>
+                          )}
+                          {o.customerEmail && !o.customerEmail.startsWith("offline_") && (
+                            <p className="text-[10px] text-[#736C66]">{o.customerEmail}</p>
+                          )}
+                          {!o.customerPhone && (!o.customerEmail || o.customerEmail.startsWith("offline_")) && (
+                            <p className="text-[10px] text-[#8C7A72] italic">No contact info</p>
+                          )}
                         </td>
 
                         {/* Products Ordered with Image */}
@@ -1049,9 +1389,19 @@ export default function AdminOrdersPage() {
                             )}
                             <button
                               onClick={() => openOrderModal(o)}
-                              className="px-3 py-1 bg-white border border-[#E8E0D5] text-[#2C332D] text-xs font-semibold rounded-lg hover:bg-[#FAF8F5] shadow-xs"
+                              className="px-2.5 py-1 bg-white border border-[#E8E0D5] text-[#2C332D] text-xs font-semibold rounded-lg hover:bg-[#FAF8F5] shadow-xs flex items-center gap-1"
+                              title="View Order Details"
                             >
-                              View & Edit
+                              <Eye className="w-3.5 h-3.5 text-[#736C66]" />
+                              <span>View</span>
+                            </button>
+                            <button
+                              onClick={() => openEditModal(o)}
+                              className="px-2.5 py-1 bg-[#FAF4EC] border border-[#D4AF37]/40 text-[#800020] text-xs font-semibold rounded-lg hover:bg-[#F4EBE6] shadow-xs flex items-center gap-1"
+                              title="Edit All Order Details"
+                            >
+                              <Edit2 className="w-3.5 h-3.5 text-[#B8972E]" />
+                              <span>Edit</span>
                             </button>
                           </div>
                         </td>
@@ -1389,7 +1739,7 @@ export default function AdminOrdersPage() {
                     type="email"
                     value={offlineForm.customerEmail}
                     onChange={(e) => setOfflineForm({ ...offlineForm, customerEmail: e.target.value })}
-                    placeholder="ananya@example.com"
+                    placeholder="Leave blank if not available"
                     className="w-full px-3 py-2 bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl"
                   />
                 </div>
@@ -1854,6 +2204,19 @@ export default function AdminOrdersPage() {
                   </a>
                 )}
                 <button
+                  type="button"
+                  onClick={() => {
+                    const ord = selectedOrder;
+                    setSelectedOrder(null);
+                    openEditModal(ord);
+                  }}
+                  className="px-3 py-1.5 bg-[#FAF4EC] hover:bg-[#F4EBE6] text-[#800020] border border-[#D4AF37]/40 text-xs font-bold rounded-xl flex items-center space-x-1.5 transition shadow-xs"
+                  title="Edit all order details"
+                >
+                  <Edit2 className="w-3.5 h-3.5 text-[#B8972E]" />
+                  <span>Edit Order</span>
+                </button>
+                <button
                   onClick={() => setSelectedOrder(null)}
                   className="p-1 text-[#736C66] hover:text-[#2C332D]"
                 >
@@ -1872,8 +2235,12 @@ export default function AdminOrdersPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs bg-[#FAF8F5] p-4 rounded-xl border border-[#E8E0D5]">
               <div>
                 <p className="font-bold text-[#2C332D]">{selectedOrder.customerName}</p>
-                <p className="text-[#736C66]">{selectedOrder.customerEmail}</p>
-                <p className="text-[#736C66]">{selectedOrder.customerPhone}</p>
+                {selectedOrder.customerPhone && (
+                  <p className="text-[#736C66]">{selectedOrder.customerPhone}</p>
+                )}
+                {selectedOrder.customerEmail && !selectedOrder.customerEmail.startsWith("offline_") && (
+                  <p className="text-[#736C66]">{selectedOrder.customerEmail}</p>
+                )}
               </div>
               <div>
                 <p className="text-[#736C66] leading-relaxed">
@@ -2434,6 +2801,620 @@ export default function AdminOrdersPage() {
                   className="px-5 py-2 bg-[#2C332D] text-white text-xs font-semibold rounded-xl hover:bg-[#3D473E]"
                 >
                   {updating ? "Saving Changes..." : "Save Changes"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Comprehensive Edit Order Modal */}
+      {editingOrder && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-3xl w-full p-6 sm:p-8 space-y-6 border border-[#E8E0D5] shadow-2xl max-h-[92vh] overflow-y-auto">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-[#F4EBE6] pb-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-full bg-[#FAF4EC] text-[#B8972E] border border-[#E8E0D5]">
+                    {editForm.orderSource || "offline"} Order
+                  </span>
+                  <span className="text-xs text-[#8C7A72]">
+                    Created {new Date(editingOrder.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                  </span>
+                </div>
+                <h2 className="font-serif text-xl sm:text-2xl font-bold text-[#2C332D] mt-1">
+                  Edit Order #{editingOrder.orderNumber}
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingOrder(null)}
+                className="p-1.5 text-[#736C66] hover:text-[#2C332D] rounded-full hover:bg-[#FAF8F5] transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Error Message */}
+            {editError && (
+              <div className="p-3 bg-[#FDF2F2] border border-[#FADBD8] rounded-xl text-xs text-[#DF4C4C] flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{editError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleSaveEditOrder} className="space-y-6 text-xs">
+              {/* 1. Customer Details */}
+              <div className="space-y-3">
+                <h3 className="font-bold text-xs uppercase tracking-wider text-[#2C332D] flex items-center gap-1.5">
+                  <Phone className="w-3.5 h-3.5 text-[#B8972E]" />
+                  <span>Customer Information</span>
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="font-semibold text-[#2C332D] block mb-1">Customer Name *</label>
+                    <input
+                      type="text"
+                      required
+                      value={editForm.customerName}
+                      onChange={(e) => setEditForm({ ...editForm, customerName: e.target.value })}
+                      className="w-full px-3 py-2 bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl text-xs text-[#2C332D]"
+                    />
+                  </div>
+                  <div>
+                    <label className="font-semibold text-[#2C332D] block mb-1">Phone Number *</label>
+                    <input
+                      type="tel"
+                      required
+                      value={editForm.customerPhone}
+                      onChange={(e) => setEditForm({ ...editForm, customerPhone: e.target.value })}
+                      className="w-full px-3 py-2 bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl text-xs text-[#2C332D]"
+                    />
+                  </div>
+                  <div>
+                    <label className="font-semibold text-[#2C332D] block mb-1">Email (Optional)</label>
+                    <input
+                      type="email"
+                      value={editForm.customerEmail}
+                      onChange={(e) => setEditForm({ ...editForm, customerEmail: e.target.value })}
+                      placeholder="Leave blank if not available"
+                      className="w-full px-3 py-2 bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl text-xs text-[#2C332D]"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* 2. Order Source & Fulfilment Status */}
+              <div className="space-y-3 pt-3 border-t border-[#F4EBE6]">
+                <h3 className="font-bold text-xs uppercase tracking-wider text-[#2C332D] flex items-center gap-1.5">
+                  <Store className="w-3.5 h-3.5 text-[#B8972E]" />
+                  <span>Order Origin &amp; Fulfilment</span>
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                  <div>
+                    <label className="font-semibold text-[#2C332D] block mb-1">Order Source</label>
+                    <select
+                      value={editForm.orderSource}
+                      onChange={(e) => setEditForm({ ...editForm, orderSource: e.target.value as any })}
+                      className="w-full px-3 py-2 bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl text-xs text-[#2C332D]"
+                    >
+                      <option value="offline">Offline / Walk-in Studio</option>
+                      <option value="exhibition">Art Exhibition / Pop-up Stall</option>
+                      <option value="instagram">Instagram DM</option>
+                      <option value="custom">Direct Custom Commission</option>
+                      <option value="online">Online Store</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="font-semibold text-[#2C332D] block mb-1">Fulfilment Status</label>
+                    <select
+                      value={editForm.orderStatus}
+                      onChange={(e) => setEditForm({ ...editForm, orderStatus: e.target.value as any })}
+                      className="w-full px-3 py-2 bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl text-xs text-[#2C332D] font-medium"
+                    >
+                      <option value="pending_payment">Pending Payment</option>
+                      <option value="confirmed">Confirmed</option>
+                      <option value="processing">Processing (Handcrafting)</option>
+                      <option value="ready_to_ship">Ready to Ship</option>
+                      <option value="shipped">Shipped</option>
+                      <option value="delivered">Delivered</option>
+                      <option value="cancelled">Cancelled</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="font-semibold text-[#2C332D] block mb-1">Courier Partner</label>
+                    <input
+                      type="text"
+                      value={editForm.courierName}
+                      onChange={(e) => setEditForm({ ...editForm, courierName: e.target.value })}
+                      placeholder="e.g. Delhivery / Blue Dart"
+                      className="w-full px-3 py-2 bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl text-xs text-[#2C332D]"
+                    />
+                  </div>
+                  <div>
+                    <label className="font-semibold text-[#2C332D] block mb-1">Tracking Number (AWB)</label>
+                    <input
+                      type="text"
+                      value={editForm.trackingNumber}
+                      onChange={(e) => setEditForm({ ...editForm, trackingNumber: e.target.value })}
+                      placeholder="e.g. DELHIVERY-7749210"
+                      className="w-full px-3 py-2 bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl text-xs font-mono text-[#2C332D]"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* 3. Payment Method & Status */}
+              <div className="space-y-3 pt-3 border-t border-[#F4EBE6]">
+                <h3 className="font-bold text-xs uppercase tracking-wider text-[#2C332D] flex items-center gap-1.5">
+                  <DollarSign className="w-3.5 h-3.5 text-[#B8972E]" />
+                  <span>Payment Details</span>
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="font-semibold text-[#2C332D] block mb-1">Payment Method</label>
+                    <select
+                      value={editForm.paymentMethod}
+                      onChange={(e) => setEditForm({ ...editForm, paymentMethod: e.target.value as any })}
+                      className="w-full px-3 py-2 bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl text-xs text-[#2C332D]"
+                    >
+                      <option value="cash">Cash in Hand</option>
+                      <option value="upi">Direct UPI Transfer</option>
+                      <option value="card">Card POS</option>
+                      <option value="bank_transfer">Bank Transfer / NEFT</option>
+                      <option value="razorpay">Razorpay Online</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="font-semibold text-[#2C332D] block mb-1">Payment Status</label>
+                    <select
+                      value={editForm.paymentStatus}
+                      onChange={(e) => setEditForm({ ...editForm, paymentStatus: e.target.value as any })}
+                      className="w-full px-3 py-2 bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl text-xs text-[#2C332D] font-bold"
+                    >
+                      <option value="paid">Paid (Verified)</option>
+                      <option value="unpaid">Unpaid</option>
+                      <option value="pending_verification">Pending Verification</option>
+                      <option value="cancelled">Cancelled</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="font-semibold text-[#2C332D] block mb-1">UPI Ref / UTR / Note</label>
+                    <input
+                      type="text"
+                      value={editForm.upiTransactionId}
+                      onChange={(e) => setEditForm({ ...editForm, upiTransactionId: e.target.value })}
+                      placeholder="e.g. 423984729182"
+                      className="w-full px-3 py-2 bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl text-xs font-mono text-[#2C332D]"
+                    />
+                  </div>
+                </div>
+
+                {/* Payment Screenshot Proof */}
+                <div className="p-3 bg-[#FAF8F5] rounded-2xl border border-[#E8E0D5] space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold text-xs text-[#2C332D] flex items-center gap-1.5">
+                      <Camera className="w-3.5 h-3.5 text-[#B8972E]" />
+                      <span>Payment Screenshot Proof</span>
+                    </span>
+                    <label className="cursor-pointer text-xs font-bold text-[#800020] hover:underline flex items-center gap-1">
+                      <UploadCloud className="w-3.5 h-3.5" />
+                      <span>{uploadingEditReceipt ? "Uploading..." : editForm.paymentScreenshotUrl ? "Replace Screenshot" : "Upload Screenshot"}</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        disabled={uploadingEditReceipt}
+                        onChange={handleUploadEditReceipt}
+                      />
+                    </label>
+                  </div>
+                  {editForm.paymentScreenshotUrl ? (
+                    <div className="flex items-center gap-3 bg-white p-2.5 rounded-xl border border-[#E8E0D5]">
+                      <img
+                        src={editForm.paymentScreenshotUrl}
+                        alt="Payment Proof"
+                        className="w-14 h-14 object-cover rounded-lg border border-[#E8E0D5] cursor-pointer"
+                        onClick={() => setViewingScreenshotModal(editForm.paymentScreenshotUrl)}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[11px] font-semibold text-[#2C332D] truncate">Payment Receipt Image</p>
+                        <button
+                          type="button"
+                          onClick={() => setViewingScreenshotModal(editForm.paymentScreenshotUrl)}
+                          className="text-[10px] text-[#800020] hover:underline"
+                        >
+                          View Full Size
+                        </button>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleRemoveEditReceipt}
+                        className="p-1.5 text-[#DF4C4C] hover:bg-[#FDF2F2] rounded-lg transition"
+                        title="Remove screenshot"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <p className="text-[11px] text-[#8C7A72] italic">No payment receipt screenshot attached.</p>
+                  )}
+                </div>
+              </div>
+
+              {/* 4. Itemized Products Table */}
+              <div className="space-y-3 pt-3 border-t border-[#F4EBE6]">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-bold text-xs uppercase tracking-wider text-[#2C332D] flex items-center gap-1.5">
+                    <Package className="w-3.5 h-3.5 text-[#B8972E]" />
+                    <span>Purchased Items &amp; Quantities ({editForm.items.length})</span>
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={handleAddEditItem}
+                    className="px-2.5 py-1 bg-[#FAF4EC] hover:bg-[#F4EBE6] text-[#800020] border border-[#D4AF37]/30 rounded-lg text-xs font-bold flex items-center gap-1 transition"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Add Item</span>
+                  </button>
+                </div>
+
+                <div className="space-y-2 border border-[#E8E0D5] rounded-2xl p-3 bg-[#FAF8F5]">
+                  {editForm.items.map((item, idx) => (
+                    <div key={idx} className="flex flex-col sm:flex-row sm:items-center gap-2 p-2.5 bg-white rounded-xl border border-[#E8E0D5]">
+                      <div className="flex-1 min-w-0">
+                        <label className="text-[10px] font-bold text-[#8C7A72] block sm:hidden">Product Name</label>
+                        <input
+                          type="text"
+                          required
+                          value={item.productName}
+                          onChange={(e) => handleEditItemChange(idx, "productName", e.target.value)}
+                          placeholder="Product Name"
+                          className="w-full px-2.5 py-1.5 bg-[#FAF8F5] border border-[#E8E0D5] rounded-lg text-xs text-[#2C332D] font-medium"
+                        />
+                      </div>
+                      <div className="w-24">
+                        <label className="text-[10px] font-bold text-[#8C7A72] block sm:hidden">Qty</label>
+                        <input
+                          type="number"
+                          min="1"
+                          required
+                          value={item.quantity}
+                          onChange={(e) => handleEditItemChange(idx, "quantity", Math.max(1, parseInt(e.target.value) || 1))}
+                          placeholder="Qty"
+                          className="w-full px-2.5 py-1.5 bg-[#FAF8F5] border border-[#E8E0D5] rounded-lg text-xs text-[#2C332D] text-center"
+                        />
+                      </div>
+                      <div className="w-28">
+                        <label className="text-[10px] font-bold text-[#8C7A72] block sm:hidden">Price (₹)</label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="any"
+                          required
+                          value={item.unitPrice}
+                          onChange={(e) => handleEditItemChange(idx, "unitPrice", parseFloat(e.target.value) || 0)}
+                          placeholder="Price ₹"
+                          className="w-full px-2.5 py-1.5 bg-[#FAF8F5] border border-[#E8E0D5] rounded-lg text-xs text-[#2C332D] text-right font-mono"
+                        />
+                      </div>
+                      <div className="w-24 text-right font-mono font-bold text-xs text-[#2C332D] py-1">
+                        ₹{(Number(item.quantity || 1) * Number(item.unitPrice || 0)).toFixed(2)}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveEditItem(idx)}
+                        disabled={editForm.items.length <= 1}
+                        className={`p-1.5 rounded-lg transition ${editForm.items.length <= 1 ? "opacity-30 cursor-not-allowed text-[#8C7A72]" : "text-[#DF4C4C] hover:bg-[#FDF2F2]"}`}
+                        title="Remove item"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* 5. Shipping Required & Address */}
+              <div className="space-y-3 pt-3 border-t border-[#F4EBE6]">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div>
+                    <label className="font-semibold text-xs uppercase tracking-wider text-[#2C332D] flex items-center gap-1.5">
+                      <Truck className="w-3.5 h-3.5 text-[#B8972E]" />
+                      <span>Shipping Required?</span>
+                    </label>
+                    <p className="text-[10px] text-[#736C66]">
+                      Does this order require courier dispatch or customer studio pickup?
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1 bg-[#FAF8F5] p-1 rounded-xl border border-[#E8E0D5]">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const tot = Math.max(0, editForm.subtotal - Number(editForm.discountAmount || 0));
+                        setEditForm({ ...editForm, hasShipping: false, shippingCharge: 0, totalAmount: tot });
+                      }}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${!editForm.hasShipping ? "bg-white text-[#2C332D] shadow-xs border border-[#E8E0D5]" : "text-[#736C66] hover:text-[#2C332D]"}`}
+                    >
+                      No (Pickup)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const ship = editForm.shippingCharge || 79;
+                        const tot = Math.max(0, editForm.subtotal - Number(editForm.discountAmount || 0) + ship);
+                        setEditForm({ ...editForm, hasShipping: true, shippingCharge: ship, totalAmount: tot });
+                      }}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${editForm.hasShipping ? "bg-[#2C332D] text-white shadow-xs" : "text-[#736C66] hover:text-[#2C332D]"}`}
+                    >
+                      Yes (Courier)
+                    </button>
+                  </div>
+                </div>
+
+                {editForm.hasShipping && (
+                  <div className="p-4 bg-[#FAF8F5] rounded-2xl border border-[#E8E0D5] space-y-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <label className="text-xs font-semibold text-[#2C332D]">Shipping Charge (₹):</label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={editForm.shippingCharge}
+                        onChange={(e) => {
+                          const ship = Number(e.target.value) || 0;
+                          const tot = Math.max(0, editForm.subtotal - Number(editForm.discountAmount || 0) + ship);
+                          setEditForm({ ...editForm, shippingCharge: ship, totalAmount: tot });
+                        }}
+                        className="w-24 px-2.5 py-1 bg-white border border-[#E8E0D5] rounded-lg text-xs font-mono font-bold text-right"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const tot = Math.max(0, editForm.subtotal - Number(editForm.discountAmount || 0));
+                          setEditForm({ ...editForm, shippingCharge: 0, totalAmount: tot });
+                        }}
+                        className="px-2 py-1 bg-white border border-[#E8E0D5] rounded-lg text-[10px] font-semibold text-[#736C66] hover:text-[#2C332D]"
+                      >
+                        ₹0 Free
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const tot = Math.max(0, editForm.subtotal - Number(editForm.discountAmount || 0) + 79);
+                          setEditForm({ ...editForm, shippingCharge: 79, totalAmount: tot });
+                        }}
+                        className="px-2 py-1 bg-white border border-[#E8E0D5] rounded-lg text-[10px] font-semibold text-[#736C66] hover:text-[#2C332D]"
+                      >
+                        ₹79 Std
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const tot = Math.max(0, editForm.subtotal - Number(editForm.discountAmount || 0) + 149);
+                          setEditForm({ ...editForm, shippingCharge: 149, totalAmount: tot });
+                        }}
+                        className="px-2 py-1 bg-white border border-[#E8E0D5] rounded-lg text-[10px] font-semibold text-[#736C66] hover:text-[#2C332D]"
+                      >
+                        ₹149 Exp
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-[11px] font-semibold text-[#2C332D] block mb-1">Address Line 1</label>
+                        <input
+                          type="text"
+                          value={editForm.shippingAddressLine1}
+                          onChange={(e) => setEditForm({ ...editForm, shippingAddressLine1: e.target.value })}
+                          placeholder="Building, street, flat no."
+                          className="w-full px-3 py-1.5 bg-white border border-[#E8E0D5] rounded-xl text-xs"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[11px] font-semibold text-[#2C332D] block mb-1">Address Line 2</label>
+                        <input
+                          type="text"
+                          value={editForm.shippingAddressLine2}
+                          onChange={(e) => setEditForm({ ...editForm, shippingAddressLine2: e.target.value })}
+                          placeholder="Landmark, area (optional)"
+                          className="w-full px-3 py-1.5 bg-white border border-[#E8E0D5] rounded-xl text-xs"
+                        />
+                      </div>
+                      <div className="grid grid-cols-3 gap-2 sm:col-span-2">
+                        <div>
+                          <label className="text-[11px] font-semibold text-[#2C332D] block mb-1">City</label>
+                          <input
+                            type="text"
+                            value={editForm.shippingCity}
+                            onChange={(e) => setEditForm({ ...editForm, shippingCity: e.target.value })}
+                            className="w-full px-3 py-1.5 bg-white border border-[#E8E0D5] rounded-xl text-xs"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[11px] font-semibold text-[#2C332D] block mb-1">State</label>
+                          <input
+                            type="text"
+                            value={editForm.shippingState}
+                            onChange={(e) => setEditForm({ ...editForm, shippingState: e.target.value })}
+                            className="w-full px-3 py-1.5 bg-white border border-[#E8E0D5] rounded-xl text-xs"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[11px] font-semibold text-[#2C332D] block mb-1">Postal Code</label>
+                          <input
+                            type="text"
+                            value={editForm.shippingPostalCode}
+                            onChange={(e) => setEditForm({ ...editForm, shippingPostalCode: e.target.value })}
+                            className="w-full px-3 py-1.5 bg-white border border-[#E8E0D5] rounded-xl text-xs font-mono"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* 6. Product & Packing Photos */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-[#F4EBE6]">
+                {/* Finished Piece Photos */}
+                <div className="space-y-2 p-3 bg-[#FAF8F5] rounded-2xl border border-[#E8E0D5]">
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold text-xs text-[#2C332D] flex items-center gap-1.5">
+                      <ImageIcon className="w-3.5 h-3.5 text-[#B8972E]" />
+                      <span>Finished Piece Photos</span>
+                    </span>
+                    <label className="cursor-pointer text-[11px] font-bold text-[#800020] hover:underline flex items-center gap-1">
+                      <UploadCloud className="w-3.5 h-3.5" />
+                      <span>{uploadingEditProductImg ? "Uploading..." : "+ Add Photos"}</span>
+                      <input
+                        type="file"
+                        multiple
+                        accept="image/*"
+                        className="hidden"
+                        disabled={uploadingEditProductImg}
+                        onChange={handleUploadEditProductImages}
+                      />
+                    </label>
+                  </div>
+                  {editForm.productImages && editForm.productImages.length > 0 ? (
+                    <div className="grid grid-cols-4 gap-2">
+                      {editForm.productImages.map((imgUrl, i) => (
+                        <div key={i} className="relative group rounded-xl overflow-hidden border border-[#E8E0D5] aspect-square bg-white">
+                          <img src={imgUrl} alt="Piece" className="w-full h-full object-cover" />
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveEditProductImg(i)}
+                            className="absolute top-1 right-1 p-1 bg-black/60 hover:bg-black text-white rounded-full transition"
+                            title="Remove photo"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-[11px] text-[#8C7A72] italic">No piece photos attached.</p>
+                  )}
+                </div>
+
+                {/* Packing Photos */}
+                <div className="space-y-2 p-3 bg-[#FAF8F5] rounded-2xl border border-[#E8E0D5]">
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold text-xs text-[#2C332D] flex items-center gap-1.5">
+                      <Package className="w-3.5 h-3.5 text-[#B8972E]" />
+                      <span>Parcel Packing Photos</span>
+                    </span>
+                    <label className="cursor-pointer text-[11px] font-bold text-[#800020] hover:underline flex items-center gap-1">
+                      <UploadCloud className="w-3.5 h-3.5" />
+                      <span>{uploadingEditPackingImg ? "Uploading..." : "+ Add Photos"}</span>
+                      <input
+                        type="file"
+                        multiple
+                        accept="image/*"
+                        className="hidden"
+                        disabled={uploadingEditPackingImg}
+                        onChange={handleUploadEditPackingImages}
+                      />
+                    </label>
+                  </div>
+                  {editForm.packingImages && editForm.packingImages.length > 0 ? (
+                    <div className="grid grid-cols-4 gap-2">
+                      {editForm.packingImages.map((imgUrl, i) => (
+                        <div key={i} className="relative group rounded-xl overflow-hidden border border-[#E8E0D5] aspect-square bg-white">
+                          <img src={imgUrl} alt="Packing" className="w-full h-full object-cover" />
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveEditPackingImg(i)}
+                            className="absolute top-1 right-1 p-1 bg-black/60 hover:bg-black text-white rounded-full transition"
+                            title="Remove photo"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-[11px] text-[#8C7A72] italic">No packing photos attached.</p>
+                  )}
+                </div>
+              </div>
+
+              {/* 7. Notes */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-[#F4EBE6]">
+                <div>
+                  <label className="font-semibold text-[#2C332D] block mb-1">Customer / Order Notes</label>
+                  <textarea
+                    rows={2}
+                    value={editForm.orderNotes}
+                    onChange={(e) => setEditForm({ ...editForm, orderNotes: e.target.value })}
+                    placeholder="Notes visible to customer or special instructions"
+                    className="w-full px-3 py-2 bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="font-semibold text-[#2C332D] block mb-1">Internal Studio Notes</label>
+                  <textarea
+                    rows={2}
+                    value={editForm.internalNotes}
+                    onChange={(e) => setEditForm({ ...editForm, internalNotes: e.target.value })}
+                    placeholder="Private notes (payment verification, packaging reminders, etc.)"
+                    className="w-full px-3 py-2 bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl text-xs"
+                  />
+                </div>
+              </div>
+
+              {/* 8. Financial Breakdown Summary */}
+              <div className="bg-[#FAF8F5] p-4 rounded-2xl border border-[#E8E0D5] space-y-2">
+                <div className="flex justify-between text-xs text-[#736C66]">
+                  <span>Items Subtotal:</span>
+                  <span className="font-mono font-semibold">₹{editForm.subtotal.toFixed(2)}</span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-[#736C66]">Discount (₹):</span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="any"
+                    value={editForm.discountAmount}
+                    onChange={(e) => {
+                      const disc = Number(e.target.value) || 0;
+                      const ship = editForm.hasShipping ? Number(editForm.shippingCharge || 0) : 0;
+                      const tot = Math.max(0, editForm.subtotal - disc + ship);
+                      setEditForm({ ...editForm, discountAmount: disc, totalAmount: tot });
+                    }}
+                    className="w-24 px-2 py-0.5 bg-white border border-[#E8E0D5] rounded text-xs font-mono text-right"
+                  />
+                </div>
+                <div className="flex justify-between text-xs text-[#736C66]">
+                  <span>Shipping Fee:</span>
+                  <span className="font-mono font-semibold">
+                    {editForm.hasShipping ? `+₹${Number(editForm.shippingCharge || 0).toFixed(2)}` : "₹0.00 (Self-Pickup)"}
+                  </span>
+                </div>
+                <div className="pt-2 border-t border-[#E8E0D5] flex justify-between items-center text-sm font-bold">
+                  <span className="text-[#2C332D]">Total Order Amount:</span>
+                  <span className="font-mono text-base text-[#800020]">
+                    ₹{editForm.totalAmount.toFixed(2)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Footer Buttons */}
+              <div className="flex items-center justify-end space-x-2 pt-3 border-t border-[#F4EBE6]">
+                <button
+                  type="button"
+                  onClick={() => setEditingOrder(null)}
+                  className="px-4 py-2 border border-[#E8E0D5] text-xs font-semibold rounded-xl text-[#736C66] hover:bg-[#FAF8F5] transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingEdit}
+                  className="px-6 py-2.5 bg-[#800020] hover:bg-[#68001a] text-white text-xs font-bold rounded-xl transition shadow-sm disabled:opacity-50"
+                >
+                  {savingEdit ? "Saving All Changes..." : "Save Order Changes"}
                 </button>
               </div>
             </form>

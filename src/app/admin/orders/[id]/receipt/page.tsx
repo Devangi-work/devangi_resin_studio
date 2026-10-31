@@ -307,7 +307,9 @@ export default function OrderReceiptPage({
             <p className="font-bold text-sm text-[#2C332D]">
               {order.customerName}
             </p>
-            <p className="text-[#736C66]">{order.customerEmail}</p>
+            {order.customerEmail && !order.customerEmail.startsWith("offline_") && (
+              <p className="text-[#736C66]">{order.customerEmail}</p>
+            )}
             <p className="text-[#736C66]">Contact: {order.customerPhone}</p>
             <div className="pt-1 text-[11px] text-[#736C66]">
               <span className="font-semibold text-[#2C332D]">Payment Method: </span>
@@ -489,7 +491,7 @@ export default function OrderReceiptPage({
 
         {/* Footer Note */}
         <div className="relative z-10 border-t border-[#F4EBE6] pt-4 text-center text-[10px] text-[#8C7A72]">
-          This is a computer-generated verified tax receipt issued by {storeName}. For order inquiries, contact {settings?.contactEmail || "hello@devangiresinstudio.com"}.
+          This is a computer-generated verified receipt issued by {storeName}. For order inquiries, contact {settings?.contactEmail || "hello@devangiresinstudio.com"}.
         </div>
 
       </div>

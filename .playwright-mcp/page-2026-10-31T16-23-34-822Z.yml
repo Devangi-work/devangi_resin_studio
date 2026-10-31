@@ -1,0 +1,127 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - complementary [ref=e3]:
+      - generic [ref=e4]:
+        - link "Devangi Resin Studio Logo DEVANGI RESIN STUDIO View Live Store" [ref=e6] [cursor=pointer]:
+          - /url: /
+          - img "Devangi Resin Studio Logo" [ref=e7]
+          - generic [ref=e8]:
+            - generic [ref=e9]: DEVANGI RESIN STUDIO
+            - generic [ref=e10]: View Live Store
+        - navigation [ref=e16]:
+          - link "Dashboard" [ref=e17] [cursor=pointer]:
+            - /url: /admin/dashboard
+          - link "Products" [ref=e24] [cursor=pointer]:
+            - /url: /admin/products
+          - link "Categories" [ref=e30] [cursor=pointer]:
+            - /url: /admin/categories
+          - link "Orders" [ref=e37] [cursor=pointer]:
+            - /url: /admin/orders
+          - link "Reviews" [ref=e42] [cursor=pointer]:
+            - /url: /admin/reviews
+          - link "Custom Studio" [ref=e46] [cursor=pointer]:
+            - /url: /admin/custom-requests
+          - link "Inventory" [ref=e50] [cursor=pointer]:
+            - /url: /admin/inventory
+          - link "Coupons" [ref=e62] [cursor=pointer]:
+            - /url: /admin/coupons
+          - link "Customers" [ref=e67] [cursor=pointer]:
+            - /url: /admin/customers
+          - link "Media Library" [ref=e74] [cursor=pointer]:
+            - /url: /admin/media
+          - link "Store Settings" [ref=e80] [cursor=pointer]:
+            - /url: /admin/settings
+      - generic [ref=e85]:
+        - 'button "Theme: light Mode Switch" [ref=e86]':
+          - generic [ref=e87]:
+            - generic [ref=e94]: "Theme:"
+            - generic [ref=e95]: light Mode
+          - generic [ref=e96]: Switch
+        - generic "Click to manage admin profile & avatar" [ref=e97] [cursor=pointer]:
+          - img "Devangi Resin Studio Admin" [ref=e180]
+          - generic [ref=e105]:
+            - paragraph [ref=e107]: Devangi Resin Studio Admin
+            - paragraph [ref=e108]: devangiresin@gmail.com
+            - paragraph [ref=e109]:
+              - generic [ref=e110]: Change Photo
+        - button "Logout" [ref=e111]
+    - main [ref=e116]:
+      - generic [ref=e118]:
+        - generic [ref=e119]:
+          - generic [ref=e120]:
+            - heading "Order Management & Fulfilment" [level=1] [ref=e121]
+            - paragraph [ref=e122]: Track online store sales and offline exhibition / Instagram custom orders in one unified system.
+          - generic [ref=e123]:
+            - button "+ Create Offline / Exhibition Order" [ref=e124]
+            - link "Export CSV" [ref=e127] [cursor=pointer]:
+              - /url: /api/admin/orders/export
+        - generic [ref=e132]:
+          - button "Orders Management (1)" [ref=e181] [cursor=pointer]
+          - button "Custom Studio Inquiries (0)" [ref=e138] [cursor=pointer]
+        - generic [ref=e142]:
+          - 'textbox "Search by order #, email, phone..." [ref=e147]'
+          - combobox [ref=e148]:
+            - option "All Sources (Online & Offline)" [selected]
+            - option "Online Web Store"
+            - option "Offline / Exhibition / Instagram"
+          - combobox [ref=e149]:
+            - option "All Fulfilment Statuses" [selected]
+            - option "Pending Payment"
+            - option "Confirmed"
+            - option "Processing (Curing)"
+            - option "Ready to Ship"
+            - option "Shipped"
+            - option "Delivered"
+            - option "Cancelled"
+          - combobox [ref=e150]:
+            - option "All Payment Statuses" [selected]
+            - option "Paid"
+            - option "Unpaid"
+            - option "Pending Verification"
+            - option "Failed"
+        - table [ref=e153]:
+          - rowgroup [ref=e154]:
+            - row [ref=e155]:
+              - 'columnheader "Order #" [ref=e156]'
+              - columnheader "Source" [ref=e157]
+              - columnheader "Customer" [ref=e158]
+              - columnheader "Products Ordered" [ref=e159]
+              - columnheader "Total" [ref=e160]
+              - columnheader "Fulfilment Status" [ref=e161]
+              - columnheader "Payment Status (Click to Toggle)" [ref=e162]
+              - columnheader "Action" [ref=e163]
+          - rowgroup [ref=e164]:
+            - row [ref=e182]:
+              - cell "OFF-20261031-6531 31 Oct" [ref=e183]:
+                - generic [ref=e184]: OFF-20261031-6531
+                - text: 31 Oct
+              - cell "offline" [ref=e185]
+              - cell [ref=e186]:
+                - paragraph [ref=e187]: Anisha Jain
+                - paragraph [ref=e188]: +91 88981 24208
+              - 'cell "Custom Rosé Aura Keychain Custom Rosé Aura Keychain Qty: 1" [ref=e189]':
+                - generic [ref=e191]:
+                  - img "Custom Rosé Aura Keychain" [ref=e193] [cursor=pointer]
+                  - generic [ref=e194]:
+                    - paragraph [ref=e195]: Custom Rosé Aura Keychain
+                    - generic [ref=e196]: "Qty: 1"
+              - cell "₹149.00" [ref=e198]
+              - cell "Confirmed" [ref=e199]:
+                - combobox "Click to change Fulfilment Status" [ref=e200] [cursor=pointer]:
+                  - option "Pending Payment"
+                  - option "Confirmed" [selected]
+                  - option "Processing"
+                  - option "Ready to Ship"
+                  - option "Shipped"
+                  - option "Delivered"
+                  - option "Cancelled"
+              - cell [ref=e201]:
+                - button "paid (Toggle)" [ref=e202]
+              - cell [ref=e205]:
+                - generic [ref=e206]:
+                  - link "PDF" [ref=e207] [cursor=pointer]:
+                    - /url: /admin/orders/ord_1793461082575/receipt
+                  - button "View" [ref=e212]
+                  - button "Edit" [ref=e217]
+  - button "Open Next.js Dev Tools" [ref=e221] [cursor=pointer]
+  - alert [ref=e225]

@@ -389,4 +389,97 @@ test("E-Commerce Test Suite", async (t) => {
     assert.equal(retrieved?.status, "converted");
     assert.equal(retrieved?.adminNotes, "Converted to Order #ORD-2026-TEST");
   });
+
+  // 15. Offline Order Without Email & Comprehensive Order Editing
+  await t.test("Offline order creation without email stores null customerEmail and updateOrder edits all details", async () => {
+    // Create offline order without email
+    const offlineOrd = await dbStore.createOrder({
+      customerName: "Kavita Singhania",
+      customerEmail: null,
+      customerPhone: "9819283746",
+      shippingAddressLine1: "Studio Pick-up / Walk-in",
+      shippingCity: "Mumbai",
+      shippingState: "Maharashtra",
+      shippingPostalCode: "400001",
+      orderSource: "offline",
+      paymentMethod: "cash",
+      paymentStatus: "paid",
+      orderStatus: "confirmed",
+      subtotal: 1200,
+      totalAmount: 1200,
+      items: [
+        {
+          productId: null,
+          productName: "Handmade Ocean Coaster",
+          quantity: 2,
+          unitPrice: 600,
+          price: 600,
+          totalPrice: 1200,
+        },
+      ],
+    });
+
+    assert.ok(offlineOrd.id);
+    // Crucial check: customerEmail must NOT be any dummy offline_* email
+    assert.strictEqual(offlineOrd.customerEmail, null);
+    assert.equal(offlineOrd.customerName, "Kavita Singhania");
+    assert.equal(offlineOrd.customerPhone, "9819283746");
+    assert.equal(Number(offlineOrd.totalAmount), 1200);
+
+    // Now edit all details using updateOrder
+    const updated = await dbStore.updateOrder(
+      offlineOrd.id,
+      {
+        customerName: "Kavita S. Singhania",
+        customerPhone: "9819283747",
+        customerEmail: "kavita.singhania@example.com",
+        orderSource: "exhibition",
+        orderStatus: "ready_to_ship",
+        paymentMethod: "upi",
+        paymentStatus: "paid",
+        upiTransactionId: "UPI982374928172",
+        shippingAddressLine1: "Flat 12B, Sea Green Towers, Worli",
+        shippingCity: "Mumbai",
+        shippingState: "Maharashtra",
+        shippingPostalCode: "400018",
+        shippingCharge: 79,
+        discountAmount: 100,
+        subtotal: 1500,
+        totalAmount: 1479,
+        trackingNumber: "DELHIVERY-998877",
+        courierName: "Delhivery",
+        orderNotes: "Fragile resin art",
+        internalNotes: "Verified UPI transfer",
+        items: [
+          {
+            productName: "Handmade Ocean Coaster - Deep Sea",
+            quantity: 3,
+            unitPrice: 500,
+            price: 500,
+            totalPrice: 1500,
+          },
+        ],
+      },
+      "admin@devangiresinstudio.com"
+    );
+
+    assert.ok(updated);
+    assert.equal(updated.customerName, "Kavita S. Singhania");
+    assert.equal(updated.customerPhone, "9819283747");
+    assert.equal(updated.customerEmail, "kavita.singhania@example.com");
+    assert.equal(updated.orderSource, "exhibition");
+    assert.equal(updated.orderStatus, "ready_to_ship");
+    assert.equal(updated.paymentMethod, "upi");
+    assert.equal(updated.upiTransactionId, "UPI982374928172");
+    assert.equal(updated.shippingAddressLine1, "Flat 12B, Sea Green Towers, Worli");
+    assert.equal(Number(updated.shippingCharge), 79);
+    assert.equal(Number(updated.discountAmount), 100);
+    assert.equal(Number(updated.totalAmount), 1479);
+    assert.equal(updated.trackingNumber, "DELHIVERY-998877");
+    assert.equal(updated.courierName, "Delhivery");
+    assert.equal(updated.internalNotes, "Verified UPI transfer");
+    assert.equal(updated.items?.length, 1);
+    assert.equal(updated.items[0].productName, "Handmade Ocean Coaster - Deep Sea");
+    assert.equal(updated.items[0].quantity, 3);
+  });
 });

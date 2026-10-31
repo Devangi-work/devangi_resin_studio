@@ -7,36 +7,46 @@ import { z } from "zod";
 export const dynamic = "force-dynamic";
 
 const updateOrderSchema = z.object({
-  orderStatus: z.enum([
-    "pending_payment",
-    "confirmed",
-    "processing",
-    "ready_to_ship",
-    "shipped",
-    "delivered",
-    "cancelled",
-    "refunded",
-  ]).optional(),
-  paymentStatus: z.enum([
-    "paid",
-    "unpaid",
-    "pending",
-    "pending_verification",
-    "failed",
-    "cancelled",
-  ]).optional(),
-  paymentScreenshotUrl: z.string().optional().nullable(),
-  trackingNumber: z.string().optional(),
-  courierName: z.string().optional(),
-  internalNotes: z.string().optional(),
-  packingImages: z.array(z.string()).optional(),
-  productImages: z.array(z.string()).optional(),
-  shippingCharge: z.number().min(0).optional(),
+  customerName: z.string().min(1).optional(),
+  customerEmail: z.string().email().optional().nullable().or(z.literal("")),
+  customerPhone: z.string().optional(),
   shippingAddressLine1: z.string().optional(),
-  shippingAddressLine2: z.string().optional(),
+  shippingAddressLine2: z.string().optional().nullable(),
   shippingCity: z.string().optional(),
   shippingState: z.string().optional(),
   shippingPostalCode: z.string().optional(),
+  shippingCountry: z.string().optional(),
+  orderSource: z.string().optional(),
+  paymentMethod: z.string().optional(),
+  paymentStatus: z.string().optional(),
+  orderStatus: z.string().optional(),
+  trackingNumber: z.string().optional().nullable(),
+  courierName: z.string().optional().nullable(),
+  upiTransactionId: z.string().optional().nullable(),
+  paymentScreenshotUrl: z.string().optional().nullable(),
+  orderNotes: z.string().optional().nullable(),
+  internalNotes: z.string().optional().nullable(),
+  subtotal: z.number().min(0).optional(),
+  discountAmount: z.number().min(0).optional(),
+  shippingCharge: z.number().min(0).optional(),
+  totalAmount: z.number().min(0).optional(),
+  packingImages: z.array(z.string()).optional(),
+  productImages: z.array(z.string()).optional(),
+  items: z.array(
+    z.object({
+      id: z.string().optional(),
+      productId: z.string().optional().nullable(),
+      productName: z.string().min(1),
+      variantName: z.string().optional().nullable(),
+      sku: z.string().optional().nullable(),
+      quantity: z.number().min(1),
+      unitPrice: z.number().min(0),
+      price: z.number().min(0).optional(),
+      totalPrice: z.number().min(0).optional(),
+      personalizationDetails: z.any().optional(),
+      referenceImageUrl: z.string().optional().nullable(),
+    })
+  ).optional(),
 });
 
 export async function GET(
@@ -98,60 +108,7 @@ export async function PUT(
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
-    if (
-      shippingCharge !== undefined ||
-      shippingAddressLine1 !== undefined ||
-      shippingAddressLine2 !== undefined ||
-      shippingCity !== undefined ||
-      shippingState !== undefined ||
-      shippingPostalCode !== undefined
-    ) {
-      order = await dbStore.updateOrderShipping(
-        id,
-        shippingCharge !== undefined ? shippingCharge : Number(order.shippingCharge || 0),
-        {
-          shippingAddressLine1,
-          shippingAddressLine2,
-          shippingCity,
-          shippingState,
-          shippingPostalCode,
-        }
-      );
-    }
-
-    if (paymentStatus && paymentStatus !== order?.paymentStatus) {
-      order = await dbStore.updateOrderPaymentStatus(id, paymentStatus);
-    }
-
-    if (paymentScreenshotUrl !== undefined) {
-      order = await dbStore.updateOrderPaymentScreenshot(id, paymentScreenshotUrl || "");
-    }
-
-    if (packingImages) {
-      order = await dbStore.updateOrderPackingImages(id, packingImages);
-    }
-
-    if (trackingNumber) {
-      order = await dbStore.updateTracking(id, trackingNumber, courierName || order.courierName || "Standard Courier");
-    }
-
-    if (orderStatus) {
-      order = await dbStore.updateOrderStatus(
-        id,
-        orderStatus,
-        internalNotes,
-        admin.email,
-        trackingNumber,
-        courierName,
-        packingImages
-      );
-    } else if (internalNotes) {
-      order = await dbStore.updateOrderStatus(id, order.orderStatus, internalNotes, admin.email);
-    }
-
-    // Return fresh state
-    const freshOrder = await dbStore.getOrderById(id);
-    const resolvedOrder = freshOrder || order;
+    const resolvedOrder = await dbStore.updateOrder(id, result.data, admin.email);
 
     try {
       revalidatePath("/admin/orders");

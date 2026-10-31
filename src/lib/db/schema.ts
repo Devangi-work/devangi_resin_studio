@@ -300,7 +300,7 @@ export const orders = pgTable(
     orderNumber: text("order_number").notNull().unique(), // e.g., "RA-20261010-8942"
     customerId: text("customer_id").references(() => customers.id, { onDelete: "set null" }),
     customerName: text("customer_name").notNull(),
-    customerEmail: text("customer_email").notNull(),
+    customerEmail: text("customer_email"),
     customerPhone: text("customer_phone").notNull(),
 
     // Shipping Address Snapshot
@@ -603,7 +603,7 @@ export const customRequests = pgTable(
   {
     id: text("id").primaryKey(),
     customerName: text("customer_name").notNull(),
-    customerEmail: text("customer_email").notNull(),
+    customerEmail: text("customer_email"),
     customerPhone: text("customer_phone").notNull(),
     productType: text("product_type").notNull(), // 'Preserved Flowers Frame', 'Resin Table Clock', 'Geode Wall Clock', 'Nameplate'
     budget: text("budget"),

@@ -61,6 +61,9 @@ export async function sendBrevoEmail(params: SendEmailParams) {
  * Sends order confirmation email with itemized list and order lookup link.
  */
 export async function sendOrderConfirmationEmail(order: any) {
+  if (!order.customerEmail || order.customerEmail.startsWith("offline_")) {
+    return { success: true, mocked: true, note: "No valid customer email provided" };
+  }
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
   const itemsHtml = (order.items || [])
     .map(

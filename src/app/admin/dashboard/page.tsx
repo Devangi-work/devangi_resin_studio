@@ -152,7 +152,12 @@ export default function AdminDashboardPage() {
                     </td>
                     <td className="py-3 px-4">
                       <p className="font-semibold">{o.customerName}</p>
-                      <p className="text-[10px] text-[#736C66]">{o.customerEmail}</p>
+                      {o.customerPhone && (
+                        <p className="text-[10px] text-[#736C66]">{o.customerPhone}</p>
+                      )}
+                      {o.customerEmail && !o.customerEmail.startsWith("offline_") && (
+                        <p className="text-[10px] text-[#736C66]">{o.customerEmail}</p>
+                      )}
                     </td>
                     <td className="py-3 px-4 font-bold">₹{o.totalAmount}</td>
                     <td className="py-3 px-4">

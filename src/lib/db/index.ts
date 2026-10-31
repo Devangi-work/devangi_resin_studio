@@ -1425,12 +1425,14 @@ export const dbStore = {
     const id = data.id || `ord_${Date.now()}`;
     const orderNumber = data.orderNumber || `RA-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-${Math.floor(1000 + Math.random() * 9000)}`;
     const secureLookupToken = `sec_${Math.random().toString(36).substring(2, 12)}`;
+    const cleanCustomerEmail = data.customerEmail && data.customerEmail.trim() ? data.customerEmail.trim() : null;
 
     const newOrder = {
       ...data,
       id,
       orderNumber,
       secureLookupToken,
+      customerEmail: cleanCustomerEmail,
       subtotal: Number(data.subtotal).toFixed(2),
       discountAmount: Number(data.discountAmount || 0).toFixed(2),
       shippingCharge: Number(data.shippingCharge || 0).toFixed(2),
@@ -1464,7 +1466,7 @@ export const dbStore = {
             packing_images, product_images, is_discarded,
             created_at, updated_at
           ) VALUES (
-            ${id}, ${orderNumber}, ${data.customerId || null}, ${data.customerName}, ${data.customerEmail}, ${data.customerPhone},
+            ${id}, ${orderNumber}, ${data.customerId || null}, ${data.customerName}, ${cleanCustomerEmail}, ${data.customerPhone},
             ${data.shippingAddressLine1}, ${data.shippingAddressLine2 || null}, ${data.shippingCity}, ${data.shippingState},
             ${data.shippingPostalCode}, ${data.shippingCountry || 'India'}, ${data.orderNotes || null},
             ${Number(data.subtotal).toFixed(2)}, ${Number(data.discountAmount || 0).toFixed(2)},
@@ -1500,6 +1502,124 @@ export const dbStore = {
     }
 
     return newOrder;
+  },
+
+  async updateOrder(id: string, data: any, adminEmail = "admin") {
+    const ordIndex = store.orders.findIndex((o) => o.id === id || o.orderNumber === id);
+    let ord = ordIndex !== -1 ? store.orders[ordIndex] : null;
+
+    const cleanEmail = data.customerEmail !== undefined
+      ? (data.customerEmail && data.customerEmail.trim() ? data.customerEmail.trim() : null)
+      : undefined;
+
+    if (ord) {
+      if (data.customerName !== undefined) ord.customerName = data.customerName;
+      if (cleanEmail !== undefined) ord.customerEmail = cleanEmail;
+      if (data.customerPhone !== undefined) ord.customerPhone = data.customerPhone;
+      if (data.shippingAddressLine1 !== undefined) ord.shippingAddressLine1 = data.shippingAddressLine1;
+      if (data.shippingAddressLine2 !== undefined) ord.shippingAddressLine2 = data.shippingAddressLine2;
+      if (data.shippingCity !== undefined) ord.shippingCity = data.shippingCity;
+      if (data.shippingState !== undefined) ord.shippingState = data.shippingState;
+      if (data.shippingPostalCode !== undefined) ord.shippingPostalCode = data.shippingPostalCode;
+      if (data.shippingCountry !== undefined) ord.shippingCountry = data.shippingCountry;
+      if (data.orderSource !== undefined) ord.orderSource = data.orderSource;
+      if (data.paymentMethod !== undefined) ord.paymentMethod = data.paymentMethod;
+      if (data.paymentStatus !== undefined) ord.paymentStatus = data.paymentStatus;
+      if (data.orderStatus !== undefined) ord.orderStatus = data.orderStatus;
+      if (data.trackingNumber !== undefined) ord.trackingNumber = data.trackingNumber;
+      if (data.courierName !== undefined) ord.courierName = data.courierName;
+      if (data.upiTransactionId !== undefined) ord.upiTransactionId = data.upiTransactionId;
+      if (data.paymentScreenshotUrl !== undefined) ord.paymentScreenshotUrl = data.paymentScreenshotUrl;
+      if (data.orderNotes !== undefined) ord.orderNotes = data.orderNotes;
+      if (data.subtotal !== undefined) ord.subtotal = Number(data.subtotal).toFixed(2);
+      if (data.discountAmount !== undefined) ord.discountAmount = Number(data.discountAmount).toFixed(2);
+      if (data.shippingCharge !== undefined) ord.shippingCharge = Number(data.shippingCharge).toFixed(2);
+      if (data.totalAmount !== undefined) ord.totalAmount = Number(data.totalAmount).toFixed(2);
+      if (data.packingImages !== undefined) ord.packingImages = data.packingImages;
+      if (data.productImages !== undefined) ord.productImages = data.productImages;
+      if (data.internalNotes) {
+        ord.internalNotes = ord.internalNotes ? `${ord.internalNotes}\n[${new Date().toISOString()}] ${data.internalNotes}` : data.internalNotes;
+      }
+      if (Array.isArray(data.items)) {
+        ord.items = data.items.map((it: any) => ({
+          ...it,
+          id: it.id || `item_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+          orderId: id,
+          unitPrice: Number(it.unitPrice || it.price || 0),
+          totalPrice: Number((it.unitPrice || it.price || 0) * (it.quantity || 1)),
+        }));
+      }
+      ord.updatedAt = new Date();
+    }
+
+    if (sql) {
+      try {
+        const customerEmailVal = cleanEmail !== undefined ? cleanEmail : (ord.customerEmail || null);
+        const shippingAddress2Val = data.shippingAddressLine2 !== undefined ? (data.shippingAddressLine2 || null) : (ord.shippingAddressLine2 || null);
+        const trackingNumberVal = data.trackingNumber !== undefined ? (data.trackingNumber || null) : (ord.trackingNumber || null);
+        const courierNameVal = data.courierName !== undefined ? (data.courierName || null) : (ord.courierName || null);
+        const upiTransactionIdVal = data.upiTransactionId !== undefined ? (data.upiTransactionId || null) : (ord.upiTransactionId || null);
+        const paymentScreenshotUrlVal = data.paymentScreenshotUrl !== undefined ? (data.paymentScreenshotUrl || null) : (ord.paymentScreenshotUrl || null);
+        const orderNotesVal = data.orderNotes !== undefined ? (data.orderNotes || null) : (ord.orderNotes || null);
+        const internalNotesVal = data.internalNotes !== undefined ? (data.internalNotes || null) : (ord.internalNotes || null);
+
+        await sql`
+          UPDATE orders
+          SET
+            customer_name = COALESCE(${data.customerName !== undefined ? data.customerName : null}, customer_name),
+            customer_email = ${customerEmailVal},
+            customer_phone = COALESCE(${data.customerPhone !== undefined ? data.customerPhone : null}, customer_phone),
+            shipping_address_line1 = COALESCE(${data.shippingAddressLine1 !== undefined ? data.shippingAddressLine1 : null}, shipping_address_line1),
+            shipping_address_line2 = ${shippingAddress2Val},
+            shipping_city = COALESCE(${data.shippingCity !== undefined ? data.shippingCity : null}, shipping_city),
+            shipping_state = COALESCE(${data.shippingState !== undefined ? data.shippingState : null}, shipping_state),
+            shipping_postal_code = COALESCE(${data.shippingPostalCode !== undefined ? data.shippingPostalCode : null}, shipping_postal_code),
+            shipping_country = COALESCE(${data.shippingCountry !== undefined ? data.shippingCountry : null}, shipping_country),
+            order_source = COALESCE(${data.orderSource !== undefined ? data.orderSource : null}, order_source),
+            payment_method = COALESCE(${data.paymentMethod !== undefined ? data.paymentMethod : null}, payment_method),
+            payment_status = COALESCE(${data.paymentStatus !== undefined ? data.paymentStatus : null}, payment_status),
+            order_status = COALESCE(${data.orderStatus !== undefined ? data.orderStatus : null}, order_status),
+            tracking_number = ${trackingNumberVal},
+            courier_name = ${courierNameVal},
+            upi_transaction_id = ${upiTransactionIdVal},
+            payment_screenshot_url = ${paymentScreenshotUrlVal},
+            order_notes = ${orderNotesVal},
+            subtotal = COALESCE(${data.subtotal !== undefined ? Number(data.subtotal).toFixed(2) : null}, subtotal),
+            discount_amount = COALESCE(${data.discountAmount !== undefined ? Number(data.discountAmount).toFixed(2) : null}, discount_amount),
+            shipping_charge = COALESCE(${data.shippingCharge !== undefined ? Number(data.shippingCharge).toFixed(2) : null}, shipping_charge),
+            total_amount = COALESCE(${data.totalAmount !== undefined ? Number(data.totalAmount).toFixed(2) : null}, total_amount),
+            packing_images = COALESCE(${data.packingImages !== undefined ? JSON.stringify(data.packingImages) : null}::jsonb, packing_images),
+            product_images = COALESCE(${data.productImages !== undefined ? JSON.stringify(data.productImages) : null}::jsonb, product_images),
+            internal_notes = ${internalNotesVal},
+            updated_at = NOW()
+          WHERE id = ${id} OR order_number = ${id};
+        `;
+
+        if (Array.isArray(data.items) && data.items.length > 0) {
+          await sql`DELETE FROM order_items WHERE order_id = ${id};`;
+          for (const item of data.items) {
+            const itemId = item.id || `item_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+            await sql`
+              INSERT INTO order_items (
+                id, order_id, product_id, variant_id, product_name, variant_name,
+                sku, unit_price, quantity, total_price, personalization_details, reference_image_url
+              ) VALUES (
+                ${itemId}, ${id}, ${item.productId || null}, ${item.variantId || null},
+                ${item.productName || 'Handmade Resin Art'}, ${item.variantName || null},
+                ${item.sku || 'SKU-CUSTOM'}, ${Number(item.price || item.unitPrice || 0).toFixed(2)},
+                ${Number(item.quantity || 1)}, ${Number((item.price || item.unitPrice || 0) * (item.quantity || 1)).toFixed(2)},
+                ${item.personalizationDetails ? JSON.stringify(item.personalizationDetails) : null},
+                ${item.referenceImageUrl || null}
+              );
+            `;
+          }
+        }
+      } catch (err) {
+        console.error("[updateOrder] DB error:", err);
+      }
+    }
+
+    return await this.getOrderById(id);
   },
 
   async updateOrderStatus(
