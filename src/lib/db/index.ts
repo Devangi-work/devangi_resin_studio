@@ -1982,8 +1982,12 @@ export const dbStore = {
 
     if (sql) {
       try {
-        await sql`DELETE FROM order_items WHERE order_id = ${targetId};`;
-        await sql`DELETE FROM order_status_history WHERE order_id = ${targetId};`;
+        await sql`DELETE FROM order_items WHERE order_id = ${targetId};`.catch(() => {});
+        await sql`DELETE FROM order_status_history WHERE order_id = ${targetId};`.catch(() => {});
+        await sql`DELETE FROM refunds WHERE order_id = ${targetId};`.catch(() => {});
+        await sql`DELETE FROM payments WHERE order_id = ${targetId};`.catch(() => {});
+        await sql`DELETE FROM coupon_usages WHERE order_id = ${targetId};`.catch(() => {});
+        await sql`UPDATE reviews SET order_id = NULL WHERE order_id = ${targetId};`.catch(() => {});
         await sql`DELETE FROM orders WHERE id = ${targetId} OR order_number = ${idOrNumber};`;
       } catch (err) {
         console.error("DB deleteOrder err:", err);
