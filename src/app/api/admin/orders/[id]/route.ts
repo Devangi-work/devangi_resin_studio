@@ -131,3 +131,37 @@ export async function PUT(
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    await requireAdminAuth();
+    const { id } = await params;
+    const order = await dbStore.getOrderById(id);
+    if (!order) {
+      return NextResponse.json({ error: "Order not found" }, { status: 404 });
+    }
+
+    await dbStore.deleteOrder(id);
+
+    try {
+      revalidatePath("/admin/orders");
+      if (order.orderNumber) {
+        revalidatePath(`/orders/${order.orderNumber}`);
+      }
+      revalidatePath("/track-order");
+      revalidatePath("/account");
+    } catch {
+      // ignore
+    }
+
+    return NextResponse.json({ success: true, message: "Order removed successfully" });
+  } catch (err: any) {
+    if (err.message?.includes("Unauthorized")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
+}

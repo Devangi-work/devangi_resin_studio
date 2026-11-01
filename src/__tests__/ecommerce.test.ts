@@ -586,4 +586,43 @@ test("E-Commerce Test Suite", async (t) => {
     const name4 = formatReceiptFileName(null, "OFF-20261031-1122");
     assert.equal(name4, "Receipt - Customer - OFF-20261031-1122");
   });
+
+  await t.test("Partial update with only orderStatus persists to database and refetches cleanly without reverting", async () => {
+    const order = await dbStore.createOrder({
+      customerName: "Rohan Varma",
+      customerEmail: "rohan.varma@example.com",
+      customerPhone: "+91 99887 76655",
+      orderSource: "offline",
+      orderStatus: "confirmed",
+      paymentStatus: "paid",
+      totalAmount: 1200,
+      subtotal: 1200,
+      shippingCharge: 0,
+      items: [
+        { productName: "Resin Clock", quantity: 1, unitPrice: 1200, totalPrice: 1200 },
+      ],
+    });
+
+    assert.equal(order.orderStatus, "confirmed");
+
+    // Send partial update only containing orderStatus (exactly like the table dropdown)
+    const updated = await dbStore.updateOrder(order.id, {
+      orderStatus: "processing",
+    });
+
+    assert.equal(updated.orderStatus, "processing");
+
+    // Refetch to simulate page refresh
+    const refreshed = await dbStore.getOrderById(order.id);
+    assert.equal(refreshed.orderStatus, "processing");
+
+    // Change to ready_to_ship and verify again
+    const updatedAgain = await dbStore.updateOrder(order.id, {
+      orderStatus: "ready_to_ship",
+    });
+    assert.equal(updatedAgain.orderStatus, "ready_to_ship");
+
+    const refreshedAgain = await dbStore.getOrderById(order.id);
+    assert.equal(refreshedAgain.orderStatus, "ready_to_ship");
+  });
 });

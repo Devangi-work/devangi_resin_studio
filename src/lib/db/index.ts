@@ -1510,6 +1510,11 @@ export const dbStore = {
   },
 
   async updateOrder(id: string, data: any, adminEmail = "admin") {
+    const existingOrder = await this.getOrderById(id);
+    if (!existingOrder) {
+      return null;
+    }
+
     const ordIndex = store.orders.findIndex((o) => o.id === id || o.orderNumber === id);
     let ord = ordIndex !== -1 ? store.orders[ordIndex] : null;
 
@@ -1560,56 +1565,84 @@ export const dbStore = {
 
     if (sql) {
       try {
-        const customerEmailVal = cleanEmail !== undefined ? cleanEmail : (ord.customerEmail || null);
-        const shippingAddress1Val = data.shippingAddressLine1 !== undefined ? (data.shippingAddressLine1 ? data.shippingAddressLine1.trim() : null) : (ord ? ord.shippingAddressLine1 || null : null);
-        const shippingAddress2Val = data.shippingAddressLine2 !== undefined ? (data.shippingAddressLine2 ? data.shippingAddressLine2.trim() : null) : (ord ? ord.shippingAddressLine2 || null : null);
-        const shippingCityVal = data.shippingCity !== undefined ? (data.shippingCity ? data.shippingCity.trim() : null) : (ord ? ord.shippingCity || null : null);
-        const shippingStateVal = data.shippingState !== undefined ? (data.shippingState ? data.shippingState.trim() : null) : (ord ? ord.shippingState || null : null);
-        const shippingPostalCodeVal = data.shippingPostalCode !== undefined ? (data.shippingPostalCode ? data.shippingPostalCode.trim() : null) : (ord ? ord.shippingPostalCode || null : null);
-        const shippingCountryVal = data.shippingCountry !== undefined ? (data.shippingCountry ? data.shippingCountry.trim() : null) : (ord ? ord.shippingCountry || null : null);
-        const trackingNumberVal = data.trackingNumber !== undefined ? (data.trackingNumber || null) : (ord.trackingNumber || null);
-        const courierNameVal = data.courierName !== undefined ? (data.courierName || null) : (ord.courierName || null);
-        const upiTransactionIdVal = data.upiTransactionId !== undefined ? (data.upiTransactionId || null) : (ord.upiTransactionId || null);
-        const paymentScreenshotUrlVal = data.paymentScreenshotUrl !== undefined ? (data.paymentScreenshotUrl || null) : (ord.paymentScreenshotUrl || null);
-        const orderNotesVal = data.orderNotes !== undefined ? (data.orderNotes || null) : (ord.orderNotes || null);
-        const internalNotesVal = data.internalNotes !== undefined ? (data.internalNotes || null) : (ord.internalNotes || null);
-        const discountReasonVal = data.discountReason !== undefined ? (data.discountReason ? data.discountReason.trim() : null) : (ord ? ord.discountReason || null : null);
+        const customerNameVal = data.customerName !== undefined ? data.customerName : existingOrder.customerName;
+        const customerEmailVal = cleanEmail !== undefined ? cleanEmail : (existingOrder.customerEmail || null);
+        const customerPhoneVal = data.customerPhone !== undefined ? (data.customerPhone || null) : (existingOrder.customerPhone || null);
+        const shippingAddress1Val = data.shippingAddressLine1 !== undefined ? (data.shippingAddressLine1 ? data.shippingAddressLine1.trim() : null) : (existingOrder.shippingAddressLine1 || null);
+        const shippingAddress2Val = data.shippingAddressLine2 !== undefined ? (data.shippingAddressLine2 ? data.shippingAddressLine2.trim() : null) : (existingOrder.shippingAddressLine2 || null);
+        const shippingCityVal = data.shippingCity !== undefined ? (data.shippingCity ? data.shippingCity.trim() : null) : (existingOrder.shippingCity || null);
+        const shippingStateVal = data.shippingState !== undefined ? (data.shippingState ? data.shippingState.trim() : null) : (existingOrder.shippingState || null);
+        const shippingPostalCodeVal = data.shippingPostalCode !== undefined ? (data.shippingPostalCode ? data.shippingPostalCode.trim() : null) : (existingOrder.shippingPostalCode || null);
+        const shippingCountryVal = data.shippingCountry !== undefined ? (data.shippingCountry ? data.shippingCountry.trim() : null) : (existingOrder.shippingCountry || null);
+        const orderSourceVal = data.orderSource !== undefined ? data.orderSource : existingOrder.orderSource;
+        const paymentMethodVal = data.paymentMethod !== undefined ? data.paymentMethod : existingOrder.paymentMethod;
+        const paymentStatusVal = data.paymentStatus !== undefined ? data.paymentStatus : existingOrder.paymentStatus;
+        const orderStatusVal = data.orderStatus !== undefined ? data.orderStatus : existingOrder.orderStatus;
+        const trackingNumberVal = data.trackingNumber !== undefined ? (data.trackingNumber || null) : (existingOrder.trackingNumber || null);
+        const courierNameVal = data.courierName !== undefined ? (data.courierName || null) : (existingOrder.courierName || null);
+        const upiTransactionIdVal = data.upiTransactionId !== undefined ? (data.upiTransactionId || null) : (existingOrder.upiTransactionId || null);
+        const paymentScreenshotUrlVal = data.paymentScreenshotUrl !== undefined ? (data.paymentScreenshotUrl || null) : (existingOrder.paymentScreenshotUrl || null);
+        const orderNotesVal = data.orderNotes !== undefined ? (data.orderNotes || null) : (existingOrder.orderNotes || null);
+        const subtotalVal = data.subtotal !== undefined ? Number(data.subtotal).toFixed(2) : existingOrder.subtotal;
+        const discountAmountVal = data.discountAmount !== undefined ? Number(data.discountAmount).toFixed(2) : existingOrder.discountAmount;
+        const discountReasonVal = data.discountReason !== undefined ? (data.discountReason ? data.discountReason.trim() : null) : (existingOrder.discountReason || null);
+        const shippingChargeVal = data.shippingCharge !== undefined ? Number(data.shippingCharge).toFixed(2) : existingOrder.shippingCharge;
+        const totalAmountVal = data.totalAmount !== undefined ? Number(data.totalAmount).toFixed(2) : existingOrder.totalAmount;
+        const packingImagesVal = data.packingImages !== undefined ? JSON.stringify(data.packingImages) : JSON.stringify(existingOrder.packingImages || []);
+        const productImagesVal = data.productImages !== undefined ? JSON.stringify(data.productImages) : JSON.stringify(existingOrder.productImages || []);
+        const internalNotesVal = data.internalNotes !== undefined
+          ? (data.internalNotes ? (existingOrder.internalNotes ? `${existingOrder.internalNotes}\n[${new Date().toISOString()}] ${data.internalNotes}` : data.internalNotes) : null)
+          : (existingOrder.internalNotes || null);
 
         await sql`
           UPDATE orders
           SET
-            customer_name = COALESCE(${data.customerName !== undefined ? data.customerName : null}, customer_name),
+            customer_name = ${customerNameVal},
             customer_email = ${customerEmailVal},
-            customer_phone = COALESCE(${data.customerPhone !== undefined ? data.customerPhone : null}, customer_phone),
+            customer_phone = ${customerPhoneVal},
             shipping_address_line1 = ${shippingAddress1Val},
             shipping_address_line2 = ${shippingAddress2Val},
             shipping_city = ${shippingCityVal},
             shipping_state = ${shippingStateVal},
             shipping_postal_code = ${shippingPostalCodeVal},
             shipping_country = ${shippingCountryVal},
-            order_source = COALESCE(${data.orderSource !== undefined ? data.orderSource : null}, order_source),
-            payment_method = COALESCE(${data.paymentMethod !== undefined ? data.paymentMethod : null}, payment_method),
-            payment_status = COALESCE(${data.paymentStatus !== undefined ? data.paymentStatus : null}, payment_status),
-            order_status = COALESCE(${data.orderStatus !== undefined ? data.orderStatus : null}, order_status),
+            order_source = ${orderSourceVal},
+            payment_method = ${paymentMethodVal},
+            payment_status = ${paymentStatusVal},
+            order_status = ${orderStatusVal},
             tracking_number = ${trackingNumberVal},
             courier_name = ${courierNameVal},
             upi_transaction_id = ${upiTransactionIdVal},
             payment_screenshot_url = ${paymentScreenshotUrlVal},
             order_notes = ${orderNotesVal},
-            subtotal = COALESCE(${data.subtotal !== undefined ? Number(data.subtotal).toFixed(2) : null}, subtotal),
-            discount_amount = COALESCE(${data.discountAmount !== undefined ? Number(data.discountAmount).toFixed(2) : null}, discount_amount),
+            subtotal = ${subtotalVal},
+            discount_amount = ${discountAmountVal},
             discount_reason = ${discountReasonVal},
-            shipping_charge = COALESCE(${data.shippingCharge !== undefined ? Number(data.shippingCharge).toFixed(2) : null}, shipping_charge),
-            total_amount = COALESCE(${data.totalAmount !== undefined ? Number(data.totalAmount).toFixed(2) : null}, total_amount),
-            packing_images = COALESCE(${data.packingImages !== undefined ? JSON.stringify(data.packingImages) : null}::jsonb, packing_images),
-            product_images = COALESCE(${data.productImages !== undefined ? JSON.stringify(data.productImages) : null}::jsonb, product_images),
+            shipping_charge = ${shippingChargeVal},
+            total_amount = ${totalAmountVal},
+            packing_images = ${packingImagesVal}::jsonb,
+            product_images = ${productImagesVal}::jsonb,
             internal_notes = ${internalNotesVal},
             updated_at = NOW()
-          WHERE id = ${id} OR order_number = ${id};
+          WHERE id = ${existingOrder.id} OR order_number = ${id};
         `;
 
+        if (data.orderStatus !== undefined && data.orderStatus !== existingOrder.orderStatus) {
+          await sql`
+            INSERT INTO order_status_history (id, order_id, status, notes, updated_by, created_at)
+            VALUES (
+              ${`osh_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`},
+              ${existingOrder.id},
+              ${data.orderStatus},
+              ${data.internalNotes || 'Status updated'},
+              ${adminEmail || 'admin'},
+              NOW()
+            );
+          `.catch(() => {});
+        }
+
         if (Array.isArray(data.items) && data.items.length > 0) {
-          await sql`DELETE FROM order_items WHERE order_id = ${id};`;
+          await sql`DELETE FROM order_items WHERE order_id = ${existingOrder.id};`;
           for (const item of data.items) {
             const itemId = item.id || `item_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
             await sql`
@@ -1617,7 +1650,7 @@ export const dbStore = {
                 id, order_id, product_id, variant_id, product_name, variant_name,
                 sku, unit_price, quantity, total_price, personalization_details, reference_image_url
               ) VALUES (
-                ${itemId}, ${id}, ${item.productId || null}, ${item.variantId || null},
+                ${itemId}, ${existingOrder.id}, ${item.productId || null}, ${item.variantId || null},
                 ${item.productName || 'Handmade Resin Art'}, ${item.variantName || null},
                 ${item.sku || 'SKU-CUSTOM'}, ${Number(item.price || item.unitPrice || 0).toFixed(2)},
                 ${Number(item.quantity || 1)}, ${Number((item.price || item.unitPrice || 0) * (item.quantity || 1)).toFixed(2)},
@@ -1629,6 +1662,7 @@ export const dbStore = {
         }
       } catch (err) {
         console.error("[updateOrder] DB error:", err);
+        throw err;
       }
     }
 
@@ -1939,6 +1973,33 @@ export const dbStore = {
       }
     }
     return this.getOrderById(id);
+  },
+
+  async deleteOrder(idOrNumber: string): Promise<boolean> {
+    const existing = await this.getOrderById(idOrNumber);
+    const targetId = existing?.id || idOrNumber;
+    const targetOrderNumber = existing?.orderNumber;
+
+    if (sql) {
+      try {
+        await sql`DELETE FROM order_items WHERE order_id = ${targetId};`;
+        await sql`DELETE FROM order_status_history WHERE order_id = ${targetId};`;
+        await sql`DELETE FROM orders WHERE id = ${targetId} OR order_number = ${idOrNumber};`;
+      } catch (err) {
+        console.error("DB deleteOrder err:", err);
+      }
+    }
+
+    const idx = store.orders.findIndex(
+      (o) =>
+        o.id === targetId ||
+        o.orderNumber === idOrNumber ||
+        (targetOrderNumber && o.orderNumber === targetOrderNumber)
+    );
+    if (idx !== -1) {
+      store.orders.splice(idx, 1);
+    }
+    return true;
   },
 
   // ---------------- COUPONS ----------------

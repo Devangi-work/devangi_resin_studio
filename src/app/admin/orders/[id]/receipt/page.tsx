@@ -168,9 +168,12 @@ export default function OrderReceiptPage({
         @media print {
           @page {
             size: A4;
-            margin: 16mm 14mm 14mm 14mm;
+            margin: 0;
           }
+          html,
           body {
+            margin: 0 !important;
+            padding: 0 !important;
             background-color: #ffffff !important;
             color: #111111 !important;
             -webkit-print-color-adjust: exact !important;
@@ -182,8 +185,8 @@ export default function OrderReceiptPage({
           .print-card {
             border: none !important;
             box-shadow: none !important;
-            padding: 4mm 0 0 0 !important;
-            margin: 0 !important;
+            padding: 12mm 14mm 12mm 14mm !important;
+            margin: 0 auto !important;
             max-width: 100% !important;
             width: 100% !important;
           }
@@ -539,7 +542,7 @@ export default function OrderReceiptPage({
 
         {/* Footer Note */}
         <div className="relative z-10 border-t border-[#F4EBE6] pt-4 text-center text-[10px] text-[#8C7A72]">
-          This is a computer-generated verified receipt issued by {storeName}. For order inquiries, contact {settings?.contactEmail || "hello@devangiresinstudio.com"}.
+          This is a computer-generated verified receipt issued by {storeName}.
         </div>
 
       </div>
