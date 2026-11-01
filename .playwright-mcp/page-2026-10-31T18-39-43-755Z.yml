@@ -1,0 +1,293 @@
+- generic [active] [ref=f2e1]:
+  - generic [ref=f2e2]:
+    - complementary [ref=f2e3]:
+      - generic [ref=f2e4]:
+        - link "Devangi Resin Studio Logo DEVANGI RESIN STUDIO View Live Store" [ref=f2e6] [cursor=pointer]:
+          - /url: /
+          - img "Devangi Resin Studio Logo" [ref=f2e7]
+          - generic [ref=f2e8]:
+            - generic [ref=f2e9]: DEVANGI RESIN STUDIO
+            - generic [ref=f2e10]: View Live Store
+        - navigation [ref=f2e16]:
+          - link "Dashboard" [ref=f2e17] [cursor=pointer]:
+            - /url: /admin/dashboard
+          - link "Products" [ref=f2e24] [cursor=pointer]:
+            - /url: /admin/products
+          - link "Categories" [ref=f2e30] [cursor=pointer]:
+            - /url: /admin/categories
+          - link "Orders" [ref=f2e37] [cursor=pointer]:
+            - /url: /admin/orders
+          - link "Reviews" [ref=f2e42] [cursor=pointer]:
+            - /url: /admin/reviews
+          - link "Custom Studio" [ref=f2e46] [cursor=pointer]:
+            - /url: /admin/custom-requests
+          - link "Inventory" [ref=f2e50] [cursor=pointer]:
+            - /url: /admin/inventory
+          - link "Coupons" [ref=f2e62] [cursor=pointer]:
+            - /url: /admin/coupons
+          - link "Customers" [ref=f2e67] [cursor=pointer]:
+            - /url: /admin/customers
+          - link "Media Library" [ref=f2e74] [cursor=pointer]:
+            - /url: /admin/media
+          - link "Store Settings" [ref=f2e80] [cursor=pointer]:
+            - /url: /admin/settings
+      - generic [ref=f2e85]:
+        - 'button "Theme: light Mode Switch" [ref=f2e86]':
+          - generic [ref=f2e87]:
+            - generic [ref=f2e94]: "Theme:"
+            - generic [ref=f2e95]: light Mode
+          - generic [ref=f2e96]: Switch
+        - generic "Click to manage admin profile & avatar" [ref=f2e97] [cursor=pointer]:
+          - img "Devangi Resin Studio Admin" [ref=f2e177]
+          - generic [ref=f2e105]:
+            - paragraph [ref=f2e107]: Devangi Resin Studio Admin
+            - paragraph [ref=f2e108]: devangiresin@gmail.com
+            - paragraph [ref=f2e109]:
+              - generic [ref=f2e110]: Change Photo
+        - button "Logout" [ref=f2e111]
+    - main [ref=f2e116]:
+      - generic [ref=f2e118]:
+        - generic [ref=f2e119]:
+          - generic [ref=f2e120]:
+            - heading "Order Management & Fulfilment" [level=1] [ref=f2e121]
+            - paragraph [ref=f2e122]: Track online store sales and offline exhibition / Instagram custom orders in one unified system.
+          - generic [ref=f2e123]:
+            - button "+ Create Offline / Exhibition Order" [ref=f2e124]
+            - link "Export CSV" [ref=f2e127] [cursor=pointer]:
+              - /url: /api/admin/orders/export
+        - generic [ref=f2e132]:
+          - button "Orders Management (2)" [ref=f2e178] [cursor=pointer]
+          - button "Custom Studio Inquiries (0)" [ref=f2e138] [cursor=pointer]
+        - generic [ref=f2e142]:
+          - 'textbox "Search by order #, email, phone..." [ref=f2e147]'
+          - combobox [ref=f2e148]:
+            - option "All Sources (Online & Offline)" [selected]
+            - option "Online Web Store"
+            - option "Offline / Exhibition / Instagram"
+          - combobox [ref=f2e149]:
+            - option "All Fulfilment Statuses" [selected]
+            - option "Pending Payment"
+            - option "Confirmed"
+            - option "Processing (Curing)"
+            - option "Ready to Ship"
+            - option "Shipped"
+            - option "Delivered"
+            - option "Cancelled"
+          - combobox [ref=f2e150]:
+            - option "All Payment Statuses" [selected]
+            - option "Paid"
+            - option "Unpaid"
+            - option "Pending Verification"
+            - option "Failed"
+        - table [ref=f2e153]:
+          - rowgroup [ref=f2e154]:
+            - row [ref=f2e155]:
+              - 'columnheader "Order #" [ref=f2e156]'
+              - columnheader "Source" [ref=f2e157]
+              - columnheader "Customer" [ref=f2e158]
+              - columnheader "Products Ordered" [ref=f2e159]
+              - columnheader "Total" [ref=f2e160]
+              - columnheader "Fulfilment Status" [ref=f2e161]
+              - columnheader "Payment Status (Click to Toggle)" [ref=f2e162]
+              - columnheader "Action" [ref=f2e163]
+          - rowgroup [ref=f2e164]:
+            - row [ref=f2e179]:
+              - cell "OFF-20261031-8619 31 Oct" [ref=f2e180]:
+                - generic [ref=f2e181]: OFF-20261031-8619
+                - text: 31 Oct
+              - cell "offline" [ref=f2e182]
+              - cell [ref=f2e183]:
+                - paragraph [ref=f2e184]: Meera Kapoor
+                - paragraph [ref=f2e185]: "9820199887"
+              - 'cell "Handmade Resin Ocean Coasters (Set of 4) Qty: 1" [ref=f2e186]':
+                - generic [ref=f2e195]:
+                  - paragraph [ref=f2e196]: Handmade Resin Ocean Coasters (Set of 4)
+                  - generic [ref=f2e197]: "Qty: 1"
+              - cell "₹649.00" [ref=f2e199]
+              - cell "Confirmed" [ref=f2e200]:
+                - combobox "Click to change Fulfilment Status" [ref=f2e201] [cursor=pointer]:
+                  - option "Pending Payment"
+                  - option "Confirmed" [selected]
+                  - option "Processing"
+                  - option "Ready to Ship"
+                  - option "Shipped"
+                  - option "Delivered"
+                  - option "Cancelled"
+              - cell [ref=f2e202]:
+                - button "paid (Toggle)" [ref=f2e203]
+              - cell [ref=f2e206]:
+                - generic [ref=f2e207]:
+                  - link "PDF" [ref=f2e208] [cursor=pointer]:
+                    - /url: /admin/orders/ord_1793471813421/receipt
+                  - button "View" [ref=f2e213]
+                  - button "Edit" [ref=f2e218]
+            - row [ref=f2e222]:
+              - cell "OFF-20261031-6531 31 Oct" [ref=f2e223]:
+                - generic [ref=f2e224]: OFF-20261031-6531
+                - text: 31 Oct
+              - cell "offline" [ref=f2e225]
+              - cell [ref=f2e226]:
+                - paragraph [ref=f2e227]: Anisha Jain
+                - paragraph [ref=f2e228]: +91 88981 24208
+                - paragraph [ref=f2e229]: shrikesh123shetty@gmail.com
+              - 'cell "Custom Rosé Aura Keychain Custom Rosé Aura Keychain Qty: 1" [ref=f2e230]':
+                - generic [ref=f2e232]:
+                  - img "Custom Rosé Aura Keychain" [ref=f2e234] [cursor=pointer]
+                  - generic [ref=f2e235]:
+                    - paragraph [ref=f2e236]: Custom Rosé Aura Keychain
+                    - generic [ref=f2e237]: "Qty: 1"
+              - cell "₹149.00" [ref=f2e239]
+              - cell "Confirmed" [ref=f2e240]:
+                - combobox "Click to change Fulfilment Status" [ref=f2e241] [cursor=pointer]:
+                  - option "Pending Payment"
+                  - option "Confirmed" [selected]
+                  - option "Processing"
+                  - option "Ready to Ship"
+                  - option "Shipped"
+                  - option "Delivered"
+                  - option "Cancelled"
+              - cell [ref=f2e242]:
+                - button "paid (Toggle)" [ref=f2e243]
+              - cell [ref=f2e246]:
+                - generic [ref=f2e247]:
+                  - link "PDF" [ref=f2e248] [cursor=pointer]:
+                    - /url: /admin/orders/ord_1793461082575/receipt
+                  - button "View" [ref=f2e253]
+                  - button "Edit" [ref=f2e258]
+        - generic [ref=f2e263]:
+          - generic [ref=f2e264]:
+            - generic [ref=f2e265]:
+              - generic [ref=f2e266]:
+                - generic [ref=f2e267]: offline Order
+                - generic [ref=f2e268]: Created 31 Oct 2026
+              - 'heading "Edit Order #OFF-20261031-8619" [level=2] [ref=f2e269]'
+            - button [ref=f2e270]
+          - generic [ref=f2e274]:
+            - generic [ref=f2e275]:
+              - heading "Customer Information" [level=3] [ref=f2e276]
+              - generic [ref=f2e280]:
+                - generic [ref=f2e281]:
+                  - generic [ref=f2e282]: Customer Name *
+                  - textbox [ref=f2e283]: Meera Kapoor
+                - generic [ref=f2e284]:
+                  - generic [ref=f2e285]: Phone Number *
+                  - textbox [ref=f2e286]: "9820199887"
+                - generic [ref=f2e287]:
+                  - generic [ref=f2e288]: Email (Optional)
+                  - textbox "Leave blank if not available" [ref=f2e289]
+            - generic [ref=f2e290]:
+              - heading "Order Origin & Fulfilment" [level=3] [ref=f2e291]
+              - generic [ref=f2e298]:
+                - generic [ref=f2e299]:
+                  - generic [ref=f2e300]: Order Source
+                  - combobox [ref=f2e301]:
+                    - option "Offline / Walk-in Studio" [selected]
+                    - option "Art Exhibition / Pop-up Stall"
+                    - option "Instagram DM"
+                    - option "Direct Custom Commission"
+                    - option "Online Store"
+                - generic [ref=f2e302]:
+                  - generic [ref=f2e303]: Fulfilment Status
+                  - combobox [ref=f2e304]:
+                    - option "Pending Payment"
+                    - option "Confirmed" [selected]
+                    - option "Processing (Handcrafting)"
+                    - option "Ready to Ship"
+                    - option "Shipped"
+                    - option "Delivered"
+                    - option "Cancelled"
+                - generic [ref=f2e305]:
+                  - generic [ref=f2e306]: Courier Partner
+                  - textbox "e.g. Delhivery / Blue Dart" [ref=f2e307]: Delhivery
+                - generic [ref=f2e308]:
+                  - generic [ref=f2e309]: Tracking Number (AWB)
+                  - textbox "e.g. DELHIVERY-7749210" [ref=f2e310]
+            - generic [ref=f2e311]:
+              - heading "Payment Details" [level=3] [ref=f2e312]
+              - generic [ref=f2e316]:
+                - generic [ref=f2e317]:
+                  - generic [ref=f2e318]: Payment Method
+                  - combobox [ref=f2e319]:
+                    - option "Cash in Hand" [selected]
+                    - option "Direct UPI Transfer"
+                    - option "Card POS"
+                    - option "Bank Transfer / NEFT"
+                    - option "Razorpay Online"
+                - generic [ref=f2e320]:
+                  - generic [ref=f2e321]: Payment Status
+                  - combobox [ref=f2e322]:
+                    - option "Paid (Verified)" [selected]
+                    - option "Unpaid"
+                    - option "Pending Verification"
+                    - option "Cancelled"
+                - generic [ref=f2e323]:
+                  - generic [ref=f2e324]: UPI Ref / UTR / Note
+                  - textbox "e.g. 423984729182" [ref=f2e325]
+              - generic [ref=f2e326]:
+                - generic [ref=f2e327]:
+                  - generic [ref=f2e328]: Payment Screenshot Proof
+                  - generic [ref=f2e333] [cursor=pointer]: Upload Screenshot
+                - paragraph [ref=f2e338]: No payment receipt screenshot attached.
+            - generic [ref=f2e339]:
+              - generic [ref=f2e340]:
+                - heading "Purchased Items & Quantities (1)" [level=3] [ref=f2e341]
+                - button "Add Item" [ref=f2e347]
+              - generic [ref=f2e351]:
+                - textbox "Product Name" [ref=f2e353]: Handmade Resin Ocean Coasters (Set of 4)
+                - spinbutton "Qty" [ref=f2e355]: "1"
+                - spinbutton "Price ₹" [ref=f2e357]: "799"
+                - generic [ref=f2e358]: ₹799.00
+                - button "Remove item" [disabled] [ref=f2e359]
+            - generic [ref=f2e364]:
+              - generic [ref=f2e365]:
+                - generic [ref=f2e366]: Shipping Required?
+                - paragraph [ref=f2e373]: Does this order require courier dispatch or customer studio pickup?
+              - generic [ref=f2e374]:
+                - button "No (Pickup)" [ref=f2e375]
+                - button "Yes (Courier)" [ref=f2e376]
+            - generic [ref=f2e377]:
+              - generic [ref=f2e378]:
+                - generic [ref=f2e379]:
+                  - generic [ref=f2e380]: Finished Piece Photos
+                  - generic [ref=f2e386] [cursor=pointer]: + Add Photos
+                - paragraph [ref=f2e391]: No piece photos attached.
+              - generic [ref=f2e392]:
+                - generic [ref=f2e393]:
+                  - generic [ref=f2e394]: Parcel Packing Photos
+                  - generic [ref=f2e400] [cursor=pointer]: + Add Photos
+                - paragraph [ref=f2e405]: No packing photos attached.
+            - generic [ref=f2e406]:
+              - generic [ref=f2e407]:
+                - generic [ref=f2e408]: Customer / Order Notes
+                - textbox "Notes visible to customer or special instructions" [ref=f2e409]
+              - generic [ref=f2e410]:
+                - generic [ref=f2e411]: Internal Studio Notes
+                - textbox "Private notes (payment verification, packaging reminders, etc.)" [ref=f2e412]
+            - generic [ref=f2e413]:
+              - generic [ref=f2e414]:
+                - generic [ref=f2e415]: "Items Subtotal:"
+                - generic [ref=f2e416]: ₹799.00
+              - generic [ref=f2e417]:
+                - generic [ref=f2e418]:
+                  - generic [ref=f2e419]: "Discount (₹):"
+                  - spinbutton "0.00" [ref=f2e420]: "199"
+                - generic [ref=f2e421]:
+                  - generic [ref=f2e422]: "Discount Reason / Label:"
+                  - textbox "e.g. Exhibition Offer, Friends & Family, Custom Quote" [ref=f2e423]: Exhibition VIP Patron Discount
+              - generic [ref=f2e424]:
+                - generic [ref=f2e425]: "Shipping Fee:"
+                - generic [ref=f2e426]: ₹0.00 (Self-Pickup)
+              - generic [ref=f2e427]:
+                - generic [ref=f2e428]: "Total Order Amount:"
+                - generic [ref=f2e429]: ₹600.00
+            - generic [ref=f2e430]:
+              - button "Cancel" [ref=f2e431]
+              - button "Saving All Changes..." [disabled] [ref=f2e441]
+  - button "Open Next.js Dev Tools" [ref=f2e442] [cursor=pointer]:
+    - generic [ref=f2e445]:
+      - text: Compiling
+      - generic [ref=f2e446]:
+        - generic [ref=f2e447]: .
+        - generic [ref=f2e448]: .
+        - generic [ref=f2e449]: .
+  - alert [ref=f2e176]

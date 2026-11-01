@@ -1,0 +1,86 @@
+- generic [active] [ref=f1e1]:
+  - generic [ref=f1e2]:
+    - generic [ref=f1e6]:
+      - generic [ref=f1e7]:
+        - link "Back to Orders" [ref=f1e8] [cursor=pointer]:
+          - /url: /admin/orders
+        - generic [ref=f1e11]:
+          - 'heading "Payment Receipt #OFF-20261031-6531" [level=1] [ref=f1e12]':
+            - generic [ref=f1e13]: Payment Receipt
+            - generic [ref=f1e14]: "#OFF-20261031-6531"
+          - paragraph [ref=f1e15]: Payment verified. Ready to print or download as PDF.
+      - button "Print / Download PDF" [ref=f1e17]
+    - generic [ref=f1e23]:
+      - generic [ref=f1e24]:
+        - generic [ref=f1e25]:
+          - img "Devangi Resin Studio" [ref=f1e27]
+          - generic [ref=f1e28]:
+            - heading "Devangi Resin Studio" [level=2] [ref=f1e29]
+            - paragraph [ref=f1e30]: Handcrafted Resin Creations by Devangi
+            - generic [ref=f1e31]:
+              - paragraph [ref=f1e32]:
+                - generic [ref=f1e36]: devangiresinstudioofficial@gmail.com
+              - paragraph [ref=f1e37]:
+                - generic [ref=f1e40]: "WhatsApp/Phone: +91 9967313355"
+        - generic [ref=f1e41]:
+          - generic [ref=f1e42]: Official Payment Receipt
+          - heading "REC-OFF-20261031-6531" [level=3] [ref=f1e43]
+          - paragraph [ref=f1e44]:
+            - text: "Date:"
+            - strong [ref=f1e45]: 31 Oct 2026
+          - generic [ref=f1e46]: PAID IN FULL
+      - generic [ref=f1e52]:
+        - generic [ref=f1e53]:
+          - generic [ref=f1e54]: Billed To (Customer)
+          - paragraph [ref=f1e55]: Anisha Jain
+          - paragraph [ref=f1e56]: "Contact: +91 88981 24208"
+          - generic [ref=f1e57]: "Payment Method: upi"
+        - generic [ref=f1e58]:
+          - generic [ref=f1e59]: Fulfilment Mode
+          - paragraph [ref=f1e60]: Direct Studio Handover / Walk-in
+          - generic [ref=f1e61]:
+            - paragraph [ref=f1e62]: "Handover Type: Self Pick-up / In-Person Sale"
+            - paragraph [ref=f1e63]: "Shipping Fee: ₹0.00 (Self Pick-up)"
+      - generic [ref=f1e64]:
+        - heading "Order Particulars & Bespoke Specifications" [level=4] [ref=f1e65]
+        - table [ref=f1e67]:
+          - rowgroup [ref=f1e68]:
+            - row [ref=f1e69]:
+              - columnheader "#" [ref=f1e70]
+              - columnheader "Item & Customization Details" [ref=f1e71]
+              - columnheader "Qty" [ref=f1e72]
+              - columnheader "Unit Price" [ref=f1e73]
+              - columnheader "Amount" [ref=f1e74]
+          - rowgroup [ref=f1e75]:
+            - row [ref=f1e76]:
+              - cell "1" [ref=f1e77]
+              - cell [ref=f1e78]:
+                - paragraph [ref=f1e79]: Custom Rosé Aura Keychain
+              - cell "1" [ref=f1e80]
+              - cell "₹149.00" [ref=f1e81]
+              - cell "₹149.00" [ref=f1e82]
+      - generic [ref=f1e83]:
+        - generic [ref=f1e84]:
+          - generic [ref=f1e85]: Amount in Words
+          - paragraph [ref=f1e86]: Indian Rupees One Hundred and Forty Nine Only.
+          - generic [ref=f1e87]:
+            - paragraph [ref=f1e88]: "Artisan Keepsake Guarantee:"
+            - text: Thank you for supporting Devangi Resin Studio! Each bespoke piece is handcrafted with premium non-yellowing epoxy resin, preserved botanicals, and hand-finished with meticulous precision.
+        - generic [ref=f1e89]:
+          - generic [ref=f1e90]:
+            - generic [ref=f1e91]: Items Subtotal
+            - generic [ref=f1e92]: ₹149.00
+          - generic [ref=f1e93]:
+            - generic [ref=f1e94]: Delivery / Shipping Fee
+            - generic [ref=f1e95]: ₹0.00 (Self Pick-up)
+          - generic [ref=f1e96]:
+            - generic [ref=f1e97]: Total Amount Paid
+            - generic [ref=f1e98]: ₹149.00
+      - generic [ref=f1e101]:
+        - img "Authorized Signature with Stamp" [ref=f1e103]
+        - generic [ref=f1e104]:
+          - paragraph [ref=f1e105]: Authorized Signatory & Stamp
+          - paragraph [ref=f1e106]: Devangi Resin Studio
+      - generic [ref=f1e107]: This is a computer-generated verified receipt issued by Devangi Resin Studio. For order inquiries, contact devangiresinstudioofficial@gmail.com.
+  - button "Open Next.js Dev Tools" [ref=f1e113] [cursor=pointer]
+  - alert [ref=f1e5]

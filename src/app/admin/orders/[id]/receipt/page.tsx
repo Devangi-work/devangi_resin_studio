@@ -11,6 +11,7 @@ import {
   Mail,
   Phone,
 } from "lucide-react";
+import { formatReceiptFileName } from "@/lib/receipt";
 
 function numberToIndianWords(num: number): string {
   if (!num || isNaN(num) || num <= 0) return "Zero";
@@ -89,6 +90,9 @@ export default function OrderReceiptPage({
 
         setOrder(orderData);
         setSettings(settingsData);
+        if (orderData) {
+          document.title = formatReceiptFileName(orderData.customerName, orderData.orderNumber);
+        }
       } catch (err: any) {
         setError(err.message || "Failed to load order receipt.");
       } finally {
@@ -98,7 +102,16 @@ export default function OrderReceiptPage({
     loadData();
   }, [id]);
 
+  useEffect(() => {
+    if (order) {
+      document.title = formatReceiptFileName(order.customerName, order.orderNumber);
+    }
+  }, [order]);
+
   const handlePrint = () => {
+    if (order) {
+      document.title = formatReceiptFileName(order.customerName, order.orderNumber);
+    }
     window.print();
   };
 
@@ -139,6 +152,14 @@ export default function OrderReceiptPage({
   const subtotal = Number(order.subtotal || order.totalAmount || 0);
   const discountAmount = Number(order.discountAmount || 0);
   const shippingCharge = Number(order.shippingCharge || 0);
+  const isCourierDelivery = Boolean(
+    order.shippingAddressLine1 &&
+    !order.shippingAddressLine1.toLowerCase().includes("pick-up") &&
+    !order.shippingAddressLine1.toLowerCase().includes("pickup") &&
+    !order.shippingAddressLine1.toLowerCase().includes("walk-in") &&
+    !order.shippingAddressLine1.toLowerCase().includes("offline") &&
+    (order.shippingCity || order.shippingPostalCode)
+  );
 
   return (
     <div className="min-h-screen bg-[#F0ECE6] py-6 sm:py-10 px-3 sm:px-6 print:p-0 print:bg-white text-[#2C332D]">
@@ -199,7 +220,7 @@ export default function OrderReceiptPage({
             </h1>
             <p className="text-xs text-[#736C66]">
               {isPaid
-                ? "Payment verified. Ready to print or download as PDF."
+                ? `Official payment receipt for ${order.customerName || "Customer"}. Ready to print or download as PDF.`
                 : "Note: Order payment status is not currently marked as 'Paid'."}
             </p>
           </div>
@@ -208,7 +229,8 @@ export default function OrderReceiptPage({
         <div className="flex items-center space-x-2.5">
           <button
             onClick={handlePrint}
-            className="px-5 py-2.5 bg-[#800020] hover:bg-[#68001a] text-white text-xs font-semibold rounded-xl flex items-center space-x-2 shadow-sm transition-all"
+            title={`Download or Print PDF: ${formatReceiptFileName(order.customerName, order.orderNumber)}.pdf`}
+            className="px-5 py-2.5 bg-[#800020] hover:bg-[#68001a] text-white text-xs font-semibold rounded-xl flex items-center space-x-2 shadow-sm transition-all cursor-pointer"
           >
             <Printer className="w-4 h-4" />
             <span>Print / Download PDF</span>
@@ -231,7 +253,7 @@ export default function OrderReceiptPage({
 
       {/* Main Printable Receipt Card with Watermark Logo */}
       <div className="print-card relative overflow-hidden max-w-4xl mx-auto bg-white rounded-3xl border border-[#E8E0D5] shadow-lg p-8 pt-10 sm:p-12 sm:pt-14 print:pt-8 space-y-8">
-        
+
         {/* Watermark Logo Background (Enhanced Visibility) */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none z-0 overflow-hidden">
           <img
@@ -322,30 +344,52 @@ export default function OrderReceiptPage({
             </div>
           </div>
 
-          {/* Ship To */}
-          <div className="space-y-1.5 text-xs">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-[#800020] block">
-              Delivery Destination
-            </span>
-            <p className="text-[#2C332D] leading-relaxed">
-              {order.shippingAddressLine1}
-              {order.shippingAddressLine2 ? `, ${order.shippingAddressLine2}` : ""}
-              <br />
-              {order.shippingCity}, {order.shippingState} - {order.shippingPostalCode}
-            </p>
-            <div className="pt-1 text-[11px] text-[#736C66] space-y-0.5">
-              <p>
-                <span className="font-semibold text-[#2C332D]">Shipping Mode: </span>
-                <span>{order.courierName || "Standard Insured Domestic Courier"}</span>
+          {/* Ship To / Fulfilment Mode */}
+          {isCourierDelivery ? (
+            <div className="space-y-1.5 text-xs">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#800020] block">
+                Delivery Destination
+              </span>
+              <p className="text-[#2C332D] leading-relaxed">
+                {order.shippingAddressLine1}
+                {order.shippingAddressLine2 ? `, ${order.shippingAddressLine2}` : ""}
+                <br />
+                {[order.shippingCity, order.shippingState].filter(Boolean).join(", ")}
+                {order.shippingPostalCode ? ` - ${order.shippingPostalCode}` : ""}
               </p>
-              {order.trackingNumber && (
+              <div className="pt-1 text-[11px] text-[#736C66] space-y-0.5">
                 <p>
-                  <span className="font-semibold text-[#2C332D]">Tracking ID: </span>
-                  <span className="font-mono font-bold text-[#800020]">{order.trackingNumber}</span>
+                  <span className="font-semibold text-[#2C332D]">Shipping Mode: </span>
+                  <span>{order.courierName || "Standard Insured Domestic Courier"}</span>
                 </p>
-              )}
+                {order.trackingNumber && (
+                  <p>
+                    <span className="font-semibold text-[#2C332D]">Tracking ID: </span>
+                    <span className="font-mono font-bold text-[#800020]">{order.trackingNumber}</span>
+                  </p>
+                )}
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="space-y-1.5 text-xs">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#800020] block">
+                Fulfilment Mode
+              </span>
+              <p className="font-bold text-sm text-[#2C332D]">
+                Direct Studio Handover / Walk-in
+              </p>
+              <div className="pt-1 text-[11px] text-[#736C66] space-y-0.5">
+                <p>
+                  <span className="font-semibold text-[#2C332D]">Handover Type: </span>
+                  <span>Self Pick-up / In-Person Sale</span>
+                </p>
+                <p>
+                  <span className="font-semibold text-[#2C332D]">Shipping Fee: </span>
+                  <span className="text-[#2E7D32] font-semibold">₹0.00 (Self Pick-up)</span>
+                </p>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Itemized Purchased Products Table (Clean dividers, no inner enclosing border) */}
@@ -437,15 +481,19 @@ export default function OrderReceiptPage({
 
             {discountAmount > 0 && (
               <div className="flex justify-between py-1 text-[#2E7D32] font-medium">
-                <span>Festival / Promo Discount</span>
+                <span>
+                  {order.discountReason && order.discountReason.trim()
+                    ? order.discountReason.trim()
+                    : (order.orderSource === "offline" ? "Special Order Discount" : "Promotional Discount")}
+                </span>
                 <span className="font-mono">-₹{discountAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
               </div>
             )}
 
             <div className="flex justify-between py-1 text-[#736C66]">
-              <span>Insured Shipping &amp; Handling</span>
+              <span>{isCourierDelivery ? "Insured Shipping & Handling" : "Delivery / Shipping Fee"}</span>
               <span className="font-mono">
-                {shippingCharge === 0 ? "FREE" : `₹${shippingCharge.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`}
+                {shippingCharge === 0 ? "₹0.00 (Self Pick-up)" : `₹${shippingCharge.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`}
               </span>
             </div>
 

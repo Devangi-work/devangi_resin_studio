@@ -92,11 +92,11 @@ export default function AdminOrdersPage() {
     customerPhone: "",
     hasShipping: false,
     shippingCharge: 0,
-    shippingAddressLine1: "Studio Pick-up / Walk-in",
+    shippingAddressLine1: "",
     shippingAddressLine2: "",
-    shippingCity: "Mumbai",
-    shippingState: "Maharashtra",
-    shippingPostalCode: "400001",
+    shippingCity: "",
+    shippingState: "",
+    shippingPostalCode: "",
     orderSource: "offline" as "offline" | "exhibition" | "instagram" | "custom",
     paymentMethod: "cash" as "cash" | "upi" | "card" | "bank_transfer",
     paymentStatus: "paid" as "paid" | "unpaid",
@@ -109,6 +109,7 @@ export default function AdminOrdersPage() {
     productImages: [] as string[],
     packingImages: [] as string[],
     discountAmount: 0,
+    discountReason: "",
     orderNotes: "",
     internalNotes: "",
   });
@@ -127,11 +128,11 @@ export default function AdminOrdersPage() {
     customerPhone: "",
     hasShipping: false,
     shippingCharge: 0,
-    shippingAddressLine1: "Studio Pick-up / Walk-in",
+    shippingAddressLine1: "",
     shippingAddressLine2: "",
-    shippingCity: "Mumbai",
-    shippingState: "Maharashtra",
-    shippingPostalCode: "400001",
+    shippingCity: "",
+    shippingState: "",
+    shippingPostalCode: "",
     shippingCountry: "India",
     orderSource: "offline",
     paymentMethod: "cash",
@@ -156,6 +157,7 @@ export default function AdminOrdersPage() {
     productImages: [] as string[],
     packingImages: [] as string[],
     discountAmount: 0,
+    discountReason: "",
     subtotal: 0,
     totalAmount: 0,
     orderNotes: "",
@@ -186,13 +188,13 @@ export default function AdminOrdersPage() {
       customerName: req.customerName || "",
       customerEmail: req.customerEmail || "",
       customerPhone: req.customerPhone || "",
-      hasShipping: true,
-      shippingCharge: 79,
+      hasShipping: false,
+      shippingCharge: 0,
       shippingAddressLine1: "",
       shippingAddressLine2: "",
-      shippingCity: "Mumbai",
-      shippingState: "Maharashtra",
-      shippingPostalCode: "400001",
+      shippingCity: "",
+      shippingState: "",
+      shippingPostalCode: "",
       orderSource: "custom",
       paymentMethod: "upi",
       paymentStatus: "unpaid",
@@ -209,6 +211,7 @@ export default function AdminOrdersPage() {
       productImages: req.referenceImageUrl ? [req.referenceImageUrl] : [],
       packingImages: [],
       discountAmount: 0,
+      discountReason: "",
       orderNotes: `Custom Inquiry Brief: ${req.description}`,
       internalNotes: `Converted from Custom Studio Request (ID: ${req.id})`,
     });
@@ -306,18 +309,19 @@ export default function AdminOrdersPage() {
 
     const addr1 = ord.shippingAddressLine1 || "";
     const hasShip = Number(ord.shippingCharge) > 0 || (
-      Boolean(addr1) &&
+      Boolean(addr1 && addr1.trim()) &&
       !addr1.toLowerCase().includes("pick-up") &&
       !addr1.toLowerCase().includes("pickup") &&
-      !addr1.toLowerCase().includes("walk-in")
+      !addr1.toLowerCase().includes("walk-in") &&
+      !addr1.toLowerCase().includes("direct handover")
     );
     setEditHasShipping(hasShip);
-    setEditShippingCharge(Number(ord.shippingCharge || 0));
-    setEditAddressLine1(addr1);
-    setEditAddressLine2(ord.shippingAddressLine2 || "");
-    setEditCity(ord.shippingCity || "Mumbai");
-    setEditState(ord.shippingState || "Maharashtra");
-    setEditPostalCode(ord.shippingPostalCode || "400001");
+    setEditShippingCharge(hasShip ? Number(ord.shippingCharge || 0) : 0);
+    setEditAddressLine1(hasShip ? addr1 : "");
+    setEditAddressLine2(hasShip ? (ord.shippingAddressLine2 || "") : "");
+    setEditCity(hasShip ? (ord.shippingCity || "") : "");
+    setEditState(hasShip ? (ord.shippingState || "") : "");
+    setEditPostalCode(hasShip ? (ord.shippingPostalCode || "") : "");
 
     if (!ord.items || ord.items.length === 0) {
       fetch(`/api/admin/orders/${ord.id}`)
@@ -334,10 +338,11 @@ export default function AdminOrdersPage() {
   const openEditModal = (ord: any) => {
     const addr1 = ord.shippingAddressLine1 || "";
     const hasShip = Number(ord.shippingCharge) > 0 || (
-      Boolean(addr1) &&
+      Boolean(addr1 && addr1.trim()) &&
       !addr1.toLowerCase().includes("pick-up") &&
       !addr1.toLowerCase().includes("pickup") &&
-      !addr1.toLowerCase().includes("walk-in")
+      !addr1.toLowerCase().includes("walk-in") &&
+      !addr1.toLowerCase().includes("direct handover")
     );
 
     const cleanEmail = ord.customerEmail && !ord.customerEmail.startsWith("offline_") ? ord.customerEmail : "";
@@ -367,13 +372,13 @@ export default function AdminOrdersPage() {
       customerEmail: cleanEmail,
       customerPhone: ord.customerPhone || "",
       hasShipping: hasShip,
-      shippingCharge: shipping,
-      shippingAddressLine1: ord.shippingAddressLine1 || "",
-      shippingAddressLine2: ord.shippingAddressLine2 || "",
-      shippingCity: ord.shippingCity || "Mumbai",
-      shippingState: ord.shippingState || "Maharashtra",
-      shippingPostalCode: ord.shippingPostalCode || "400001",
-      shippingCountry: ord.shippingCountry || "India",
+      shippingCharge: hasShip ? shipping : 0,
+      shippingAddressLine1: hasShip ? (ord.shippingAddressLine1 || "") : "",
+      shippingAddressLine2: hasShip ? (ord.shippingAddressLine2 || "") : "",
+      shippingCity: hasShip ? (ord.shippingCity || "") : "",
+      shippingState: hasShip ? (ord.shippingState || "") : "",
+      shippingPostalCode: hasShip ? (ord.shippingPostalCode || "") : "",
+      shippingCountry: hasShip ? (ord.shippingCountry || "India") : "",
       orderSource: ord.orderSource || "offline",
       paymentMethod: ord.paymentMethod || "cash",
       paymentStatus: ord.paymentStatus || "paid",
@@ -386,6 +391,7 @@ export default function AdminOrdersPage() {
       productImages: ord.productImages || [],
       packingImages: ord.packingImages || [],
       discountAmount: discount,
+      discountReason: ord.discountReason || "",
       subtotal,
       totalAmount: total,
       orderNotes: ord.orderNotes || "",
@@ -562,14 +568,24 @@ export default function AdminOrdersPage() {
         customerName: editForm.customerName,
         customerEmail: editForm.customerEmail.trim() ? editForm.customerEmail.trim() : null,
         customerPhone: editForm.customerPhone,
-        shippingAddressLine1: editForm.hasShipping
-          ? (editForm.shippingAddressLine1 || "Studio Pick-up / Walk-in")
-          : "Studio Pick-up / Walk-in",
-        shippingAddressLine2: editForm.shippingAddressLine2 || null,
-        shippingCity: editForm.shippingCity || "Mumbai",
-        shippingState: editForm.shippingState || "Maharashtra",
-        shippingPostalCode: editForm.shippingPostalCode || "400001",
-        shippingCountry: editForm.shippingCountry || "India",
+        shippingAddressLine1: editForm.hasShipping && editForm.shippingAddressLine1.trim()
+          ? editForm.shippingAddressLine1.trim()
+          : null,
+        shippingAddressLine2: editForm.hasShipping && editForm.shippingAddressLine2?.trim()
+          ? editForm.shippingAddressLine2.trim()
+          : null,
+        shippingCity: editForm.hasShipping && editForm.shippingCity.trim()
+          ? editForm.shippingCity.trim()
+          : null,
+        shippingState: editForm.hasShipping && editForm.shippingState.trim()
+          ? editForm.shippingState.trim()
+          : null,
+        shippingPostalCode: editForm.hasShipping && editForm.shippingPostalCode.trim()
+          ? editForm.shippingPostalCode.trim()
+          : null,
+        shippingCountry: editForm.hasShipping && editForm.shippingAddressLine1.trim()
+          ? (editForm.shippingCountry || "India")
+          : null,
         orderSource: editForm.orderSource,
         paymentMethod: editForm.paymentMethod,
         paymentStatus: editForm.paymentStatus,
@@ -580,13 +596,21 @@ export default function AdminOrdersPage() {
         paymentScreenshotUrl: editForm.paymentScreenshotUrl || null,
         orderNotes: editForm.orderNotes || null,
         internalNotes: editForm.internalNotes || null,
-        items: editForm.items,
-        subtotal: editForm.subtotal,
+        items: editForm.items.map((i) => ({
+          ...i,
+          productName: i.productName.trim() || "Handmade Resin Art",
+          quantity: Math.max(1, parseInt(String(i.quantity), 10) || 1),
+          unitPrice: Math.max(0, parseFloat(String(i.unitPrice)) || 0),
+          price: Math.max(0, parseFloat(String(i.unitPrice)) || 0),
+          totalPrice: (Math.max(1, parseInt(String(i.quantity), 10) || 1)) * (Math.max(0, parseFloat(String(i.unitPrice)) || 0)),
+        })),
+        subtotal: Number(editForm.subtotal) || 0,
         discountAmount: Number(editForm.discountAmount) || 0,
+        discountReason: editForm.discountReason?.trim() || null,
         shippingCharge: editForm.hasShipping ? Number(editForm.shippingCharge || 0) : 0,
-        totalAmount: editForm.totalAmount,
-        packingImages: editForm.packingImages,
-        productImages: editForm.productImages,
+        totalAmount: Number(editForm.totalAmount) || 0,
+        packingImages: editForm.packingImages || [],
+        productImages: editForm.productImages || [],
       };
 
       const res = await fetch(`/api/admin/orders/${editingOrder.id}`, {
@@ -603,7 +627,10 @@ export default function AdminOrdersPage() {
         }
         setEditingOrder(null);
       } else {
-        setEditError(data.error || "Failed to save order");
+        const errorDetails = data.details
+          ? Object.entries(data.details).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(", ") : v}`).join(", ")
+          : "";
+        setEditError(data.error ? `${data.error}${errorDetails ? ` (${errorDetails})` : ""}` : "Failed to save order");
       }
     } catch (err: any) {
       setEditError(err.message || "Network error updating order");
@@ -865,11 +892,12 @@ export default function AdminOrdersPage() {
     setUpdateMsg("");
 
     const shippingChargeNum = editHasShipping ? Math.max(0, Number(editShippingCharge || 0)) : 0;
-    const finalAddressLine1 = editHasShipping
-      ? (editAddressLine1.trim() || "Customer Delivery Address")
-      : (editAddressLine1 && !editAddressLine1.toLowerCase().includes("pick-up") && !editAddressLine1.toLowerCase().includes("pickup") && !editAddressLine1.toLowerCase().includes("walk-in")
-        ? editAddressLine1
-        : "Studio Pick-up / Direct Handover");
+    const finalAddressLine1 = editHasShipping && editAddressLine1.trim() ? editAddressLine1.trim() : null;
+    const finalAddressLine2 = editHasShipping && editAddressLine2.trim() ? editAddressLine2.trim() : null;
+    const finalCity = editHasShipping && editCity.trim() ? editCity.trim() : null;
+    const finalState = editHasShipping && editState.trim() ? editState.trim() : null;
+    const finalPostalCode = editHasShipping && editPostalCode.trim() ? editPostalCode.trim() : null;
+    const finalCountry = editHasShipping ? "India" : null;
 
     try {
       const res = await fetch(`/api/admin/orders/${selectedOrder.id}`, {
@@ -883,10 +911,11 @@ export default function AdminOrdersPage() {
           internalNotes: internalNotes.trim() || undefined,
           shippingCharge: shippingChargeNum,
           shippingAddressLine1: finalAddressLine1,
-          shippingAddressLine2: editAddressLine2.trim() || undefined,
-          shippingCity: editCity.trim() || "Mumbai",
-          shippingState: editState.trim() || "Maharashtra",
-          shippingPostalCode: editPostalCode.trim() || "400001",
+          shippingAddressLine2: finalAddressLine2,
+          shippingCity: finalCity,
+          shippingState: finalState,
+          shippingPostalCode: finalPostalCode,
+          shippingCountry: finalCountry,
         }),
       });
 
@@ -953,13 +982,24 @@ export default function AdminOrdersPage() {
       const payload = {
         ...offlineForm,
         shippingCharge,
-        shippingAddressLine1: offlineForm.hasShipping
-          ? (offlineForm.shippingAddressLine1.trim() || "Customer Delivery Address")
-          : "Studio Pick-up / Direct Handover",
-        shippingCity: offlineForm.hasShipping ? (offlineForm.shippingCity || "Mumbai") : "Mumbai",
-        shippingState: offlineForm.hasShipping ? (offlineForm.shippingState || "Maharashtra") : "Maharashtra",
-        shippingPostalCode: offlineForm.hasShipping ? (offlineForm.shippingPostalCode || "400001") : "400001",
+        shippingAddressLine1: offlineForm.hasShipping && offlineForm.shippingAddressLine1.trim()
+          ? offlineForm.shippingAddressLine1.trim()
+          : null,
+        shippingAddressLine2: offlineForm.hasShipping && offlineForm.shippingAddressLine2?.trim()
+          ? offlineForm.shippingAddressLine2.trim()
+          : null,
+        shippingCity: offlineForm.hasShipping && offlineForm.shippingCity.trim()
+          ? offlineForm.shippingCity.trim()
+          : null,
+        shippingState: offlineForm.hasShipping && offlineForm.shippingState.trim()
+          ? offlineForm.shippingState.trim()
+          : null,
+        shippingPostalCode: offlineForm.hasShipping && offlineForm.shippingPostalCode.trim()
+          ? offlineForm.shippingPostalCode.trim()
+          : null,
         subtotal,
+        discountAmount: Number(offlineForm.discountAmount) || 0,
+        discountReason: offlineForm.discountReason?.trim() || null,
         totalAmount,
         items: offlineForm.items.map((i) => ({
           productName: i.productName.trim() || "Handmade Resin Artwork",
@@ -1025,11 +1065,11 @@ export default function AdminOrdersPage() {
         customerPhone: "",
         hasShipping: false,
         shippingCharge: 0,
-        shippingAddressLine1: "Studio Pick-up / Walk-in",
+        shippingAddressLine1: "",
         shippingAddressLine2: "",
-        shippingCity: "Mumbai",
-        shippingState: "Maharashtra",
-        shippingPostalCode: "400001",
+        shippingCity: "",
+        shippingState: "",
+        shippingPostalCode: "",
         orderSource: "offline",
         paymentMethod: "cash",
         paymentStatus: "paid",
@@ -1042,6 +1082,7 @@ export default function AdminOrdersPage() {
         productImages: [],
         packingImages: [],
         discountAmount: 0,
+        discountReason: "",
         orderNotes: "",
         internalNotes: "",
       });
@@ -1995,10 +2036,21 @@ export default function AdminOrdersPage() {
                   <div className="flex items-center gap-1 bg-[#FAF8F5] p-1 rounded-xl border border-[#E8E0D5]">
                     <button
                       type="button"
-                      onClick={() => setOfflineForm({ ...offlineForm, hasShipping: false, shippingCharge: 0 })}
-                      className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${!offlineForm.hasShipping
-                        ? "bg-white text-[#2C332D] shadow-xs border border-[#E8E0D5]"
-                        : "text-[#736C66] hover:text-[#2C332D]"
+                      onClick={() =>
+                        setOfflineForm({
+                          ...offlineForm,
+                          hasShipping: false,
+                          shippingCharge: 0,
+                          shippingAddressLine1: "",
+                          shippingAddressLine2: "",
+                          shippingCity: "",
+                          shippingState: "",
+                          shippingPostalCode: "",
+                        })
+                      }
+                      className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${!offlineForm.hasShipping
+                        ? "bg-[#2C332D] text-white shadow-sm"
+                        : "bg-transparent text-[#736C66] hover:text-[#2C332D] hover:bg-black/5"
                         }`}
                     >
                       No (Pickup)
@@ -2012,9 +2064,9 @@ export default function AdminOrdersPage() {
                           shippingCharge: offlineForm.shippingCharge || 79,
                         })
                       }
-                      className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${offlineForm.hasShipping
-                        ? "bg-[#800020] text-white shadow-xs"
-                        : "text-[#736C66] hover:text-[#2C332D]"
+                      className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${offlineForm.hasShipping
+                        ? "bg-[#800020] text-white shadow-sm"
+                        : "bg-transparent text-[#736C66] hover:text-[#2C332D] hover:bg-black/5"
                         }`}
                     >
                       Yes (Shipping)
@@ -2130,12 +2182,40 @@ export default function AdminOrdersPage() {
               </div>
 
               {/* Total Summary */}
-              <div className="bg-[#FAF8F5] p-3.5 rounded-xl border border-[#E8E0D5] space-y-1.5 text-xs">
+              <div className="bg-[#FAF8F5] p-3.5 rounded-xl border border-[#E8E0D5] space-y-2 text-xs">
                 <div className="flex justify-between text-[#736C66]">
                   <span>Items Subtotal:</span>
                   <span className="font-mono">₹{calculateOfflineSubtotal().toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between text-[#736C66]">
+                <div className="space-y-1.5 pt-1 border-t border-[#E8E0D5]/60">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-[#736C66]">Discount (₹):</span>
+                    <input
+                      type="number"
+                      min="0"
+                      step="any"
+                      value={offlineForm.discountAmount || ""}
+                      placeholder="0.00"
+                      onChange={(e) =>
+                        setOfflineForm({ ...offlineForm, discountAmount: Number(e.target.value) || 0 })
+                      }
+                      className="w-28 px-2 py-1 bg-white border border-[#E8E0D5] rounded-lg text-xs font-mono text-right focus:border-[#2C332D] focus:outline-none"
+                    />
+                  </div>
+                  {(Number(offlineForm.discountAmount) > 0 || offlineForm.discountReason) && (
+                    <div className="flex items-center justify-between text-xs gap-2 pt-0.5">
+                      <span className="text-[#736C66] whitespace-nowrap">Discount Reason / Label:</span>
+                      <input
+                        type="text"
+                        placeholder="e.g. Exhibition Special, Walk-in Offer, VIP Client"
+                        value={offlineForm.discountReason || ""}
+                        onChange={(e) => setOfflineForm({ ...offlineForm, discountReason: e.target.value })}
+                        className="flex-1 px-2.5 py-1 bg-white border border-[#E8E0D5] rounded-lg text-xs text-[#2C332D] placeholder-[#A89F91] focus:border-[#2C332D] focus:outline-none"
+                      />
+                    </div>
+                  )}
+                </div>
+                <div className="flex justify-between text-[#736C66] pt-1 border-t border-[#E8E0D5]/60">
                   <span>Shipping Fee:</span>
                   <span className="font-mono font-semibold">
                     {offlineForm.hasShipping
@@ -2243,19 +2323,37 @@ export default function AdminOrdersPage() {
                 )}
               </div>
               <div>
-                <p className="text-[#736C66] leading-relaxed">
-                  {selectedOrder.shippingAddressLine1}
-                  {selectedOrder.shippingAddressLine2 ? `, ${selectedOrder.shippingAddressLine2}` : ""}
-                  <br />
-                  {selectedOrder.shippingCity}, {selectedOrder.shippingState} - {selectedOrder.shippingPostalCode}
-                </p>
-                <div className="mt-1 flex items-center gap-1.5 text-[11px] font-semibold text-[#8C7A72]">
-                  <Truck className="w-3.5 h-3.5 text-[#B8972E]" />
-                  <span>
-                    Shipping Charge: <strong className="text-[#2C332D]">₹{Number(selectedOrder.shippingCharge || 0).toFixed(2)}</strong>
-                    {Number(selectedOrder.shippingCharge || 0) === 0 ? " (Free / Pickup)" : ""}
-                  </span>
-                </div>
+                {selectedOrder.shippingAddressLine1 &&
+                !selectedOrder.shippingAddressLine1.toLowerCase().includes("pick-up") &&
+                !selectedOrder.shippingAddressLine1.toLowerCase().includes("pickup") &&
+                !selectedOrder.shippingAddressLine1.toLowerCase().includes("walk-in") &&
+                !selectedOrder.shippingAddressLine1.toLowerCase().includes("offline") ? (
+                  <>
+                    <p className="text-[#736C66] leading-relaxed">
+                      {selectedOrder.shippingAddressLine1}
+                      {selectedOrder.shippingAddressLine2 ? `, ${selectedOrder.shippingAddressLine2}` : ""}
+                      <br />
+                      {[selectedOrder.shippingCity, selectedOrder.shippingState].filter(Boolean).join(", ")}
+                      {selectedOrder.shippingPostalCode ? ` - ${selectedOrder.shippingPostalCode}` : ""}
+                    </p>
+                    <div className="mt-1 flex items-center gap-1.5 text-[11px] font-semibold text-[#8C7A72]">
+                      <Truck className="w-3.5 h-3.5 text-[#B8972E]" />
+                      <span>
+                        Shipping Charge: <strong className="text-[#2C332D]">₹{Number(selectedOrder.shippingCharge || 0).toFixed(2)}</strong>
+                      </span>
+                    </div>
+                  </>
+                ) : (
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#B8972E] block">Fulfilment Mode</span>
+                    <p className="font-semibold text-[#2C332D]">Studio Pick-up / Direct Handover</p>
+                    <p className="text-[#736C66]">Self-collected (No courier delivery)</p>
+                    <div className="mt-1 flex items-center gap-1.5 text-[11px] font-semibold text-[#2E7D32]">
+                      <Package className="w-3.5 h-3.5 text-[#2E7D32]" />
+                      <span>₹0.00 (Self Pick-up)</span>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -2587,10 +2685,15 @@ export default function AdminOrdersPage() {
                       onClick={() => {
                         setEditHasShipping(false);
                         setEditShippingCharge(0);
+                        setEditAddressLine1("");
+                        setEditAddressLine2("");
+                        setEditCity("");
+                        setEditState("");
+                        setEditPostalCode("");
                       }}
-                      className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${!editHasShipping
-                        ? "bg-white text-[#2C332D] shadow-xs border border-[#E8E0D5]"
-                        : "text-[#736C66] hover:text-[#2C332D]"
+                      className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${!editHasShipping
+                        ? "bg-[#2C332D] text-white shadow-sm"
+                        : "bg-transparent text-[#736C66] hover:text-[#2C332D] hover:bg-black/5"
                         }`}
                     >
                       No (Pickup)
@@ -2601,9 +2704,9 @@ export default function AdminOrdersPage() {
                         setEditHasShipping(true);
                         if (!editShippingCharge) setEditShippingCharge(79);
                       }}
-                      className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${editHasShipping
-                        ? "bg-[#800020] text-white shadow-xs"
-                        : "text-[#736C66] hover:text-[#2C332D]"
+                      className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${editHasShipping
+                        ? "bg-[#800020] text-white shadow-sm"
+                        : "bg-transparent text-[#736C66] hover:text-[#2C332D] hover:bg-black/5"
                         }`}
                     >
                       Yes (Shipping)
@@ -2726,7 +2829,7 @@ export default function AdminOrdersPage() {
                   </div>
                   {Number(selectedOrder.discountAmount || 0) > 0 && (
                     <div className="flex justify-between text-[#2E7D32]">
-                      <span>Discount Applied:</span>
+                      <span>Discount Applied{selectedOrder.discountReason ? ` (${selectedOrder.discountReason})` : ""}:</span>
                       <span className="font-mono font-semibold">-₹{Number(selectedOrder.discountAmount).toFixed(2)}</span>
                     </div>
                   )}
@@ -3133,9 +3236,23 @@ export default function AdminOrdersPage() {
                       type="button"
                       onClick={() => {
                         const tot = Math.max(0, editForm.subtotal - Number(editForm.discountAmount || 0));
-                        setEditForm({ ...editForm, hasShipping: false, shippingCharge: 0, totalAmount: tot });
+                        setEditForm({
+                          ...editForm,
+                          hasShipping: false,
+                          shippingCharge: 0,
+                          shippingAddressLine1: "",
+                          shippingAddressLine2: "",
+                          shippingCity: "",
+                          shippingState: "",
+                          shippingPostalCode: "",
+                          shippingCountry: "",
+                          totalAmount: tot,
+                        });
                       }}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${!editForm.hasShipping ? "bg-white text-[#2C332D] shadow-xs border border-[#E8E0D5]" : "text-[#736C66] hover:text-[#2C332D]"}`}
+                      className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${!editForm.hasShipping
+                        ? "bg-[#2C332D] text-white shadow-sm"
+                        : "bg-transparent text-[#736C66] hover:text-[#2C332D] hover:bg-black/5"
+                        }`}
                     >
                       No (Pickup)
                     </button>
@@ -3144,9 +3261,17 @@ export default function AdminOrdersPage() {
                       onClick={() => {
                         const ship = editForm.shippingCharge || 79;
                         const tot = Math.max(0, editForm.subtotal - Number(editForm.discountAmount || 0) + ship);
-                        setEditForm({ ...editForm, hasShipping: true, shippingCharge: ship, totalAmount: tot });
+                        setEditForm({
+                          ...editForm,
+                          hasShipping: true,
+                          shippingCharge: ship,
+                          totalAmount: tot,
+                        });
                       }}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${editForm.hasShipping ? "bg-[#2C332D] text-white shadow-xs" : "text-[#736C66] hover:text-[#2C332D]"}`}
+                      className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${editForm.hasShipping
+                        ? "bg-[#800020] text-white shadow-sm"
+                        : "bg-transparent text-[#736C66] hover:text-[#2C332D] hover:bg-black/5"
+                        }`}
                     >
                       Yes (Courier)
                     </button>
@@ -3370,23 +3495,38 @@ export default function AdminOrdersPage() {
                   <span>Items Subtotal:</span>
                   <span className="font-mono font-semibold">₹{editForm.subtotal.toFixed(2)}</span>
                 </div>
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-[#736C66]">Discount (₹):</span>
-                  <input
-                    type="number"
-                    min="0"
-                    step="any"
-                    value={editForm.discountAmount}
-                    onChange={(e) => {
-                      const disc = Number(e.target.value) || 0;
-                      const ship = editForm.hasShipping ? Number(editForm.shippingCharge || 0) : 0;
-                      const tot = Math.max(0, editForm.subtotal - disc + ship);
-                      setEditForm({ ...editForm, discountAmount: disc, totalAmount: tot });
-                    }}
-                    className="w-24 px-2 py-0.5 bg-white border border-[#E8E0D5] rounded text-xs font-mono text-right"
-                  />
+                <div className="space-y-1.5 pt-1 border-t border-[#E8E0D5]/60">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-[#736C66]">Discount (₹):</span>
+                    <input
+                      type="number"
+                      min="0"
+                      step="any"
+                      value={editForm.discountAmount || ""}
+                      placeholder="0.00"
+                      onChange={(e) => {
+                        const disc = Number(e.target.value) || 0;
+                        const ship = editForm.hasShipping ? Number(editForm.shippingCharge || 0) : 0;
+                        const tot = Math.max(0, editForm.subtotal - disc + ship);
+                        setEditForm({ ...editForm, discountAmount: disc, totalAmount: tot });
+                      }}
+                      className="w-28 px-2 py-1 bg-white border border-[#E8E0D5] rounded-lg text-xs font-mono text-right focus:border-[#2C332D] focus:outline-none"
+                    />
+                  </div>
+                  {(Number(editForm.discountAmount) > 0 || editForm.discountReason) && (
+                    <div className="flex items-center justify-between text-xs gap-2 pt-0.5">
+                      <span className="text-[#736C66] whitespace-nowrap">Discount Reason / Label:</span>
+                      <input
+                        type="text"
+                        placeholder="e.g. Exhibition Offer, Friends & Family, Custom Quote"
+                        value={editForm.discountReason || ""}
+                        onChange={(e) => setEditForm({ ...editForm, discountReason: e.target.value })}
+                        className="flex-1 px-2.5 py-1 bg-white border border-[#E8E0D5] rounded-lg text-xs text-[#2C332D] placeholder-[#A89F91] focus:border-[#2C332D] focus:outline-none"
+                      />
+                    </div>
+                  )}
                 </div>
-                <div className="flex justify-between text-xs text-[#736C66]">
+                <div className="flex justify-between text-xs text-[#736C66] pt-1 border-t border-[#E8E0D5]/60">
                   <span>Shipping Fee:</span>
                   <span className="font-mono font-semibold">
                     {editForm.hasShipping ? `+₹${Number(editForm.shippingCharge || 0).toFixed(2)}` : "₹0.00 (Self-Pickup)"}

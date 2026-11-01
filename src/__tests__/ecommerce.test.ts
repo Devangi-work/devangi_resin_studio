@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { dbStore } from "../lib/db/index";
 import { hashPassword, verifyPassword, signAdminSession, verifyAdminSession } from "../lib/auth/index";
 import { ALLOWED_IMAGE_TYPES, MAX_FILE_SIZE_BYTES } from "../lib/blob/index";
+import { formatReceiptFileName } from "../lib/receipt/index";
 
 test("E-Commerce Test Suite", async (t) => {
   // 1. Admin Authentication & Hashing
@@ -481,5 +482,108 @@ test("E-Commerce Test Suite", async (t) => {
     assert.equal(updated.items?.length, 1);
     assert.equal(updated.items[0].productName, "Handmade Ocean Coaster - Deep Sea");
     assert.equal(updated.items[0].quantity, 3);
+  });
+
+  await t.test("Admin can set custom discount reason/label for offline orders and it persists across updates", async () => {
+    const created = await dbStore.createOrder({
+      customerName: "Aarti Mehra",
+      customerEmail: null,
+      customerPhone: "9820011223",
+      subtotal: 3500,
+      discountAmount: 500,
+      discountReason: "Exhibition Special Offer",
+      shippingCharge: 0,
+      totalAmount: 3000,
+      orderSource: "exhibition",
+      paymentMethod: "cash",
+      paymentStatus: "paid",
+      items: [
+        { productName: "Handmade Epoxy Wall Clock", quantity: 1, unitPrice: 3500, totalPrice: 3500 },
+      ],
+    });
+
+    assert.equal(Number(created.discountAmount), 500);
+    assert.equal(created.discountReason, "Exhibition Special Offer");
+
+    const fetched = await dbStore.getOrderById(created.id);
+    assert.ok(fetched);
+    assert.equal(fetched.discountReason, "Exhibition Special Offer");
+
+    const updated = await dbStore.updateOrder(created.id, {
+      discountAmount: 700,
+      discountReason: "VIP Bulk Purchase Discount",
+      totalAmount: 2800,
+    });
+
+    assert.equal(Number(updated.discountAmount), 700);
+    assert.equal(updated.discountReason, "VIP Bulk Purchase Discount");
+
+    const refetched = await dbStore.getOrderById(created.id);
+    assert.equal(refetched.discountReason, "VIP Bulk Purchase Discount");
+  });
+
+  await t.test("When admin updates order shipping to No (Pickup), shipping address and charges are cleared to null/0", async () => {
+    // 1. Create order with active courier shipping
+    const orderWithShipping = await dbStore.createOrder({
+      customerName: "Rohan Varma",
+      customerEmail: "rohan@example.com",
+      customerPhone: "9876543210",
+      shippingAddressLine1: "101 Lotus Heights, Bandra West",
+      shippingCity: "Mumbai",
+      shippingState: "Maharashtra",
+      shippingPostalCode: "400050",
+      shippingCountry: "India",
+      shippingCharge: 149,
+      subtotal: 2000,
+      totalAmount: 2149,
+      orderSource: "offline",
+      paymentMethod: "upi",
+      paymentStatus: "paid",
+      items: [
+        { productName: "Resin Geode Platter", quantity: 1, unitPrice: 2000, totalPrice: 2000 },
+      ],
+    });
+
+    assert.equal(orderWithShipping.shippingAddressLine1, "101 Lotus Heights, Bandra West");
+    assert.equal(Number(orderWithShipping.shippingCharge), 149);
+
+    // 2. Admin switches shipping to No (Pickup): payload sends nulls and 0 charge
+    const updatedToPickup = await dbStore.updateOrder(orderWithShipping.id, {
+      shippingCharge: 0,
+      shippingAddressLine1: null,
+      shippingAddressLine2: null,
+      shippingCity: null,
+      shippingState: null,
+      shippingPostalCode: null,
+      shippingCountry: null,
+      totalAmount: 2000,
+    });
+
+    assert.equal(updatedToPickup.shippingAddressLine1, null);
+    assert.equal(Number(updatedToPickup.shippingCharge), 0);
+    assert.equal(Number(updatedToPickup.totalAmount), 2000);
+
+    // 3. Verify retrieved order from DB has null shipping address and 0 charge
+    const refetched = await dbStore.getOrderById(orderWithShipping.id);
+    assert.equal(refetched.shippingAddressLine1, null);
+    assert.equal(Number(refetched.shippingCharge), 0);
+  });
+
+  await t.test("formatReceiptFileName produces clean, legal filename including customer name and order number", () => {
+    // Standard customer name and order number
+    const name1 = formatReceiptFileName("Meera Kapoor", "OFF-20261031-8619");
+    assert.equal(name1, "Receipt - Meera Kapoor - OFF-20261031-8619");
+
+    // Name with illegal filename characters like slashes, colons, quotes
+    const name2 = formatReceiptFileName("Priya / Sharma: \"VIP\"", "RA-20261012-9901");
+    assert.equal(name2, "Receipt - Priya Sharma VIP - RA-20261012-9901");
+
+    // Name with excess whitespace
+    const name3 = formatReceiptFileName("   Ananya    K.   Rao   ", "ORD-1234");
+    assert.equal(name3, "Receipt - Ananya K. Rao - ORD-1234");
+
+    // Null or empty customer name
+    const name4 = formatReceiptFileName(null, "OFF-20261031-1122");
+    assert.equal(name4, "Receipt - Customer - OFF-20261031-1122");
   });
 });

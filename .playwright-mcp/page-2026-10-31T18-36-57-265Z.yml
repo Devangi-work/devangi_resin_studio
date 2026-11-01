@@ -1,0 +1,225 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - complementary [ref=e3]:
+      - generic [ref=e4]:
+        - link "Devangi Resin Studio Logo DEVANGI RESIN STUDIO View Live Store" [ref=e6] [cursor=pointer]:
+          - /url: /
+          - img "Devangi Resin Studio Logo" [ref=e7]
+          - generic [ref=e8]:
+            - generic [ref=e9]: DEVANGI RESIN STUDIO
+            - generic [ref=e10]: View Live Store
+        - navigation [ref=e16]:
+          - link "Dashboard" [ref=e17] [cursor=pointer]:
+            - /url: /admin/dashboard
+          - link "Products" [ref=e24] [cursor=pointer]:
+            - /url: /admin/products
+          - link "Categories" [ref=e30] [cursor=pointer]:
+            - /url: /admin/categories
+          - link "Orders" [ref=e37] [cursor=pointer]:
+            - /url: /admin/orders
+          - link "Reviews" [ref=e42] [cursor=pointer]:
+            - /url: /admin/reviews
+          - link "Custom Studio" [ref=e46] [cursor=pointer]:
+            - /url: /admin/custom-requests
+          - link "Inventory" [ref=e50] [cursor=pointer]:
+            - /url: /admin/inventory
+          - link "Coupons" [ref=e62] [cursor=pointer]:
+            - /url: /admin/coupons
+          - link "Customers" [ref=e67] [cursor=pointer]:
+            - /url: /admin/customers
+          - link "Media Library" [ref=e74] [cursor=pointer]:
+            - /url: /admin/media
+          - link "Store Settings" [ref=e80] [cursor=pointer]:
+            - /url: /admin/settings
+      - generic [ref=e85]:
+        - 'button "Theme: light Mode Switch" [ref=e86]':
+          - generic [ref=e87]:
+            - generic [ref=e94]: "Theme:"
+            - generic [ref=e95]: light Mode
+          - generic [ref=e96]: Switch
+        - generic "Click to manage admin profile & avatar" [ref=e97] [cursor=pointer]:
+          - img "Devangi Resin Studio Admin" [ref=e177]
+          - generic [ref=e105]:
+            - paragraph [ref=e107]: Devangi Resin Studio Admin
+            - paragraph [ref=e108]: devangiresin@gmail.com
+            - paragraph [ref=e109]:
+              - generic [ref=e110]: Change Photo
+        - button "Logout" [ref=e111]
+    - main [ref=e116]:
+      - generic [ref=e118]:
+        - generic [ref=e119]:
+          - generic [ref=e120]:
+            - heading "Order Management & Fulfilment" [level=1] [ref=e121]
+            - paragraph [ref=e122]: Track online store sales and offline exhibition / Instagram custom orders in one unified system.
+          - generic [ref=e123]:
+            - button "+ Create Offline / Exhibition Order" [ref=e124]
+            - link "Export CSV" [ref=e127] [cursor=pointer]:
+              - /url: /api/admin/orders/export
+        - generic [ref=e132]:
+          - button "Orders Management (1)" [ref=e178] [cursor=pointer]
+          - button "Custom Studio Inquiries (0)" [ref=e138] [cursor=pointer]
+        - generic [ref=e142]:
+          - 'textbox "Search by order #, email, phone..." [ref=e147]'
+          - combobox [ref=e148]:
+            - option "All Sources (Online & Offline)" [selected]
+            - option "Online Web Store"
+            - option "Offline / Exhibition / Instagram"
+          - combobox [ref=e149]:
+            - option "All Fulfilment Statuses" [selected]
+            - option "Pending Payment"
+            - option "Confirmed"
+            - option "Processing (Curing)"
+            - option "Ready to Ship"
+            - option "Shipped"
+            - option "Delivered"
+            - option "Cancelled"
+          - combobox [ref=e150]:
+            - option "All Payment Statuses" [selected]
+            - option "Paid"
+            - option "Unpaid"
+            - option "Pending Verification"
+            - option "Failed"
+        - table [ref=e153]:
+          - rowgroup [ref=e154]:
+            - row [ref=e155]:
+              - 'columnheader "Order #" [ref=e156]'
+              - columnheader "Source" [ref=e157]
+              - columnheader "Customer" [ref=e158]
+              - columnheader "Products Ordered" [ref=e159]
+              - columnheader "Total" [ref=e160]
+              - columnheader "Fulfilment Status" [ref=e161]
+              - columnheader "Payment Status (Click to Toggle)" [ref=e162]
+              - columnheader "Action" [ref=e163]
+          - rowgroup [ref=e164]:
+            - row [ref=e179]:
+              - cell "OFF-20261031-6531 31 Oct" [ref=e180]:
+                - generic [ref=e181]: OFF-20261031-6531
+                - text: 31 Oct
+              - cell "offline" [ref=e182]
+              - cell [ref=e183]:
+                - paragraph [ref=e184]: Anisha Jain
+                - paragraph [ref=e185]: +91 88981 24208
+                - paragraph [ref=e186]: shrikesh123shetty@gmail.com
+              - 'cell "Custom Rosé Aura Keychain Custom Rosé Aura Keychain Qty: 1" [ref=e187]':
+                - generic [ref=e189]:
+                  - img "Custom Rosé Aura Keychain" [ref=e191] [cursor=pointer]
+                  - generic [ref=e192]:
+                    - paragraph [ref=e193]: Custom Rosé Aura Keychain
+                    - generic [ref=e194]: "Qty: 1"
+              - cell "₹149.00" [ref=e196]
+              - cell "Confirmed" [ref=e197]:
+                - combobox "Click to change Fulfilment Status" [ref=e198] [cursor=pointer]:
+                  - option "Pending Payment"
+                  - option "Confirmed" [selected]
+                  - option "Processing"
+                  - option "Ready to Ship"
+                  - option "Shipped"
+                  - option "Delivered"
+                  - option "Cancelled"
+              - cell [ref=e199]:
+                - button "paid (Toggle)" [ref=e200]
+              - cell [ref=e203]:
+                - generic [ref=e204]:
+                  - link "PDF" [ref=e205] [cursor=pointer]:
+                    - /url: /admin/orders/ord_1793461082575/receipt
+                  - button "View" [ref=e210]
+                  - button "Edit" [ref=e215]
+        - generic [ref=e220]:
+          - generic [ref=e221]:
+            - generic [ref=e222]:
+              - text: Studio & Sales
+              - heading "Create Manual / Offline Order" [level=2] [ref=e223]
+            - button [ref=e224]
+          - generic [ref=e228]:
+            - generic [ref=e229]:
+              - generic [ref=e230]:
+                - generic [ref=e231]: Customer Name *
+                - textbox "e.g. Ananya Rao" [ref=e232]: Meera Kapoor
+              - generic [ref=e233]:
+                - generic [ref=e234]: Phone Number *
+                - textbox "e.g. 9820154321" [ref=e235]: "9820199887"
+              - generic [ref=e236]:
+                - generic [ref=e237]: Email (Optional)
+                - textbox "Leave blank if not available" [ref=e238]
+            - generic [ref=e239]:
+              - generic [ref=e240]:
+                - generic [ref=e241]: Order Source *
+                - combobox [ref=e242]:
+                  - option "Offline / Walk-in Studio" [selected]
+                  - option "Art Exhibition / Pop-up Stall"
+                  - option "Instagram DM"
+                  - option "Direct Custom Commission"
+              - generic [ref=e243]:
+                - generic [ref=e244]: Payment Method
+                - combobox [ref=e245]:
+                  - option "Cash in Hand" [selected]
+                  - option "Direct UPI Transfer"
+                  - option "Card POS"
+                  - option "Bank Transfer / NEFT"
+              - generic [ref=e246]:
+                - generic [ref=e247]: Payment Status
+                - combobox [ref=e248]:
+                  - option "Paid" [selected]
+                  - option "Unpaid"
+              - generic [ref=e249]:
+                - generic [ref=e250]:
+                  - generic [ref=e251]: Payment Screenshot / Receipt (Optional)
+                  - generic [ref=e252] [cursor=pointer]: Tap to attach receipt image
+                - generic [ref=e257]:
+                  - generic [ref=e258]: UPI Ref / UTR / Transaction ID (Optional)
+                  - textbox "e.g. 428901234567" [ref=e259]
+            - generic [ref=e260]:
+              - generic [ref=e261]:
+                - generic [ref=e262]: Products / Commission Items
+                - button "+ Add Item Row" [ref=e263]
+              - generic [ref=e264]:
+                - textbox "Item name / Custom Resin Piece" [ref=e265]: Handmade Resin Ocean Coasters (Set of 4)
+                - spinbutton "Qty" [ref=e266]: "1"
+                - generic [ref=e267]:
+                  - generic [ref=e268]: ₹
+                  - spinbutton "Price" [ref=e269]: "799"
+            - generic [ref=e271]:
+              - generic [ref=e272]:
+                - generic [ref=e273]: Product Images (Custom Resin Piece)
+                - paragraph [ref=e279]: Upload multiple photos of the finished piece made
+              - generic [ref=e280] [cursor=pointer]: Upload Photos
+            - generic [ref=e286]:
+              - generic [ref=e287]:
+                - generic [ref=e288]: Packing Images (Internal Admin Only)
+                - paragraph [ref=e294]: Upload photos of the packaged box / parcel
+              - generic [ref=e295] [cursor=pointer]: Upload Photos
+            - generic [ref=e301]:
+              - generic [ref=e302]:
+                - generic [ref=e303]: Shipping Required? *
+                - paragraph [ref=e310]: Does this manual order require courier shipping or direct pickup/handover?
+              - generic [ref=e311]:
+                - button "No (Pickup)" [ref=e312]
+                - button "Yes (Shipping)" [ref=e313]
+            - generic [ref=e314]:
+              - generic [ref=e315]:
+                - generic [ref=e316]: "Items Subtotal:"
+                - generic [ref=e317]: ₹799.00
+              - generic [ref=e318]:
+                - generic [ref=e319]:
+                  - generic [ref=e320]: "Discount (₹):"
+                  - spinbutton "0.00" [ref=e321]: "150"
+                - generic [ref=e347]:
+                  - generic [ref=e348]: "Discount Reason / Label:"
+                  - textbox "e.g. Exhibition Special, Walk-in Offer, VIP Client" [ref=e349]: Exhibition Special Inaugural Offer
+              - generic [ref=e322]:
+                - generic [ref=e323]: "Shipping Fee:"
+                - generic [ref=e324]: ₹0.00 (Self-Pickup / Handover)
+              - generic [ref=e325]:
+                - generic [ref=e326]: "Calculated Grand Total:"
+                - generic [ref=e327]: ₹649.00
+            - generic [ref=e328]:
+              - button "Cancel" [ref=e329]
+              - button "Recording Order..." [disabled] [ref=e358]
+  - button "Open Next.js Dev Tools" [ref=e359] [cursor=pointer]:
+    - generic [ref=e362]:
+      - text: Compiling
+      - generic [ref=e363]:
+        - generic [ref=e364]: .
+        - generic [ref=e365]: .
+        - generic [ref=e366]: .
+  - alert [ref=e176]

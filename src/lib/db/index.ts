@@ -19,6 +19,7 @@ if (sql) {
   sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_screenshot_url TEXT;`.catch(() => { });
   sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS packing_images JSONB DEFAULT '[]'::jsonb;`.catch(() => { });
   sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS product_images JSONB DEFAULT '[]'::jsonb;`.catch(() => { });
+  sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS discount_reason TEXT;`.catch(() => { });
   sql`ALTER TABLE customers ADD COLUMN IF NOT EXISTS avatar_url TEXT;`.catch(() => { });
   sql`ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS avatar_url TEXT;`.catch(() => { });
   sql`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS signature_url TEXT DEFAULT '';`.catch(() => { });
@@ -1121,6 +1122,7 @@ export const dbStore = {
             order_notes as "orderNotes",
             subtotal,
             discount_amount as "discountAmount",
+            discount_reason as "discountReason",
             shipping_charge as "shippingCharge",
             tax_amount as "taxAmount",
             total_amount as "totalAmount",
@@ -1265,6 +1267,7 @@ export const dbStore = {
             order_notes as "orderNotes",
             subtotal,
             discount_amount as "discountAmount",
+            discount_reason as "discountReason",
             shipping_charge as "shippingCharge",
             tax_amount as "taxAmount",
             total_amount as "totalAmount",
@@ -1346,6 +1349,7 @@ export const dbStore = {
             order_notes as "orderNotes",
             subtotal,
             discount_amount as "discountAmount",
+            discount_reason as "discountReason",
             shipping_charge as "shippingCharge",
             tax_amount as "taxAmount",
             total_amount as "totalAmount",
@@ -1435,6 +1439,7 @@ export const dbStore = {
       customerEmail: cleanCustomerEmail,
       subtotal: Number(data.subtotal).toFixed(2),
       discountAmount: Number(data.discountAmount || 0).toFixed(2),
+      discountReason: data.discountReason ? data.discountReason.trim() : null,
       shippingCharge: Number(data.shippingCharge || 0).toFixed(2),
       taxAmount: Number(data.taxAmount || 0).toFixed(2),
       totalAmount: Number(data.totalAmount).toFixed(2),
@@ -1460,16 +1465,16 @@ export const dbStore = {
           INSERT INTO orders (
             id, order_number, customer_id, customer_name, customer_email, customer_phone,
             shipping_address_line1, shipping_address_line2, shipping_city, shipping_state,
-            shipping_postal_code, shipping_country, order_notes, subtotal, discount_amount,
+            shipping_postal_code, shipping_country, order_notes, subtotal, discount_amount, discount_reason,
             shipping_charge, tax_amount, total_amount, order_status, payment_status,
             payment_method, upi_transaction_id, payment_screenshot_url, secure_lookup_token, order_source,
             packing_images, product_images, is_discarded,
             created_at, updated_at
           ) VALUES (
             ${id}, ${orderNumber}, ${data.customerId || null}, ${data.customerName}, ${cleanCustomerEmail}, ${data.customerPhone},
-            ${data.shippingAddressLine1}, ${data.shippingAddressLine2 || null}, ${data.shippingCity}, ${data.shippingState},
-            ${data.shippingPostalCode}, ${data.shippingCountry || 'India'}, ${data.orderNotes || null},
-            ${Number(data.subtotal).toFixed(2)}, ${Number(data.discountAmount || 0).toFixed(2)},
+            ${data.shippingAddressLine1 || null}, ${data.shippingAddressLine2 || null}, ${data.shippingCity || null}, ${data.shippingState || null},
+            ${data.shippingPostalCode || null}, ${data.shippingCountry || (data.shippingAddressLine1 ? 'India' : null)}, ${data.orderNotes || null},
+            ${Number(data.subtotal).toFixed(2)}, ${Number(data.discountAmount || 0).toFixed(2)}, ${data.discountReason ? data.discountReason.trim() : null},
             ${Number(data.shippingCharge || 0).toFixed(2)}, ${Number(data.taxAmount || 0).toFixed(2)},
             ${Number(data.totalAmount).toFixed(2)}, ${newOrder.orderStatus}, ${newOrder.paymentStatus},
             ${newOrder.paymentMethod}, ${newOrder.upiTransactionId}, ${newOrder.paymentScreenshotUrl}, ${secureLookupToken}, ${newOrder.orderSource},
@@ -1516,12 +1521,12 @@ export const dbStore = {
       if (data.customerName !== undefined) ord.customerName = data.customerName;
       if (cleanEmail !== undefined) ord.customerEmail = cleanEmail;
       if (data.customerPhone !== undefined) ord.customerPhone = data.customerPhone;
-      if (data.shippingAddressLine1 !== undefined) ord.shippingAddressLine1 = data.shippingAddressLine1;
-      if (data.shippingAddressLine2 !== undefined) ord.shippingAddressLine2 = data.shippingAddressLine2;
-      if (data.shippingCity !== undefined) ord.shippingCity = data.shippingCity;
-      if (data.shippingState !== undefined) ord.shippingState = data.shippingState;
-      if (data.shippingPostalCode !== undefined) ord.shippingPostalCode = data.shippingPostalCode;
-      if (data.shippingCountry !== undefined) ord.shippingCountry = data.shippingCountry;
+      if (data.shippingAddressLine1 !== undefined) ord.shippingAddressLine1 = data.shippingAddressLine1 ? data.shippingAddressLine1.trim() : null;
+      if (data.shippingAddressLine2 !== undefined) ord.shippingAddressLine2 = data.shippingAddressLine2 ? data.shippingAddressLine2.trim() : null;
+      if (data.shippingCity !== undefined) ord.shippingCity = data.shippingCity ? data.shippingCity.trim() : null;
+      if (data.shippingState !== undefined) ord.shippingState = data.shippingState ? data.shippingState.trim() : null;
+      if (data.shippingPostalCode !== undefined) ord.shippingPostalCode = data.shippingPostalCode ? data.shippingPostalCode.trim() : null;
+      if (data.shippingCountry !== undefined) ord.shippingCountry = data.shippingCountry ? data.shippingCountry.trim() : null;
       if (data.orderSource !== undefined) ord.orderSource = data.orderSource;
       if (data.paymentMethod !== undefined) ord.paymentMethod = data.paymentMethod;
       if (data.paymentStatus !== undefined) ord.paymentStatus = data.paymentStatus;
@@ -1533,6 +1538,7 @@ export const dbStore = {
       if (data.orderNotes !== undefined) ord.orderNotes = data.orderNotes;
       if (data.subtotal !== undefined) ord.subtotal = Number(data.subtotal).toFixed(2);
       if (data.discountAmount !== undefined) ord.discountAmount = Number(data.discountAmount).toFixed(2);
+      if (data.discountReason !== undefined) ord.discountReason = data.discountReason ? data.discountReason.trim() : null;
       if (data.shippingCharge !== undefined) ord.shippingCharge = Number(data.shippingCharge).toFixed(2);
       if (data.totalAmount !== undefined) ord.totalAmount = Number(data.totalAmount).toFixed(2);
       if (data.packingImages !== undefined) ord.packingImages = data.packingImages;
@@ -1555,13 +1561,19 @@ export const dbStore = {
     if (sql) {
       try {
         const customerEmailVal = cleanEmail !== undefined ? cleanEmail : (ord.customerEmail || null);
-        const shippingAddress2Val = data.shippingAddressLine2 !== undefined ? (data.shippingAddressLine2 || null) : (ord.shippingAddressLine2 || null);
+        const shippingAddress1Val = data.shippingAddressLine1 !== undefined ? (data.shippingAddressLine1 ? data.shippingAddressLine1.trim() : null) : (ord ? ord.shippingAddressLine1 || null : null);
+        const shippingAddress2Val = data.shippingAddressLine2 !== undefined ? (data.shippingAddressLine2 ? data.shippingAddressLine2.trim() : null) : (ord ? ord.shippingAddressLine2 || null : null);
+        const shippingCityVal = data.shippingCity !== undefined ? (data.shippingCity ? data.shippingCity.trim() : null) : (ord ? ord.shippingCity || null : null);
+        const shippingStateVal = data.shippingState !== undefined ? (data.shippingState ? data.shippingState.trim() : null) : (ord ? ord.shippingState || null : null);
+        const shippingPostalCodeVal = data.shippingPostalCode !== undefined ? (data.shippingPostalCode ? data.shippingPostalCode.trim() : null) : (ord ? ord.shippingPostalCode || null : null);
+        const shippingCountryVal = data.shippingCountry !== undefined ? (data.shippingCountry ? data.shippingCountry.trim() : null) : (ord ? ord.shippingCountry || null : null);
         const trackingNumberVal = data.trackingNumber !== undefined ? (data.trackingNumber || null) : (ord.trackingNumber || null);
         const courierNameVal = data.courierName !== undefined ? (data.courierName || null) : (ord.courierName || null);
         const upiTransactionIdVal = data.upiTransactionId !== undefined ? (data.upiTransactionId || null) : (ord.upiTransactionId || null);
         const paymentScreenshotUrlVal = data.paymentScreenshotUrl !== undefined ? (data.paymentScreenshotUrl || null) : (ord.paymentScreenshotUrl || null);
         const orderNotesVal = data.orderNotes !== undefined ? (data.orderNotes || null) : (ord.orderNotes || null);
         const internalNotesVal = data.internalNotes !== undefined ? (data.internalNotes || null) : (ord.internalNotes || null);
+        const discountReasonVal = data.discountReason !== undefined ? (data.discountReason ? data.discountReason.trim() : null) : (ord ? ord.discountReason || null : null);
 
         await sql`
           UPDATE orders
@@ -1569,12 +1581,12 @@ export const dbStore = {
             customer_name = COALESCE(${data.customerName !== undefined ? data.customerName : null}, customer_name),
             customer_email = ${customerEmailVal},
             customer_phone = COALESCE(${data.customerPhone !== undefined ? data.customerPhone : null}, customer_phone),
-            shipping_address_line1 = COALESCE(${data.shippingAddressLine1 !== undefined ? data.shippingAddressLine1 : null}, shipping_address_line1),
+            shipping_address_line1 = ${shippingAddress1Val},
             shipping_address_line2 = ${shippingAddress2Val},
-            shipping_city = COALESCE(${data.shippingCity !== undefined ? data.shippingCity : null}, shipping_city),
-            shipping_state = COALESCE(${data.shippingState !== undefined ? data.shippingState : null}, shipping_state),
-            shipping_postal_code = COALESCE(${data.shippingPostalCode !== undefined ? data.shippingPostalCode : null}, shipping_postal_code),
-            shipping_country = COALESCE(${data.shippingCountry !== undefined ? data.shippingCountry : null}, shipping_country),
+            shipping_city = ${shippingCityVal},
+            shipping_state = ${shippingStateVal},
+            shipping_postal_code = ${shippingPostalCodeVal},
+            shipping_country = ${shippingCountryVal},
             order_source = COALESCE(${data.orderSource !== undefined ? data.orderSource : null}, order_source),
             payment_method = COALESCE(${data.paymentMethod !== undefined ? data.paymentMethod : null}, payment_method),
             payment_status = COALESCE(${data.paymentStatus !== undefined ? data.paymentStatus : null}, payment_status),
@@ -1586,6 +1598,7 @@ export const dbStore = {
             order_notes = ${orderNotesVal},
             subtotal = COALESCE(${data.subtotal !== undefined ? Number(data.subtotal).toFixed(2) : null}, subtotal),
             discount_amount = COALESCE(${data.discountAmount !== undefined ? Number(data.discountAmount).toFixed(2) : null}, discount_amount),
+            discount_reason = ${discountReasonVal},
             shipping_charge = COALESCE(${data.shippingCharge !== undefined ? Number(data.shippingCharge).toFixed(2) : null}, shipping_charge),
             total_amount = COALESCE(${data.totalAmount !== undefined ? Number(data.totalAmount).toFixed(2) : null}, total_amount),
             packing_images = COALESCE(${data.packingImages !== undefined ? JSON.stringify(data.packingImages) : null}::jsonb, packing_images),
@@ -2488,6 +2501,7 @@ export const dbStore = {
             shipping_state as "shippingState",
             subtotal,
             discount_amount as "discountAmount",
+            discount_reason as "discountReason",
             shipping_charge as "shippingCharge",
             tax_amount as "taxAmount",
             total_amount as "totalAmount",
@@ -2821,6 +2835,7 @@ export const dbStore = {
             shipping_state as "shippingState",
             subtotal,
             discount_amount as "discountAmount",
+            discount_reason as "discountReason",
             shipping_charge as "shippingCharge",
             tax_amount as "taxAmount",
             total_amount as "totalAmount",

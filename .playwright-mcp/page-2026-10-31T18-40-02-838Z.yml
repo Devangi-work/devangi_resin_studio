@@ -1,0 +1,10 @@
+- generic [active] [ref=f3e1]:
+  - paragraph [ref=f3e4]: Generating Official Receipt...
+  - button "Open Next.js Dev Tools" [ref=f3e10] [cursor=pointer]:
+    - generic [ref=f3e13]:
+      - text: Compiling
+      - generic [ref=f3e14]:
+        - generic [ref=f3e15]: .
+        - generic [ref=f3e16]: .
+        - generic [ref=f3e17]: .
+  - alert [ref=f3e18]

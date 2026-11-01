@@ -304,18 +304,19 @@ export const orders = pgTable(
     customerPhone: text("customer_phone").notNull(),
 
     // Shipping Address Snapshot
-    shippingAddressLine1: text("shipping_address_line1").notNull(),
+    shippingAddressLine1: text("shipping_address_line1"),
     shippingAddressLine2: text("shipping_address_line2"),
-    shippingCity: text("shipping_city").notNull(),
-    shippingState: text("shipping_state").notNull(),
-    shippingPostalCode: text("shipping_postal_code").notNull(),
-    shippingCountry: text("shipping_country").default("India").notNull(),
+    shippingCity: text("shipping_city"),
+    shippingState: text("shipping_state"),
+    shippingPostalCode: text("shipping_postal_code"),
+    shippingCountry: text("shipping_country").default("India"),
 
     orderNotes: text("order_notes"),
 
     // Financial calculations
     subtotal: numeric("subtotal", { precision: 10, scale: 2 }).notNull(),
     discountAmount: numeric("discount_amount", { precision: 10, scale: 2 }).default("0.00").notNull(),
+    discountReason: text("discount_reason"),
     shippingCharge: numeric("shipping_charge", { precision: 10, scale: 2 }).default("0.00").notNull(),
     taxAmount: numeric("tax_amount", { precision: 10, scale: 2 }).default("0.00").notNull(),
     totalAmount: numeric("total_amount", { precision: 10, scale: 2 }).notNull(),

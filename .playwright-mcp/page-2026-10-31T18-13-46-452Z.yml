@@ -1,0 +1,254 @@
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - complementary [ref=e3]:
+      - generic [ref=e4]:
+        - link "Devangi Resin Studio Logo DEVANGI RESIN STUDIO View Live Store" [ref=e6] [cursor=pointer]:
+          - /url: /
+          - img "Devangi Resin Studio Logo" [ref=e7]
+          - generic [ref=e8]:
+            - generic [ref=e9]: DEVANGI RESIN STUDIO
+            - generic [ref=e10]: View Live Store
+        - navigation [ref=e16]:
+          - link "Dashboard" [ref=e17] [cursor=pointer]:
+            - /url: /admin/dashboard
+          - link "Products" [ref=e24] [cursor=pointer]:
+            - /url: /admin/products
+          - link "Categories" [ref=e30] [cursor=pointer]:
+            - /url: /admin/categories
+          - link "Orders" [ref=e37] [cursor=pointer]:
+            - /url: /admin/orders
+          - link "Reviews" [ref=e42] [cursor=pointer]:
+            - /url: /admin/reviews
+          - link "Custom Studio" [ref=e46] [cursor=pointer]:
+            - /url: /admin/custom-requests
+          - link "Inventory" [ref=e50] [cursor=pointer]:
+            - /url: /admin/inventory
+          - link "Coupons" [ref=e62] [cursor=pointer]:
+            - /url: /admin/coupons
+          - link "Customers" [ref=e67] [cursor=pointer]:
+            - /url: /admin/customers
+          - link "Media Library" [ref=e74] [cursor=pointer]:
+            - /url: /admin/media
+          - link "Store Settings" [ref=e80] [cursor=pointer]:
+            - /url: /admin/settings
+      - generic [ref=e85]:
+        - 'button "Theme: light Mode Switch" [ref=e86]':
+          - generic [ref=e87]:
+            - generic [ref=e94]: "Theme:"
+            - generic [ref=e95]: light Mode
+          - generic [ref=e96]: Switch
+        - generic "Click to manage admin profile & avatar" [ref=e97] [cursor=pointer]:
+          - img "Devangi Resin Studio Admin" [ref=e176]
+          - generic [ref=e105]:
+            - paragraph [ref=e107]: Devangi Resin Studio Admin
+            - paragraph [ref=e108]: devangiresin@gmail.com
+            - paragraph [ref=e109]:
+              - generic [ref=e110]: Change Photo
+        - button "Logout" [ref=e111]
+    - main [ref=e116]:
+      - generic [ref=e118]:
+        - generic [ref=e119]:
+          - generic [ref=e120]:
+            - heading "Order Management & Fulfilment" [level=1] [ref=e121]
+            - paragraph [ref=e122]: Track online store sales and offline exhibition / Instagram custom orders in one unified system.
+          - generic [ref=e123]:
+            - button "+ Create Offline / Exhibition Order" [ref=e124]
+            - link "Export CSV" [ref=e127] [cursor=pointer]:
+              - /url: /api/admin/orders/export
+        - generic [ref=e132]:
+          - button "Orders Management (1)" [ref=e177] [cursor=pointer]
+          - button "Custom Studio Inquiries (0)" [ref=e138] [cursor=pointer]
+        - generic [ref=e142]:
+          - 'textbox "Search by order #, email, phone..." [ref=e147]'
+          - combobox [ref=e148]:
+            - option "All Sources (Online & Offline)" [selected]
+            - option "Online Web Store"
+            - option "Offline / Exhibition / Instagram"
+          - combobox [ref=e149]:
+            - option "All Fulfilment Statuses" [selected]
+            - option "Pending Payment"
+            - option "Confirmed"
+            - option "Processing (Curing)"
+            - option "Ready to Ship"
+            - option "Shipped"
+            - option "Delivered"
+            - option "Cancelled"
+          - combobox [ref=e150]:
+            - option "All Payment Statuses" [selected]
+            - option "Paid"
+            - option "Unpaid"
+            - option "Pending Verification"
+            - option "Failed"
+        - table [ref=e153]:
+          - rowgroup [ref=e154]:
+            - row [ref=e155]:
+              - 'columnheader "Order #" [ref=e156]'
+              - columnheader "Source" [ref=e157]
+              - columnheader "Customer" [ref=e158]
+              - columnheader "Products Ordered" [ref=e159]
+              - columnheader "Total" [ref=e160]
+              - columnheader "Fulfilment Status" [ref=e161]
+              - columnheader "Payment Status (Click to Toggle)" [ref=e162]
+              - columnheader "Action" [ref=e163]
+          - rowgroup [ref=e164]:
+            - row [ref=e178]:
+              - cell "OFF-20261031-6531 31 Oct" [ref=e179]:
+                - generic [ref=e180]: OFF-20261031-6531
+                - text: 31 Oct
+              - cell "offline" [ref=e181]
+              - cell [ref=e182]:
+                - paragraph [ref=e183]: Anisha Jain
+                - paragraph [ref=e184]: +91 88981 24208
+              - 'cell "Custom Rosé Aura Keychain Custom Rosé Aura Keychain Qty: 1" [ref=e185]':
+                - generic [ref=e187]:
+                  - img "Custom Rosé Aura Keychain" [ref=e189] [cursor=pointer]
+                  - generic [ref=e190]:
+                    - paragraph [ref=e191]: Custom Rosé Aura Keychain
+                    - generic [ref=e192]: "Qty: 1"
+              - cell "₹149.00" [ref=e194]
+              - cell "Confirmed" [ref=e195]:
+                - combobox "Click to change Fulfilment Status" [ref=e196] [cursor=pointer]:
+                  - option "Pending Payment"
+                  - option "Confirmed" [selected]
+                  - option "Processing"
+                  - option "Ready to Ship"
+                  - option "Shipped"
+                  - option "Delivered"
+                  - option "Cancelled"
+              - cell [ref=e197]:
+                - button "paid (Toggle)" [ref=e198]
+              - cell [ref=e201]:
+                - generic [ref=e202]:
+                  - link "PDF" [ref=e203] [cursor=pointer]:
+                    - /url: /admin/orders/ord_1793461082575/receipt
+                  - button "View" [ref=e208]
+                  - button "Edit" [active] [ref=e213]
+        - generic [ref=e219]:
+          - generic [ref=e220]:
+            - generic [ref=e221]:
+              - generic [ref=e222]:
+                - generic [ref=e223]: offline Order
+                - generic [ref=e224]: Created 31 Oct 2026
+              - 'heading "Edit Order #OFF-20261031-6531" [level=2] [ref=e225]'
+            - button [ref=e226]
+          - generic [ref=e230]:
+            - generic [ref=e231]:
+              - heading "Customer Information" [level=3] [ref=e232]
+              - generic [ref=e236]:
+                - generic [ref=e237]:
+                  - generic [ref=e238]: Customer Name *
+                  - textbox [ref=e239]: Anisha Jain
+                - generic [ref=e240]:
+                  - generic [ref=e241]: Phone Number *
+                  - textbox [ref=e242]: +91 88981 24208
+                - generic [ref=e243]:
+                  - generic [ref=e244]: Email (Optional)
+                  - textbox "Leave blank if not available" [ref=e245]
+            - generic [ref=e246]:
+              - heading "Order Origin & Fulfilment" [level=3] [ref=e247]
+              - generic [ref=e254]:
+                - generic [ref=e255]:
+                  - generic [ref=e256]: Order Source
+                  - combobox [ref=e257]:
+                    - option "Offline / Walk-in Studio" [selected]
+                    - option "Art Exhibition / Pop-up Stall"
+                    - option "Instagram DM"
+                    - option "Direct Custom Commission"
+                    - option "Online Store"
+                - generic [ref=e258]:
+                  - generic [ref=e259]: Fulfilment Status
+                  - combobox [ref=e260]:
+                    - option "Pending Payment"
+                    - option "Confirmed" [selected]
+                    - option "Processing (Handcrafting)"
+                    - option "Ready to Ship"
+                    - option "Shipped"
+                    - option "Delivered"
+                    - option "Cancelled"
+                - generic [ref=e261]:
+                  - generic [ref=e262]: Courier Partner
+                  - textbox "e.g. Delhivery / Blue Dart" [ref=e263]: Self
+                - generic [ref=e264]:
+                  - generic [ref=e265]: Tracking Number (AWB)
+                  - textbox "e.g. DELHIVERY-7749210" [ref=e266]
+            - generic [ref=e267]:
+              - heading "Payment Details" [level=3] [ref=e268]
+              - generic [ref=e272]:
+                - generic [ref=e273]:
+                  - generic [ref=e274]: Payment Method
+                  - combobox [ref=e275]:
+                    - option "Cash in Hand"
+                    - option "Direct UPI Transfer" [selected]
+                    - option "Card POS"
+                    - option "Bank Transfer / NEFT"
+                    - option "Razorpay Online"
+                - generic [ref=e276]:
+                  - generic [ref=e277]: Payment Status
+                  - combobox [ref=e278]:
+                    - option "Paid (Verified)" [selected]
+                    - option "Unpaid"
+                    - option "Pending Verification"
+                    - option "Cancelled"
+                - generic [ref=e279]:
+                  - generic [ref=e280]: UPI Ref / UTR / Note
+                  - textbox "e.g. 423984729182" [ref=e281]
+              - generic [ref=e282]:
+                - generic [ref=e283]:
+                  - generic [ref=e284]: Payment Screenshot Proof
+                  - generic [ref=e289] [cursor=pointer]: Upload Screenshot
+                - paragraph [ref=e294]: No payment receipt screenshot attached.
+            - generic [ref=e295]:
+              - generic [ref=e296]:
+                - heading "Purchased Items & Quantities (1)" [level=3] [ref=e297]
+                - button "Add Item" [ref=e303]
+              - generic [ref=e307]:
+                - textbox "Product Name" [ref=e309]: Custom Rosé Aura Keychain
+                - spinbutton "Qty" [ref=e311]: "1"
+                - spinbutton "Price ₹" [ref=e313]: "149"
+                - generic [ref=e314]: ₹149.00
+                - button "Remove item" [disabled] [ref=e315]
+            - generic [ref=e320]:
+              - generic [ref=e321]:
+                - generic [ref=e322]: Shipping Required?
+                - paragraph [ref=e329]: Does this order require courier dispatch or customer studio pickup?
+              - generic [ref=e330]:
+                - button "No (Pickup)" [ref=e331]
+                - button "Yes (Courier)" [ref=e332]
+            - generic [ref=e333]:
+              - generic [ref=e334]:
+                - generic [ref=e335]:
+                  - generic [ref=e336]: Finished Piece Photos
+                  - generic [ref=e342] [cursor=pointer]: + Add Photos
+                - generic [ref=e348]:
+                  - img "Piece" [ref=e349]
+                  - button "Remove photo" [ref=e350]
+              - generic [ref=e354]:
+                - generic [ref=e355]:
+                  - generic [ref=e356]: Parcel Packing Photos
+                  - generic [ref=e362] [cursor=pointer]: + Add Photos
+                - paragraph [ref=e367]: No packing photos attached.
+            - generic [ref=e368]:
+              - generic [ref=e369]:
+                - generic [ref=e370]: Customer / Order Notes
+                - textbox "Notes visible to customer or special instructions" [ref=e371]
+              - generic [ref=e372]:
+                - generic [ref=e373]: Internal Studio Notes
+                - textbox "Private notes (payment verification, packaging reminders, etc.)" [ref=e374]
+            - generic [ref=e375]:
+              - generic [ref=e376]:
+                - generic [ref=e377]: "Items Subtotal:"
+                - generic [ref=e378]: ₹149.00
+              - generic [ref=e379]:
+                - generic [ref=e380]: "Discount (₹):"
+                - spinbutton [ref=e381]: "0"
+              - generic [ref=e382]:
+                - generic [ref=e383]: "Shipping Fee:"
+                - generic [ref=e384]: ₹0.00 (Self-Pickup)
+              - generic [ref=e385]:
+                - generic [ref=e386]: "Total Order Amount:"
+                - generic [ref=e387]: ₹149.00
+            - generic [ref=e388]:
+              - button "Cancel" [ref=e389]
+              - button "Save Order Changes" [ref=e390]
+  - button "Open Next.js Dev Tools" [ref=e172] [cursor=pointer]
+  - alert [ref=e217]
