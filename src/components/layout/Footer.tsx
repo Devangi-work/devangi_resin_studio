@@ -101,7 +101,7 @@ export function Footer() {
             </p>
             <div className="flex items-center space-x-3 pt-2">
               <a
-                href={settings?.instagramUrl || "https://instagram.com/devangiresinstudio"}
+                href={settings?.instagramUrl || "https://www.instagram.com/devangi_resin_studio?cplk=dGV0MmUydXN2azcy"}
                 target="_blank"
                 rel="noreferrer"
                 className="w-9 h-9 rounded-full bg-[#3A1823] flex items-center justify-center text-[#FAF4EE] hover:text-[#D4AF37] hover:bg-[#4E2230] transition-colors shadow-xs"

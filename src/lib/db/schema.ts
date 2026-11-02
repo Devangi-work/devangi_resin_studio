@@ -542,7 +542,7 @@ export const siteSettings = pgTable("site_settings", {
   contactEmail: text("contact_email").default("hello@devangiresinstudio.com").notNull(),
   contactPhone: text("contact_phone").default("+91 98765 43210").notNull(),
   whatsappNumber: text("whatsapp_number").default("+919876543210").notNull(),
-  instagramUrl: text("instagram_url").default("https://instagram.com/devangiresinstudio"),
+  instagramUrl: text("instagram_url").default("https://www.instagram.com/devangi_resin_studio?cplk=dGV0MmUydXN2azcy"),
   facebookUrl: text("facebook_url").default("https://facebook.com/devangiresinstudio"),
   pinterestUrl: text("pinterest_url").default("https://pinterest.com/devangiresinstudio"),
   currency: text("currency").default("INR").notNull(),

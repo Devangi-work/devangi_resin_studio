@@ -52,7 +52,7 @@ export default function AdminSettingsPage() {
     contactEmail: "hello@devangiresinstudio.com",
     contactPhone: "+91 98765 43210",
     whatsappNumber: "+919876543210",
-    instagramUrl: "https://instagram.com/devangiresinstudio",
+    instagramUrl: "https://www.instagram.com/devangi_resin_studio?cplk=dGV0MmUydXN2azcy",
     pinterestUrl: "https://pinterest.com/devangiresinstudio",
     defaultShippingCharge: "79.00",
     freeShippingThreshold: "999.00",

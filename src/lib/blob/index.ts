@@ -45,15 +45,42 @@ export async function uploadImageToBlob(
     throw new Error(`File size ${(file.size / 1024 / 1024).toFixed(1)}MB exceeds the 5MB maximum limit.`);
   }
 
-  const sanitizedFilename = filename.toLowerCase().replace(/[^a-z0-9._-]/g, "_");
+  let uploadFile: File | Blob = file;
+  let finalFilename = filename;
+
+  if (isHeic) {
+    try {
+      // Convert HEIC/HEIF to universal browser-compatible JPEG so it renders in all browsers
+      const heicConvert = (await import("heic-convert")).default || (await import("heic-convert"));
+      const arrayBuffer = await file.arrayBuffer();
+      const inputBuffer = Buffer.from(arrayBuffer);
+      const outputBuffer = await heicConvert({
+        buffer: inputBuffer,
+        format: "JPEG",
+        quality: 0.92,
+      });
+
+      finalFilename = filename.replace(/\.(heic|heif)$/i, ".jpg");
+      if (!finalFilename.toLowerCase().endsWith(".jpg") && !finalFilename.toLowerCase().endsWith(".jpeg")) {
+        finalFilename += ".jpg";
+      }
+
+      uploadFile = new Blob([new Uint8Array(outputBuffer as ArrayBuffer)], { type: "image/jpeg" });
+    } catch (conversionErr) {
+      console.warn("[uploadImageToBlob] HEIC to JPEG conversion note:", conversionErr);
+      finalFilename = filename.replace(/\.(heic|heif)$/i, ".jpg");
+    }
+  }
+
+  const sanitizedFilename = finalFilename.toLowerCase().replace(/[^a-z0-9._-]/g, "_");
   const pathname = `${prefix}/${Date.now()}-${sanitizedFilename}`;
 
   if (!isBlobConfigured()) {
     // Development / fallback: convert to data URL or return development mock URL
-    const arrayBuffer = await file.arrayBuffer();
+    const arrayBuffer = await uploadFile.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
     const base64 = buffer.toString("base64");
-    const mime = isHeic ? (file.type && file.type.startsWith("image/") ? file.type : "image/heic") : (file.type || "image/png");
+    const mime = uploadFile.type && !uploadFile.type.includes("heic") && !uploadFile.type.includes("heif") ? uploadFile.type : "image/jpeg";
     const dataUrl = `data:${mime};base64,${base64}`;
 
     return {
@@ -63,9 +90,10 @@ export async function uploadImageToBlob(
     };
   }
 
-  const blob = await put(pathname, file, {
+  const blob = await put(pathname, uploadFile, {
     access: "public",
     token: BLOB_READ_WRITE_TOKEN,
+    contentType: uploadFile.type || "image/jpeg",
   });
 
   return {

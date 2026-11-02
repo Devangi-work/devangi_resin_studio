@@ -167,7 +167,7 @@ function getInitialStoreState(): StoreState {
       contactEmail: "devangi0403@gmail.com",
       contactPhone: "+91 98765 43210",
       whatsappNumber: "+919876543210",
-      instagramUrl: "https://instagram.com/devangiresinstudio",
+      instagramUrl: "https://www.instagram.com/devangi_resin_studio?cplk=dGV0MmUydXN2azcy",
       pinterestUrl: "https://pinterest.com/devangiresinstudio",
       currency: "INR",
       upiId: "devangi0403@okaxis",
@@ -1426,7 +1426,7 @@ export const dbStore = {
   },
 
   async createOrder(data: any) {
-    const id = data.id || `ord_${Date.now()}`;
+    const id = data.id || `ord_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
     const orderNumber = data.orderNumber || `RA-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-${Math.floor(1000 + Math.random() * 9000)}`;
     const secureLookupToken = `sec_${Math.random().toString(36).substring(2, 12)}`;
     const cleanCustomerEmail = data.customerEmail && data.customerEmail.trim() ? data.customerEmail.trim() : null;
@@ -2022,6 +2022,21 @@ export const dbStore = {
       store.orders.splice(idx, 1);
     }
     return true;
+  },
+
+  async bulkDeleteOrders(ids: string[]): Promise<{ deleted: boolean; count: number }> {
+    let count = 0;
+    const idSet = new Set(ids);
+    for (const id of ids) {
+      try {
+        const deleted = await this.deleteOrder(id);
+        if (deleted) count++;
+      } catch (e) {
+        console.error("DB bulkDeleteOrders error for id:", id, e);
+      }
+    }
+    store.orders = store.orders.filter((o) => !idSet.has(o.id) && !idSet.has(o.orderNumber));
+    return { deleted: true, count };
   },
 
   // ---------------- COUPONS ----------------

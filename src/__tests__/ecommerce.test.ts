@@ -139,8 +139,8 @@ test("E-Commerce Test Suite", async (t) => {
   });
 
 
-  // 7. Image File Restrictions
-  await t.test("Media Upload Allowed Formats and Size Limit Safeguards", async () => {
+  // 7. Image File Restrictions & HEIC Auto-Conversion to JPEG
+  await t.test("Media Upload Allowed Formats, HEIC Auto-Conversion to JPEG and Size Limit", async () => {
     assert.ok(ALLOWED_IMAGE_TYPES.includes("image/jpeg"));
     assert.ok(ALLOWED_IMAGE_TYPES.includes("image/png"));
     assert.ok(ALLOWED_IMAGE_TYPES.includes("image/webp"));
@@ -148,6 +148,13 @@ test("E-Commerce Test Suite", async (t) => {
     assert.ok(ALLOWED_IMAGE_TYPES.includes("image/heif"));
     assert.equal(ALLOWED_IMAGE_TYPES.includes("application/pdf"), false);
     assert.equal(MAX_FILE_SIZE_BYTES, 5 * 1024 * 1024);
+
+    // HEIC upload converts to universal browser-compatible JPEG
+    const { uploadImageToBlob } = await import("../lib/blob");
+    const dummyHeic = new Blob(["fake-heic-data"], { type: "image/heic" });
+    const uploaded = await uploadImageToBlob(dummyHeic, "resin_sample.heic", "test-uploads");
+    assert.ok(uploaded.pathname.endsWith(".jpg"));
+    assert.ok(uploaded.url.startsWith("data:image/jpeg;base64,") || uploaded.url.endsWith(".jpg"));
   });
 
   // 8. UPI Payment Screenshot OCR Text Parser Test
@@ -696,5 +703,68 @@ test("E-Commerce Test Suite", async (t) => {
     assert.equal(retrieved.items[0].productId, product.id);
     assert.equal(retrieved.items[0].productName, "Amethyst Crystal Resin Platter");
     assert.equal(Number(retrieved.items[0].unitPrice), 1699);
+
+    // Clean up
+    await dbStore.deleteOrder(order.id);
+  });
+
+  // 21. Order Removal / Deletion Test (Single & Bulk)
+  await t.test("Admin can delete single order and bulk delete multiple orders", async () => {
+    // 1. Create 3 test orders
+    const o1 = await dbStore.createOrder({
+      customerName: "Delete Test 1",
+      customerPhone: "9000000001",
+      totalAmount: 500,
+      subtotal: 500,
+      orderStatus: "confirmed",
+      paymentStatus: "unpaid",
+      paymentMethod: "upi",
+      orderSource: "whatsapp",
+      items: [{ productName: "Item 1", quantity: 1, unitPrice: 500 }],
+    });
+
+    const o2 = await dbStore.createOrder({
+      customerName: "Delete Test 2",
+      customerPhone: "9000000002",
+      totalAmount: 600,
+      subtotal: 600,
+      orderStatus: "confirmed",
+      paymentStatus: "unpaid",
+      paymentMethod: "upi",
+      orderSource: "whatsapp",
+      items: [{ productName: "Item 2", quantity: 1, unitPrice: 600 }],
+    });
+
+    const o3 = await dbStore.createOrder({
+      customerName: "Delete Test 3",
+      customerPhone: "9000000003",
+      totalAmount: 700,
+      subtotal: 700,
+      orderStatus: "confirmed",
+      paymentStatus: "unpaid",
+      paymentMethod: "upi",
+      orderSource: "whatsapp",
+      items: [{ productName: "Item 3", quantity: 1, unitPrice: 700 }],
+    });
+
+    assert.ok(o1.id);
+    assert.ok(o2.id);
+    assert.ok(o3.id);
+
+    // 2. Delete single order o1
+    const delSingle = await dbStore.deleteOrder(o1.id);
+    assert.equal(delSingle, true);
+    const checkO1 = await dbStore.getOrderById(o1.id);
+    assert.equal(checkO1, null);
+
+    // 3. Bulk delete remaining orders o2 & o3
+    const bulkRes = await dbStore.bulkDeleteOrders([o2.id, o3.id]);
+    assert.equal(bulkRes.deleted, true);
+    assert.equal(bulkRes.count, 2);
+
+    const checkO2 = await dbStore.getOrderById(o2.id);
+    const checkO3 = await dbStore.getOrderById(o3.id);
+    assert.equal(checkO2, null);
+    assert.equal(checkO3, null);
   });
 });

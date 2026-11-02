@@ -87,6 +87,12 @@ export default function AdminOrdersPage() {
   const [adminScreenshotSuccess, setAdminScreenshotSuccess] = useState("");
   const [viewingScreenshotModal, setViewingScreenshotModal] = useState<string | null>(null);
 
+  // Deletion & Selection state
+  const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);
+  const [deletingOrderId, setDeletingOrderId] = useState<string | null>(null);
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+  const [actionMessage, setActionMessage] = useState("");
+
   // Registered customers & Available website products
   const [customersList, setCustomersList] = useState<any[]>([]);
   const [productsList, setProductsList] = useState<any[]>([]);
@@ -333,6 +339,90 @@ export default function AdminOrdersPage() {
     }
     return true;
   });
+
+  const handleDeleteSingleOrder = async (order: any) => {
+    if (!order?.id) return;
+    const orderNum = order.orderNumber || "this order";
+    if (
+      !confirm(
+        `Are you sure you want to permanently remove order #${orderNum}? This action cannot be undone.`
+      )
+    ) {
+      return;
+    }
+
+    setDeletingOrderId(order.id);
+    try {
+      const res = await fetch(`/api/admin/orders/${order.id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setActionMessage(`Order #${orderNum} has been permanently deleted.`);
+        setTimeout(() => setActionMessage(""), 4000);
+        if (selectedOrder?.id === order.id) setSelectedOrder(null);
+        if (editingOrder?.id === order.id) setEditingOrder(null);
+        setSelectedOrderIds((prev) => prev.filter((id) => id !== order.id));
+        setOrders((prev) => prev.filter((o) => o.id !== order.id));
+      } else {
+        alert(data.error || "Failed to delete order.");
+      }
+    } catch {
+      alert("An error occurred while deleting the order.");
+    } finally {
+      setDeletingOrderId(null);
+    }
+  };
+
+  const handleBulkDeleteOrders = async () => {
+    if (selectedOrderIds.length === 0) return;
+    const count = selectedOrderIds.length;
+    if (
+      !confirm(
+        `Are you sure you want to permanently remove ${count} selected order${
+          count > 1 ? "s" : ""
+        }? This action cannot be undone.`
+      )
+    ) {
+      return;
+    }
+
+    setIsBulkDeleting(true);
+    try {
+      const res = await fetch("/api/admin/orders/bulk", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: selectedOrderIds }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setActionMessage(`Successfully removed ${count} order${count > 1 ? "s" : ""}.`);
+        setTimeout(() => setActionMessage(""), 4000);
+        setOrders((prev) => prev.filter((o) => !selectedOrderIds.includes(o.id)));
+        setSelectedOrderIds([]);
+      } else {
+        alert(data.error || "Failed to delete selected orders.");
+      }
+    } catch {
+      alert("An error occurred while deleting selected orders.");
+    } finally {
+      setIsBulkDeleting(false);
+    }
+  };
+
+  const toggleSelectOrder = (id: string) => {
+    setSelectedOrderIds((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectAllOrders = () => {
+    if (selectedOrderIds.length === filteredOrders.length && filteredOrders.length > 0) {
+      setSelectedOrderIds([]);
+    } else {
+      setSelectedOrderIds(filteredOrders.map((o) => o.id));
+    }
+  };
 
   const openOrderModal = (ord: any) => {
     setSelectedOrder(ord);
@@ -1273,56 +1363,91 @@ export default function AdminOrdersPage() {
 
       {activeTab === "orders" ? (
         <>
-          {/* Filters Bar */}
-          <div className="bg-white p-4 rounded-2xl border border-[#E8E0D5] shadow-sm flex flex-wrap items-center gap-3">
-            <div className="relative w-full sm:w-64">
-              <Search className="w-3.5 h-3.5 text-[#8C7A72] absolute left-3 top-3" />
-              <input
-                type="text"
-                placeholder="Search by order #, email, phone..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-8 pr-3 py-2 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
-              />
+          {/* Action Message Banner */}
+          {actionMessage && (
+            <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded-xl flex items-center justify-between shadow-xs">
+              <span>{actionMessage}</span>
+              <button
+                type="button"
+                onClick={() => setActionMessage("")}
+                className="text-emerald-600 hover:text-emerald-800"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+
+          {/* Filters Bar & Bulk Action Controls */}
+          <div className="bg-white p-4 rounded-2xl border border-[#E8E0D5] shadow-sm flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="relative w-full sm:w-64">
+                <Search className="w-3.5 h-3.5 text-[#8C7A72] absolute left-3 top-3" />
+                <input
+                  type="text"
+                  placeholder="Search by order #, email, phone..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full pl-8 pr-3 py-2 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
+                />
+              </div>
+
+              <select
+                value={sourceFilter}
+                onChange={(e) => setSourceFilter(e.target.value)}
+                className="py-2 px-3 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl text-[#2C332D]"
+              >
+                <option value="all">All Sources (Online, WhatsApp & Offline)</option>
+                <option value="whatsapp">WhatsApp Orders</option>
+                <option value="online">Online Web Store</option>
+                <option value="offline">Offline / Exhibition / Instagram</option>
+              </select>
+
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="py-2 px-3 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl text-[#2C332D]"
+              >
+                <option value="all">All Fulfilment Statuses</option>
+                <option value="pending_payment">Pending Payment</option>
+                <option value="confirmed">Confirmed</option>
+                <option value="processing">Processing (Curing)</option>
+                <option value="ready_to_ship">Ready to Ship</option>
+                <option value="shipped">Shipped</option>
+                <option value="delivered">Delivered</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+
+              <select
+                value={paymentFilter}
+                onChange={(e) => setPaymentFilter(e.target.value)}
+                className="py-2 px-3 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl text-[#2C332D]"
+              >
+                <option value="all">All Payment Statuses</option>
+                <option value="paid">Paid</option>
+                <option value="unpaid">Unpaid</option>
+                <option value="pending_verification">Pending Verification</option>
+                <option value="failed">Failed</option>
+              </select>
             </div>
 
-            <select
-              value={sourceFilter}
-              onChange={(e) => setSourceFilter(e.target.value)}
-              className="py-2 px-3 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl text-[#2C332D]"
-            >
-              <option value="all">All Sources (Online, WhatsApp & Offline)</option>
-              <option value="whatsapp">WhatsApp Orders</option>
-              <option value="online">Online Web Store</option>
-              <option value="offline">Offline / Exhibition / Instagram</option>
-            </select>
-
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="py-2 px-3 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl text-[#2C332D]"
-            >
-              <option value="all">All Fulfilment Statuses</option>
-              <option value="pending_payment">Pending Payment</option>
-              <option value="confirmed">Confirmed</option>
-              <option value="processing">Processing (Curing)</option>
-              <option value="ready_to_ship">Ready to Ship</option>
-              <option value="shipped">Shipped</option>
-              <option value="delivered">Delivered</option>
-              <option value="cancelled">Cancelled</option>
-            </select>
-
-            <select
-              value={paymentFilter}
-              onChange={(e) => setPaymentFilter(e.target.value)}
-              className="py-2 px-3 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl text-[#2C332D]"
-            >
-              <option value="all">All Payment Statuses</option>
-              <option value="paid">Paid</option>
-              <option value="unpaid">Unpaid</option>
-              <option value="pending_verification">Pending Verification</option>
-              <option value="failed">Failed</option>
-            </select>
+            {/* Bulk Removal Controls */}
+            {selectedOrderIds.length > 0 && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-[#736C66] font-medium">
+                  {selectedOrderIds.length} selected:
+                </span>
+                <button
+                  type="button"
+                  onClick={handleBulkDeleteOrders}
+                  disabled={isBulkDeleting}
+                  className="px-3 py-1.5 text-xs font-semibold bg-[#FDF2F2] text-[#DF4C4C] hover:bg-[#FBE5E5] rounded-xl border border-[#FADBD8] flex items-center space-x-1.5 transition shadow-xs"
+                  title="Permanently remove selected orders"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>{isBulkDeleting ? "Removing..." : `Delete (${selectedOrderIds.length})`}</span>
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Orders Table */}
@@ -1331,6 +1456,18 @@ export default function AdminOrdersPage() {
               <table className="w-full text-left text-xs">
                 <thead className="bg-[#FAF8F5] text-[#736C66] border-b border-[#E8E0D5]">
                   <tr>
+                    <th className="py-3 px-3 w-8">
+                      <input
+                        type="checkbox"
+                        checked={
+                          filteredOrders.length > 0 &&
+                          selectedOrderIds.length === filteredOrders.length
+                        }
+                        onChange={toggleSelectAllOrders}
+                        className="rounded text-[#2C332D] cursor-pointer"
+                        title="Select All Orders"
+                      />
+                    </th>
                     <th className="py-3 px-4 font-semibold">Order #</th>
                     <th className="py-3 px-4 font-semibold">Source</th>
                     <th className="py-3 px-4 font-semibold">Customer</th>
@@ -1344,19 +1481,28 @@ export default function AdminOrdersPage() {
                 <tbody className="divide-y divide-[#F4EBE6] text-[#2C332D]">
                   {loading ? (
                     <tr>
-                      <td colSpan={8} className="py-8 text-center text-[#736C66]">
+                      <td colSpan={9} className="py-8 text-center text-[#736C66]">
                         Loading orders...
                       </td>
                     </tr>
                   ) : filteredOrders.length === 0 ? (
                     <tr>
-                      <td colSpan={8} className="py-8 text-center text-[#736C66]">
+                      <td colSpan={9} className="py-8 text-center text-[#736C66]">
                         No orders found.
                       </td>
                     </tr>
                   ) : (
                     filteredOrders.map((o) => (
                       <tr key={o.id} className="hover:bg-[#FAF8F5] transition-colors">
+                        <td className="py-3 px-3" onClick={(e) => e.stopPropagation()}>
+                          <input
+                            type="checkbox"
+                            checked={selectedOrderIds.includes(o.id)}
+                            onChange={() => toggleSelectOrder(o.id)}
+                            className="rounded text-[#2C332D] cursor-pointer"
+                            title={`Select Order #${o.orderNumber}`}
+                          />
+                        </td>
                         <td className="py-3 px-4 font-mono font-bold text-[#2C332D]">
                           <div>{o.orderNumber}</div>
                           <span className="text-[10px] font-normal text-[#8C7A72]">
@@ -1557,6 +1703,18 @@ export default function AdminOrdersPage() {
                             >
                               <Edit2 className="w-3.5 h-3.5 text-[#B8972E]" />
                               <span>Edit</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteSingleOrder(o);
+                              }}
+                              disabled={deletingOrderId === o.id}
+                              className="p-1.5 bg-[#FDF2F2] hover:bg-[#FBE5E5] text-[#DF4C4C] border border-[#FADBD8] rounded-lg transition shadow-xs flex items-center gap-1"
+                              title={`Delete Order #${o.orderNumber}`}
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           </div>
                         </td>
@@ -2491,6 +2649,16 @@ export default function AdminOrdersPage() {
                 >
                   <Edit2 className="w-3.5 h-3.5 text-[#B8972E]" />
                   <span>Edit Order</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleDeleteSingleOrder(selectedOrder)}
+                  disabled={deletingOrderId === selectedOrder.id}
+                  className="px-3 py-1.5 bg-[#FDF2F2] hover:bg-[#FBE5E5] text-[#DF4C4C] border border-[#FADBD8] text-xs font-bold rounded-xl flex items-center space-x-1.5 transition shadow-xs"
+                  title="Permanently remove this order"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>{deletingOrderId === selectedOrder.id ? "Deleting..." : "Delete Order"}</span>
                 </button>
                 <button
                   onClick={() => setSelectedOrder(null)}
@@ -3738,21 +3906,33 @@ export default function AdminOrdersPage() {
               </div>
 
               {/* Footer Buttons */}
-              <div className="flex items-center justify-end space-x-2 pt-3 border-t border-[#F4EBE6]">
+              <div className="flex items-center justify-between pt-3 border-t border-[#F4EBE6]">
                 <button
                   type="button"
-                  onClick={() => setEditingOrder(null)}
-                  className="px-4 py-2 border border-[#E8E0D5] text-xs font-semibold rounded-xl text-[#736C66] hover:bg-[#FAF8F5] transition"
+                  onClick={() => handleDeleteSingleOrder(editingOrder)}
+                  disabled={deletingOrderId === editingOrder.id}
+                  className="px-3.5 py-2 bg-[#FDF2F2] hover:bg-[#FBE5E5] text-[#DF4C4C] border border-[#FADBD8] text-xs font-bold rounded-xl flex items-center space-x-1.5 transition shadow-xs"
+                  title="Permanently remove this order"
                 >
-                  Cancel
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>{deletingOrderId === editingOrder.id ? "Deleting..." : "Delete Order"}</span>
                 </button>
-                <button
-                  type="submit"
-                  disabled={savingEdit}
-                  className="px-6 py-2.5 bg-[#800020] hover:bg-[#68001a] text-white text-xs font-bold rounded-xl transition shadow-sm disabled:opacity-50"
-                >
-                  {savingEdit ? "Saving All Changes..." : "Save Order Changes"}
-                </button>
+                <div className="flex items-center space-x-2">
+                  <button
+                    type="button"
+                    onClick={() => setEditingOrder(null)}
+                    className="px-4 py-2 border border-[#E8E0D5] text-xs font-semibold rounded-xl text-[#736C66] hover:bg-[#FAF8F5] transition"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={savingEdit}
+                    className="px-6 py-2.5 bg-[#800020] hover:bg-[#68001a] text-white text-xs font-bold rounded-xl transition shadow-sm disabled:opacity-50"
+                  >
+                    {savingEdit ? "Saving All Changes..." : "Save Order Changes"}
+                  </button>
+                </div>
               </div>
             </form>
           </div>
