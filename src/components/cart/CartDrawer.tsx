@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCart } from "@/lib/store/cart";
 import {
   X,
@@ -14,9 +15,12 @@ import {
   Tag,
   CheckCircle2,
   Sparkles,
+  MessageCircle,
 } from "lucide-react";
+import { buildCartWhatsAppMessage, getWhatsAppUrl } from "@/lib/whatsapp";
 
 export function CartDrawer() {
+  const router = useRouter();
   const {
     items,
     isCartOpen,
@@ -32,9 +36,47 @@ export function CartDrawer() {
   const [couponError, setCouponError] = useState("");
   const [couponLoading, setCouponLoading] = useState(false);
 
-  const freeShippingGoal = 999;
+  // Authentication & WhatsApp redirection states
+  const [customer, setCustomer] = useState<any>(null);
+  const [adminPhone, setAdminPhone] = useState("+91 9967313355");
+  const [defaultShippingCharge, setDefaultShippingCharge] = useState(79);
+  const [freeShippingThreshold, setFreeShippingThreshold] = useState(999);
+  const [redirectingWhatsApp, setRedirectingWhatsApp] = useState(false);
+
+  useEffect(() => {
+    // Check if customer is logged in
+    fetch("/api/customer/me")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.authenticated && data?.customer) {
+          setCustomer(data.customer);
+        }
+      })
+      .catch(() => {});
+
+    // Fetch site settings
+    fetch("/api/settings")
+      .then((res) => res.json())
+      .then((s) => {
+        if (s?.whatsappNumber || s?.contactPhone) {
+          setAdminPhone(s.whatsappNumber || s.contactPhone);
+        }
+        if (s?.defaultShippingCharge) {
+          setDefaultShippingCharge(Number(s.defaultShippingCharge) || 79);
+        }
+        if (s?.freeShippingThreshold) {
+          setFreeShippingThreshold(Number(s.freeShippingThreshold) || 999);
+        }
+      })
+      .catch(() => {});
+  }, [isCartOpen]);
+
+  const freeShippingGoal = freeShippingThreshold;
   const progressPercent = Math.min(100, (subtotal / freeShippingGoal) * 100);
   const remainingForFreeShipping = Math.max(0, freeShippingGoal - subtotal);
+  const discount = appliedCoupon ? Number(appliedCoupon.discountAmount) : 0;
+  const shippingCharge = subtotal >= freeShippingGoal || subtotal === 0 ? 0 : defaultShippingCharge;
+  const finalTotal = Math.max(0, subtotal - discount + shippingCharge);
 
   const handleApplyCoupon = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,8 +107,52 @@ export function CartDrawer() {
     }
   };
 
-  const discount = appliedCoupon ? appliedCoupon.discountAmount : 0;
-  const finalTotal = Math.max(0, subtotal - discount);
+  const triggerWhatsAppCheckout = (cust?: any) => {
+    if (items.length === 0) return;
+    const message = buildCartWhatsAppMessage({
+      items: items.map((i) => ({
+        name: i.name,
+        quantity: i.quantity,
+        price: i.price,
+        variantName: i.variantName,
+        personalizationDetails: i.personalizationDetails,
+        giftWrapped: i.giftWrapped,
+        giftWrapCharge: i.giftWrapCharge,
+        referenceImageUrl: i.referenceImageUrl,
+      })),
+      subtotal,
+      discountAmount: discount,
+      couponCode: appliedCoupon?.code || null,
+      shippingCharge,
+      finalTotal,
+      customer: cust || customer,
+    });
+
+    const url = getWhatsAppUrl(adminPhone, message);
+    setRedirectingWhatsApp(true);
+    setIsCartOpen(false);
+    window.location.href = url;
+  };
+
+  const handleProceedToCheckout = async () => {
+    if (items.length === 0) return;
+
+    // 1. Check if user is logged in
+    try {
+      const res = await fetch("/api/customer/me");
+      const data = await res.json();
+      if (data?.authenticated && data?.customer) {
+        setCustomer(data.customer);
+        triggerWhatsAppCheckout(data.customer);
+        return;
+      }
+    } catch {}
+
+    // 2. Not logged in -> close cart and redirect to login
+    setIsCartOpen(false);
+    const returnUrl = "/cart?checkout=whatsapp";
+    router.push(`/account/login?redirect=${encodeURIComponent(returnUrl)}`);
+  };
 
   if (!isCartOpen) return null;
 
@@ -315,10 +401,10 @@ export function CartDrawer() {
                 <div className="flex justify-between">
                   <span>Shipping</span>
                   <span className="font-medium text-[#3A1823]">
-                    {subtotal >= freeShippingGoal ? (
+                    {shippingCharge === 0 ? (
                       <span className="text-[#2E7D32] font-semibold">FREE</span>
                     ) : (
-                      "Calculated at checkout"
+                      `₹${shippingCharge.toFixed(2)}`
                     )}
                   </span>
                 </div>
@@ -329,14 +415,37 @@ export function CartDrawer() {
               </div>
 
               {/* Checkout CTA */}
-              <Link
-                href="/checkout"
-                onClick={() => setIsCartOpen(false)}
-                className="w-full py-3.5 bg-[#3A1823] text-white rounded-xl font-semibold text-xs tracking-wide flex items-center justify-center space-x-2 hover:bg-[#4E2230] active:scale-98 shadow-md transition-all group"
+              <button
+                type="button"
+                onClick={handleProceedToCheckout}
+                disabled={redirectingWhatsApp}
+                className="w-full py-3.5 bg-[#25D366] hover:bg-[#20ba5a] text-white rounded-xl font-bold text-xs uppercase tracking-wider flex items-center justify-center space-x-2 shadow-md transition-all group active:scale-[0.99] disabled:opacity-70"
               >
-                <span>Proceed to Secure Checkout</span>
+                <MessageCircle className="w-4 h-4 fill-white" />
+                <span>
+                  {redirectingWhatsApp
+                    ? "Opening WhatsApp..."
+                    : "Proceed to Secure Checkout"}
+                </span>
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </Link>
+              </button>
+
+              <div className="flex items-center justify-between text-[11px] text-[#7A5E68] pt-1">
+                <Link
+                  href="/cart"
+                  onClick={() => setIsCartOpen(false)}
+                  className="underline hover:text-[#3A1823] font-medium"
+                >
+                  View Full Cart
+                </Link>
+                <Link
+                  href="/checkout"
+                  onClick={() => setIsCartOpen(false)}
+                  className="underline hover:text-[#3A1823]"
+                >
+                  Web Checkout
+                </Link>
+              </div>
             </div>
           )}
         </div>

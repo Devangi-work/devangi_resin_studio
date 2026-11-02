@@ -144,6 +144,8 @@ test("E-Commerce Test Suite", async (t) => {
     assert.ok(ALLOWED_IMAGE_TYPES.includes("image/jpeg"));
     assert.ok(ALLOWED_IMAGE_TYPES.includes("image/png"));
     assert.ok(ALLOWED_IMAGE_TYPES.includes("image/webp"));
+    assert.ok(ALLOWED_IMAGE_TYPES.includes("image/heic"));
+    assert.ok(ALLOWED_IMAGE_TYPES.includes("image/heif"));
     assert.equal(ALLOWED_IMAGE_TYPES.includes("application/pdf"), false);
     assert.equal(MAX_FILE_SIZE_BYTES, 5 * 1024 * 1024);
   });
@@ -624,5 +626,75 @@ test("E-Commerce Test Suite", async (t) => {
 
     const refreshedAgain = await dbStore.getOrderById(order.id);
     assert.equal(refreshedAgain.orderStatus, "ready_to_ship");
+  });
+
+  // 20. Admin Manual Order Creation with Customer Dropdown & Website Product
+  await t.test("Admin manual order creation with selected customer and website product preserves customerId and productId", async () => {
+    // 1. Create a customer
+    const customer = await dbStore.createCustomer({
+      name: "Rohit Deshmukh",
+      email: "rohit.deshmukh@example.com",
+      phone: "9876501234",
+      addressLine1: "Flat 502, Lotus Tower",
+      city: "Pune",
+      state: "Maharashtra",
+      postalCode: "411001",
+    });
+    assert.ok(customer.id);
+
+    // 2. Create a website product
+    const product = await dbStore.createProduct({
+      name: "Amethyst Crystal Resin Platter",
+      slug: "amethyst-crystal-resin-platter-test",
+      sku: "PLT-AME-99",
+      regularPrice: 1999,
+      salePrice: 1699,
+      productType: "ready_made",
+      trackInventory: true,
+      stockQuantity: 10,
+    });
+    assert.ok(product.id);
+
+    // 3. Create an order with selected customer and website product
+    const order = await dbStore.createOrder({
+      customerId: customer.id,
+      customerName: customer.name,
+      customerEmail: customer.email,
+      customerPhone: customer.phone,
+      shippingAddressLine1: customer.addressLine1,
+      shippingCity: customer.city,
+      shippingState: customer.state,
+      shippingPostalCode: customer.postalCode,
+      orderSource: "offline",
+      paymentMethod: "upi",
+      paymentStatus: "paid",
+      orderStatus: "confirmed",
+      subtotal: 1699,
+      shippingCharge: 79,
+      totalAmount: 1778,
+      items: [
+        {
+          productId: product.id,
+          productName: product.name,
+          quantity: 1,
+          unitPrice: 1699,
+          totalPrice: 1699,
+        },
+      ],
+    });
+
+    assert.ok(order.id);
+    assert.equal(order.customerId, customer.id);
+    assert.equal(order.customerName, "Rohit Deshmukh");
+    assert.equal(order.shippingCity, "Pune");
+
+    // 4. Retrieve order and verify items have productId linked
+    const retrieved = await dbStore.getOrderById(order.id);
+    assert.ok(retrieved);
+    assert.equal(retrieved.customerId, customer.id);
+    assert.ok(retrieved.items && retrieved.items.length === 1);
+    assert.equal(retrieved.items[0].productId, product.id);
+    assert.equal(retrieved.items[0].productName, "Amethyst Crystal Resin Platter");
+    assert.equal(Number(retrieved.items[0].unitPrice), 1699);
   });
 });

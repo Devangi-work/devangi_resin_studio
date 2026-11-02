@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/lib/store/cart";
 import {
@@ -19,8 +19,10 @@ import {
   Clock,
   Layers,
   Star,
+  MessageCircle,
 } from "lucide-react";
 import { ProductReviewsSection } from "@/components/product/ProductReviewsSection";
+import { buildSingleProductWhatsAppMessage, getWhatsAppUrl } from "@/lib/whatsapp";
 
 export interface ProductDetailProps {
   product: any;
@@ -164,10 +166,157 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailPro
     setTimeout(() => setAdded(false), 2000);
   };
 
-  const handleBuyNow = () => {
-    handleAddToCart();
-    setIsCartOpen(false);
-    router.push("/checkout");
+  // Customer auth & Admin WhatsApp state
+  const [customer, setCustomer] = useState<any>(null);
+  const [adminPhone, setAdminPhone] = useState("+91 9967313355");
+  const [redirectingWhatsApp, setRedirectingWhatsApp] = useState(false);
+
+  useEffect(() => {
+    // Check customer session
+    fetch("/api/customer/me")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.authenticated && data?.customer) {
+          setCustomer(data.customer);
+        }
+      })
+      .catch(() => {});
+
+    // Fetch site settings for WhatsApp phone number
+    fetch("/api/settings")
+      .then((res) => res.json())
+      .then((s) => {
+        if (s?.whatsappNumber || s?.contactPhone) {
+          setAdminPhone(s.whatsappNumber || s.contactPhone);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const triggerWhatsAppRedirect = (cust: any, customSelections?: any) => {
+    const qty = customSelections?.quantity || quantity;
+    const pers = customSelections?.personalizationDetails !== undefined
+      ? customSelections.personalizationDetails
+      : (product.enablePersonalization
+          ? {
+              customName: customName.trim() || undefined,
+              initials: initials.trim() || undefined,
+              color: product.customColorEnabled ? selectedColor : undefined,
+              design: product.customDesignEnabled ? selectedDesign : undefined,
+              notes: personalizationNotes.trim() || undefined,
+            }
+          : null);
+    const vName = customSelections?.variantName !== undefined
+      ? customSelections.variantName
+      : (selectedVariant?.name || null);
+    const refImg = customSelections?.referenceImageUrl !== undefined
+      ? customSelections.referenceImageUrl
+      : referenceImageUrl;
+    const isGift = customSelections?.giftWrapped !== undefined
+      ? customSelections.giftWrapped
+      : giftWrapped;
+
+    const message = buildSingleProductWhatsAppMessage({
+      product: {
+        id: product.id,
+        name: product.name,
+        slug: product.slug,
+        sku: product.sku,
+      },
+      variantName: vName,
+      unitPrice: currentUnitPrice,
+      quantity: qty,
+      giftWrapped: isGift,
+      giftWrapCharge,
+      personalizationDetails: pers,
+      referenceImageUrl: refImg,
+      customer: cust || customer,
+    });
+
+    const url = getWhatsAppUrl(adminPhone, message);
+    setRedirectingWhatsApp(true);
+    window.location.href = url;
+  };
+
+  // If redirected back from login with ?buy1click=true
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("buy1click") === "true") {
+      fetch("/api/customer/me")
+        .then((res) => res.json())
+        .then((data) => {
+          if (data?.authenticated && data?.customer) {
+            setCustomer(data.customer);
+
+            let restored: any = null;
+            try {
+              const savedStr = sessionStorage.getItem(`pending_buy1click_${product.id}`);
+              if (savedStr) {
+                const saved = JSON.parse(savedStr);
+                restored = saved;
+                if (saved.quantity) setQuantity(saved.quantity);
+                if (saved.customName) setCustomName(saved.customName);
+                if (saved.initials) setInitials(saved.initials);
+                if (saved.selectedColor) setSelectedColor(saved.selectedColor);
+                if (saved.selectedDesign) setSelectedDesign(saved.selectedDesign);
+                if (saved.personalizationNotes) setPersonalizationNotes(saved.personalizationNotes);
+                if (saved.referenceImageUrl) setReferenceImageUrl(saved.referenceImageUrl);
+                if (saved.giftWrapped !== undefined) setGiftWrapped(saved.giftWrapped);
+                sessionStorage.removeItem(`pending_buy1click_${product.id}`);
+              }
+            } catch {}
+
+            window.history.replaceState({}, "", window.location.pathname);
+            triggerWhatsAppRedirect(data.customer, restored);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [product.id, adminPhone, currentUnitPrice, giftWrapCharge]);
+
+  const handleBuyNow = async () => {
+    // 1. Check if logged in
+    try {
+      const res = await fetch("/api/customer/me");
+      const data = await res.json();
+      if (data?.authenticated && data?.customer) {
+        setCustomer(data.customer);
+        triggerWhatsAppRedirect(data.customer);
+        return;
+      }
+    } catch {}
+
+    // 2. Not logged in -> save selections in sessionStorage
+    try {
+      sessionStorage.setItem(
+        `pending_buy1click_${product.id}`,
+        JSON.stringify({
+          quantity,
+          variantName: selectedVariant?.name || null,
+          customName,
+          initials,
+          selectedColor,
+          selectedDesign,
+          personalizationNotes,
+          referenceImageUrl,
+          giftWrapped,
+          personalizationDetails: product.enablePersonalization
+            ? {
+                customName: customName.trim() || undefined,
+                initials: initials.trim() || undefined,
+                color: product.customColorEnabled ? selectedColor : undefined,
+                design: product.customDesignEnabled ? selectedDesign : undefined,
+                notes: personalizationNotes.trim() || undefined,
+              }
+            : null,
+        })
+      );
+    } catch {}
+
+    // 3. Redirect to login page with return url to this product page
+    const returnUrl = `/shop/${product.slug}?buy1click=true`;
+    router.push(`/account/login?redirect=${encodeURIComponent(returnUrl)}`);
   };
 
   return (
@@ -444,7 +593,7 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailPro
                         </span>
                         <input
                           type="file"
-                          accept="image/*"
+                          accept="image/*,.heic,.heif,image/heic,image/heif"
                           className="hidden"
                           onChange={handleImageUpload}
                           disabled={uploadingImage}
@@ -521,13 +670,15 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailPro
               </button>
             </div>
 
-            {/* Buy Now Button */}
+            {/* Buy in 1 Click via WhatsApp */}
             {!isOutOfStock && (
               <button
                 onClick={handleBuyNow}
-                className="w-full py-3.5 bg-[#2C332D] text-white rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-[#3D473E] shadow-md transition-all flex items-center justify-center space-x-2 group"
+                disabled={redirectingWhatsApp}
+                className="w-full py-3.5 bg-[#25D366] hover:bg-[#20ba59] text-white rounded-xl font-bold text-xs uppercase tracking-wider shadow-md transition-all flex items-center justify-center space-x-2 group cursor-pointer disabled:opacity-60"
               >
-                <span>Buy Now with 1-Click</span>
+                <MessageCircle className="w-4 h-4 fill-white" />
+                <span>{redirectingWhatsApp ? "Opening WhatsApp..." : "Buy in 1 Click via WhatsApp"}</span>
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </button>
             )}

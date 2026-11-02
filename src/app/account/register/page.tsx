@@ -45,7 +45,8 @@ function CustomerRegisterForm() {
         return;
       }
 
-      router.push(redirectUrl);
+      window.dispatchEvent(new Event("customer-auth-changed"));
+      window.location.href = redirectUrl;
     } catch {
       setError("An unexpected network error occurred.");
       setLoading(false);

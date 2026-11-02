@@ -44,8 +44,14 @@ export function AccountLayoutShell({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!file.type.startsWith("image/")) {
-      setAvatarError("Please select an image file (JPEG, PNG, WebP).");
+    const isHeic =
+      file.type === "image/heic" ||
+      file.type === "image/heif" ||
+      file.name.toLowerCase().endsWith(".heic") ||
+      file.name.toLowerCase().endsWith(".heif");
+
+    if (!file.type.startsWith("image/") && !isHeic) {
+      setAvatarError("Please select an image file (JPEG, PNG, WebP, HEIC).");
       return;
     }
 
@@ -161,7 +167,7 @@ export function AccountLayoutShell({
                 ref={fileInputRef}
                 id="avatar-upload"
                 type="file"
-                accept="image/*"
+                accept="image/*,.heic,.heif,image/heic,image/heif"
                 className="hidden"
                 disabled={isUploadingAvatar}
                 onChange={handleAvatarChange}

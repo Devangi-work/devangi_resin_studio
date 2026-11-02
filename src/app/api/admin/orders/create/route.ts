@@ -4,6 +4,7 @@ import { dbStore } from "@/lib/db";
 import { z } from "zod";
 
 const createOfflineOrderSchema = z.object({
+  customerId: z.string().optional().nullable(),
   customerName: z.string().min(2, "Customer name is required"),
   customerEmail: z.string().email().optional().or(z.literal("")),
   customerPhone: z.string().min(10, "Phone number is required"),
@@ -57,6 +58,7 @@ export async function POST(request: NextRequest) {
 
     const newOrder = await dbStore.createOrder({
       orderNumber,
+      customerId: data.customerId || null,
       customerName: data.customerName,
       customerEmail: data.customerEmail && data.customerEmail.trim() ? data.customerEmail.trim() : null,
       customerPhone: data.customerPhone,

@@ -435,7 +435,7 @@ export default function AdminSettingsPage() {
                     <span>Upload</span>
                     <input
                       type="file"
-                      accept="image/*"
+                      accept="image/*,.heic,.heif,image/heic,image/heif"
                       onChange={handleAvatarFile}
                       className="hidden"
                       disabled={uploadingAvatar}
@@ -607,7 +607,7 @@ export default function AdminSettingsPage() {
                 <input
                   type="file"
                   id="logoUploadInput"
-                  accept="image/png, image/jpeg, image/webp, image/svg+xml"
+                  accept="image/png, image/jpeg, image/webp, image/svg+xml, image/heic, image/heif, .heic, .heif"
                   className="hidden"
                   onChange={handleLogoUpload}
                   disabled={uploadingLogo}
@@ -711,7 +711,7 @@ export default function AdminSettingsPage() {
                 <input
                   type="file"
                   id="signatureUploadInput"
-                  accept="image/png, image/jpeg, image/webp"
+                  accept="image/png, image/jpeg, image/webp, image/heic, image/heif, .heic, .heif"
                   className="hidden"
                   onChange={handleSignatureUpload}
                   disabled={uploadingSignature}
@@ -886,7 +886,7 @@ export default function AdminSettingsPage() {
                 <input
                   type="file"
                   id="qrUploadInput"
-                  accept="image/png, image/jpeg, image/webp"
+                  accept="image/png, image/jpeg, image/webp, image/heic, image/heif, .heic, .heif"
                   className="hidden"
                   onChange={async (e) => {
                     const file = e.target.files?.[0];
@@ -1250,7 +1250,7 @@ export default function AdminSettingsPage() {
                         <span>Upload</span>
                         <input
                           type="file"
-                          accept="image/*"
+                          accept="image/*,.heic,.heif,image/heic,image/heif"
                           onChange={(e) => handleKeepsakeUpload(slot, e)}
                           className="hidden"
                           disabled={isUploadingThis}

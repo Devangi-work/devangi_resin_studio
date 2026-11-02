@@ -55,14 +55,35 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     try {
       const res = await fetch("/api/customer/me");
       const data = await res.json();
-      const key = data?.authenticated && data?.customer?.id ? `resin_cart_${data.customer.id}` : "resin_cart_guest";
+      const isAuthenticated = Boolean(data?.authenticated && data?.customer?.id);
+      const key = isAuthenticated ? `resin_cart_${data.customer.id}` : "resin_cart_guest";
       setStorageKey(key);
       const stored = localStorage.getItem(key);
-      if (stored) {
-        setItems(JSON.parse(stored));
-      } else {
-        setItems([]);
+      let userItems: CartItem[] = stored ? JSON.parse(stored) : [];
+
+      // If just logged in and had guest items, merge guest cart into user cart
+      if (isAuthenticated) {
+        const guestStored = localStorage.getItem("resin_cart_guest");
+        if (guestStored) {
+          try {
+            const guestItems: CartItem[] = JSON.parse(guestStored);
+            if (Array.isArray(guestItems) && guestItems.length > 0) {
+              for (const gItem of guestItems) {
+                const existingIdx = userItems.findIndex((u) => u.id === gItem.id);
+                if (existingIdx !== -1) {
+                  userItems[existingIdx].quantity += gItem.quantity;
+                } else {
+                  userItems.push(gItem);
+                }
+              }
+              localStorage.removeItem("resin_cart_guest");
+              localStorage.setItem(key, JSON.stringify(userItems));
+            }
+          } catch {}
+        }
       }
+
+      setItems(userItems);
     } catch (e) {
       console.error("Failed to sync cart key:", e);
       try {

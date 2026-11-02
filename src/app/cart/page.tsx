@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useCart } from "@/lib/store/cart";
 import {
   Trash2,
@@ -14,9 +15,14 @@ import {
   Tag,
   CheckCircle2,
   Lock,
+  MessageCircle,
 } from "lucide-react";
+import { buildCartWhatsAppMessage, getWhatsAppUrl } from "@/lib/whatsapp";
 
 export default function CartPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   const {
     items,
     updateQuantity,
@@ -30,10 +36,45 @@ export default function CartPage() {
   const [couponError, setCouponError] = useState("");
   const [couponLoading, setCouponLoading] = useState(false);
 
-  const freeShippingThreshold = 999;
+  // Authentication & WhatsApp redirection states
+  const [customer, setCustomer] = useState<any>(null);
+  const [adminPhone, setAdminPhone] = useState("+91 9967313355");
+  const [defaultShippingCharge, setDefaultShippingCharge] = useState(79);
+  const [freeShippingThreshold, setFreeShippingThreshold] = useState(999);
+  const [redirectingWhatsApp, setRedirectingWhatsApp] = useState(false);
+
+  useEffect(() => {
+    // Check if customer is logged in
+    fetch("/api/customer/me")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.authenticated && data?.customer) {
+          setCustomer(data.customer);
+        }
+      })
+      .catch(() => {});
+
+    // Fetch site settings
+    fetch("/api/settings")
+      .then((res) => res.json())
+      .then((s) => {
+        if (s?.whatsappNumber || s?.contactPhone) {
+          setAdminPhone(s.whatsappNumber || s.contactPhone);
+        }
+        if (s?.defaultShippingCharge) {
+          setDefaultShippingCharge(Number(s.defaultShippingCharge) || 79);
+        }
+        if (s?.freeShippingThreshold) {
+          setFreeShippingThreshold(Number(s.freeShippingThreshold) || 999);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   const remainingForFreeShipping = Math.max(0, freeShippingThreshold - subtotal);
-  const discount = appliedCoupon ? appliedCoupon.discountAmount : 0;
-  const finalTotal = Math.max(0, subtotal - discount);
+  const discount = appliedCoupon ? Number(appliedCoupon.discountAmount) : 0;
+  const shippingCharge = subtotal >= freeShippingThreshold || subtotal === 0 ? 0 : defaultShippingCharge;
+  const finalTotal = Math.max(0, subtotal - discount + shippingCharge);
 
   const handleApplyCoupon = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,6 +103,69 @@ export default function CartPage() {
     } finally {
       setCouponLoading(false);
     }
+  };
+
+  const triggerWhatsAppCheckout = (cust?: any) => {
+    if (items.length === 0) return;
+    const message = buildCartWhatsAppMessage({
+      items: items.map((i) => ({
+        name: i.name,
+        quantity: i.quantity,
+        price: i.price,
+        variantName: i.variantName,
+        personalizationDetails: i.personalizationDetails,
+        giftWrapped: i.giftWrapped,
+        giftWrapCharge: i.giftWrapCharge,
+        referenceImageUrl: i.referenceImageUrl,
+      })),
+      subtotal,
+      discountAmount: discount,
+      couponCode: appliedCoupon?.code || null,
+      shippingCharge,
+      finalTotal,
+      customer: cust || customer,
+    });
+
+    const url = getWhatsAppUrl(adminPhone, message);
+    setRedirectingWhatsApp(true);
+    window.location.href = url;
+  };
+
+  // If redirected back from login with ?checkout=whatsapp
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const isWhatsAppReturn = searchParams.get("checkout") === "whatsapp";
+    if (isWhatsAppReturn && items.length > 0) {
+      fetch("/api/customer/me")
+        .then((res) => res.json())
+        .then((data) => {
+          if (data?.authenticated && data?.customer) {
+            setCustomer(data.customer);
+            window.history.replaceState({}, "", window.location.pathname);
+            triggerWhatsAppCheckout(data.customer);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [searchParams, items.length, subtotal, discount, shippingCharge, finalTotal, adminPhone]);
+
+  const handleProceedToCheckout = async () => {
+    if (items.length === 0) return;
+
+    // 1. Check if user is logged in
+    try {
+      const res = await fetch("/api/customer/me");
+      const data = await res.json();
+      if (data?.authenticated && data?.customer) {
+        setCustomer(data.customer);
+        triggerWhatsAppCheckout(data.customer);
+        return;
+      }
+    } catch {}
+
+    // 2. Not logged in -> redirect to login with return redirect back to /cart?checkout=whatsapp
+    const returnUrl = "/cart?checkout=whatsapp";
+    router.push(`/account/login?redirect=${encodeURIComponent(returnUrl)}`);
   };
 
   if (items.length === 0) {
@@ -293,10 +397,10 @@ export default function CartPage() {
               <div className="flex justify-between">
                 <span>Shipping</span>
                 <span className="font-semibold text-[#2C332D]">
-                  {subtotal >= freeShippingThreshold ? (
-                    <span className="text-[#2E7D32]">FREE</span>
+                  {shippingCharge === 0 ? (
+                    <span className="text-[#2E7D32]">FREE (Complimentary)</span>
                   ) : (
-                    "Calculated at checkout"
+                    `₹${shippingCharge.toFixed(2)}`
                   )}
                 </span>
               </div>
@@ -306,17 +410,33 @@ export default function CartPage() {
               </div>
             </div>
 
-            <Link
-              href="/checkout"
-              className="w-full py-3.5 bg-[#2C332D] text-white rounded-xl font-bold text-xs uppercase tracking-wider flex items-center justify-center space-x-2 hover:bg-[#3D473E] shadow-md transition-all group"
+            <button
+              type="button"
+              onClick={handleProceedToCheckout}
+              disabled={redirectingWhatsApp}
+              className="w-full py-3.5 bg-[#25D366] hover:bg-[#20ba5a] text-white rounded-xl font-bold text-xs uppercase tracking-wider flex items-center justify-center space-x-2 shadow-md transition-all group active:scale-[0.99] disabled:opacity-70"
             >
-              <span>Proceed to Checkout</span>
+              <MessageCircle className="w-4 h-4 fill-white" />
+              <span>
+                {redirectingWhatsApp
+                  ? "Opening WhatsApp..."
+                  : "Proceed to Secure Checkout"}
+              </span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </Link>
+            </button>
+
+            <div className="text-center">
+              <Link
+                href="/checkout"
+                className="text-[11px] text-[#736C66] hover:text-[#2C332D] underline font-medium"
+              >
+                Or proceed with standard web checkout
+              </Link>
+            </div>
 
             <div className="flex items-center justify-center space-x-2 text-[11px] text-[#8C7A72] pt-2">
               <Lock className="w-3.5 h-3.5 text-[#B8972E]" />
-              <span>100% Secure Direct UPI & QR Checkout</span>
+              <span>100% Secure WhatsApp & UPI Checkout</span>
             </div>
           </div>
         </div>

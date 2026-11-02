@@ -2615,6 +2615,7 @@ export const dbStore = {
           SELECT 
             id, name, email, phone, 
             google_id as "googleId", avatar_url as "avatarUrl", 
+            address_line1 as "addressLine1", address_line2 as "addressLine2",
             city, state, postal_code as "postalCode", 
             created_at as "createdAt" 
           FROM customers
@@ -2624,7 +2625,9 @@ export const dbStore = {
           SELECT 
             id, customer_id as "customerId", customer_email as "customerEmail", 
             customer_name as "customerName", customer_phone as "customerPhone",
+            shipping_address_line1 as "shippingAddressLine1", shipping_address_line2 as "shippingAddressLine2",
             shipping_city as "shippingCity", shipping_state as "shippingState",
+            shipping_postal_code as "shippingPostalCode",
             total_amount as "totalAmount", payment_status as "paymentStatus", 
             created_at as "createdAt" 
           FROM orders;
@@ -2635,15 +2638,29 @@ export const dbStore = {
     }
 
     if (!custs || custs.length === 0) {
-      custs = [];
+      custs = (store.customers || []).map((c) => ({
+        id: c.id,
+        name: c.name,
+        email: c.email,
+        phone: c.phone,
+        addressLine1: c.addressLine1,
+        addressLine2: c.addressLine2,
+        city: c.city,
+        state: c.state,
+        postalCode: c.postalCode,
+        createdAt: c.createdAt,
+      }));
       ords = store.orders.map((o) => ({
         id: o.id,
         customerId: o.customerId,
         customerEmail: o.customerEmail,
         customerName: o.customerName,
         customerPhone: o.customerPhone,
+        shippingAddressLine1: o.shippingAddressLine1,
+        shippingAddressLine2: o.shippingAddressLine2,
         shippingCity: o.shippingCity,
         shippingState: o.shippingState,
+        shippingPostalCode: o.shippingPostalCode,
         totalAmount: o.totalAmount,
         paymentStatus: o.paymentStatus,
         createdAt: o.createdAt,
@@ -2662,7 +2679,11 @@ export const dbStore = {
           phone: o.customerPhone || null,
           googleId: null,
           avatarUrl: null,
+          addressLine1: o.shippingAddressLine1 || null,
+          addressLine2: o.shippingAddressLine2 || null,
           city: o.shippingCity || null,
+          state: o.shippingState || null,
+          postalCode: o.shippingPostalCode || null,
           state: o.shippingState || null,
           createdAt: o.createdAt,
         });

@@ -482,7 +482,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/*"
+                accept="image/*,.heic,.heif,image/heic,image/heif"
                 onChange={handleDirectAvatarUpload}
                 className="hidden"
               />

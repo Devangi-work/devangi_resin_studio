@@ -490,7 +490,7 @@ export function ProductReviewsSection({
                         ref={fileInputRef}
                         type="file"
                         multiple
-                        accept="image/jpeg,image/png,image/webp"
+                        accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"
                         className="hidden"
                         disabled={isUploading}
                         onChange={handleImageUpload}

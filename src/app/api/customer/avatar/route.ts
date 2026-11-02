@@ -17,8 +17,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "No avatar image provided." }, { status: 400 });
     }
 
-    if (!file.type.startsWith("image/")) {
-      return NextResponse.json({ error: "Only image files (JPEG, PNG, WebP) are allowed." }, { status: 400 });
+    const isHeic =
+      file.type === "image/heic" ||
+      file.type === "image/heif" ||
+      file.name.toLowerCase().endsWith(".heic") ||
+      file.name.toLowerCase().endsWith(".heif");
+
+    if (!file.type.startsWith("image/") && !isHeic) {
+      return NextResponse.json({ error: "Only image files (JPEG, PNG, WebP, HEIC) are allowed." }, { status: 400 });
     }
 
     if (file.size > 5 * 1024 * 1024) {

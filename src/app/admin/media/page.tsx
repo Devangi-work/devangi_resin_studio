@@ -198,7 +198,7 @@ export default function AdminMediaPage() {
           <span>{uploading ? "Uploading to Library..." : "Upload Images"}</span>
           <input
             type="file"
-            accept="image/*"
+            accept="image/*,.heic,.heif,image/heic,image/heif"
             multiple
             className="hidden"
             onChange={handleUpload}

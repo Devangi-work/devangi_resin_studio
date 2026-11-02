@@ -294,7 +294,7 @@ export default function CustomOrdersPage() {
                         </span>
                         <input
                           type="file"
-                          accept="image/*"
+                          accept="image/*,.heic,.heif,image/heic,image/heif"
                           className="hidden"
                           onChange={handleImageUpload}
                         />

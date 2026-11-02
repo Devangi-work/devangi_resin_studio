@@ -185,7 +185,7 @@ export function MediaPickerModal({
               <span>{uploading ? "Uploading..." : "Upload New"}</span>
               <input
                 type="file"
-                accept="image/*"
+                accept="image/*,.heic,.heif,image/heic,image/heif"
                 multiple={multiple}
                 className="hidden"
                 onChange={handleUploadNew}

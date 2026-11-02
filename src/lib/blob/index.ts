@@ -2,7 +2,16 @@ import { put, del } from "@vercel/blob";
 
 const BLOB_READ_WRITE_TOKEN = process.env.BLOB_READ_WRITE_TOKEN || "";
 
-export const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+export const ALLOWED_IMAGE_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+  "image/heic",
+  "image/heif",
+  "image/heic-sequence",
+  "image/heif-sequence",
+];
 export const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
 
 export function isBlobConfigured(): boolean {
@@ -18,9 +27,17 @@ export async function uploadImageToBlob(
   filename: string,
   prefix = "products"
 ): Promise<{ url: string; pathname: string; isMock: boolean }> {
-  // Validate MIME type
-  if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
-    throw new Error(`Unsupported file type: ${file.type}. Allowed: JPEG, PNG, WEBP, GIF.`);
+  const isHeic =
+    file.type === "image/heic" ||
+    file.type === "image/heif" ||
+    file.type === "image/heic-sequence" ||
+    file.type === "image/heif-sequence" ||
+    filename.toLowerCase().endsWith(".heic") ||
+    filename.toLowerCase().endsWith(".heif");
+
+  // Validate MIME type or HEIC extension
+  if (!ALLOWED_IMAGE_TYPES.includes(file.type) && !isHeic) {
+    throw new Error(`Unsupported file type: ${file.type}. Allowed: JPEG, PNG, WEBP, GIF, HEIC.`);
   }
 
   // Validate file size
@@ -36,7 +53,8 @@ export async function uploadImageToBlob(
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
     const base64 = buffer.toString("base64");
-    const dataUrl = `data:${file.type};base64,${base64}`;
+    const mime = isHeic ? (file.type && file.type.startsWith("image/") ? file.type : "image/heic") : (file.type || "image/png");
+    const dataUrl = `data:${mime};base64,${base64}`;
 
     return {
       url: dataUrl,

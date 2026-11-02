@@ -31,6 +31,7 @@ import {
   Mail,
   MessageCircle,
   RefreshCw,
+  User,
 } from "lucide-react";
 
 export default function AdminOrdersPage() {
@@ -86,7 +87,13 @@ export default function AdminOrdersPage() {
   const [adminScreenshotSuccess, setAdminScreenshotSuccess] = useState("");
   const [viewingScreenshotModal, setViewingScreenshotModal] = useState<string | null>(null);
 
+  // Registered customers & Available website products
+  const [customersList, setCustomersList] = useState<any[]>([]);
+  const [productsList, setProductsList] = useState<any[]>([]);
+  const [selectedCustomerDropdownId, setSelectedCustomerDropdownId] = useState("");
+
   const [offlineForm, setOfflineForm] = useState({
+    customerId: "",
     customerName: "",
     customerEmail: "",
     customerPhone: "",
@@ -104,7 +111,7 @@ export default function AdminOrdersPage() {
     upiTransactionId: "",
     orderStatus: "confirmed" as "confirmed" | "processing" | "ready_to_ship" | "delivered",
     items: [
-      { productName: "Handmade Resin Ocean Coasters (Set of 4)", quantity: 1, unitPrice: 799 },
+      { productId: "", productName: "", quantity: 1, unitPrice: 0 },
     ],
     productImages: [] as string[],
     packingImages: [] as string[],
@@ -266,9 +273,35 @@ export default function AdminOrdersPage() {
     }
   };
 
+  const loadCustomers = async () => {
+    try {
+      const res = await fetch("/api/admin/customers");
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setCustomersList(data);
+      }
+    } catch (e) {
+      console.error("Failed to load customers:", e);
+    }
+  };
+
+  const loadProducts = async () => {
+    try {
+      const res = await fetch("/api/admin/products?limit=200");
+      const data = await res.json();
+      if (data && Array.isArray(data.products)) {
+        setProductsList(data.products);
+      }
+    } catch (e) {
+      console.error("Failed to load products:", e);
+    }
+  };
+
   useEffect(() => {
     loadOrders();
     loadCustomRequests();
+    loadCustomers();
+    loadProducts();
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       if (params.get("tab") === "custom" || params.get("tab") === "custom_requests") {
@@ -795,8 +828,14 @@ export default function AdminOrdersPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!file.type.startsWith("image/")) {
-      alert("Please upload a valid image file (JPEG, PNG, WebP).");
+    const isHeic =
+      file.type === "image/heic" ||
+      file.type === "image/heif" ||
+      file.name.toLowerCase().endsWith(".heic") ||
+      file.name.toLowerCase().endsWith(".heif");
+
+    if (!file.type.startsWith("image/") && !isHeic) {
+      alert("Please upload a valid image file (JPEG, PNG, WebP, HEIC).");
       return;
     }
 
@@ -935,12 +974,76 @@ export default function AdminOrdersPage() {
     }
   };
 
+  // Select customer from dropdown to autofill order
+  const handleCustomerSelect = (customerId: string) => {
+    setSelectedCustomerDropdownId(customerId);
+    if (!customerId) {
+      setOfflineForm((prev) => ({
+        ...prev,
+        customerId: "",
+      }));
+      return;
+    }
+
+    const cust = customersList.find((c) => c.id === customerId);
+    if (cust) {
+      const isGuest = cust.id.startsWith("guest_");
+      const cleanEmail = cust.email && !cust.email.startsWith("offline_") ? cust.email : "";
+      const hasAddress = Boolean(cust.addressLine1 || cust.city || cust.state || cust.postalCode);
+
+      setOfflineForm((prev) => ({
+        ...prev,
+        customerId: isGuest ? "" : cust.id,
+        customerName: cust.name || prev.customerName,
+        customerEmail: cleanEmail || prev.customerEmail,
+        customerPhone: cust.phone || prev.customerPhone,
+        hasShipping: hasAddress ? true : prev.hasShipping,
+        shippingAddressLine1: cust.addressLine1 || prev.shippingAddressLine1,
+        shippingAddressLine2: cust.addressLine2 || prev.shippingAddressLine2,
+        shippingCity: cust.city || prev.shippingCity,
+        shippingState: cust.state || prev.shippingState,
+        shippingPostalCode: cust.postalCode || prev.shippingPostalCode,
+      }));
+    }
+  };
+
   // Add Item to Offline Order Form
   const handleAddOfflineItem = () => {
     setOfflineForm((prev) => ({
       ...prev,
-      items: [...prev.items, { productName: "", quantity: 1, unitPrice: 0 }],
+      items: [...prev.items, { productId: "", productName: "", quantity: 1, unitPrice: 0 }],
     }));
+  };
+
+  // Select website product for order item row
+  const handleSelectWebsiteProduct = (idx: number, productId: string) => {
+    if (!productId) {
+      handleOfflineItemChange(idx, "productId", "");
+      return;
+    }
+
+    const prod = productsList.find((p) => p.id === productId);
+    if (prod) {
+      const price = prod.salePrice ? Number(prod.salePrice) : Number(prod.regularPrice) || 0;
+      setOfflineForm((prev) => {
+        const copy = [...prev.items];
+        copy[idx] = {
+          ...copy[idx],
+          productId: prod.id,
+          productName: prod.name,
+          unitPrice: price,
+        };
+
+        // If product has images and offlineForm.productImages is empty, populate primary image
+        let nextProductImages = prev.productImages;
+        const prodImg = prod.images?.find((img: any) => img.isPrimary)?.imageUrl || prod.images?.[0]?.imageUrl;
+        if (prodImg && (!nextProductImages || nextProductImages.length === 0)) {
+          nextProductImages = [prodImg];
+        }
+
+        return { ...prev, items: copy, productImages: nextProductImages };
+      });
+    }
   };
 
   const handleRemoveOfflineItem = (idx: number) => {
@@ -981,6 +1084,7 @@ export default function AdminOrdersPage() {
 
       const payload = {
         ...offlineForm,
+        customerId: offlineForm.customerId || null,
         shippingCharge,
         shippingAddressLine1: offlineForm.hasShipping && offlineForm.shippingAddressLine1.trim()
           ? offlineForm.shippingAddressLine1.trim()
@@ -1002,6 +1106,7 @@ export default function AdminOrdersPage() {
         discountReason: offlineForm.discountReason?.trim() || null,
         totalAmount,
         items: offlineForm.items.map((i) => ({
+          productId: i.productId || null,
           productName: i.productName.trim() || "Handmade Resin Artwork",
           quantity: Number(i.quantity),
           unitPrice: Number(i.unitPrice),
@@ -1059,7 +1164,9 @@ export default function AdminOrdersPage() {
       }
 
       setShowCreateModal(false);
+      setSelectedCustomerDropdownId("");
       setOfflineForm({
+        customerId: "",
         customerName: "",
         customerEmail: "",
         customerPhone: "",
@@ -1077,7 +1184,7 @@ export default function AdminOrdersPage() {
         upiTransactionId: "",
         orderStatus: "confirmed",
         items: [
-          { productName: "Handmade Resin Ocean Coasters (Set of 4)", quantity: 1, unitPrice: 799 },
+          { productId: "", productName: "", quantity: 1, unitPrice: 0 },
         ],
         productImages: [],
         packingImages: [],
@@ -1750,6 +1857,49 @@ export default function AdminOrdersPage() {
             )}
 
             <form onSubmit={handleCreateOfflineOrder} className="space-y-4 text-xs">
+              {/* Select Existing Customer Dropdown */}
+              <div className="bg-[#FAF4EC] p-3.5 rounded-2xl border border-[#E8E0D5] space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-[#2C332D] flex items-center gap-1.5">
+                    <User className="w-3.5 h-3.5 text-[#B8972E]" />
+                    <span>Select Customer from Website / Orders</span>
+                  </label>
+                  {selectedCustomerDropdownId && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedCustomerDropdownId("");
+                        setOfflineForm((prev) => ({
+                          ...prev,
+                          customerId: "",
+                          customerName: "",
+                          customerPhone: "",
+                          customerEmail: "",
+                        }));
+                      }}
+                      className="text-[11px] text-[#DF4C4C] hover:underline font-semibold"
+                    >
+                      Clear Selection
+                    </button>
+                  )}
+                </div>
+                <select
+                  value={selectedCustomerDropdownId}
+                  onChange={(e) => handleCustomerSelect(e.target.value)}
+                  className="w-full px-3 py-2 bg-white border border-[#E8E0D5] rounded-xl text-xs font-medium text-[#2C332D] focus:ring-1 focus:ring-[#B8972E]"
+                >
+                  <option value="">-- Choose Customer ({customersList.length} registered / past buyers) --</option>
+                  {customersList.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name} {c.phone ? `• ${c.phone}` : ""} {c.email ? `• ${c.email}` : ""} {c.city ? `(${c.city})` : ""}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-[10px] text-[#736C66]">
+                  Selecting a user will automatically fetch and fill their name, phone number, email, and saved shipping address.
+                </p>
+              </div>
+
               {/* Customer Details */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
@@ -1857,7 +2007,7 @@ export default function AdminOrdersPage() {
                         <Camera className="w-4 h-4 text-[#B8972E]" />
                         <input
                           type="file"
-                          accept="image/*"
+                          accept="image/*,.heic,.heif,image/heic,image/heif"
                           className="hidden"
                           disabled={uploadingManualReceipt}
                           onChange={handleUploadManualReceipt}
@@ -1881,58 +2031,96 @@ export default function AdminOrdersPage() {
               </div>
 
               {/* Items Section */}
-              <div className="space-y-2 pt-2 border-t border-[#F4EBE6]">
+              <div className="space-y-3 pt-2 border-t border-[#F4EBE6]">
                 <div className="flex items-center justify-between">
-                  <span className="font-bold uppercase tracking-wider text-[#736C66]">Products / Commission Items</span>
+                  <div>
+                    <span className="font-bold uppercase tracking-wider text-[#736C66] block">
+                      Products / Commission Items
+                    </span>
+                    <span className="text-[10px] text-[#A69E96]">
+                      Select from website products or type custom handcrafted items below
+                    </span>
+                  </div>
                   <button
                     type="button"
                     onClick={handleAddOfflineItem}
-                    className="text-[#B8972E] font-bold text-[11px] hover:underline"
+                    className="text-[#B8972E] font-bold text-[11px] hover:underline flex items-center gap-1"
                   >
-                    + Add Item Row
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Add Item Row</span>
                   </button>
                 </div>
 
                 {offlineForm.items.map((item, idx) => (
-                  <div key={idx} className="flex items-center gap-2 bg-[#FAF8F5] p-2.5 rounded-xl border border-[#E8E0D5]">
-                    <input
-                      type="text"
-                      required
-                      placeholder="Item name / Custom Resin Piece"
-                      value={item.productName}
-                      onChange={(e) => handleOfflineItemChange(idx, "productName", e.target.value)}
-                      className="flex-1 px-3 py-1.5 bg-white border border-[#E8E0D5] rounded-lg text-xs"
-                    />
-                    <input
-                      type="number"
-                      required
-                      min={1}
-                      placeholder="Qty"
-                      value={item.quantity}
-                      onChange={(e) => handleOfflineItemChange(idx, "quantity", Number(e.target.value))}
-                      className="w-16 px-2 py-1.5 bg-white border border-[#E8E0D5] rounded-lg text-xs"
-                    />
-                    <div className="flex items-center gap-1">
-                      <span>₹</span>
-                      <input
-                        type="number"
-                        required
-                        min={0}
-                        placeholder="Price"
-                        value={item.unitPrice}
-                        onChange={(e) => handleOfflineItemChange(idx, "unitPrice", Number(e.target.value))}
-                        className="w-24 px-2 py-1.5 bg-white border border-[#E8E0D5] rounded-lg text-xs"
-                      />
-                    </div>
-                    {offlineForm.items.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveOfflineItem(idx)}
-                        className="p-1 text-[#DF4C4C] hover:bg-[#FDF2F2] rounded"
+                  <div key={idx} className="bg-[#FAF8F5] p-3 rounded-2xl border border-[#E8E0D5] space-y-2">
+                    <div className="flex items-center gap-2">
+                      <select
+                        value={item.productId || ""}
+                        onChange={(e) => handleSelectWebsiteProduct(idx, e.target.value)}
+                        className="w-full px-2.5 py-1.5 bg-white border border-[#E8E0D5] rounded-xl text-xs font-medium text-[#2C332D] focus:ring-1 focus:ring-[#B8972E]"
                       >
-                        <X className="w-4 h-4" />
-                      </button>
-                    )}
+                        <option value="">-- Or Select Product from Website ({productsList.length} items) --</option>
+                        {productsList.map((p) => {
+                          const price = p.salePrice ? Number(p.salePrice) : Number(p.regularPrice) || 0;
+                          return (
+                            <option key={p.id} value={p.id}>
+                              {p.name} — ₹{price.toFixed(2)} {p.sku ? `[${p.sku}]` : ""}
+                            </option>
+                          );
+                        })}
+                      </select>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                      <input
+                        type="text"
+                        required
+                        placeholder="Item name / Custom Resin Piece"
+                        value={item.productName}
+                        onChange={(e) => handleOfflineItemChange(idx, "productName", e.target.value)}
+                        className="flex-1 px-3 py-1.5 bg-white border border-[#E8E0D5] rounded-xl text-xs"
+                      />
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1 bg-white border border-[#E8E0D5] rounded-xl px-2.5 py-1">
+                          <span className="text-[10px] text-[#736C66] font-semibold">Qty:</span>
+                          <input
+                            type="number"
+                            required
+                            min={1}
+                            placeholder="Qty"
+                            value={item.quantity}
+                            onChange={(e) => handleOfflineItemChange(idx, "quantity", Number(e.target.value))}
+                            className="w-12 text-xs font-bold text-[#2C332D] focus:outline-none text-center"
+                          />
+                        </div>
+                        <div className="flex items-center gap-1 bg-white border border-[#E8E0D5] rounded-xl px-2.5 py-1">
+                          <span className="text-xs font-semibold text-[#736C66]">₹</span>
+                          <input
+                            type="number"
+                            required
+                            min={0}
+                            step="any"
+                            placeholder="Price"
+                            value={item.unitPrice}
+                            onChange={(e) => handleOfflineItemChange(idx, "unitPrice", Number(e.target.value))}
+                            className="w-20 text-xs font-bold text-[#2C332D] focus:outline-none"
+                          />
+                        </div>
+                        <div className="text-right text-xs font-bold text-[#2C332D] min-w-[70px]">
+                          ₹{((Number(item.quantity) || 1) * (Number(item.unitPrice) || 0)).toFixed(2)}
+                        </div>
+                        {offlineForm.items.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveOfflineItem(idx)}
+                            className="p-1.5 text-[#DF4C4C] hover:bg-[#FDF2F2] rounded-lg transition"
+                            title="Remove item"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -1953,7 +2141,7 @@ export default function AdminOrdersPage() {
                     <input
                       type="file"
                       multiple
-                      accept="image/*"
+                      accept="image/*,.heic,.heif,image/heic,image/heif"
                       className="hidden"
                       disabled={uploadingManualProductImg}
                       onChange={handleUploadManualProductImages}
@@ -1994,7 +2182,7 @@ export default function AdminOrdersPage() {
                     <input
                       type="file"
                       multiple
-                      accept="image/*"
+                      accept="image/*,.heic,.heif,image/heic,image/heif"
                       className="hidden"
                       disabled={uploadingManualPackingImg}
                       onChange={handleUploadManualPackingImages}
@@ -2447,7 +2635,7 @@ export default function AdminOrdersPage() {
                     <input
                       type="file"
                       multiple
-                      accept="image/*"
+                      accept="image/*,.heic,.heif,image/heic,image/heif"
                       className="hidden"
                       disabled={uploadingPacking}
                       onChange={handleUploadOrderPackingImages}
@@ -2524,7 +2712,7 @@ export default function AdminOrdersPage() {
                       <span>{uploadingAdminScreenshot ? "Uploading..." : selectedOrder.paymentScreenshotUrl ? "Replace Screenshot" : "Upload Screenshot"}</span>
                       <input
                         type="file"
-                        accept="image/*"
+                        accept="image/*,.heic,.heif,image/heic,image/heif"
                         className="hidden"
                         disabled={uploadingAdminScreenshot}
                         onChange={(e) => handleAdminScreenshotUpload(e, selectedOrder.id)}
@@ -2580,7 +2768,7 @@ export default function AdminOrdersPage() {
                         <span>Upload Screenshot</span>
                         <input
                           type="file"
-                          accept="image/*"
+                          accept="image/*,.heic,.heif,image/heic,image/heif"
                           className="hidden"
                           disabled={uploadingAdminScreenshot}
                           onChange={(e) => handleAdminScreenshotUpload(e, selectedOrder.id)}
@@ -3106,7 +3294,7 @@ export default function AdminOrdersPage() {
                       <span>{uploadingEditReceipt ? "Uploading..." : editForm.paymentScreenshotUrl ? "Replace Screenshot" : "Upload Screenshot"}</span>
                       <input
                         type="file"
-                        accept="image/*"
+                        accept="image/*,.heic,.heif,image/heic,image/heif"
                         className="hidden"
                         disabled={uploadingEditReceipt}
                         onChange={handleUploadEditReceipt}
@@ -3395,7 +3583,7 @@ export default function AdminOrdersPage() {
                       <input
                         type="file"
                         multiple
-                        accept="image/*"
+                        accept="image/*,.heic,.heif,image/heic,image/heif"
                         className="hidden"
                         disabled={uploadingEditProductImg}
                         onChange={handleUploadEditProductImages}
@@ -3436,7 +3624,7 @@ export default function AdminOrdersPage() {
                       <input
                         type="file"
                         multiple
-                        accept="image/*"
+                        accept="image/*,.heic,.heif,image/heic,image/heif"
                         className="hidden"
                         disabled={uploadingEditPackingImg}
                         onChange={handleUploadEditPackingImages}

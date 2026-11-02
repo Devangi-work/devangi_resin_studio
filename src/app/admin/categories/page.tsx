@@ -406,7 +406,7 @@ export default function AdminCategoriesPage() {
                     </span>
                     <input
                       type="file"
-                      accept="image/*"
+                      accept="image/*,.heic,.heif,image/heic,image/heif"
                       onChange={handleImageFileChange}
                       className="hidden"
                     />

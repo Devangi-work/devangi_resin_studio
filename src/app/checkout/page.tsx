@@ -193,8 +193,14 @@ export default function CheckoutPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!file.type.startsWith("image/")) {
-      setErrorMessage("Please select a valid image file (JPEG, PNG, WebP).");
+    const isHeic =
+      file.type === "image/heic" ||
+      file.type === "image/heif" ||
+      file.name.toLowerCase().endsWith(".heic") ||
+      file.name.toLowerCase().endsWith(".heif");
+
+    if (!file.type.startsWith("image/") && !isHeic) {
+      setErrorMessage("Please select a valid image file (JPEG, PNG, WebP, HEIC).");
       return;
     }
 
@@ -1313,7 +1319,7 @@ export default function CheckoutPage() {
                         Change
                         <input
                           type="file"
-                          accept="image/*"
+                          accept="image/*,.heic,.heif,image/heic,image/heif"
                           className="hidden"
                           onChange={handleScreenshotUpload}
                         />
@@ -1327,11 +1333,11 @@ export default function CheckoutPage() {
                       Tap to Upload Payment Screenshot
                     </span>
                     <span className="text-[10.5px] text-[#8C7A72] mt-0.5">
-                      PhonePe, Google Pay, or Paytm receipt (JPEG, PNG, WebP)
+                      PhonePe, Google Pay, or Paytm receipt (JPEG, PNG, WebP, HEIC)
                     </span>
                     <input
                       type="file"
-                      accept="image/*"
+                      accept="image/*,.heic,.heif,image/heic,image/heif"
                       className="hidden"
                       onChange={handleScreenshotUpload}
                     />
