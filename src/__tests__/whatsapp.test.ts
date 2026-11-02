@@ -115,4 +115,74 @@ test("WhatsApp Integration Test Suite", async (t) => {
     const url = getWhatsAppUrl("+91 99673 13355", "Hello Devangi!");
     assert.equal(url, "https://wa.me/919967313355?text=Hello%20Devangi!");
   });
+
+  await t.test("WhatsApp message includes Order Reference when orderNumber is provided", () => {
+    const singleMsg = buildSingleProductWhatsAppMessage({
+      product: { id: "p1", name: "Keychain", slug: "keychain", sku: "KC-01" },
+      unitPrice: 199,
+      quantity: 1,
+      orderNumber: "WA-20261102-1234",
+    });
+    assert.ok(singleMsg.includes("*Order Reference:* WA-20261102-1234"));
+
+    const cartMsg = buildCartWhatsAppMessage({
+      items: [{ name: "Keychain", quantity: 1, price: 199 }],
+      subtotal: 199,
+      finalTotal: 199,
+      orderNumber: "WA-20261102-5678",
+    });
+    assert.ok(cartMsg.includes("*Order Reference:* WA-20261102-5678"));
+  });
+
+  await t.test("WhatsApp order creation persists single order with multiple items and orderSource whatsapp", async () => {
+    const { dbStore } = await import("../lib/db");
+    const testOrderNumber = `WA-TEST-${Date.now()}`;
+    const created = await dbStore.createOrder({
+      orderNumber: testOrderNumber,
+      customerName: "Pooja Patel",
+      customerPhone: "+91 9876543210",
+      customerEmail: "pooja@example.com",
+      orderSource: "whatsapp",
+      paymentMethod: "upi",
+      paymentStatus: "unpaid",
+      orderStatus: "confirmed",
+      subtotal: 1500,
+      totalAmount: 1500,
+      orderNotes: "WhatsApp Cart Multi-item Checkout",
+      items: [
+        {
+          productName: "Resin Ocean Tray",
+          sku: "TR-01",
+          quantity: 1,
+          unitPrice: 1000,
+          totalPrice: 1000,
+          personalizationDetails: { customName: "Ocean Waves" },
+        },
+        {
+          productName: "Gold Leaf Coaster Pair",
+          sku: "CS-02",
+          quantity: 2,
+          unitPrice: 250,
+          totalPrice: 500,
+        },
+      ],
+    });
+
+    assert.ok(created.id);
+    assert.equal(created.orderNumber, testOrderNumber);
+    assert.equal(created.orderSource, "whatsapp");
+
+    // Fetch order back from DB
+    const fetched = await dbStore.getOrderById(created.id);
+    assert.ok(fetched);
+    assert.equal(fetched.orderSource, "whatsapp");
+    assert.equal(fetched.items?.length, 2);
+    assert.equal(fetched.items[0].productName, "Resin Ocean Tray");
+    assert.equal(fetched.items[0].personalizationDetails?.customName, "Ocean Waves");
+    assert.equal(fetched.items[1].productName, "Gold Leaf Coaster Pair");
+    assert.equal(fetched.items[1].quantity, 2);
+
+    // Clean up test order
+    await dbStore.deleteOrder(created.id);
+  });
 });

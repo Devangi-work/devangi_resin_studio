@@ -107,8 +107,45 @@ export function CartDrawer() {
     }
   };
 
-  const triggerWhatsAppCheckout = (cust?: any) => {
+  const triggerWhatsAppCheckout = async (cust?: any) => {
     if (items.length === 0) return;
+    setRedirectingWhatsApp(true);
+
+    let createdOrderNumber: string | null = null;
+    try {
+      const res = await fetch("/api/orders/whatsapp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: items.map((i) => ({
+            productId: i.productId || null,
+            name: i.name,
+            price: i.price,
+            quantity: i.quantity,
+            variantId: i.variantId || null,
+            variantName: i.variantName || null,
+            image: i.image || null,
+            personalizationDetails: i.personalizationDetails || null,
+            referenceImageUrl: i.referenceImageUrl || null,
+            giftWrapped: Boolean(i.giftWrapped),
+            giftWrapCharge: i.giftWrapped ? Number(i.giftWrapCharge || 0) : 0,
+          })),
+          subtotal,
+          discountAmount: discount,
+          couponCode: appliedCoupon?.code || null,
+          shippingCharge,
+          finalTotal,
+          orderNotes: "Cart Drawer Checkout via WhatsApp",
+        }),
+      });
+      const data = await res.json();
+      if (data?.orderNumber) {
+        createdOrderNumber = data.orderNumber;
+      }
+    } catch (err) {
+      console.error("Failed to create WhatsApp cart order:", err);
+    }
+
     const message = buildCartWhatsAppMessage({
       items: items.map((i) => ({
         name: i.name,
@@ -126,10 +163,10 @@ export function CartDrawer() {
       shippingCharge,
       finalTotal,
       customer: cust || customer,
+      orderNumber: createdOrderNumber,
     });
 
     const url = getWhatsAppUrl(adminPhone, message);
-    setRedirectingWhatsApp(true);
     setIsCartOpen(false);
     window.location.href = url;
   };

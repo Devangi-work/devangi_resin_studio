@@ -315,7 +315,8 @@ export default function AdminOrdersPage() {
     if (paymentFilter !== "all" && o.paymentStatus !== paymentFilter) return false;
     if (sourceFilter !== "all") {
       const src = o.orderSource || "online";
-      if (sourceFilter === "offline" && src === "online") return false;
+      if (sourceFilter === "whatsapp" && src !== "whatsapp") return false;
+      if (sourceFilter === "offline" && (src === "online" || src === "whatsapp")) return false;
       if (sourceFilter === "online" && src !== "online") return false;
     }
     if (search.trim()) {
@@ -1288,7 +1289,8 @@ export default function AdminOrdersPage() {
               onChange={(e) => setSourceFilter(e.target.value)}
               className="py-2 px-3 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl text-[#2C332D]"
             >
-              <option value="all">All Sources (Online & Offline)</option>
+              <option value="all">All Sources (Online, WhatsApp & Offline)</option>
+              <option value="whatsapp">WhatsApp Orders</option>
               <option value="online">Online Web Store</option>
               <option value="offline">Offline / Exhibition / Instagram</option>
             </select>
@@ -1363,10 +1365,13 @@ export default function AdminOrdersPage() {
                           </span>
                         </td>
                         <td className="py-3 px-4">
-                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider ${o.orderSource && o.orderSource !== "online"
-                            ? "bg-[#FAF4EC] text-[#B8972E] border border-[#E8E0D5]"
-                            : "bg-[#F0F4F8] text-[#334E68]"
-                            }`}>
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider ${
+                            o.orderSource === "whatsapp"
+                              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                              : o.orderSource && o.orderSource !== "online"
+                              ? "bg-[#FAF4EC] text-[#B8972E] border border-[#E8E0D5]"
+                              : "bg-[#F0F4F8] text-[#334E68]"
+                          }`}>
                             {o.orderSource || "online"}
                           </span>
                         </td>
@@ -1946,6 +1951,7 @@ export default function AdminOrdersPage() {
                     className="w-full px-3 py-2 bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl"
                   >
                     <option value="offline">Offline / Walk-in Studio</option>
+                    <option value="whatsapp">WhatsApp Order / Inquiry</option>
                     <option value="exhibition">Art Exhibition / Pop-up Stall</option>
                     <option value="instagram">Instagram DM</option>
                     <option value="custom">Direct Custom Commission</option>
@@ -3191,6 +3197,7 @@ export default function AdminOrdersPage() {
                       className="w-full px-3 py-2 bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl text-xs text-[#2C332D]"
                     >
                       <option value="offline">Offline / Walk-in Studio</option>
+                      <option value="whatsapp">WhatsApp Order</option>
                       <option value="exhibition">Art Exhibition / Pop-up Stall</option>
                       <option value="instagram">Instagram DM</option>
                       <option value="custom">Direct Custom Commission</option>

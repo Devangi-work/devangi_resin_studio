@@ -193,7 +193,7 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailPro
       .catch(() => {});
   }, []);
 
-  const triggerWhatsAppRedirect = (cust: any, customSelections?: any) => {
+  const triggerWhatsAppRedirect = async (cust: any, customSelections?: any) => {
     const qty = customSelections?.quantity || quantity;
     const pers = customSelections?.personalizationDetails !== undefined
       ? customSelections.personalizationDetails
@@ -216,6 +216,44 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailPro
       ? customSelections.giftWrapped
       : giftWrapped;
 
+    setRedirectingWhatsApp(true);
+
+    let createdOrderNumber: string | null = null;
+    try {
+      const orderRes = await fetch("/api/orders/whatsapp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: [
+            {
+              productId: product.id,
+              name: product.name,
+              price: currentUnitPrice,
+              quantity: qty,
+              variantId: selectedVariant?.id || null,
+              variantName: vName,
+              sku: product.sku,
+              image: activeImage,
+              personalizationDetails: pers,
+              referenceImageUrl: refImg,
+              giftWrapped: isGift,
+              giftWrapCharge: isGift ? giftWrapCharge : 0,
+            },
+          ],
+          subtotal: (currentUnitPrice + (isGift ? giftWrapCharge : 0)) * qty,
+          shippingCharge: 0,
+          finalTotal: (currentUnitPrice + (isGift ? giftWrapCharge : 0)) * qty,
+          orderNotes: "1-Click Buy via WhatsApp",
+        }),
+      });
+      const orderData = await orderRes.json();
+      if (orderData?.orderNumber) {
+        createdOrderNumber = orderData.orderNumber;
+      }
+    } catch (e) {
+      console.error("Failed to record WhatsApp order:", e);
+    }
+
     const message = buildSingleProductWhatsAppMessage({
       product: {
         id: product.id,
@@ -231,10 +269,10 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailPro
       personalizationDetails: pers,
       referenceImageUrl: refImg,
       customer: cust || customer,
+      orderNumber: createdOrderNumber,
     });
 
     const url = getWhatsAppUrl(adminPhone, message);
-    setRedirectingWhatsApp(true);
     window.location.href = url;
   };
 

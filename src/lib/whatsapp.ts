@@ -31,6 +31,7 @@ export function buildSingleProductWhatsAppMessage(params: {
     email?: string;
     phone?: string;
   } | null;
+  orderNumber?: string | null;
 }): string {
   const {
     product,
@@ -42,6 +43,7 @@ export function buildSingleProductWhatsAppMessage(params: {
     personalizationDetails,
     referenceImageUrl,
     customer,
+    orderNumber,
   } = params;
 
   const giftTotal = giftWrapped ? giftWrapCharge * quantity : 0;
@@ -49,6 +51,9 @@ export function buildSingleProductWhatsAppMessage(params: {
 
   let msg = `*ORDER INQUIRY - DEVANGI RESIN STUDIO*\n\n`;
   msg += `Hello Devangi! I would like to place an order for this handcrafted piece:\n\n`;
+  if (orderNumber) {
+    msg += `*Order Reference:* ${orderNumber}\n\n`;
+  }
   msg += `*Product:* ${product.name}\n`;
   if (variantName) {
     msg += `*Variant / Option:* ${variantName}\n`;
@@ -126,6 +131,7 @@ export function buildCartWhatsAppMessage(params: {
     city?: string;
     state?: string;
   } | null;
+  orderNumber?: string | null;
 }): string {
   const {
     items,
@@ -135,10 +141,14 @@ export function buildCartWhatsAppMessage(params: {
     shippingCharge = 0,
     finalTotal,
     customer,
+    orderNumber,
   } = params;
 
   let msg = `*CHECKOUT ORDER - DEVANGI RESIN STUDIO*\n\n`;
   msg += `Hello Devangi! I would like to place an order for the items in my cart:\n\n`;
+  if (orderNumber) {
+    msg += `*Order Reference:* ${orderNumber}\n\n`;
+  }
   msg += `*ITEMS ORDERED (${items.length}):*\n`;
   msg += `---------------------------------\n`;
 
