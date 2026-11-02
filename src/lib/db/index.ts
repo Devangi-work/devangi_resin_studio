@@ -1486,12 +1486,30 @@ export const dbStore = {
         if (Array.isArray(data.items)) {
           for (const item of data.items) {
             const itemId = item.id || `item_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+
+            // Validate productId & variantId against database foreign keys to prevent FK constraint failures
+            let safeProductId = null;
+            if (item.productId) {
+              try {
+                const [pRow] = await sql`SELECT id FROM products WHERE id = ${item.productId} LIMIT 1;`;
+                if (pRow) safeProductId = pRow.id;
+              } catch {}
+            }
+
+            let safeVariantId = null;
+            if (item.variantId) {
+              try {
+                const [vRow] = await sql`SELECT id FROM product_variants WHERE id = ${item.variantId} LIMIT 1;`;
+                if (vRow) safeVariantId = vRow.id;
+              } catch {}
+            }
+
             await sql`
               INSERT INTO order_items (
                 id, order_id, product_id, variant_id, product_name, variant_name,
                 sku, unit_price, quantity, total_price, personalization_details, reference_image_url
               ) VALUES (
-                ${itemId}, ${id}, ${item.productId || null}, ${item.variantId || null},
+                ${itemId}, ${id}, ${safeProductId}, ${safeVariantId},
                 ${item.productName || 'Handmade Resin Art'}, ${item.variantName || null},
                 ${item.sku || 'SKU-CUSTOM'}, ${Number(item.price || item.unitPrice || 0).toFixed(2)},
                 ${Number(item.quantity)}, ${Number((item.price || item.unitPrice || 0) * item.quantity).toFixed(2)},
@@ -2684,7 +2702,6 @@ export const dbStore = {
           city: o.shippingCity || null,
           state: o.shippingState || null,
           postalCode: o.shippingPostalCode || null,
-          state: o.shippingState || null,
           createdAt: o.createdAt,
         });
       }

@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { buildCartWhatsAppMessage, getWhatsAppUrl } from "@/lib/whatsapp";
 
-export default function CartPage() {
+function CartContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -479,5 +479,13 @@ export default function CartPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function CartPage() {
+  return (
+    <React.Suspense fallback={<div className="max-w-7xl mx-auto px-4 py-20 text-center text-xs text-[#8C7A72]">Loading cart...</div>}>
+      <CartContent />
+    </React.Suspense>
   );
 }

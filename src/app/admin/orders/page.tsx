@@ -192,6 +192,7 @@ export default function AdminOrdersPage() {
         ? Number(String(req.budget).replace(/[^0-9]/g, "")) || 1500
         : 1500;
     setOfflineForm({
+      customerId: req.customerId || "",
       customerName: req.customerName || "",
       customerEmail: req.customerEmail || "",
       customerPhone: req.customerPhone || "",
@@ -210,6 +211,7 @@ export default function AdminOrdersPage() {
       orderStatus: "confirmed",
       items: [
         {
+          productId: "",
           productName: req.productType ? `Custom ${req.productType}` : "Bespoke Custom Resin Art",
           quantity: 1,
           unitPrice,
