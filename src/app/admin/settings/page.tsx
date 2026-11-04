@@ -330,6 +330,9 @@ export default function AdminSettingsPage() {
 
       if (res.ok) {
         setMessage("Settings saved and live across the storefront!");
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new Event("site-settings-updated"));
+        }
       }
     } catch {
       alert("Error saving settings.");

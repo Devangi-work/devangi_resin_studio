@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCart } from "@/lib/store/cart";
 import {
@@ -22,6 +23,7 @@ import {
 } from "lucide-react";
 
 export function Navbar() {
+  const pathname = usePathname();
   const { totalItems, setIsCartOpen } = useCart();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -104,12 +106,16 @@ export function Navbar() {
 
   useEffect(() => {
     // 1. Fetch site settings
-    fetch("/api/settings")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data && !data.error) setSettings(data);
-      })
-      .catch(() => { });
+    const loadSettings = () => {
+      fetch("/api/settings")
+        .then((res) => res.json())
+        .then((data) => {
+          if (data && !data.error) setSettings(data);
+        })
+        .catch(() => { });
+    };
+
+    loadSettings();
 
     // 2. Fetch categories dynamically from database
     fetch("/api/categories")
@@ -139,11 +145,13 @@ export function Navbar() {
     checkCustomer();
     window.addEventListener("customer-profile-updated", checkCustomer);
     window.addEventListener("customer-auth-changed", checkCustomer);
+    window.addEventListener("site-settings-updated", loadSettings);
     return () => {
       window.removeEventListener("customer-profile-updated", checkCustomer);
       window.removeEventListener("customer-auth-changed", checkCustomer);
+      window.removeEventListener("site-settings-updated", loadSettings);
     };
-  }, []);
+  }, [pathname]);
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -288,13 +296,15 @@ export function Navbar() {
               </button>
             </div>
 
-            <Link
-              href="/shop?festival=true"
-              className="text-[11px] xl:text-xs font-bold uppercase tracking-wider text-[#8C1D38] hover:text-[#D4AF37] transition-colors py-1 flex items-center space-x-1 border-b-2 border-transparent hover:border-[#D4AF37] whitespace-nowrap"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-[#D4AF37] flex-shrink-0" />
-              <span>Festive</span>
-            </Link>
+            {Boolean(settings?.festivalDiscountActive) && (
+              <Link
+                href="/shop?festival=true"
+                className="text-[11px] xl:text-xs font-bold uppercase tracking-wider text-[#8C1D38] hover:text-[#D4AF37] transition-colors py-1 flex items-center space-x-1 border-b-2 border-transparent hover:border-[#D4AF37] whitespace-nowrap"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-[#D4AF37] flex-shrink-0" />
+                <span>Festive</span>
+              </Link>
+            )}
 
             <Link
               href="/custom-orders"
@@ -526,11 +536,12 @@ export function Navbar() {
               transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
               onMouseEnter={handleCollectionsEnter}
               onMouseLeave={handleCollectionsLeave}
-              className="hidden lg:block absolute top-full left-0 right-0 w-full bg-[#FCFAF8]/98 backdrop-blur-xl border-b border-[#EFE3E7] shadow-[0_25px_50px_-12px_rgba(58,24,35,0.18)] z-50 overflow-hidden"
+              className="hidden lg:block absolute top-full left-0 right-0 w-full bg-[#FCFAF8]/98 backdrop-blur-xl border-b border-[#EFE3E7] shadow-[0_25px_50px_-12px_rgba(58,24,35,0.18)] z-50 max-h-[calc(100vh-100px)] overflow-y-auto overscroll-contain"
+              style={{ scrollbarWidth: "thin", scrollbarColor: "#D4AF37 transparent" }}
             >
-              <div className="max-w-7xl mx-auto px-6 lg:px-8 py-7">
+              <div className="max-w-7xl mx-auto px-6 lg:px-8 py-5 sm:py-6">
                 {/* Header row inside mega menu */}
-                <div className="flex items-center justify-between pb-5 border-b border-[#EFE3E7]/80">
+                <div className="flex items-center justify-between pb-4 border-b border-[#EFE3E7]/80">
                   <div>
                     <span className="text-[10px] font-bold uppercase tracking-widest text-[#B84A67] flex items-center gap-1.5">
                       <Sparkle className="w-3.5 h-3.5 text-[#D4AF37]" />
@@ -552,7 +563,7 @@ export function Navbar() {
                 </div>
 
                 {/* Category Cards Grid with Image + Category Name + Description */}
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5 pt-6">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 pt-4">
                   {displayCategories.map((cat) => (
                     <Link
                       key={cat.id || cat.slug}
@@ -561,7 +572,7 @@ export function Navbar() {
                       className="group flex flex-col rounded-2xl bg-white border border-[#EFE3E7] hover:border-[#D4AF37] p-3 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 overflow-hidden"
                     >
                       {/* Image Thumbnail with zoom on hover */}
-                      <div className="relative aspect-square w-full rounded-xl overflow-hidden bg-[#FAF0F3] mb-3 border border-[#F4EBE6]">
+                      <div className="relative aspect-[4/3] w-full rounded-xl overflow-hidden bg-[#FAF0F3] mb-2.5 border border-[#F4EBE6]">
                         <img
                           src={cat.imageUrl || "/images/logo/resin_logo.png"}
                           alt={cat.name}
@@ -702,19 +713,21 @@ export function Navbar() {
                     <ArrowRight className="w-4 h-4 text-[#B84A67] group-hover:translate-x-1 transition-transform" />
                   </Link>
 
-                  <Link
-                    href="/shop?festival=true"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex items-center justify-between p-3 rounded-xl bg-gradient-to-r from-[#FAF0F3] to-[#FFF5F8] border-2 border-[#D4AF37] text-[#6A162B] font-serif font-bold text-base tracking-wide group shadow-xs active:scale-98"
-                  >
-                    <span className="flex items-center space-x-2">
-                      <Sparkles className="w-4 h-4 text-[#D4AF37]" />
-                      <span>✨ Festive Specials</span>
-                    </span>
-                    <span className="text-[10px] bg-[#D4AF37] text-[#2D121C] px-2 py-0.5 rounded-full font-black">
-                      OFFERS
-                    </span>
-                  </Link>
+                  {Boolean(settings?.festivalDiscountActive) && (
+                    <Link
+                      href="/shop?festival=true"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="flex items-center justify-between p-3 rounded-xl bg-gradient-to-r from-[#FAF0F3] to-[#FFF5F8] border-2 border-[#D4AF37] text-[#6A162B] font-serif font-bold text-base tracking-wide group shadow-xs active:scale-98"
+                    >
+                      <span className="flex items-center space-x-2">
+                        <Sparkles className="w-4 h-4 text-[#D4AF37]" />
+                        <span>✨ Festive Specials</span>
+                      </span>
+                      <span className="text-[10px] bg-[#D4AF37] text-[#2D121C] px-2 py-0.5 rounded-full font-black">
+                        OFFERS
+                      </span>
+                    </Link>
+                  )}
 
                   {/* 4. Browse Collections with dynamic categories */}
                   <div className="py-2">

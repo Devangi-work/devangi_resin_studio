@@ -18,6 +18,7 @@ interface ShopFiltersProps {
   initialSort?: string;
   initialInStock?: boolean;
   initialFestival?: boolean;
+  showFestivalFilter?: boolean;
 }
 
 export function ShopFilters({
@@ -27,6 +28,7 @@ export function ShopFilters({
   initialSort = "popularity",
   initialInStock = false,
   initialFestival = false,
+  showFestivalFilter = false,
 }: ShopFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -92,28 +94,30 @@ export function ShopFilters({
           </form>
         </div>
 
-        {/* Festive Specials Filter Section */}
-        <div className="p-3.5 rounded-xl bg-gradient-to-r from-[#FAF0F3] to-[#FFF5F8] border-2 border-[#D4AF37]/60 space-y-2 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-black uppercase tracking-wider text-[#6A162B] flex items-center space-x-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />
-              <span>Festive Specials</span>
-            </span>
-            <span className="text-[9px] font-bold bg-[#D4AF37] text-[#2D121C] px-1.5 py-0.5 rounded-full font-mono">
-              OFFERS
-            </span>
+        {/* Festive Specials Filter Section (Only displayed when Festive Special is active in admin) */}
+        {showFestivalFilter && (
+          <div className="p-3.5 rounded-xl bg-gradient-to-r from-[#FAF0F3] to-[#FFF5F8] border-2 border-[#D4AF37]/60 space-y-2 shadow-xs">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-black uppercase tracking-wider text-[#6A162B] flex items-center space-x-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />
+                <span>Festive Specials</span>
+              </span>
+              <span className="text-[9px] font-bold bg-[#D4AF37] text-[#2D121C] px-1.5 py-0.5 rounded-full font-mono">
+                OFFERS
+              </span>
+            </div>
+            <label className="flex items-center space-x-2 text-xs text-[#3A1823] cursor-pointer font-bold">
+              <input
+                type="checkbox"
+                name="festival"
+                checked={initialFestival}
+                onChange={(e) => handleFestivalToggle(e.target.checked)}
+                className="rounded border-[#D4AF37] text-[#6A162B] focus:ring-[#D4AF37]"
+              />
+              <span>Show Festive Editions Only</span>
+            </label>
           </div>
-          <label className="flex items-center space-x-2 text-xs text-[#3A1823] cursor-pointer font-bold">
-            <input
-              type="checkbox"
-              name="festival"
-              checked={initialFestival}
-              onChange={(e) => handleFestivalToggle(e.target.checked)}
-              className="rounded border-[#D4AF37] text-[#6A162B] focus:ring-[#D4AF37]"
-            />
-            <span>Show Festive Editions Only</span>
-          </label>
-        </div>
+        )}
 
         {/* Sort Dropdown */}
         <div>
@@ -150,7 +154,7 @@ export function ShopFilters({
         </div>
 
         {/* Clear All Filters */}
-        {(activeCategorySlug || initialSearch || initialInStock || initialFestival) && (
+        {(activeCategorySlug || initialSearch || initialInStock || (showFestivalFilter && initialFestival)) && (
           <div className="pt-2 border-t border-[#FAF0F3]">
             <Link
               href="/shop"
