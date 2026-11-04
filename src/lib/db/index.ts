@@ -39,6 +39,8 @@ if (sql) {
   sql`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS keepsake_studio_images JSONB DEFAULT '[]'::jsonb;`.catch(() => { });
   sql`ALTER TABLE coupons ADD COLUMN IF NOT EXISTS applicable_category_id TEXT;`.catch(() => { });
   sql`ALTER TABLE coupons ADD COLUMN IF NOT EXISTS applicable_product_id TEXT;`.catch(() => { });
+  sql`ALTER TABLE coupons ADD COLUMN IF NOT EXISTS applicable_product_ids JSONB DEFAULT '[]'::jsonb;`.catch(() => { });
+  sql`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS city_shipping_rates JSONB DEFAULT '[]'::jsonb;`.catch(() => { });
   sql`CREATE TABLE IF NOT EXISTS media_items (
     id TEXT PRIMARY KEY,
     file_name TEXT NOT NULL,
@@ -195,6 +197,7 @@ function getInitialStoreState(): StoreState {
       festivalCtaText: "Shop Festive Collection",
       festivalCtaUrl: "/shop?filter=festival",
       keepsakeStudioImages: [],
+      cityShippingRates: [],
       updatedAt: new Date(),
     },
     customRequests: [],
@@ -2129,6 +2132,7 @@ export const dbStore = {
             is_active as "isActive",
             applicable_category_id as "applicableCategoryId",
             applicable_product_id as "applicableProductId",
+            COALESCE(applicable_product_ids, '[]'::jsonb) as "applicableProductIds",
             created_at as "createdAt",
             updated_at as "updatedAt"
           FROM coupons
@@ -2140,13 +2144,21 @@ export const dbStore = {
             discountValue: Number(c.discountValue).toFixed(2),
             minCartAmount: Number(c.minCartAmount || 0).toFixed(2),
             maxDiscount: c.maxDiscount ? Number(c.maxDiscount).toFixed(2) : null,
+            applicableProductIds: Array.isArray(c.applicableProductIds)
+              ? c.applicableProductIds
+              : (c.applicableProductId ? [c.applicableProductId] : []),
           }));
         }
       } catch (err) {
         console.error("DB getCoupons err, fallback to memory:", err);
       }
     }
-    return [...store.coupons];
+    return store.coupons.map((c) => ({
+      ...c,
+      applicableProductIds: Array.isArray(c.applicableProductIds)
+        ? c.applicableProductIds
+        : (c.applicableProductId ? [c.applicableProductId] : []),
+    }));
   },
 
   async getCouponByCode(code: string) {
@@ -2169,6 +2181,7 @@ export const dbStore = {
             is_active as "isActive",
             applicable_category_id as "applicableCategoryId",
             applicable_product_id as "applicableProductId",
+            COALESCE(applicable_product_ids, '[]'::jsonb) as "applicableProductIds",
             created_at as "createdAt",
             updated_at as "updatedAt"
           FROM coupons
@@ -2182,13 +2195,23 @@ export const dbStore = {
             discountValue: Number(c.discountValue).toFixed(2),
             minCartAmount: Number(c.minCartAmount || 0).toFixed(2),
             maxDiscount: c.maxDiscount ? Number(c.maxDiscount).toFixed(2) : null,
+            applicableProductIds: Array.isArray(c.applicableProductIds)
+              ? c.applicableProductIds
+              : (c.applicableProductId ? [c.applicableProductId] : []),
           };
         }
       } catch (err) {
         console.error("DB getCouponByCode err, fallback to memory:", err);
       }
     }
-    return store.coupons.find((c) => c.code.toUpperCase() === clean) || null;
+    const c = store.coupons.find((cp) => cp.code.toUpperCase() === clean);
+    if (!c) return null;
+    return {
+      ...c,
+      applicableProductIds: Array.isArray(c.applicableProductIds)
+        ? c.applicableProductIds
+        : (c.applicableProductId ? [c.applicableProductId] : []),
+    };
   },
 
   async validateCoupon(
@@ -2253,14 +2276,25 @@ export const dbStore = {
     // Check optional Product or Category restrictions if configured on coupon
     let eligibleAmount = cartAmount;
 
-    if (coupon.applicableProductId) {
+    // Support single product or multiple products
+    const targetProductIds: string[] = Array.isArray(coupon.applicableProductIds) && coupon.applicableProductIds.length > 0
+      ? coupon.applicableProductIds.map(String)
+      : (coupon.applicableProductId ? [String(coupon.applicableProductId)] : []);
+
+    if (targetProductIds.length > 0) {
       if (Array.isArray(items) && items.length > 0) {
-        const matchingItems = items.filter((it) => it.productId === coupon.applicableProductId);
+        const matchingItems = items.filter((it) => it.productId && targetProductIds.includes(String(it.productId)));
         if (matchingItems.length === 0) {
-          const targetProd = await this.getProductById(coupon.applicableProductId);
+          if (targetProductIds.length === 1) {
+            const targetProd = await this.getProductById(targetProductIds[0]);
+            return {
+              valid: false,
+              message: `This coupon is valid only for the product: "${targetProd?.name || "selected product"}".`,
+            };
+          }
           return {
             valid: false,
-            message: `This coupon is valid only for the product: "${targetProd?.name || "selected product"}".`,
+            message: `This coupon is valid only for selected products in our collection.`,
           };
         }
         eligibleAmount = matchingItems.reduce(
@@ -2310,6 +2344,10 @@ export const dbStore = {
   },
 
   async createCoupon(data: any) {
+    const productIds: string[] = Array.isArray(data.applicableProductIds)
+      ? data.applicableProductIds.filter(Boolean).map(String)
+      : (data.applicableProductId ? [String(data.applicableProductId)] : []);
+
     const newCoupon = {
       ...data,
       id: `cpn_${Date.now()}`,
@@ -2323,7 +2361,8 @@ export const dbStore = {
       perCustomerLimit: data.perCustomerLimit ? Number(data.perCustomerLimit) : 1,
       isActive: data.isActive !== undefined ? Boolean(data.isActive) : true,
       applicableCategoryId: data.applicableCategoryId ? String(data.applicableCategoryId).trim() || null : null,
-      applicableProductId: data.applicableProductId ? String(data.applicableProductId).trim() || null : null,
+      applicableProductId: productIds.length === 1 ? productIds[0] : (data.applicableProductId ? String(data.applicableProductId).trim() || null : null),
+      applicableProductIds: productIds,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -2335,12 +2374,13 @@ export const dbStore = {
           INSERT INTO coupons (
             id, code, discount_type, discount_value, min_cart_amount, max_discount,
             max_redemptions, current_redemptions, per_customer_limit, is_active,
-            applicable_category_id, applicable_product_id, created_at, updated_at
+            applicable_category_id, applicable_product_id, applicable_product_ids, created_at, updated_at
           ) VALUES (
             ${newCoupon.id}, ${newCoupon.code}, ${newCoupon.discountType},
             ${newCoupon.discountValue}, ${newCoupon.minCartAmount}, ${newCoupon.maxDiscount},
             ${newCoupon.maxRedemptions}, ${newCoupon.currentRedemptions}, ${newCoupon.perCustomerLimit},
             ${newCoupon.isActive}, ${newCoupon.applicableCategoryId}, ${newCoupon.applicableProductId},
+            ${JSON.stringify(newCoupon.applicableProductIds || [])}::jsonb,
             NOW(), NOW()
           );
         `;
@@ -2353,6 +2393,10 @@ export const dbStore = {
   },
 
   async updateCoupon(id: string, data: any) {
+    const productIds: string[] | undefined = data.applicableProductIds !== undefined
+      ? (Array.isArray(data.applicableProductIds) ? data.applicableProductIds.filter(Boolean).map(String) : [])
+      : (data.applicableProductId !== undefined ? (data.applicableProductId ? [String(data.applicableProductId)] : []) : undefined);
+
     const idx = store.coupons.findIndex((c) => c.id === id);
     if (idx !== -1) {
       store.coupons[idx] = {
@@ -2364,9 +2408,13 @@ export const dbStore = {
             ? (data.applicableCategoryId ? String(data.applicableCategoryId).trim() : null)
             : store.coupons[idx].applicableCategoryId,
         applicableProductId:
-          data.applicableProductId !== undefined
-            ? (data.applicableProductId ? String(data.applicableProductId).trim() : null)
-            : store.coupons[idx].applicableProductId,
+          productIds !== undefined
+            ? (productIds.length === 1 ? productIds[0] : null)
+            : (data.applicableProductId !== undefined ? (data.applicableProductId ? String(data.applicableProductId).trim() : null) : store.coupons[idx].applicableProductId),
+        applicableProductIds:
+          productIds !== undefined
+            ? productIds
+            : (store.coupons[idx].applicableProductIds || []),
         updatedAt: new Date(),
       };
     }
@@ -2384,7 +2432,8 @@ export const dbStore = {
             max_redemptions = COALESCE(${data.maxRedemptions !== undefined ? Number(data.maxRedemptions) : null}, max_redemptions),
             is_active = COALESCE(${data.isActive !== undefined ? Boolean(data.isActive) : null}, is_active),
             applicable_category_id = ${data.applicableCategoryId ? String(data.applicableCategoryId).trim() : null},
-            applicable_product_id = ${data.applicableProductId ? String(data.applicableProductId).trim() : null},
+            applicable_product_id = ${productIds !== undefined ? (productIds.length === 1 ? productIds[0] : null) : (data.applicableProductId ? String(data.applicableProductId).trim() : null)},
+            applicable_product_ids = ${productIds !== undefined ? JSON.stringify(productIds) : null}::jsonb,
             updated_at = NOW()
           WHERE id = ${id};
         `;
@@ -2466,6 +2515,7 @@ export const dbStore = {
             festival_cta_text as "festivalCtaText",
             festival_cta_url as "festivalCtaUrl",
             COALESCE(keepsake_studio_images, '[]'::jsonb) as "keepsakeStudioImages",
+            COALESCE(city_shipping_rates, '[]'::jsonb) as "cityShippingRates",
             updated_at as "updatedAt"
           FROM site_settings
           WHERE id = 'default'
@@ -2476,6 +2526,7 @@ export const dbStore = {
           store.siteSettings = {
             ...store.siteSettings,
             ...row,
+            cityShippingRates: Array.isArray(row.cityShippingRates) ? row.cityShippingRates : [],
           };
           return store.siteSettings;
         }
@@ -2503,7 +2554,7 @@ export const dbStore = {
             shipping_policy, return_policy, privacy_policy, terms_policy, care_instructions_default,
             festival_discount_active, festival_name, festival_tagline, festival_discount_percentage,
             festival_coupon_code, festival_expires_at, festival_banner_bg, festival_cta_text, festival_cta_url,
-            upi_id, upi_qr_code_url, account_holder_name, keepsake_studio_images, updated_at
+            upi_id, upi_qr_code_url, account_holder_name, keepsake_studio_images, city_shipping_rates, updated_at
           ) VALUES (
             'default',
             ${data.storeName ?? store.siteSettings.storeName},
@@ -2538,6 +2589,7 @@ export const dbStore = {
             ${data.upiQrCodeUrl ?? store.siteSettings.upiQrCodeUrl ?? ''},
             ${data.accountHolderName ?? store.siteSettings.accountHolderName ?? 'Devangi Resin Studio'},
             ${JSON.stringify(data.keepsakeStudioImages ?? store.siteSettings.keepsakeStudioImages ?? [])}::jsonb,
+            ${JSON.stringify(data.cityShippingRates ?? store.siteSettings.cityShippingRates ?? [])}::jsonb,
             NOW()
           )
           ON CONFLICT (id) DO UPDATE SET
@@ -2573,6 +2625,7 @@ export const dbStore = {
             upi_qr_code_url = EXCLUDED.upi_qr_code_url,
             account_holder_name = EXCLUDED.account_holder_name,
             keepsake_studio_images = EXCLUDED.keepsake_studio_images,
+            city_shipping_rates = EXCLUDED.city_shipping_rates,
             updated_at = NOW();
         `;
       } catch (err) {

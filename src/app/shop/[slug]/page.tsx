@@ -46,10 +46,11 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
   });
 
   const relatedProducts = relatedRes.products.filter((p: any) => p.id !== product.id).slice(0, 4);
+  const settings = await dbStore.getSiteSettings();
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
-      <ProductDetailView product={product} relatedProducts={relatedProducts} />
+      <ProductDetailView product={product} relatedProducts={relatedProducts} settings={settings} />
     </div>
   );
 }

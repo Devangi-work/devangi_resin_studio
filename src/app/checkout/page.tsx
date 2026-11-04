@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useCart } from "@/lib/store/cart";
+import { resolveShippingCharge } from "@/lib/shipping";
 import {
   Lock,
   ArrowRight,
@@ -111,7 +112,15 @@ export default function CheckoutPage() {
     fetch("/api/settings")
       .then((res) => res.json())
       .then((data) => {
-        if (data && !data.error) setSettings(data);
+        if (data && !data.error) {
+          setSettings(data);
+          const savedCity = typeof window !== "undefined" ? localStorage.getItem("user_delivery_city") : "";
+          if (savedCity) {
+            setFormData((prev) => ({ ...prev, shippingCity: prev.shippingCity || savedCity }));
+          } else if (Array.isArray(data.cityShippingRates) && data.cityShippingRates.length > 0) {
+            setFormData((prev) => ({ ...prev, shippingCity: prev.shippingCity || data.cityShippingRates[0].name }));
+          }
+        }
       })
       .catch((err) => console.error("Error loading settings:", err));
 
@@ -133,6 +142,14 @@ export default function CheckoutPage() {
             shippingPostalCode: data.customer.postalCode || "",
             orderNotes: "",
           });
+        } else if (typeof window !== "undefined") {
+          const savedCity = localStorage.getItem("user_delivery_city");
+          if (savedCity) {
+            setFormData((prev) => ({
+              ...prev,
+              shippingCity: prev.shippingCity || savedCity,
+            }));
+          }
         }
       })
       .catch((err) => {
@@ -141,12 +158,29 @@ export default function CheckoutPage() {
       });
   }, []);
 
-  const freeThreshold = Number(settings.freeShippingThreshold || 999);
-  const defaultShipFee = Number(settings.defaultShippingCharge || 79);
-  const shippingCharge = subtotal >= freeThreshold ? 0 : defaultShipFee;
+  const cityRates: Array<{ id?: string; name: string; charge: number | string }> =
+    Array.isArray((settings as any).cityShippingRates) ? (settings as any).cityShippingRates : [];
+
+  const shippingInfo = resolveShippingCharge({
+    subtotal,
+    cityName: formData.shippingCity,
+    stateName: formData.shippingState,
+    cityRates,
+    defaultShippingCharge: settings.defaultShippingCharge,
+    freeShippingThreshold: settings.freeShippingThreshold,
+  });
+
+  const shippingCharge = subtotal === 0 ? 0 : shippingInfo.charge;
+  const matchedCityRateName = shippingInfo.matchedCityName;
   const discount = appliedCoupon ? Number(appliedCoupon.discountAmount) : 0;
   // Strictly no round off - preserve exact decimals
   const finalTotal = Math.max(1, subtotal - discount + shippingCharge);
+  const totalItemsSavings = items.reduce((acc, it) => {
+    if (it.originalPrice && it.originalPrice > it.price) {
+      return acc + (it.originalPrice - it.price) * it.quantity;
+    }
+    return acc;
+  }, 0);
 
   const activeUpiId = settings.upiId || "devangibarai0403@okhdfcbank";
   const activePayeeName = settings.accountHolderName || "Devangi Banshilal Barai";
@@ -167,7 +201,14 @@ export default function CheckoutPage() {
       )}`;
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+    if (name === "shippingCity" && value.trim()) {
+      try {
+        localStorage.setItem("user_delivery_city", value.trim());
+        window.dispatchEvent(new Event("user-city-changed"));
+      } catch {}
+    }
   };
 
   const copyToClipboard = () => {
@@ -936,6 +977,7 @@ export default function CheckoutPage() {
                   onChange={handleInputChange}
                   className="w-full px-3.5 py-2.5 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
                 />
+
               </div>
 
               <div>
@@ -1088,6 +1130,12 @@ export default function CheckoutPage() {
                 <span>Subtotal</span>
                 <span className="font-semibold text-[#2C332D]">₹{subtotal.toFixed(2)}</span>
               </div>
+              {totalItemsSavings > 0 && (
+                <div className="flex justify-between text-[#2E7D32] font-semibold">
+                  <span>Product Savings</span>
+                  <span>-₹{totalItemsSavings.toFixed(2)}</span>
+                </div>
+              )}
               {appliedCoupon && appliedCoupon.code.toUpperCase().includes("FESTIVE") ? (
                 <div className="flex justify-between text-[#800020] font-semibold bg-[#FFF0F4] px-2.5 py-1.5 rounded-lg border border-[#D4AF37]/30">
                   <span className="flex items-center space-x-1">
@@ -1107,10 +1155,17 @@ export default function CheckoutPage() {
               <div className="flex justify-between">
                 <span>Insured Shipping</span>
                 <span className="font-semibold text-[#2C332D]">
-                  {shippingCharge === 0 ? (
+                  {shippingInfo.isFree ? (
                     <span className="text-[#2E7D32]">FREE</span>
                   ) : (
-                    `₹${shippingCharge.toFixed(2)}`
+                    <span>
+                      ₹{shippingCharge.toFixed(2)}
+                      {matchedCityRateName && (
+                        <span className="text-[10px] text-[#B84A67] font-semibold ml-1">
+                          ({matchedCityRateName})
+                        </span>
+                      )}
+                    </span>
                   )}
                 </span>
               </div>

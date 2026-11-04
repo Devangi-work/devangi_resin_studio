@@ -194,6 +194,7 @@ export const couponSchema = z.object({
   isActive: z.boolean().default(true),
   applicableCategoryId: z.string().optional().nullable(),
   applicableProductId: z.string().optional().nullable(),
+  applicableProductIds: z.array(z.string()).optional().nullable(),
 });
 
 // Stock Adjustment

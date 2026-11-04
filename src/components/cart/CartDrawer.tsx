@@ -16,8 +16,10 @@ import {
   CheckCircle2,
   Sparkles,
   MessageCircle,
+  MapPin,
 } from "lucide-react";
 import { buildCartWhatsAppMessage, getWhatsAppUrl } from "@/lib/whatsapp";
+import { resolveShippingCharge, CityShippingRate } from "@/lib/shipping";
 
 export function CartDrawer() {
   const router = useRouter();
@@ -36,20 +38,21 @@ export function CartDrawer() {
   const [couponError, setCouponError] = useState("");
   const [couponLoading, setCouponLoading] = useState(false);
 
-  // Authentication & WhatsApp redirection states
+  // Authentication & Settings & Shipping states
   const [customer, setCustomer] = useState<any>(null);
   const [adminPhone, setAdminPhone] = useState("+91 9967313355");
-  const [defaultShippingCharge, setDefaultShippingCharge] = useState(79);
-  const [freeShippingThreshold, setFreeShippingThreshold] = useState(999);
+  const [siteSettings, setSiteSettings] = useState<any>(null);
   const [redirectingWhatsApp, setRedirectingWhatsApp] = useState(false);
 
   useEffect(() => {
-    // Check if customer is logged in
+    // Check if customer is logged in & get profile shipping details
     fetch("/api/customer/me")
       .then((res) => res.json())
       .then((data) => {
         if (data?.authenticated && data?.customer) {
           setCustomer(data.customer);
+        } else {
+          setCustomer(null);
         }
       })
       .catch(() => {});
@@ -58,25 +61,43 @@ export function CartDrawer() {
     fetch("/api/settings")
       .then((res) => res.json())
       .then((s) => {
-        if (s?.whatsappNumber || s?.contactPhone) {
-          setAdminPhone(s.whatsappNumber || s.contactPhone);
-        }
-        if (s?.defaultShippingCharge) {
-          setDefaultShippingCharge(Number(s.defaultShippingCharge) || 79);
-        }
-        if (s?.freeShippingThreshold) {
-          setFreeShippingThreshold(Number(s.freeShippingThreshold) || 999);
+        if (s && !s.error) {
+          setSiteSettings(s);
+          if (s?.whatsappNumber || s?.contactPhone) {
+            setAdminPhone(s.whatsappNumber || s.contactPhone);
+          }
         }
       })
       .catch(() => {});
   }, [isCartOpen]);
 
-  const freeShippingGoal = freeShippingThreshold;
+  // Automatically determine city and shipping rate from the customer's completed profile
+  const userCity = (customer?.city || customer?.state || "").trim();
+  const configuredCityRates: CityShippingRate[] = Array.isArray(siteSettings?.cityShippingRates)
+    ? siteSettings.cityShippingRates
+    : [];
+
+  const shippingInfo = resolveShippingCharge({
+    subtotal,
+    cityName: userCity || null,
+    stateName: customer?.state || null,
+    cityRates: configuredCityRates,
+    defaultShippingCharge: siteSettings?.defaultShippingCharge,
+    freeShippingThreshold: siteSettings?.freeShippingThreshold,
+  });
+
+  const freeShippingGoal = shippingInfo.freeShippingThreshold;
   const progressPercent = Math.min(100, (subtotal / freeShippingGoal) * 100);
   const remainingForFreeShipping = Math.max(0, freeShippingGoal - subtotal);
   const discount = appliedCoupon ? Number(appliedCoupon.discountAmount) : 0;
-  const shippingCharge = subtotal >= freeShippingGoal || subtotal === 0 ? 0 : defaultShippingCharge;
+  const shippingCharge = subtotal === 0 ? 0 : shippingInfo.charge;
   const finalTotal = Math.max(0, subtotal - discount + shippingCharge);
+  const totalItemsSavings = items.reduce((acc, it) => {
+    if (it.originalPrice && it.originalPrice > it.price) {
+      return acc + (it.originalPrice - it.price) * it.quantity;
+    }
+    return acc;
+  }, 0);
 
   const handleApplyCoupon = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -230,27 +251,120 @@ export function CartDrawer() {
             </button>
           </div>
 
-          {/* Free Shipping Progress Indicator */}
-          <div className="bg-[#FAF0F3] px-6 py-3 border-b border-[#EFE3E7]">
-            <div className="flex items-center justify-between text-xs text-[#3A1823] mb-1.5">
-              {remainingForFreeShipping > 0 ? (
-                <span>
-                  Add <strong className="text-[#B84A67]">₹{remainingForFreeShipping.toFixed(2)}</strong> more for <strong>FREE Insured Shipping</strong>
-                </span>
+          {/* Free Shipping Progress Indicator (only if threshold is set > 0) */}
+          {freeShippingGoal > 0 && (
+            <div className="bg-[#FAF0F3] px-6 py-3 border-b border-[#EFE3E7]">
+              <div className="flex items-center justify-between text-xs text-[#3A1823] mb-1.5">
+                {remainingForFreeShipping > 0 ? (
+                  <span>
+                    Add <strong className="text-[#B84A67]">₹{remainingForFreeShipping.toFixed(2)}</strong> more for <strong>FREE Insured Shipping</strong>
+                  </span>
+                ) : (
+                  <span className="flex items-center text-[#2E7D32] font-semibold">
+                    <Sparkles className="w-3.5 h-3.5 mr-1 text-[#D4AF37]" />
+                    Complimentary Insured Shipping Unlocked!
+                  </span>
+                )}
+                <span className="text-[11px] text-[#7A5E68]">{progressPercent.toFixed(0)}%</span>
+              </div>
+              <div className="w-full bg-[#EFE3E7] h-1.5 rounded-full overflow-hidden">
+                <div
+                  className="bg-gradient-to-r from-[#B84A67] to-[#D4AF37] h-full transition-all duration-300"
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Professional User Shipping Details & Delivery Address Card */}
+          <div className="bg-[#FAF8F5] border-b border-[#EFE3E7] px-5 py-3">
+            {customer ? (
+              customer.addressLine1 && customer.city ? (
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-start space-x-2.5 min-w-0">
+                    <div className="mt-0.5 p-1.5 rounded-full bg-white text-[#B84A67] border border-[#EFE3E7] flex-shrink-0 shadow-xs">
+                      <MapPin className="w-3.5 h-3.5" />
+                    </div>
+                    <div className="min-w-0 text-xs space-y-0.5">
+                      <div className="flex items-center space-x-1.5">
+                        <span className="font-semibold text-[#3A1823] truncate">
+                          Deliver to: {customer.name || "Customer"}
+                        </span>
+                        <span className="text-[9px] bg-[#E8EFE8] text-[#2E7D32] px-1.5 py-0.2 rounded font-medium flex-shrink-0">
+                          Saved
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-[#7A5E68] leading-snug line-clamp-2">
+                        {[customer.addressLine1, customer.addressLine2, customer.city, customer.state, customer.postalCode].filter(Boolean).join(", ")}
+                      </p>
+                      <div className="flex flex-wrap items-center gap-2 pt-0.5 text-[10px]">
+                        {customer.phone && (
+                          <span className="text-[#A69E96]">📞 {customer.phone}</span>
+                        )}
+                        {shippingInfo.matchedCityName ? (
+                          <span className="text-[#B84A67] font-semibold bg-[#FAF0F3] px-1.5 py-0.5 rounded border border-[#EFE3E7]">
+                            📍 {shippingInfo.matchedCityName} Delivery: {shippingInfo.isFree ? "FREE" : `₹${shippingInfo.charge.toFixed(2)}`}
+                          </span>
+                        ) : (
+                          <span className="text-[#7A5E68] font-medium bg-white px-1.5 py-0.5 rounded border border-[#EFE3E7]">
+                            Standard Delivery: {shippingInfo.isFree ? "FREE" : `₹${shippingInfo.charge.toFixed(2)}`}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <Link
+                    href="/account/profile"
+                    onClick={() => setIsCartOpen(false)}
+                    className="text-[11px] text-[#B84A67] hover:underline font-semibold flex-shrink-0 mt-0.5"
+                  >
+                    Edit
+                  </Link>
+                </div>
               ) : (
-                <span className="flex items-center text-[#2E7D32] font-semibold">
-                  <Sparkles className="w-3.5 h-3.5 mr-1 text-[#D4AF37]" />
-                  Complimentary Insured Shipping Unlocked!
-                </span>
-              )}
-              <span className="text-[11px] text-[#7A5E68]">{progressPercent.toFixed(0)}%</span>
-            </div>
-            <div className="w-full bg-[#EFE3E7] h-1.5 rounded-full overflow-hidden">
-              <div
-                className="bg-gradient-to-r from-[#B84A67] to-[#D4AF37] h-full transition-all duration-300"
-                style={{ width: `${progressPercent}%` }}
-              />
-            </div>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center space-x-2.5 min-w-0">
+                    <div className="p-1.5 rounded-full bg-white text-[#B84A67] border border-[#EFE3E7] flex-shrink-0">
+                      <MapPin className="w-3.5 h-3.5" />
+                    </div>
+                    <div className="min-w-0 text-xs">
+                      <p className="font-semibold text-[#3A1823]">Complete Shipping Address</p>
+                      <p className="text-[10px] text-[#7A5E68] truncate">
+                        Add your address in profile to get your city's shipping price
+                      </p>
+                    </div>
+                  </div>
+                  <Link
+                    href="/account/profile"
+                    onClick={() => setIsCartOpen(false)}
+                    className="text-[11px] bg-[#FAF0F3] text-[#B84A67] border border-[#EFE3E7] px-3 py-1 rounded-full font-semibold hover:bg-[#F5E2E8] flex-shrink-0"
+                  >
+                    + Add
+                  </Link>
+                </div>
+              )
+            ) : (
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center space-x-2.5 min-w-0">
+                  <div className="p-1.5 rounded-full bg-white text-[#B84A67] border border-[#EFE3E7] flex-shrink-0">
+                    <MapPin className="w-3.5 h-3.5" />
+                  </div>
+                  <div className="min-w-0 text-xs">
+                    <p className="font-semibold text-[#3A1823]">Delivering to your doorstep</p>
+                    <p className="text-[10px] text-[#7A5E68] truncate">
+                      Sign in to apply your saved shipping address & city rates
+                    </p>
+                  </div>
+                </div>
+                <Link
+                  href="/account/login?redirect=/cart"
+                  onClick={() => setIsCartOpen(false)}
+                  className="text-[11px] bg-[#3A1823] text-white px-3 py-1 rounded-full font-semibold hover:bg-[#522332] flex-shrink-0"
+                >
+                  Sign In
+                </Link>
+              </div>
+            )}
           </div>
 
           {/* Cart Items List */}
@@ -443,6 +557,12 @@ export function CartDrawer() {
                   <span>Subtotal</span>
                   <span className="font-medium text-[#3A1823]">₹{subtotal.toFixed(2)}</span>
                 </div>
+                {totalItemsSavings > 0 && (
+                  <div className="flex justify-between text-[#2E7D32] font-semibold">
+                    <span>Product Savings</span>
+                    <span>-₹{totalItemsSavings.toFixed(2)}</span>
+                  </div>
+                )}
                 {appliedCoupon && appliedCoupon.code.toUpperCase().includes("FESTIVE") ? (
                   <div className="flex justify-between text-[#800020] font-semibold bg-[#FFF0F4] px-2 py-1 rounded-md border border-[#D4AF37]/30">
                     <span className="flex items-center space-x-1">
@@ -459,10 +579,17 @@ export function CartDrawer() {
                     <span>-₹{appliedCoupon.discountAmount.toFixed(2)}</span>
                   </div>
                 ) : null}
-                <div className="flex justify-between">
-                  <span>Shipping</span>
+                <div className="flex justify-between items-center">
+                  <span className="flex items-center space-x-1">
+                    <span>Shipping</span>
+                    {shippingInfo.matchedCityName && (
+                      <span className="text-[10px] bg-[#FAF0F3] text-[#B84A67] px-1.5 py-0.5 rounded font-semibold border border-[#EFE3E7]">
+                        {shippingInfo.matchedCityName}
+                      </span>
+                    )}
+                  </span>
                   <span className="font-medium text-[#3A1823]">
-                    {shippingCharge === 0 ? (
+                    {shippingInfo.isFree ? (
                       <span className="text-[#2E7D32] font-semibold">FREE</span>
                     ) : (
                       `₹${shippingCharge.toFixed(2)}`

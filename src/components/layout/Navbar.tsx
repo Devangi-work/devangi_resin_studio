@@ -206,10 +206,11 @@ export function Navbar() {
       <div className="bg-[#3A1823] text-[#FAF4EE] text-[10px] xs:text-[11px] sm:text-xs py-2 px-3 sm:px-4 text-center font-medium tracking-wide flex items-center justify-center space-x-1.5 sm:space-x-2 leading-snug sm:leading-normal">
         <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#D4AF37] flex-shrink-0" />
         <span className="text-center font-sans">
-          Handmade with Love • Complimentary Insured Delivery on orders over ₹
-          {settings?.freeShippingThreshold
-            ? Number(settings.freeShippingThreshold).toFixed(2)
-            : "999.00"}
+          {Number(settings?.freeShippingThreshold || 0) > 0 ? (
+            <>Handmade with Love • Complimentary Insured Delivery on orders over ₹{Number(settings.freeShippingThreshold).toFixed(2)}</>
+          ) : (
+            <>Handmade with Love • Handcrafted Botanical Resin Art & Keepsakes</>
+          )}
         </span>
         <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#D4AF37] flex-shrink-0" />
       </div>

@@ -504,6 +504,7 @@ export const coupons = pgTable(
     isActive: boolean("is_active").default(true).notNull(),
     applicableCategoryId: text("applicable_category_id"),
     applicableProductId: text("applicable_product_id"),
+    applicableProductIds: jsonb("applicable_product_ids").default([]),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
@@ -577,6 +578,9 @@ export const siteSettings = pgTable("site_settings", {
 
   // Personalised Keepsake Studio Showcase Images
   keepsakeStudioImages: jsonb("keepsake_studio_images").default([]),
+
+  // City-specific Shipping Charges
+  cityShippingRates: jsonb("city_shipping_rates").default([]),
 
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

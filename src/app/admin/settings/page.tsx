@@ -26,6 +26,8 @@ import {
   Lock,
   FileText,
   PenTool,
+  Plus,
+  MapPin,
 } from "lucide-react";
 import { MediaPickerModal } from "@/components/admin/MediaPickerModal";
 import { getStoredAdminTheme, applyAdminTheme, AdminTheme } from "@/lib/admin-theme";
@@ -72,6 +74,7 @@ export default function AdminSettingsPage() {
     festivalBannerBg: "royal_wine",
     festivalCtaText: "Shop Festive Collection",
     festivalCtaUrl: "/shop?filter=festival",
+    cityShippingRates: [] as Array<{ id: string; name: string; charge: string | number }>,
   });
 
   const [loading, setLoading] = useState(true);
@@ -99,7 +102,12 @@ export default function AdminSettingsPage() {
     fetch("/api/admin/settings")
       .then((res) => res.json())
       .then((data) => {
-        if (data) setSettings(data);
+        if (data) {
+          setSettings({
+            ...data,
+            cityShippingRates: Array.isArray(data.cityShippingRates) ? data.cityShippingRates : [],
+          });
+        }
       })
       .catch((e) => console.error(e))
       .finally(() => setLoading(false));
@@ -803,6 +811,115 @@ export default function AdminSettingsPage() {
                 className="w-full px-3.5 py-2 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl"
               />
             </div>
+          </div>
+
+          {/* City / State Specific Shipping Charges */}
+          <div className="pt-4 border-t border-[#F4EBE6] space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <h3 className="text-xs font-bold text-[#2C332D] flex items-center gap-1.5 uppercase tracking-wider">
+                  <MapPin className="w-3.5 h-3.5 text-[#B8972E]" />
+                  <span>City & State Specific Shipping Charges</span>
+                </h3>
+                <p className="text-[11px] text-[#736C66] mt-0.5">
+                  Set custom delivery fees for specific cities or states (e.g. Mumbai, Maharashtra, Rajasthan, etc.).
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  const currentRates = Array.isArray(settings.cityShippingRates) ? settings.cityShippingRates : [];
+                  setSettings({
+                    ...settings,
+                    cityShippingRates: [
+                      ...currentRates,
+                      { id: `city_${Date.now()}`, name: "", charge: "40.00" },
+                    ],
+                  });
+                }}
+                className="inline-flex items-center gap-1 px-3 py-1.5 bg-[#FAF8F5] hover:bg-[#F3EEE6] text-[#2C332D] border border-[#E8E0D5] rounded-xl text-xs font-semibold transition-colors"
+              >
+                <Plus className="w-3.5 h-3.5 text-[#B8972E]" />
+                <span>Add City / State</span>
+              </button>
+            </div>
+
+            {Array.isArray(settings.cityShippingRates) && settings.cityShippingRates.length > 0 ? (
+              <div className="border border-[#E8E0D5] rounded-xl overflow-hidden divide-y divide-[#F4EBE6] bg-[#FAF8F5]">
+                <div className="grid grid-cols-12 px-3.5 py-2 text-[10px] font-bold text-[#8C7A72] uppercase tracking-wider bg-[#F4EBE6]/60">
+                  <div className="col-span-6 sm:col-span-7">City or State Name</div>
+                  <div className="col-span-4 sm:col-span-4">Shipping Price (₹)</div>
+                  <div className="col-span-2 sm:col-span-1 text-right">Action</div>
+                </div>
+                {settings.cityShippingRates.map((rate: any, index: number) => (
+                  <div key={rate.id || index} className="grid grid-cols-12 items-center px-3 py-2 gap-2 bg-white hover:bg-[#FAF8F5] transition-colors">
+                    <div className="col-span-6 sm:col-span-7">
+                      <input
+                        type="text"
+                        placeholder="e.g. Mumbai, Maharashtra, Rajasthan..."
+                        value={rate.name || ""}
+                        onChange={(e) => {
+                          const updated = [...settings.cityShippingRates];
+                          updated[index] = { ...updated[index], name: e.target.value };
+                          setSettings({ ...settings, cityShippingRates: updated });
+                        }}
+                        className="w-full px-2.5 py-1.5 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-lg text-[#2C332D] focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
+                      />
+                    </div>
+                    <div className="col-span-4 sm:col-span-4 flex items-center gap-1">
+                      <span className="text-xs text-[#736C66] font-semibold">₹</span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        placeholder="40.00"
+                        value={rate.charge ?? ""}
+                        onChange={(e) => {
+                          const updated = [...settings.cityShippingRates];
+                          updated[index] = { ...updated[index], charge: e.target.value };
+                          setSettings({ ...settings, cityShippingRates: updated });
+                        }}
+                        className="w-full px-2.5 py-1.5 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-lg text-[#2C332D] focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
+                      />
+                    </div>
+                    <div className="col-span-2 sm:col-span-1 text-right">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const updated = settings.cityShippingRates.filter((_: any, i: number) => i !== index);
+                          setSettings({ ...settings, cityShippingRates: updated });
+                        }}
+                        className="p-1.5 text-[#DF4C4C] hover:bg-rose-50 rounded-lg transition-colors"
+                        title="Remove city rate"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="p-4 rounded-xl border border-dashed border-[#E8E0D5] bg-[#FAF8F5] text-center">
+                <p className="text-xs text-[#736C66]">
+                  No custom city rates added yet. The default domestic shipping fee of ₹{settings.defaultShippingCharge || "79.00"} will apply to all cities.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSettings({
+                      ...settings,
+                      cityShippingRates: [
+                        { id: `city_${Date.now()}_1`, name: "Mumbai", charge: "40.00" },
+                        { id: `city_${Date.now()}_2`, name: "Maharashtra", charge: "60.00" },
+                        { id: `city_${Date.now()}_3`, name: "Rajasthan", charge: "80.00" },
+                      ],
+                    });
+                  }}
+                  className="mt-2 text-[11px] font-bold text-[#B8972E] hover:underline"
+                >
+                  + Add Sample Rates (Mumbai ₹40, Maharashtra ₹60, Rajasthan ₹80)
+                </button>
+              </div>
+            )}
           </div>
         </div>
 

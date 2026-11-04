@@ -16,8 +16,10 @@ import {
   CheckCircle2,
   Lock,
   MessageCircle,
+  MapPin,
 } from "lucide-react";
 import { buildCartWhatsAppMessage, getWhatsAppUrl } from "@/lib/whatsapp";
+import { resolveShippingCharge } from "@/lib/shipping";
 
 function CartContent() {
   const router = useRouter();
@@ -38,10 +40,12 @@ function CartContent() {
 
   // Authentication & WhatsApp redirection states
   const [customer, setCustomer] = useState<any>(null);
+  const [siteSettings, setSiteSettings] = useState<any>(null);
   const [adminPhone, setAdminPhone] = useState("+91 9967313355");
-  const [defaultShippingCharge, setDefaultShippingCharge] = useState(79);
-  const [freeShippingThreshold, setFreeShippingThreshold] = useState(999);
   const [redirectingWhatsApp, setRedirectingWhatsApp] = useState(false);
+
+  const configuredCityRates: Array<{ id: string; name: string; charge: number | string }> =
+    Array.isArray(siteSettings?.cityShippingRates) ? siteSettings.cityShippingRates : [];
 
   useEffect(() => {
     // Check if customer is logged in
@@ -52,29 +56,45 @@ function CartContent() {
           setCustomer(data.customer);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
 
     // Fetch site settings
     fetch("/api/settings")
       .then((res) => res.json())
       .then((s) => {
-        if (s?.whatsappNumber || s?.contactPhone) {
-          setAdminPhone(s.whatsappNumber || s.contactPhone);
-        }
-        if (s?.defaultShippingCharge) {
-          setDefaultShippingCharge(Number(s.defaultShippingCharge) || 79);
-        }
-        if (s?.freeShippingThreshold) {
-          setFreeShippingThreshold(Number(s.freeShippingThreshold) || 999);
+        if (s && !s.error) {
+          setSiteSettings(s);
+          if (s?.whatsappNumber || s?.contactPhone) {
+            setAdminPhone(s.whatsappNumber || s.contactPhone);
+          }
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
+  // Automatically determine city and shipping rate from the customer's completed profile
+  const userCity = (customer?.city || customer?.state || "").trim();
+
+  const shippingInfo = resolveShippingCharge({
+    subtotal,
+    cityName: userCity || null,
+    stateName: customer?.state || null,
+    cityRates: configuredCityRates,
+    defaultShippingCharge: siteSettings?.defaultShippingCharge,
+    freeShippingThreshold: siteSettings?.freeShippingThreshold,
+  });
+
+  const freeShippingThreshold = shippingInfo.freeShippingThreshold;
   const remainingForFreeShipping = Math.max(0, freeShippingThreshold - subtotal);
   const discount = appliedCoupon ? Number(appliedCoupon.discountAmount) : 0;
-  const shippingCharge = subtotal >= freeShippingThreshold || subtotal === 0 ? 0 : defaultShippingCharge;
+  const shippingCharge = subtotal === 0 ? 0 : shippingInfo.charge;
   const finalTotal = Math.max(0, subtotal - discount + shippingCharge);
+  const totalItemsSavings = items.reduce((acc, it) => {
+    if (it.originalPrice && it.originalPrice > it.price) {
+      return acc + (it.originalPrice - it.price) * it.quantity;
+    }
+    return acc;
+  }, 0);
 
   const handleApplyCoupon = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -190,7 +210,7 @@ function CartContent() {
             triggerWhatsAppCheckout(data.customer);
           }
         })
-        .catch(() => {});
+        .catch(() => { });
     }
   }, [searchParams, items.length, subtotal, discount, shippingCharge, finalTotal, adminPhone]);
 
@@ -206,7 +226,7 @@ function CartContent() {
         triggerWhatsAppCheckout(data.customer);
         return;
       }
-    } catch {}
+    } catch { }
 
     // 2. Not logged in -> redirect to login with return redirect back to /cart?checkout=whatsapp
     const returnUrl = "/cart?checkout=whatsapp";
@@ -246,27 +266,29 @@ function CartContent() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        
+
         {/* Items List */}
         <div className="lg:col-span-8 space-y-4">
-          {/* Free Shipping Alert */}
-          <div className="bg-[#FAF4EC] border border-[#E8E0D5] p-4 rounded-2xl flex items-center justify-between text-xs text-[#2C332D]">
-            {remainingForFreeShipping > 0 ? (
-              <span>
-                Add <strong className="text-[#B8972E]">₹{remainingForFreeShipping.toFixed(2)}</strong> more to get <strong>Complimentary Insured Shipping</strong>
-              </span>
-            ) : (
-              <span className="flex items-center text-[#2E7D32] font-semibold">
-                <Sparkles className="w-4 h-4 mr-1 text-[#D4AF37]" />
-                You have unlocked Complimentary Insured Shipping!
-              </span>
-            )}
-          </div>
+          {/* Free Shipping Alert (only if threshold is set > 0) */}
+          {freeShippingThreshold > 0 && (
+            <div className="bg-[#FAF4EC] border border-[#E8E0D5] p-4 rounded-2xl flex items-center justify-between text-xs text-[#2C332D]">
+              {remainingForFreeShipping > 0 ? (
+                <span>
+                  Add <strong className="text-[#B8972E]">₹{remainingForFreeShipping.toFixed(2)}</strong> more to get <strong>Complimentary Insured Shipping</strong>
+                </span>
+              ) : (
+                <span className="flex items-center text-[#2E7D32] font-semibold">
+                  <Sparkles className="w-4 h-4 mr-1 text-[#D4AF37]" />
+                  You have unlocked Complimentary Insured Shipping!
+                </span>
+              )}
+            </div>
+          )}
 
           <div className="bg-white rounded-2xl border border-[#E8E0D5] divide-y divide-[#F4EBE6] shadow-sm overflow-hidden">
             {items.map((item) => (
               <div key={item.id} className="p-5 flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-5 items-start sm:items-center justify-between">
-                
+
                 <div className="flex space-x-4 items-center">
                   <div className="w-20 h-20 rounded-xl overflow-hidden bg-[#FAF8F5] border border-[#E8E0D5] flex-shrink-0">
                     <img
@@ -441,6 +463,12 @@ function CartContent() {
                 <span>Subtotal</span>
                 <span className="font-semibold text-[#2C332D]">₹{subtotal.toFixed(2)}</span>
               </div>
+              {totalItemsSavings > 0 && (
+                <div className="flex justify-between text-[#2E7D32] font-semibold">
+                  <span>Product Savings</span>
+                  <span>-₹{totalItemsSavings.toFixed(2)}</span>
+                </div>
+              )}
               {appliedCoupon && appliedCoupon.code.toUpperCase().includes("FESTIVE") ? (
                 <div className="flex justify-between text-[#800020] font-semibold bg-[#FFF0F4] px-2.5 py-1.5 rounded-lg border border-[#D4AF37]/30">
                   <span className="flex items-center space-x-1">
@@ -457,10 +485,61 @@ function CartContent() {
                   <span>-₹{appliedCoupon.discountAmount.toFixed(2)}</span>
                 </div>
               ) : null}
+              {/* Saved Delivery Address Card (Auto-detected from profile) */}
+              <div className="py-2.5 px-3 rounded-xl bg-[#FAF8F5] border border-[#E8E0D5] space-y-1.5">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-semibold text-[#2C332D] flex items-center gap-1.5">
+                    <MapPin className="w-3.5 h-3.5 text-[#B8972E] flex-shrink-0" />
+                    <span>
+                      {customer?.addressLine1 && customer?.city ? (
+                        <>Deliver to: {customer.name || "Customer"}</>
+                      ) : customer ? (
+                        <>Delivery Address</>
+                      ) : (
+                        <>Delivering across India</>
+                      )}
+                    </span>
+                  </span>
+                  {customer?.addressLine1 && customer?.city ? (
+                    <Link href="/account/profile" className="text-[11px] text-[#B84A67] font-semibold hover:underline">
+                      Edit
+                    </Link>
+                  ) : customer ? (
+                    <Link href="/account/profile" className="text-[11px] text-[#B84A67] font-semibold hover:underline">
+                      + Add Address
+                    </Link>
+                  ) : (
+                    <Link href="/account/login?redirect=/cart" className="text-[11px] text-[#B84A67] font-semibold hover:underline">
+                      Sign In
+                    </Link>
+                  )}
+                </div>
+                {customer?.addressLine1 && customer?.city ? (
+                  <>
+                    <p className="text-[11px] text-[#736C66] leading-snug">
+                      {[customer.addressLine1, customer.addressLine2, customer.city, customer.state, customer.postalCode].filter(Boolean).join(", ")}
+                    </p>
+                    {shippingInfo.matchedCityName && (
+                      <div className="text-[10px] text-[#B84A67] font-semibold bg-[#FAF0F3] px-2 py-0.5 rounded border border-[#EFE3E7] inline-block">
+                        📍 {shippingInfo.matchedCityName} City Rate ({shippingInfo.isFree ? "FREE" : `₹${shippingInfo.charge.toFixed(2)}`}) Applied Automatically
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <p className="text-[11px] text-[#A69E96]">
+                    {customer
+                      ? "Add your address in your profile to auto-apply your city delivery charges."
+                      : "Sign in to apply your saved delivery address and city shipping price."}
+                  </p>
+                )}
+              </div>
+
               <div className="flex justify-between">
-                <span>Shipping</span>
+                <span>
+                  Insured Delivery {shippingInfo.matchedCityName ? `(${shippingInfo.matchedCityName})` : ""}
+                </span>
                 <span className="font-semibold text-[#2C332D]">
-                  {shippingCharge === 0 ? (
+                  {shippingInfo.isFree ? (
                     <span className="text-[#2E7D32]">FREE (Complimentary)</span>
                   ) : (
                     `₹${shippingCharge.toFixed(2)}`

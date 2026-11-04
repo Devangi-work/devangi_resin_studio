@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/lib/store/cart";
 import {
@@ -20,16 +21,19 @@ import {
   Layers,
   Star,
   MessageCircle,
+  MapPin,
 } from "lucide-react";
 import { ProductReviewsSection } from "@/components/product/ProductReviewsSection";
 import { buildSingleProductWhatsAppMessage, getWhatsAppUrl } from "@/lib/whatsapp";
+import { resolveShippingCharge } from "@/lib/shipping";
 
 export interface ProductDetailProps {
   product: any;
   relatedProducts: any[];
+  settings?: any;
 }
 
-export function ProductDetailView({ product, relatedProducts }: ProductDetailProps) {
+export function ProductDetailView({ product, relatedProducts, settings: initialSettings }: ProductDetailProps) {
   const router = useRouter();
   const { addItem, setIsCartOpen } = useCart();
 
@@ -162,15 +166,12 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailPro
   const festDiscount = rawFestPct > 0 ? String(rawFestPct) : null;
 
   let discountedBase = baseRegular;
-  let hasDiscount = false;
 
   if (isFestive && rawFestPct > 0) {
     const festDiscountAmount = (baseRegular * rawFestPct) / 100;
     discountedBase = Math.max(0, Number((baseRegular - festDiscountAmount).toFixed(2)));
-    hasDiscount = discountedBase < baseRegular;
   } else if (baseSale && baseSale < baseRegular) {
     discountedBase = baseSale;
-    hasDiscount = true;
   }
 
   const hasSelectedVariants = selectedVariants.length > 0;
@@ -191,15 +192,23 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailPro
       ? Number(product.personalizationSurcharge || 0)
       : 0;
 
-  // When variant(s) are selected: display ONLY the sum of selected variant(s) prices.
-  // If no variant is selected: display product regular/discounted base price.
+  // When variant(s) are selected:
+  // - Selling price (currentUnitPrice) takes the variant price (+ personalization surcharge).
+  // - Actual price (regularUnitPrice) takes the actual/regular price from pricing (+ personalization surcharge).
   const currentUnitPrice = hasSelectedVariants
     ? variantsSum + persSurcharge
     : discountedBase + persSurcharge;
 
   const regularUnitPrice = hasSelectedVariants
-    ? variantsSum + persSurcharge
+    ? (baseSale && baseSale > 0 && baseRegular > baseSale
+        ? Math.max(baseRegular, variantsSum + (baseRegular - baseSale))
+        : isFestive && rawFestPct > 0
+        ? Math.max(baseRegular, Math.round(variantsSum / (1 - rawFestPct / 100)))
+        : Math.max(baseRegular, variantsSum)) + persSurcharge
     : baseRegular + persSurcharge;
+
+  const hasDiscount = regularUnitPrice > currentUnitPrice;
+  const savedAmount = hasDiscount ? regularUnitPrice - currentUnitPrice : 0;
 
   const giftWrapCharge = product.giftWrappingAvailable ? Number(product.giftWrappingCharge || 49) : 0;
 
@@ -295,11 +304,15 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailPro
 
   // Customer auth & Admin WhatsApp state
   const [customer, setCustomer] = useState<any>(null);
+  const [siteSettings, setSiteSettings] = useState<any>(initialSettings || null);
   const [adminPhone, setAdminPhone] = useState("+91 9967313355");
   const [redirectingWhatsApp, setRedirectingWhatsApp] = useState(false);
 
+  const configuredCityRates: Array<{ id: string; name: string; charge: number | string }> =
+    Array.isArray(siteSettings?.cityShippingRates) ? siteSettings.cityShippingRates : [];
+
   useEffect(() => {
-    // Check customer session
+    // 1. Check customer session & profile shipping details
     fetch("/api/customer/me")
       .then((res) => res.json())
       .then((data) => {
@@ -309,16 +322,42 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailPro
       })
       .catch(() => {});
 
-    // Fetch site settings for WhatsApp phone number
+    // 2. Fetch site settings
     fetch("/api/settings")
       .then((res) => res.json())
       .then((s) => {
-        if (s?.whatsappNumber || s?.contactPhone) {
-          setAdminPhone(s.whatsappNumber || s.contactPhone);
+        if (s && !s.error) {
+          setSiteSettings(s);
+          if (s?.whatsappNumber || s?.contactPhone) {
+            setAdminPhone(s.whatsappNumber || s.contactPhone);
+          }
         }
       })
       .catch(() => {});
   }, []);
+
+  // Automatically determine city and shipping rate from the customer's completed profile
+  const userCity = (customer?.city || customer?.state || "").trim();
+
+  const shippingInfo = resolveShippingCharge({
+    subtotal: currentUnitPrice,
+    cityName: userCity || null,
+    stateName: customer?.state || null,
+    cityRates: configuredCityRates,
+    defaultShippingCharge: siteSettings?.defaultShippingCharge,
+    freeShippingThreshold: siteSettings?.freeShippingThreshold,
+    isProductFreeShipping: Boolean(product.isFreeShipping),
+  });
+
+  const isFreeShipping = shippingInfo.isFree;
+  const currentShippingFee = shippingInfo.charge;
+  const freeThreshold = shippingInfo.freeShippingThreshold;
+  const defaultShipFee = shippingInfo.defaultShippingCharge;
+  const matchedRate = shippingInfo.matchedCityName
+    ? configuredCityRates.find(
+        (r) => r.name.toLowerCase() === shippingInfo.matchedCityName?.toLowerCase()
+      ) || { name: shippingInfo.matchedCityName }
+    : null;
 
   const triggerWhatsAppRedirect = async (cust: any, customSelections?: any) => {
     const qty = customSelections?.quantity || quantity;
@@ -516,7 +555,7 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailPro
               </span>
             ) : hasDiscount ? (
               <span className="absolute top-4 left-4 text-xs font-bold uppercase tracking-wider bg-[#DF4C4C] text-white px-3 py-1 rounded-full shadow-sm">
-                Save ₹{(regularUnitPrice - currentUnitPrice).toFixed(0)}
+                Save ₹{savedAmount.toFixed(0)}
               </span>
             ) : null}
           </div>
@@ -584,16 +623,21 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailPro
 
           {/* Price & Stock Status */}
           <div className="flex items-baseline justify-between border-b border-[#E8E0D5] pb-4">
-            <div className="flex items-baseline space-x-3">
+            <div className="flex flex-wrap items-baseline gap-2.5">
               <span className="font-serif text-3xl font-bold text-[#2C332D]">
                 ₹{currentUnitPrice.toFixed(2)}
               </span>
-              {!hasSelectedVariants && hasDiscount && (
-                <span className="text-base text-[#A69E96] line-through">
-                  ₹{regularUnitPrice.toFixed(2)}
-                </span>
+              {hasDiscount && (
+                <>
+                  <span className="text-base text-[#A69E96] line-through font-medium">
+                    ₹{regularUnitPrice.toFixed(2)}
+                  </span>
+                  <span className="text-xs font-bold text-[#2E7D32] bg-[#E8EFE8] px-2.5 py-0.5 rounded-full">
+                    Save ₹{savedAmount.toFixed(0)} ({Math.round((savedAmount / regularUnitPrice) * 100)}% off)
+                  </span>
+                </>
               )}
-              {!hasSelectedVariants && isFestive && (
+              {isFestive && (
                 <span className="text-xs font-black uppercase tracking-wider bg-[#FFF0F4] text-[#800020] border border-[#D4AF37]/50 px-2.5 py-0.5 rounded-full shadow-xs flex items-center space-x-1 font-mono">
                   <Sparkles className="w-3 h-3 text-[#D4AF37]" />
                   <span>{rawFestPct > 0 ? `${rawFestPct}% FESTIVE DEAL` : "Festive Special"}</span>
@@ -921,6 +965,86 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailPro
             )}
           </div>
 
+          {/* ---------------- 2.6 CITY-BASED SHIPPING & DELIVERY ESTIMATOR ---------------- */}
+          <div className="p-4 rounded-2xl bg-gradient-to-r from-[#FAF8F5] to-[#FCFAF8] border border-[#E8E0D5] space-y-3 shadow-xs">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <span className="w-7 h-7 rounded-lg bg-[#FAF0F3] text-[#B84A67] flex items-center justify-center">
+                  <Truck className="w-4 h-4" />
+                </span>
+                <div>
+                  <h4 className="text-xs font-bold text-[#2C332D]">
+                    Shipping &amp; Delivery to Your City
+                  </h4>
+                  <p className="text-[10px] text-[#736C66]">
+                    {matchedRate
+                      ? `Special city rate applied for ${matchedRate.name}`
+                      : "Direct insured transit with door delivery"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="text-right">
+                {isFreeShipping ? (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-black bg-[#E8EFE8] text-[#2E7D32]">
+                    FREE DELIVERY
+                  </span>
+                ) : (
+                  <span className="text-xs font-black text-[#8C1D38]">
+                    Shipping: ₹{currentShippingFee.toFixed(2)}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* User Profile Shipping Info (Auto-detected from profile) */}
+            <div className="pt-2 border-t border-[#E8E0D5]/60 flex items-center justify-between text-xs">
+              <span className="flex items-center space-x-1.5 text-[#736C66]">
+                <MapPin className="w-3.5 h-3.5 text-[#B8972E] flex-shrink-0" />
+                <span>
+                  {customer?.city ? (
+                    <>
+                      Deliver to: <strong className="text-[#2C332D]">{customer.city}</strong>
+                    </>
+                  ) : customer ? (
+                    <span>No delivery address saved in profile</span>
+                  ) : (
+                    <span>Delivering across India</span>
+                  )}
+                </span>
+              </span>
+              {customer?.city && shippingInfo.matchedCityName ? (
+                <span className="text-[10px] bg-[#FAF0F3] text-[#B84A67] px-2 py-0.5 rounded font-semibold border border-[#EFE3E7]">
+                  {shippingInfo.matchedCityName} Rate (₹{currentShippingFee.toFixed(0)})
+                </span>
+              ) : !customer ? (
+                <Link
+                  href="/account/login?redirect=/shop"
+                  className="text-[10px] text-[#B8972E] hover:underline font-semibold"
+                >
+                  Sign In
+                </Link>
+              ) : !customer.city ? (
+                <Link
+                  href="/account/profile"
+                  className="text-[10px] text-[#B8972E] hover:underline font-semibold"
+                >
+                  + Add Address
+                </Link>
+              ) : null}
+            </div>
+
+            {/* Threshold & Guarantee Strip */}
+            <div className="text-[10px] text-[#736C66] flex items-center justify-between pt-1">
+              {freeThreshold > 0 ? (
+                <span>Free delivery on orders above ₹{freeThreshold}</span>
+              ) : (
+                <span>Direct insured doorstep transit</span>
+              )}
+              <span className="text-[#2E7D32] font-semibold">Dispatched in 2-4 business days</span>
+            </div>
+          </div>
+
           {/* ---------------- ACCORDION SPECS ---------------- */}
           <div className="space-y-3 pt-6 border-t border-[#E8E0D5] text-xs">
             <div className="bg-white p-4 rounded-xl border border-[#E8E0D5] space-y-2">
@@ -939,15 +1063,33 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailPro
             </div>
 
             <div className="bg-white p-4 rounded-xl border border-[#E8E0D5] space-y-2">
-              <h4 className="font-bold text-[#2C332D] flex items-center space-x-1.5">
-                <Truck className="w-4 h-4 text-[#B8972E]" />
-                <span>Shipping & Delivery Policy</span>
+              <h4 className="font-bold text-[#2C332D] flex items-center justify-between">
+                <span className="flex items-center space-x-1.5">
+                  <Truck className="w-4 h-4 text-[#B8972E]" />
+                  <span>Shipping & Delivery Policy</span>
+                </span>
+                <span className="text-[11px] font-black text-[#8C1D38]">
+                  {isFreeShipping
+                    ? "FREE Delivery"
+                    : `₹${currentShippingFee.toFixed(2)}${userCity ? ` to ${userCity}` : ""}`}
+                </span>
               </h4>
               <p className="text-[#736C66] leading-relaxed">
                 {product.isFreeShipping
                   ? "Eligible for Complimentary Insured Express Shipping across India."
-                  : "Standard insured transit across India takes 4-7 business days."}
+                  : `Shipping charge for ${userCity ? userCity : "your location"} is ₹${currentShippingFee.toFixed(2)}.${freeThreshold > 0 ? ` Complimentary free delivery applies automatically on all orders over ₹${freeThreshold}.` : ""}`}
               </p>
+              {configuredCityRates.length > 0 && (
+                <div className="pt-1 text-[11px] text-[#736C66]">
+                  <strong>Configured City Rates: </strong>
+                  {configuredCityRates.map((r, i) => (
+                    <span key={r.id || r.name}>
+                      {r.name} (₹{Number(r.charge).toFixed(0)}){i < configuredCityRates.length - 1 ? ", " : ""}
+                    </span>
+                  ))}
+                  <span> (Rest of India: ₹{defaultShipFee.toFixed(0)})</span>
+                </div>
+              )}
             </div>
 
             {product.careInstructions && (

@@ -3,6 +3,7 @@ import { dbStore } from "@/lib/db";
 import { checkoutSchema } from "@/lib/validations";
 import { getCustomerSession } from "@/lib/auth/customer";
 import { sendBrevoEmail } from "@/lib/email/brevo";
+import { resolveShippingCharge } from "@/lib/shipping";
 
 export async function POST(request: Request) {
   try {
@@ -136,10 +137,15 @@ export async function POST(request: Request) {
       });
     }
 
-    const freeShippingThreshold = Number(settings.freeShippingThreshold || 999);
-    const defaultShippingCharge = Number(settings.defaultShippingCharge || 79);
-
-    const shippingCharge = subtotal >= freeShippingThreshold ? 0 : defaultShippingCharge;
+    const shippingInfo = resolveShippingCharge({
+      subtotal,
+      cityName: shippingCity,
+      stateName: shippingState,
+      cityRates: settings.cityShippingRates,
+      defaultShippingCharge: settings.defaultShippingCharge,
+      freeShippingThreshold: settings.freeShippingThreshold,
+    });
+    const shippingCharge = subtotal === 0 ? 0 : shippingInfo.charge;
 
     // 3. Coupon validation
     let discountAmount = 0;

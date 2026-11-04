@@ -4,6 +4,7 @@ import { dbStore } from "../lib/db/index";
 import { hashPassword, verifyPassword, signAdminSession, verifyAdminSession } from "../lib/auth/index";
 import { ALLOWED_IMAGE_TYPES, MAX_FILE_SIZE_BYTES } from "../lib/blob/index";
 import { formatReceiptFileName } from "../lib/receipt/index";
+import { resolveShippingCharge } from "../lib/shipping";
 
 test("E-Commerce Test Suite", async (t) => {
   // 1. Admin Authentication & Hashing
@@ -135,6 +136,31 @@ test("E-Commerce Test Suite", async (t) => {
       { productId: "non_existent_or_other_prod", price: 200, quantity: 1 },
     ]);
     assert.equal(catCouponInvalid.valid, false);
+
+    // Test multi-product coupon
+    const secondProd = sampleProducts.products[1] || { id: "prod_second" };
+    await dbStore.createCoupon({
+      code: "MULTIPROD30",
+      discountType: "percentage",
+      discountValue: "30.00",
+      minCartAmount: "0.00",
+      applicableProductIds: [testProdId, secondProd.id],
+    });
+
+    // Valid when either matching product is in cart
+    const multiCouponValid = await dbStore.validateCoupon("MULTIPROD30", 600, undefined, [
+      { productId: testProdId, price: 300, quantity: 1 },
+      { productId: "other_unrelated_prod", price: 300, quantity: 1 },
+    ]);
+    assert.equal(multiCouponValid.valid, true);
+    // 30% of eligible 300 = 90
+    assert.equal(multiCouponValid.discountAmount, 90);
+
+    // Invalid when neither matching product is in cart
+    const multiCouponInvalid = await dbStore.validateCoupon("MULTIPROD30", 600, undefined, [
+      { productId: "other_unrelated_prod", price: 600, quantity: 1 },
+    ]);
+    assert.equal(multiCouponInvalid.valid, false);
   });
 
   // 5. Order Creation & Idempotent Stock Deduction
@@ -311,6 +337,151 @@ test("E-Commerce Test Suite", async (t) => {
     const afterP2 = await dbStore.getProductById(p2.id);
     assert.equal(afterP1, null);
     assert.equal(afterP2, null);
+  });
+
+  // Admin City-based Shipping Rates Configuration Test
+  await t.test("Admin can configure and persist City-specific Shipping Charges", async () => {
+    const customRates = [
+      { id: "city_mum", name: "Mumbai", charge: "40.00" },
+      { id: "city_mah", name: "Maharashtra", charge: "60.00" },
+      { id: "city_raj", name: "Rajasthan", charge: "80.00" },
+    ];
+
+    await dbStore.updateSiteSettings({
+      defaultShippingCharge: "79.00",
+      freeShippingThreshold: "999.00",
+      cityShippingRates: customRates,
+    });
+
+    const settings = await dbStore.getSiteSettings();
+    assert.ok(Array.isArray(settings.cityShippingRates));
+    assert.equal(settings.cityShippingRates.length, 3);
+    assert.equal(settings.cityShippingRates[0].name, "Mumbai");
+    assert.equal(settings.cityShippingRates[0].charge, "40.00");
+    assert.equal(settings.cityShippingRates[2].name, "Rajasthan");
+    assert.equal(settings.cityShippingRates[2].charge, "80.00");
+  });
+
+  // Multi-product coupon assignment and calculation test
+  await t.test("Multi-product coupon applies discount only to assigned products", async () => {
+    const multiCoupon = await dbStore.createCoupon({
+      code: "MULTIART20",
+      discountType: "percentage",
+      discountValue: 20,
+      applicableProductIds: ["prod_test_x", "prod_test_y"],
+      isActive: true,
+    });
+
+    assert.ok(multiCoupon.id);
+    assert.deepEqual(multiCoupon.applicableProductIds, ["prod_test_x", "prod_test_y"]);
+
+    // Test with cart containing eligible (prod_test_x for 500) and ineligible (prod_test_z for 500)
+    const cartItems = [
+      { productId: "prod_test_x", price: 500, quantity: 1 },
+      { productId: "prod_test_z", price: 500, quantity: 1 },
+    ];
+
+    const validation = await dbStore.validateCoupon("MULTIART20", 1000, undefined, cartItems);
+    assert.equal(validation.valid, true);
+    // 20% on 500 = 100 (ineligible item excluded)
+    assert.equal(validation.discountAmount, 100);
+
+    // Test with cart having NO eligible products
+    const ineligibleCart = [
+      { productId: "prod_test_z", price: 500, quantity: 1 },
+    ];
+    const ineligibleValidation = await dbStore.validateCoupon("MULTIART20", 500, undefined, ineligibleCart);
+    assert.equal(ineligibleValidation.valid, false);
+    assert.ok(ineligibleValidation.message?.includes("selected products"));
+  });
+
+  // resolveShippingCharge test for Mumbai 50, Maharashtra 35, Rajasthan 79, and 0.00 default
+  await t.test("resolveShippingCharge correctly resolves Mumbai, Maharashtra, Rajasthan and handles 0.00 default charge", async () => {
+    const cityRates = [
+      { name: "Mumbai", charge: "50" },
+      { name: "Maharashtra", charge: "35" },
+      { name: "Rajasthan", charge: "79" },
+    ];
+
+    // 1. Mumbai match
+    const mum = resolveShippingCharge({
+      subtotal: 300,
+      cityName: "Mumbai",
+      cityRates,
+      defaultShippingCharge: "0.00",
+      freeShippingThreshold: 999,
+    });
+    assert.equal(mum.charge, 50);
+    assert.equal(mum.matchedCityName, "Mumbai");
+
+    // 2. Maharashtra match
+    const mah = resolveShippingCharge({
+      subtotal: 300,
+      cityName: "Pune",
+      stateName: "Maharashtra",
+      cityRates,
+      defaultShippingCharge: "0.00",
+      freeShippingThreshold: 999,
+    });
+    assert.equal(mah.charge, 35);
+    assert.equal(mah.matchedCityName, "Maharashtra");
+
+    // 3. Rajasthan match
+    const raj = resolveShippingCharge({
+      subtotal: 300,
+      cityName: "Jaipur",
+      stateName: "Rajasthan",
+      cityRates,
+      defaultShippingCharge: "0.00",
+      freeShippingThreshold: 999,
+    });
+    assert.equal(raj.charge, 79);
+    assert.equal(raj.matchedCityName, "Rajasthan");
+
+    // 4. No city specified in profile -> returns defaultShippingCharge (0.00, not assuming another city)
+    const emptyCity = resolveShippingCharge({
+      subtotal: 300,
+      cityName: "",
+      cityRates,
+      defaultShippingCharge: "0.00",
+      freeShippingThreshold: 999,
+    });
+    assert.equal(emptyCity.charge, 0);
+    assert.equal(emptyCity.matchedCityName, null);
+
+    // 5. Unmatched city with defaultShippingCharge 0.00 -> returns 0 (NOT 79!)
+    const unMatched = resolveShippingCharge({
+      subtotal: 300,
+      cityName: "Chennai",
+      stateName: "Tamil Nadu",
+      cityRates,
+      defaultShippingCharge: "0.00",
+      freeShippingThreshold: 999,
+    });
+    assert.equal(unMatched.charge, 0);
+
+    // 6. Free shipping threshold met (subtotal >= 999) -> returns 0
+    const free = resolveShippingCharge({
+      subtotal: 1200,
+      cityName: "Mumbai",
+      cityRates,
+      defaultShippingCharge: "0.00",
+      freeShippingThreshold: 999,
+    });
+    assert.equal(free.charge, 0);
+    assert.equal(free.isFree, true);
+
+    // 7. When freeShippingThreshold is "0.00" and user is from Mumbai, MUST NOT mark as free, MUST charge ₹50!
+    const zeroThresholdMum = resolveShippingCharge({
+      subtotal: 500,
+      cityName: "Mumbai",
+      cityRates,
+      defaultShippingCharge: "0.00",
+      freeShippingThreshold: "0.00",
+    });
+    assert.equal(zeroThresholdMum.charge, 50);
+    assert.equal(zeroThresholdMum.isFree, false);
+    assert.equal(zeroThresholdMum.matchedCityName, "Mumbai");
   });
 
   // 11. Order Shipping Update & Total Recalculation (Edit Order)

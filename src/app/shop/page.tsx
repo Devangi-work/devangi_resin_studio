@@ -55,7 +55,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-      
+
       {/* Page Header */}
       <div className="border-b border-[#EFE3E7] pb-6 mb-8">
         <div className="flex flex-col md:flex-row md:items-end justify-between space-y-4 md:space-y-0">
@@ -99,8 +99,8 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
               {isFestivalOnly
                 ? "Discover our limited-edition celebratory keepsakes, floral frames, and geode clocks featuring exclusive festive discounts."
                 : activeCategory
-                ? activeCategory.description
-                : "Explore our complete range of handmade crystal geode coasters, floral jewellery, bespoke keychains, and personalized keepsake gifts."}
+                  ? activeCategory.description
+                  : "Explore our complete range of handmade crystal geode coasters, floral jewellery, bespoke keychains, and personalized keepsake gifts."}
             </p>
           </div>
 
@@ -113,11 +113,10 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
         <div className="flex flex-wrap items-center gap-2 pt-6">
           <Link
             href="/shop"
-            className={`text-xs px-4 py-2 rounded-full font-semibold transition-all ${
-              !categorySlug && !isFestivalOnly
+            className={`text-xs px-4 py-2 rounded-full font-semibold transition-all ${!categorySlug && !isFestivalOnly
                 ? "bg-[#3A1823] text-white shadow-sm"
                 : "bg-white border border-[#EFE3E7] text-[#3A1823] hover:bg-[#FAF0F3]"
-            }`}
+              }`}
           >
             All Collections
           </Link>
@@ -126,11 +125,10 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
           {isFestivalActive && (
             <Link
               href="/shop?festival=true"
-              className={`text-xs px-4 py-2 rounded-full font-bold transition-all flex items-center space-x-1.5 shadow-xs ${
-                isFestivalOnly
+              className={`text-xs px-4 py-2 rounded-full font-bold transition-all flex items-center space-x-1.5 shadow-xs ${isFestivalOnly
                   ? "bg-gradient-to-r from-[#6A162B] via-[#851E39] to-[#6A162B] text-[#FFDF78] ring-2 ring-[#D4AF37] shadow-md scale-105"
                   : "bg-gradient-to-r from-[#FAF0F3] to-[#FFF5F8] border-2 border-[#D4AF37]/70 text-[#6A162B] hover:border-[#D4AF37] hover:scale-102"
-              }`}
+                }`}
             >
               <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />
               <span>✨ Festive Specials</span>
@@ -144,11 +142,10 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
             <Link
               key={c.id}
               href={`/shop?category=${c.slug}`}
-              className={`text-xs px-3.5 py-2 rounded-full font-medium transition-all ${
-                categorySlug === c.slug && !isFestivalOnly
+              className={`text-xs px-3.5 py-2 rounded-full font-medium transition-all ${categorySlug === c.slug && !isFestivalOnly
                   ? "bg-[#3A1823] text-white shadow-sm"
                   : "bg-white border border-[#EFE3E7] text-[#3A1823] hover:bg-[#FAF0F3]"
-              }`}
+                }`}
             >
               {c.name}
             </Link>
@@ -157,7 +154,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        
+
         {/* ---------------- Filters Sidebar ---------------- */}
         <React.Suspense fallback={<div className="h-64 bg-[#FCFAF8] rounded-2xl animate-pulse" />}>
           <ShopFilters

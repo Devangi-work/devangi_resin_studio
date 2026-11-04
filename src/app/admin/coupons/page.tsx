@@ -22,8 +22,10 @@ export default function AdminCouponsPage() {
     isActive: true,
     applicableCategoryId: "",
     applicableProductId: "",
+    applicableProductIds: [] as string[],
   });
 
+  const [productSearch, setProductSearch] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -58,6 +60,7 @@ export default function AdminCouponsPage() {
 
   const openNew = () => {
     setEditingId(null);
+    setProductSearch("");
     setFormData({
       code: "",
       discountType: "percentage",
@@ -68,12 +71,18 @@ export default function AdminCouponsPage() {
       isActive: true,
       applicableCategoryId: "",
       applicableProductId: "",
+      applicableProductIds: [],
     });
     setIsOpen(true);
   };
 
   const openEdit = (c: any) => {
     setEditingId(c.id);
+    setProductSearch("");
+    const productIds: string[] = Array.isArray(c.applicableProductIds) && c.applicableProductIds.length > 0
+      ? c.applicableProductIds
+      : (c.applicableProductId ? [c.applicableProductId] : []);
+
     setFormData({
       code: c.code,
       discountType: c.discountType,
@@ -83,7 +92,8 @@ export default function AdminCouponsPage() {
       maxRedemptions: c.maxRedemptions || 100,
       isActive: c.isActive,
       applicableCategoryId: c.applicableCategoryId || "",
-      applicableProductId: c.applicableProductId || "",
+      applicableProductId: productIds[0] || "",
+      applicableProductIds: productIds,
     });
     setIsOpen(true);
   };
@@ -97,10 +107,16 @@ export default function AdminCouponsPage() {
       const endpoint = editingId ? `/api/admin/coupons/${editingId}` : "/api/admin/coupons";
       const method = editingId ? "PUT" : "POST";
 
+      const payload = {
+        ...formData,
+        applicableProductId: formData.applicableProductIds.length === 1 ? formData.applicableProductIds[0] : null,
+        applicableProductIds: formData.applicableProductIds,
+      };
+
       const res = await fetch(endpoint, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
@@ -293,10 +309,28 @@ export default function AdminCouponsPage() {
                         : `₹${Number(c.discountValue)} OFF`}
                     </td>
                     <td className="py-3 px-4">
-                      {c.applicableProductId ? (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#FFF4E5] text-[#B86200] border border-[#FFE2BA] max-w-[170px] truncate" title={products.find((p) => p.id === c.applicableProductId)?.name || "Specific Product"}>
-                          Product: {products.find((p) => p.id === c.applicableProductId)?.name || "Specific Product"}
+                      {Array.isArray(c.applicableProductIds) && c.applicableProductIds.length > 1 ? (
+                        <span
+                          className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#FFF4E5] text-[#B86200] border border-[#FFE2BA] cursor-help"
+                          title={c.applicableProductIds
+                            .map((pid: string) => products.find((p) => p.id === pid)?.name || pid)
+                            .join("\n")}
+                        >
+                          {c.applicableProductIds.length} Specific Products
                         </span>
+                      ) : (c.applicableProductIds?.length === 1 || c.applicableProductId) ? (
+                        (() => {
+                          const targetId = c.applicableProductIds?.[0] || c.applicableProductId;
+                          const targetName = products.find((p) => p.id === targetId)?.name || "Specific Product";
+                          return (
+                            <span
+                              className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#FFF4E5] text-[#B86200] border border-[#FFE2BA] max-w-[170px] truncate"
+                              title={targetName}
+                            >
+                              Product: {targetName}
+                            </span>
+                          );
+                        })()
                       ) : c.applicableCategoryId ? (
                         <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#EBF3FF] text-[#0052CC] border border-[#CDE1FF]">
                           Category: {categories.find((cat) => cat.id === c.applicableCategoryId)?.name || "Specific Category"}
@@ -317,8 +351,8 @@ export default function AdminCouponsPage() {
                     <td className="py-3 px-4">
                       <span
                         className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${c.isActive
-                            ? "bg-[#E8EFE8] text-[#2E7D32]"
-                            : "bg-[#F4EBE6] text-[#736C66]"
+                          ? "bg-[#E8EFE8] text-[#2E7D32]"
+                          : "bg-[#F4EBE6] text-[#736C66]"
                           }`}
                       >
                         {c.isActive ? "Active" : "Inactive"}
@@ -476,25 +510,127 @@ export default function AdminCouponsPage() {
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-[#2C332D] block mb-1">
-                    Specific Product (Optional)
-                  </label>
-                  <select
-                    value={formData.applicableProductId}
-                    onChange={(e) =>
-                      setFormData({ ...formData, applicableProductId: e.target.value })
-                    }
-                    className="w-full px-3 py-2 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl text-[#2C332D] focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
-                  >
-                    <option value="">All Products (Active for all)</option>
-                    {products.map((prod: any) => (
-                      <option key={prod.id} value={prod.id}>
-                        {prod.name} {prod.sku ? `(${prod.sku})` : ""}
-                      </option>
-                    ))}
-                  </select>
-                  <p className="text-[10px] text-[#8C7A72] mt-0.5">
-                    Leave unselected to make this coupon valid across all products.
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs font-semibold text-[#2C332D]">
+                      Specific Products (Optional - Select Multiple)
+                    </label>
+                    <span className="text-[10px] text-[#8C7A72]">
+                      {formData.applicableProductIds.length > 0
+                        ? `${formData.applicableProductIds.length} selected`
+                        : "Active for all"}
+                    </span>
+                  </div>
+
+                  {/* Filter Search & Quick Actions */}
+                  <div className="flex items-center gap-2 mb-2">
+                    <input
+                      type="text"
+                      placeholder="Search products by name or SKU..."
+                      value={productSearch}
+                      onChange={(e) => setProductSearch(e.target.value)}
+                      className="flex-1 px-3 py-1.5 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-lg text-[#2C332D] focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
+                    />
+                    {formData.applicableProductIds.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setFormData({
+                            ...formData,
+                            applicableProductIds: [],
+                            applicableProductId: "",
+                          })
+                        }
+                        className="px-2 py-1.5 text-[10px] font-semibold text-[#DF4C4C] hover:bg-rose-50 rounded-lg border border-[#F4D0D8]"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Selected Product Chips */}
+                  {formData.applicableProductIds.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mb-2 max-h-20 overflow-y-auto p-1.5 bg-[#FAF8F5] rounded-lg border border-[#E8E0D5]">
+                      {formData.applicableProductIds.map((pid) => {
+                        const prod = products.find((p) => p.id === pid);
+                        return (
+                          <span
+                            key={pid}
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#FFF4E5] text-[#B86200] border border-[#FFE2BA]"
+                          >
+                            <span className="max-w-[120px] truncate">{prod?.name || pid}</span>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setFormData({
+                                  ...formData,
+                                  applicableProductIds: formData.applicableProductIds.filter(
+                                    (id) => id !== pid
+                                  ),
+                                  applicableProductId:
+                                    formData.applicableProductIds.filter((id) => id !== pid)[0] ||
+                                    "",
+                                })
+                              }
+                              className="text-[#B86200] hover:text-red-700 ml-0.5 font-bold"
+                            >
+                              ×
+                            </button>
+                          </span>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Scrollable Products List with Checkboxes */}
+                  <div className="max-h-44 overflow-y-auto border border-[#E8E0D5] rounded-xl divide-y divide-[#F4EBE6] bg-white">
+                    {products
+                      .filter((p: any) =>
+                        productSearch
+                          ? p.name.toLowerCase().includes(productSearch.toLowerCase()) ||
+                          (p.sku && p.sku.toLowerCase().includes(productSearch.toLowerCase()))
+                          : true
+                      )
+                      .map((prod: any) => {
+                        const isSelected = formData.applicableProductIds.includes(prod.id);
+                        return (
+                          <label
+                            key={prod.id}
+                            className={`flex items-center justify-between px-3 py-2 text-xs cursor-pointer transition-colors ${isSelected ? "bg-[#FFF9F2]" : "hover:bg-[#FAF8F5]"
+                              }`}
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={() => {
+                                  const updated = isSelected
+                                    ? formData.applicableProductIds.filter((id) => id !== prod.id)
+                                    : [...formData.applicableProductIds, prod.id];
+                                  setFormData({
+                                    ...formData,
+                                    applicableProductIds: updated,
+                                    applicableProductId: updated[0] || "",
+                                  });
+                                }}
+                                className="rounded border-[#E8E0D5] text-[#D4AF37] focus:ring-[#D4AF37]"
+                              />
+                              <div className="min-w-0">
+                                <p className="font-medium text-[#2C332D] truncate">{prod.name}</p>
+                                <p className="text-[10px] text-[#8C7A72]">
+                                  {prod.sku ? `SKU: ${prod.sku}` : `ID: ${prod.id.slice(-6)}`}
+                                </p>
+                              </div>
+                            </div>
+                            <span className="text-[11px] font-semibold text-[#736C66] whitespace-nowrap">
+                              ₹{Number(prod.salePrice || prod.regularPrice || 0).toFixed(0)}
+                            </span>
+                          </label>
+                        );
+                      })}
+                  </div>
+
+                  <p className="text-[10px] text-[#8C7A72] mt-1">
+                    Leave all unchecked to keep coupon active across all products.
                   </p>
                 </div>
               </div>
