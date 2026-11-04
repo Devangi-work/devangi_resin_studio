@@ -192,6 +192,8 @@ export const couponSchema = z.object({
   maxRedemptions: z.coerce.number().int().positive().optional().nullable(),
   perCustomerLimit: z.coerce.number().int().positive().default(1),
   isActive: z.boolean().default(true),
+  applicableCategoryId: z.string().optional().nullable(),
+  applicableProductId: z.string().optional().nullable(),
 });
 
 // Stock Adjustment

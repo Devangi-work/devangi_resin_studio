@@ -502,6 +502,8 @@ export const coupons = pgTable(
     currentRedemptions: integer("current_redemptions").default(0).notNull(),
     perCustomerLimit: integer("per_customer_limit").default(1).notNull(),
     isActive: boolean("is_active").default(true).notNull(),
+    applicableCategoryId: text("applicable_category_id"),
+    applicableProductId: text("applicable_product_id"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },

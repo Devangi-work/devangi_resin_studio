@@ -5,6 +5,8 @@ import { Plus, Tag, Trash2, Edit, CheckCircle2, AlertCircle, X } from "lucide-re
 
 export default function AdminCouponsPage() {
   const [coupons, setCoupons] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Modal
@@ -18,6 +20,8 @@ export default function AdminCouponsPage() {
     maxDiscount: "300.00",
     maxRedemptions: 100,
     isActive: true,
+    applicableCategoryId: "",
+    applicableProductId: "",
   });
 
   const [message, setMessage] = useState("");
@@ -28,9 +32,19 @@ export default function AdminCouponsPage() {
   const loadCoupons = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/coupons");
-      const data = await res.json();
-      setCoupons(data || []);
+      const [coupRes, catRes, prodRes] = await Promise.all([
+        fetch("/api/admin/coupons"),
+        fetch("/api/categories"),
+        fetch("/api/admin/products"),
+      ]);
+      const [coupData, catData, prodData] = await Promise.all([
+        coupRes.json(),
+        catRes.json(),
+        prodRes.json(),
+      ]);
+      setCoupons(coupData || []);
+      setCategories(catData || []);
+      setProducts(prodData?.products || prodData || []);
     } catch (e) {
       console.error(e);
     } finally {
@@ -52,6 +66,8 @@ export default function AdminCouponsPage() {
       maxDiscount: "300.00",
       maxRedemptions: 100,
       isActive: true,
+      applicableCategoryId: "",
+      applicableProductId: "",
     });
     setIsOpen(true);
   };
@@ -66,6 +82,8 @@ export default function AdminCouponsPage() {
       maxDiscount: c.maxDiscount || "",
       maxRedemptions: c.maxRedemptions || 100,
       isActive: c.isActive,
+      applicableCategoryId: c.applicableCategoryId || "",
+      applicableProductId: c.applicableProductId || "",
     });
     setIsOpen(true);
   };
@@ -131,8 +149,7 @@ export default function AdminCouponsPage() {
     const count = selectedIds.length;
     if (
       !confirm(
-        `Are you sure you want to permanently delete these ${count} selected coupon${
-          count > 1 ? "s" : ""
+        `Are you sure you want to permanently delete these ${count} selected coupon${count > 1 ? "s" : ""
         }?`
       )
     ) {
@@ -235,6 +252,7 @@ export default function AdminCouponsPage() {
                 </th>
                 <th className="py-3 px-4 font-semibold">Coupon Code</th>
                 <th className="py-3 px-4 font-semibold">Discount</th>
+                <th className="py-3 px-4 font-semibold">Applies To</th>
                 <th className="py-3 px-4 font-semibold">Min. Cart</th>
                 <th className="py-3 px-4 font-semibold">Max. Discount</th>
                 <th className="py-3 px-4 font-semibold">Redemptions</th>
@@ -245,13 +263,13 @@ export default function AdminCouponsPage() {
             <tbody className="divide-y divide-[#F4EBE6] text-[#2C332D]">
               {loading ? (
                 <tr>
-                  <td colSpan={8} className="py-8 text-center text-[#736C66]">
+                  <td colSpan={9} className="py-8 text-center text-[#736C66]">
                     Loading coupons...
                   </td>
                 </tr>
               ) : coupons.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-8 text-center text-[#736C66]">
+                  <td colSpan={9} className="py-8 text-center text-[#736C66]">
                     No promotional coupons found.
                   </td>
                 </tr>
@@ -274,6 +292,21 @@ export default function AdminCouponsPage() {
                         ? `${Number(c.discountValue)}% OFF`
                         : `₹${Number(c.discountValue)} OFF`}
                     </td>
+                    <td className="py-3 px-4">
+                      {c.applicableProductId ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#FFF4E5] text-[#B86200] border border-[#FFE2BA] max-w-[170px] truncate" title={products.find((p) => p.id === c.applicableProductId)?.name || "Specific Product"}>
+                          Product: {products.find((p) => p.id === c.applicableProductId)?.name || "Specific Product"}
+                        </span>
+                      ) : c.applicableCategoryId ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#EBF3FF] text-[#0052CC] border border-[#CDE1FF]">
+                          Category: {categories.find((cat) => cat.id === c.applicableCategoryId)?.name || "Specific Category"}
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-[#F4F3F0] text-[#736C66]">
+                          All Products
+                        </span>
+                      )}
+                    </td>
                     <td className="py-3 px-4 text-[#736C66]">₹{c.minCartAmount}</td>
                     <td className="py-3 px-4 text-[#736C66]">
                       {c.maxDiscount ? `₹${c.maxDiscount}` : "Unlimited"}
@@ -283,11 +316,10 @@ export default function AdminCouponsPage() {
                     </td>
                     <td className="py-3 px-4">
                       <span
-                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                          c.isActive
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${c.isActive
                             ? "bg-[#E8EFE8] text-[#2E7D32]"
                             : "bg-[#F4EBE6] text-[#736C66]"
-                        }`}
+                          }`}
                       >
                         {c.isActive ? "Active" : "Inactive"}
                       </span>
@@ -416,6 +448,55 @@ export default function AdminCouponsPage() {
                 <label htmlFor="act" className="text-xs font-semibold text-[#2C332D] cursor-pointer">
                   Coupon Is Active & Usable at Checkout
                 </label>
+              </div>
+
+              {/* Product & Category Eligibility */}
+              <div className="space-y-3 pt-2 border-t border-[#F4EBE6]">
+                <div>
+                  <label className="text-xs font-semibold text-[#2C332D] block mb-1">
+                    Specific Product Category (Optional)
+                  </label>
+                  <select
+                    value={formData.applicableCategoryId}
+                    onChange={(e) =>
+                      setFormData({ ...formData, applicableCategoryId: e.target.value })
+                    }
+                    className="w-full px-3 py-2 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl text-[#2C332D] focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
+                  >
+                    <option value="">All Product Categories (Active for all)</option>
+                    {categories.map((cat: any) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-[10px] text-[#8C7A72] mt-0.5">
+                    Leave unselected to make this coupon valid across all categories.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold text-[#2C332D] block mb-1">
+                    Specific Product (Optional)
+                  </label>
+                  <select
+                    value={formData.applicableProductId}
+                    onChange={(e) =>
+                      setFormData({ ...formData, applicableProductId: e.target.value })
+                    }
+                    className="w-full px-3 py-2 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl text-[#2C332D] focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
+                  >
+                    <option value="">All Products (Active for all)</option>
+                    {products.map((prod: any) => (
+                      <option key={prod.id} value={prod.id}>
+                        {prod.name} {prod.sku ? `(${prod.sku})` : ""}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-[10px] text-[#8C7A72] mt-0.5">
+                    Leave unselected to make this coupon valid across all products.
+                  </p>
+                </div>
               </div>
 
               <div className="flex justify-end space-x-2 pt-4 border-t border-[#F4EBE6]">

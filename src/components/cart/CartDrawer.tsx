@@ -88,7 +88,15 @@ export function CartDrawer() {
       const res = await fetch("/api/coupons/validate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: couponInput.trim(), cartAmount: subtotal }),
+        body: JSON.stringify({
+          code: couponInput.trim(),
+          cartAmount: subtotal,
+          items: items.map((it) => ({
+            productId: it.productId,
+            price: it.price,
+            quantity: it.quantity,
+          })),
+        }),
       });
       const data = await res.json();
       if (data.valid) {

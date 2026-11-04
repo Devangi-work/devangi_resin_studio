@@ -357,6 +357,11 @@ export default function CheckoutPage() {
           code: couponInput.trim(),
           cartAmount: subtotal,
           customerEmail: formData.customerEmail || undefined,
+          items: items.map((it) => ({
+            productId: it.productId,
+            price: it.price,
+            quantity: it.quantity,
+          })),
         }),
       });
       const data = await res.json();

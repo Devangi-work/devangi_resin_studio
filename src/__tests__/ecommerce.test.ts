@@ -88,6 +88,53 @@ test("E-Commerce Test Suite", async (t) => {
     // Below minimum cart amount requirement
     const belowMin = await dbStore.validateCoupon("RESIN100", 300);
     assert.equal(belowMin.valid, false);
+
+    // Test product-specific coupon
+    const sampleProducts = await dbStore.getProducts();
+    const testProd = sampleProducts.products[0];
+    const testProdId = testProd ? testProd.id : "prod_sample";
+    const testCatId = testProd ? testProd.categoryId : "cat_keychains";
+
+    await dbStore.createCoupon({
+      code: "PRODONLY50",
+      discountType: "fixed",
+      discountValue: "50.00",
+      minCartAmount: "0.00",
+      applicableProductId: testProdId,
+    });
+
+    // Valid when matching product is in cart
+    const prodCouponValid = await dbStore.validateCoupon("PRODONLY50", 500, undefined, [
+      { productId: testProdId, price: 200, quantity: 1 },
+      { productId: "other_prod", price: 300, quantity: 1 },
+    ]);
+    assert.equal(prodCouponValid.valid, true);
+    assert.equal(prodCouponValid.discountAmount, 50);
+
+    // Invalid when matching product is NOT in cart
+    const prodCouponInvalid = await dbStore.validateCoupon("PRODONLY50", 500, undefined, [
+      { productId: "other_prod", price: 500, quantity: 1 },
+    ]);
+    assert.equal(prodCouponInvalid.valid, false);
+
+    // Test category-specific coupon
+    await dbStore.createCoupon({
+      code: "CATONLY20",
+      discountType: "percentage",
+      discountValue: "20.00",
+      minCartAmount: "0.00",
+      applicableCategoryId: testCatId,
+    });
+
+    const catCouponValid = await dbStore.validateCoupon("CATONLY20", 400, undefined, [
+      { productId: testProdId, price: 200, quantity: 1 },
+    ]);
+    assert.equal(catCouponValid.valid, true);
+
+    const catCouponInvalid = await dbStore.validateCoupon("CATONLY20", 400, undefined, [
+      { productId: "non_existent_or_other_prod", price: 200, quantity: 1 },
+    ]);
+    assert.equal(catCouponInvalid.valid, false);
   });
 
   // 5. Order Creation & Idempotent Stock Deduction

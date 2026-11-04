@@ -6,6 +6,13 @@ const validateCouponSchema = z.object({
   code: z.string().min(1, "Please provide a coupon code."),
   cartAmount: z.coerce.number().positive("Cart amount must be greater than 0."),
   customerEmail: z.string().email().optional(),
+  items: z.array(
+    z.object({
+      productId: z.string().optional(),
+      price: z.coerce.number().optional(),
+      quantity: z.coerce.number().optional(),
+    })
+  ).optional(),
 });
 
 export async function POST(request: Request) {
@@ -20,8 +27,8 @@ export async function POST(request: Request) {
       );
     }
 
-    const { code, cartAmount, customerEmail } = result.data;
-    const validation = await dbStore.validateCoupon(code, cartAmount, customerEmail);
+    const { code, cartAmount, customerEmail, items } = result.data;
+    const validation = await dbStore.validateCoupon(code, cartAmount, customerEmail, items);
 
     if (!validation.valid) {
       return NextResponse.json(validation, { status: 400 });
