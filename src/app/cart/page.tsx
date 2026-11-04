@@ -276,12 +276,30 @@ function CartContent() {
                       {item.name}
                     </Link>
                     {item.variantName && (
-                      <p className="text-xs text-[#736C66] mt-0.5">{item.variantName}</p>
+                      <p className="text-xs text-[#736C66] mt-0.5 leading-snug">{item.variantName}</p>
+                    )}
+                    {item.personalizationDetails?.color && (
+                      <p className="text-xs text-[#800020] font-semibold mt-0.5">
+                        Color Theme: {item.personalizationDetails.color}
+                      </p>
                     )}
                     {item.personalizationDetails?.customName && (
                       <p className="text-xs text-[#B8972E] font-medium mt-0.5">
                         Custom Name: "{item.personalizationDetails.customName}"
                       </p>
+                    )}
+                    {item.referenceImageUrl && (
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <img src={item.referenceImageUrl} alt="Reference" className="w-6 h-6 rounded object-cover border border-[#E8E0D5]" />
+                        <a
+                          href={item.referenceImageUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-[11px] text-[#2E7D32] underline font-medium hover:text-[#1e5822]"
+                        >
+                          View Reference Photo
+                        </a>
+                      </div>
                     )}
                     {item.giftWrapped && (
                       <span className="inline-flex items-center space-x-1 text-[10px] bg-[#E8EFE8] text-[#2E7D32] px-2 py-0.5 rounded mt-1">

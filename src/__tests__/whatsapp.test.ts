@@ -6,6 +6,7 @@ import {
   buildCartWhatsAppMessage,
   getWhatsAppUrl,
 } from "../lib/whatsapp";
+import { dbStore } from "../lib/db";
 
 test("WhatsApp Integration Test Suite", async (t) => {
   await t.test("formatWhatsAppNumber cleans formatting and handles 10-digit/12-digit Indian numbers", () => {
@@ -184,5 +185,107 @@ test("WhatsApp Integration Test Suite", async (t) => {
 
     // Clean up test order
     await dbStore.deleteOrder(created.id);
+  });
+
+  await t.test("buildSingleProductWhatsAppMessage auto-fills multi-title variant selections, color palette, and blob reference URL", () => {
+    const msg = buildSingleProductWhatsAppMessage({
+      product: {
+        id: "prod_resin_clock",
+        name: "Geode Floral Wall Clock",
+        sku: "RA-CLK-99",
+      },
+      unitPrice: 2299.00,
+      quantity: 1,
+      giftWrapped: true,
+      giftWrapCharge: 49.00,
+      personalizationDetails: {
+        color: "Emerald Green & Gold",
+        customName: "Shrikesh & Devangi",
+        initials: "S & D",
+        selectedVariants: [
+          { groupTitle: "Select Size", name: "Large (16-inch)", priceAdjustment: 500 },
+          { groupTitle: "Clock Hands Hardware", name: "Rose Gold Silent Sweep", priceAdjustment: 150 },
+        ],
+      },
+      referenceImageUrl: "https://mockblob.public.blob.vercel-storage.com/ref-photo.jpg",
+      customer: {
+        name: "Shrikesh Shetty",
+        phone: "7045332855",
+        email: "shrikesh123shetty@gmail.com",
+      },
+      orderNumber: "WA-20261104-5544",
+    });
+
+    assert.ok(msg.includes("*Order Reference:* WA-20261104-5544"));
+    assert.ok(msg.includes("*Product:* Geode Floral Wall Clock"));
+    assert.ok(msg.includes("*Selected Variants / Custom Options:*"));
+    assert.ok(msg.includes("• Select Size: Large (16-inch) (+₹500.00)"));
+    assert.ok(msg.includes("• Clock Hands Hardware: Rose Gold Silent Sweep (+₹150.00)"));
+    assert.ok(msg.includes("*Selected Color:* Emerald Green & Gold"));
+    assert.ok(msg.includes('*Custom Name / Text:* "Shrikesh & Devangi"'));
+    assert.ok(msg.includes("*Initials:* S & D"));
+    assert.ok(msg.includes("*Reference Photo:* https://mockblob.public.blob.vercel-storage.com/ref-photo.jpg"));
+    assert.ok(msg.includes("*Unit Price:* ₹2299.00"));
+    assert.ok(msg.includes("*Boutique Gift Packaging:* Yes (+₹49.00)"));
+    // 2299 + 49 = 2348
+    assert.ok(msg.includes("*Total Calculated Amount:* ₹2348.00"));
+    assert.ok(msg.includes("Name: Shrikesh Shetty"));
+    assert.ok(msg.includes("Phone: 7045332855"));
+  });
+
+  await t.test("Product creation and update stores variantGroups, customColorPalette, and primary image properly", async () => {
+    const testProdId = `prod_test_vg_${Date.now()}`;
+    const created = await dbStore.createProduct({
+      id: testProdId,
+      name: "Custom Resin Nameplate",
+      slug: `custom-resin-nameplate-${Date.now()}`,
+      description: "Handcrafted resin nameplate with custom lettering",
+      categoryId: "cat_clocks_home_decor",
+      regularPrice: 1499,
+      enableVariants: true,
+      variantGroups: [
+        {
+          id: "vg_size",
+          title: "Dimensions",
+          options: [
+            { id: "opt_sm", name: "12x6 inches", priceAdjustment: 0 },
+            { id: "opt_lg", name: "16x8 inches", priceAdjustment: 350 },
+          ],
+        },
+        {
+          id: "vg_mount",
+          title: "Mounting Option",
+          options: [
+            { id: "opt_wall", name: "Heavy Duty Wall Mount", priceAdjustment: 0 },
+            { id: "opt_stand", name: "Desk Acrylic Stand", priceAdjustment: 120 },
+          ],
+        },
+      ],
+      enablePersonalization: true,
+      customColorEnabled: true,
+      customColorPalette: ["Rose Gold & Blush Pink", "Emerald Green & Gold", "Ocean Turquoise & Gold Leaf"],
+      customImageUploadEnabled: true,
+      images: [
+        { imageUrl: "https://example.com/secondary.jpg", altText: "Secondary", isPrimary: false, displayOrder: 2 },
+        { imageUrl: "https://example.com/primary.jpg", altText: "Primary", isPrimary: true, displayOrder: 1 },
+      ],
+    });
+
+    assert.ok(created);
+    const fetched = await dbStore.getProductById(testProdId);
+    assert.ok(fetched);
+    assert.equal(fetched.variantGroups?.length, 2);
+    assert.equal(fetched.variantGroups[0].title, "Dimensions");
+    assert.equal(fetched.variantGroups[0].options?.length, 2);
+    assert.equal(fetched.variantGroups[1].title, "Mounting Option");
+    assert.equal(fetched.customColorPalette?.length, 3);
+    assert.ok(fetched.customColorPalette.includes("Ocean Turquoise & Gold Leaf"));
+    // Primary image is guaranteed to be first
+    assert.ok(fetched.images && fetched.images.length >= 2);
+    assert.equal(fetched.images[0].isPrimary, true);
+    assert.equal(fetched.images[0].imageUrl, "https://example.com/primary.jpg");
+
+    // Clean up test product
+    await dbStore.deleteProduct(testProdId);
   });
 });

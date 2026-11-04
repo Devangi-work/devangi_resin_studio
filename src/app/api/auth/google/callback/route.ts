@@ -98,8 +98,21 @@ export async function GET(request: NextRequest) {
 
     await setCustomerSessionCookie(sessionToken);
 
-    // 5. Redirect user to destination (e.g. /checkout or /account)
-    return NextResponse.redirect(new URL(redirectTarget, origin));
+    // 5. Check if required profile details are missing
+    const isProfileIncomplete =
+      !customer.phone ||
+      !customer.email ||
+      !customer.addressLine1 ||
+      !customer.city ||
+      !customer.state ||
+      !customer.postalCode;
+
+    const targetUrl =
+      isProfileIncomplete && !redirectTarget.includes("/account/profile")
+        ? `/account/profile?required=true&redirect=${encodeURIComponent(redirectTarget)}`
+        : redirectTarget;
+
+    return NextResponse.redirect(new URL(targetUrl, origin));
   } catch (err: any) {
     console.error("[Google OAuth Callback Error]:", err);
     const detail = err?.message || "An unexpected error occurred during Google sign-in.";

@@ -37,13 +37,27 @@ export async function POST(request: Request) {
 
     await setCustomerSessionCookie(token);
 
+    const profileIncomplete =
+      !customer.phone ||
+      !customer.email ||
+      !customer.addressLine1 ||
+      !customer.city ||
+      !customer.state ||
+      !customer.postalCode;
+
     return NextResponse.json({
       success: true,
+      profileIncomplete,
       customer: {
         id: customer.id,
         name: customer.name,
         email: customer.email,
         phone: customer.phone,
+        addressLine1: customer.addressLine1,
+        addressLine2: customer.addressLine2,
+        city: customer.city,
+        state: customer.state,
+        postalCode: customer.postalCode,
       },
     });
   } catch (err: any) {

@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { AccountLayoutShell } from "@/components/customer/AccountLayoutShell";
 import {
   User,
@@ -20,8 +20,12 @@ import {
   Camera,
 } from "lucide-react";
 
-export default function CustomerProfilePage() {
+function CustomerProfilePageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isRequiredNotice = searchParams.get("required") === "true";
+  const redirectTarget = searchParams.get("redirect");
+
   const [customer, setCustomer] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -83,12 +87,28 @@ export default function CustomerProfilePage() {
       return;
     }
 
-    if (formData.phone && formData.phone.replace(/\D/g, "").length < 10) {
-      setErrorMessage("Please enter a valid 10-digit mobile number.");
+    const cleanPhone = formData.phone.replace(/\D/g, "");
+    if (!cleanPhone || cleanPhone.length < 10) {
+      setErrorMessage("Please enter a valid 10-digit mobile phone number.");
       return;
     }
 
-    if (formData.postalCode && !/^\d{6}$/.test(formData.postalCode.trim())) {
+    if (!formData.addressLine1.trim() || formData.addressLine1.trim().length < 3) {
+      setErrorMessage("Please enter Flat / House No. / Street Address.");
+      return;
+    }
+
+    if (!formData.city.trim() || formData.city.trim().length < 2) {
+      setErrorMessage("Please enter your City.");
+      return;
+    }
+
+    if (!formData.state.trim()) {
+      setErrorMessage("Please select your State.");
+      return;
+    }
+
+    if (!formData.postalCode.trim() || !/^\d{6}$/.test(formData.postalCode.trim())) {
       setErrorMessage("Please enter a valid 6-digit Indian PIN code.");
       return;
     }
@@ -99,18 +119,29 @@ export default function CustomerProfilePage() {
       const res = await fetch("/api/customer/profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          phone: cleanPhone,
+          postalCode: formData.postalCode.trim(),
+        }),
       });
 
       const json = await res.json();
       if (!res.ok) {
         setErrorMessage(json.error || "Failed to update profile details.");
       } else {
-        setCustomer((prev: any) => ({ ...prev, ...formData }));
+        setCustomer((prev: any) => ({ ...prev, ...formData, phone: cleanPhone }));
         setSuccessMessage("Your profile and shipping details have been saved successfully!");
         window.dispatchEvent(new Event("customer-profile-updated"));
         window.dispatchEvent(new Event("customer-auth-changed"));
-        setTimeout(() => setSuccessMessage(""), 4000);
+
+        if (redirectTarget) {
+          setTimeout(() => {
+            window.location.href = redirectTarget;
+          }, 1000);
+        } else {
+          setTimeout(() => setSuccessMessage(""), 4000);
+        }
       }
     } catch {
       setErrorMessage("Network error while saving profile.");
@@ -182,6 +213,19 @@ export default function CustomerProfilePage() {
             <span>Secure 256-Bit Encrypted Data</span>
           </div>
         </div>
+
+        {/* Required details reminder banner */}
+        {isRequiredNotice && (
+          <div className="p-4 bg-[#FFF8EC] border-2 border-[#D4AF37] rounded-2xl flex items-start space-x-3 text-xs text-[#2C332D] shadow-sm animate-in fade-in">
+            <Sparkles className="w-5 h-5 text-[#B8972E] shrink-0 mt-0.5" />
+            <div>
+              <h4 className="font-bold text-[#2C332D] text-sm">Action Required: Complete Your Details</h4>
+              <p className="text-[#736C66] mt-0.5 leading-relaxed">
+                Please enter your Phone No., Flat / House No. / Street Address, City, State, and PIN Code below to complete your profile and proceed.
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Feedback Messages */}
         {successMessage && (
@@ -259,7 +303,7 @@ export default function CustomerProfilePage() {
               {/* Mobile Phone */}
               <div className="sm:col-span-2">
                 <label className="text-xs font-bold text-[#2C332D] block mb-1.5">
-                  Mobile Contact Number (for delivery updates &amp; tracking) *
+                  Phone No. *
                 </label>
                 <div className="relative flex items-center">
                   <span className="absolute left-3.5 text-xs font-bold text-[#736C66] border-r border-[#E8E0D5] pr-2.5">
@@ -299,7 +343,7 @@ export default function CustomerProfilePage() {
               {/* Street Address Line 1 */}
               <div>
                 <label className="text-xs font-bold text-[#2C332D] block mb-1.5">
-                  Flat, House no., Building, Company, Apartment *
+                  Flat / House No. / Street Address *
                 </label>
                 <div className="relative">
                   <Building className="w-4 h-4 text-[#8C7A72] absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -317,7 +361,7 @@ export default function CustomerProfilePage() {
               {/* Street Address Line 2 */}
               <div>
                 <label className="text-xs font-bold text-[#2C332D] block mb-1.5">
-                  Area, Street, Sector, Village, Landmark
+                  Apartment / Landmark / Locality (Optional)
                 </label>
                 <div className="relative">
                   <Navigation className="w-4 h-4 text-[#8C7A72] absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -336,7 +380,7 @@ export default function CustomerProfilePage() {
                 {/* City */}
                 <div>
                   <label className="text-xs font-bold text-[#2C332D] block mb-1.5">
-                    Town / City *
+                    City *
                   </label>
                   <input
                     type="text"
@@ -351,7 +395,7 @@ export default function CustomerProfilePage() {
                 {/* State */}
                 <div>
                   <label className="text-xs font-bold text-[#2C332D] block mb-1.5">
-                    State / Region *
+                    State *
                   </label>
                   <select
                     required
@@ -371,7 +415,7 @@ export default function CustomerProfilePage() {
                 {/* Postal PIN Code */}
                 <div>
                   <label className="text-xs font-bold text-[#2C332D] block mb-1.5">
-                    6-Digit Postal PIN Code *
+                    PIN Code *
                   </label>
                   <input
                     type="text"
@@ -426,6 +470,21 @@ export default function CustomerProfilePage() {
         </form>
       </div>
     </AccountLayoutShell>
+  );
+}
+
+export default function CustomerProfilePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="max-w-6xl mx-auto px-4 py-20 text-center text-[#736C66]">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto text-[#D4AF37] mb-3" />
+          <p className="text-sm font-medium">Loading your profile and shipping details...</p>
+        </div>
+      }
+    >
+      <CustomerProfilePageContent />
+    </Suspense>
   );
 }
 

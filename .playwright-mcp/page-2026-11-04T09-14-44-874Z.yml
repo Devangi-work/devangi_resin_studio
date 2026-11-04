@@ -1,0 +1,279 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]: Handmade with Love • Complimentary Insured Delivery on orders over ₹999.00
+    - navigation [ref=e9]:
+      - generic [ref=e10]:
+        - link "Devangi Resin Studio Logo Devangi Resin Studio" [ref=e12] [cursor=pointer]:
+          - /url: /
+          - img "Devangi Resin Studio Logo" [ref=e13]
+          - generic [ref=e14]: Devangi Resin Studio
+        - generic [ref=e16]:
+          - link "Home" [ref=e17] [cursor=pointer]:
+            - /url: /
+          - link "Shop" [ref=e18] [cursor=pointer]:
+            - /url: /shop
+          - button "Collections" [ref=e20] [cursor=pointer]
+          - link "Festive" [ref=e24] [cursor=pointer]:
+            - /url: /shop?festival=true
+          - link "Custom Studio" [ref=e28] [cursor=pointer]:
+            - /url: /custom-orders
+          - link "Showcase" [ref=e29] [cursor=pointer]:
+            - /url: /devangiresinstudio/orderscatalogue
+          - link "Track Order" [ref=e30] [cursor=pointer]:
+            - /url: /track-order
+        - generic [ref=e31]:
+          - button "Search products" [ref=e32]
+          - button "User Account Options" [ref=e37]
+          - button "View Shopping Cart" [ref=e44]
+  - main [ref=e48]:
+    - generic [ref=e49]:
+      - generic [ref=e51]:
+        - generic [ref=e52]: Orders Showcase & Custom Gallery
+        - heading "Real Handcrafted Creations, Delivered With Love" [level=1] [ref=e56]
+        - paragraph [ref=e57]:
+          - text: Every piece we craft is a unique story in crystal-clear resin. Browse our delivered commissions below and tap
+          - strong [ref=e58]: “Want Same Piece?”
+          - text: to chat directly with artisan Devangi on WhatsApp to customize yours.
+        - generic [ref=e59]:
+          - generic [ref=e60]: 100% Handcrafted & UV Protected
+          - generic [ref=e64]: Custom Names, Dried Flowers & Gold Leaf
+          - generic [ref=e67]: Insured Pan-India Safe Delivery
+      - main [ref=e70]:
+        - generic [ref=e71]:
+          - generic [ref=e72]:
+            - generic [ref=e73]:
+              - textbox "Search handcrafted pieces, orders, custom names..." [ref=e78]
+              - generic [ref=e79]:
+                - text: Showing
+                - strong [ref=e80]: "9"
+                - text: real custom orders
+            - generic [ref=e81]:
+              - generic [ref=e82]: "Filter:"
+              - button "All" [ref=e85]
+              - button "Clocks" [ref=e86]
+              - button "Frames & Flowers" [ref=e87]
+              - button "Coasters & Trays" [ref=e88]
+              - button "Nameplates" [ref=e89]
+              - button "Jewellery & Accessories" [ref=e90]
+              - button "Custom Commissions" [ref=e91]
+          - generic [ref=e92]:
+            - generic [ref=e93]:
+              - generic [ref=e94]:
+                - img "Rose Gold Floral Alphabet Keychain - P" [ref=e95]
+                - generic [ref=e96]: Real Client Order
+                - generic [ref=e100]: "#WA-20261104-9968"
+              - generic [ref=e101]:
+                - generic [ref=e102]:
+                  - generic [ref=e103]:
+                    - generic [ref=e104]: Jewellery & Accessories
+                    - generic [ref=e105]: Nov 2026
+                  - heading "Rose Gold Floral Alphabet Keychain - P" [level=3] [ref=e106]
+                  - paragraph [ref=e107]: "Alphabets: P (₹149.00) + Alphabets: N (₹149.00)"
+                - generic [ref=e108]:
+                  - link "Want Same Piece?" [ref=e109] [cursor=pointer]:
+                    - /url: https://wa.me/919967313355?text=Hi%20Devangi%20Resin%20Studio!%20%E2%9C%A8%0A%0AI%20was%20browsing%20your%20Orders%20Showcase%20and%20loved%20this%20piece%3A%0A%E2%80%A2%20Piece%3A%20Rose%20Gold%20Floral%20Alphabet%20Keychain%20-%20P%20(Alphabets%3A%20P%20(%E2%82%B9149.00)%20%2B%20Alphabets%3A%20N%20(%E2%82%B9149.00))%0A%E2%80%A2%20Order%20Reference%3A%20%23WA-20261104-9968%0A%0AI%20would%20love%20to%20get%20the%20same%20piece%20made!%20Could%20you%20please%20share%20the%20pricing%2C%20customization%20options%2C%20and%20availability%3F
+                  - paragraph [ref=e113]: Direct WhatsApp enquiry with artisan Devangi
+            - generic [ref=e114]:
+              - generic [ref=e115]:
+                - img "Custom Rosé Aura Keychain" [ref=e116]
+                - generic [ref=e117]: Real Client Order
+                - generic [ref=e121]: "#WA-20261103-9001"
+              - generic [ref=e122]:
+                - generic [ref=e123]:
+                  - generic [ref=e124]:
+                    - generic [ref=e125]: Jewellery & Accessories
+                    - generic [ref=e126]: Nov 2026
+                  - heading "Custom Rosé Aura Keychain" [level=3] [ref=e127]
+                - generic [ref=e128]:
+                  - link "Want Same Piece?" [ref=e129] [cursor=pointer]:
+                    - /url: https://wa.me/919967313355?text=Hi%20Devangi%20Resin%20Studio!%20%E2%9C%A8%0A%0AI%20was%20browsing%20your%20Orders%20Showcase%20and%20loved%20this%20piece%3A%0A%E2%80%A2%20Piece%3A%20Custom%20Ros%C3%A9%20Aura%20Keychain%0A%E2%80%A2%20Order%20Reference%3A%20%23WA-20261103-9001%0A%0AI%20would%20love%20to%20get%20the%20same%20piece%20made!%20Could%20you%20please%20share%20the%20pricing%2C%20customization%20options%2C%20and%20availability%3F
+                  - paragraph [ref=e133]: Direct WhatsApp enquiry with artisan Devangi
+            - generic [ref=e134]:
+              - generic [ref=e135]:
+                - img "Custom Rosé Aura Keychain" [ref=e136]
+                - generic [ref=e137]: Real Client Order
+                - generic [ref=e141]: "#OFF-20261103-3292"
+              - generic [ref=e142]:
+                - generic [ref=e143]:
+                  - generic [ref=e144]:
+                    - generic [ref=e145]: Jewellery & Accessories
+                    - generic [ref=e146]: Nov 2026
+                  - heading "Custom Rosé Aura Keychain" [level=3] [ref=e147]
+                - generic [ref=e148]:
+                  - link "Want Same Piece?" [ref=e149] [cursor=pointer]:
+                    - /url: https://wa.me/919967313355?text=Hi%20Devangi%20Resin%20Studio!%20%E2%9C%A8%0A%0AI%20was%20browsing%20your%20Orders%20Showcase%20and%20loved%20this%20piece%3A%0A%E2%80%A2%20Piece%3A%20Custom%20Ros%C3%A9%20Aura%20Keychain%0A%E2%80%A2%20Order%20Reference%3A%20%23OFF-20261103-3292%0A%0AI%20would%20love%20to%20get%20the%20same%20piece%20made!%20Could%20you%20please%20share%20the%20pricing%2C%20customization%20options%2C%20and%20availability%3F
+                  - paragraph [ref=e153]: Direct WhatsApp enquiry with artisan Devangi
+            - generic [ref=e154]:
+              - generic [ref=e155]:
+                - img "Ocean Treasure Alphabet Keychain – A" [ref=e156]
+                - generic [ref=e157]: Real Client Order
+                - generic [ref=e161]: "#OFF-20261102-9569"
+              - generic [ref=e162]:
+                - generic [ref=e163]:
+                  - generic [ref=e164]:
+                    - generic [ref=e165]: Jewellery & Accessories
+                    - generic [ref=e166]: Nov 2026
+                  - heading "Ocean Treasure Alphabet Keychain – A" [level=3] [ref=e167]
+                - generic [ref=e168]:
+                  - link "Want Same Piece?" [ref=e169] [cursor=pointer]:
+                    - /url: https://wa.me/919967313355?text=Hi%20Devangi%20Resin%20Studio!%20%E2%9C%A8%0A%0AI%20was%20browsing%20your%20Orders%20Showcase%20and%20loved%20this%20piece%3A%0A%E2%80%A2%20Piece%3A%20Ocean%20Treasure%20Alphabet%20Keychain%20%E2%80%93%20A%0A%E2%80%A2%20Order%20Reference%3A%20%23OFF-20261102-9569%0A%0AI%20would%20love%20to%20get%20the%20same%20piece%20made!%20Could%20you%20please%20share%20the%20pricing%2C%20customization%20options%2C%20and%20availability%3F
+                  - paragraph [ref=e173]: Direct WhatsApp enquiry with artisan Devangi
+            - generic [ref=e174]:
+              - generic [ref=e175]:
+                - img "Rose Gold Floral Alphabet Keychain – S" [ref=e176]
+                - generic [ref=e177]: Real Client Order
+                - generic [ref=e181]: "#OFF-20261102-9569"
+              - generic [ref=e182]:
+                - generic [ref=e183]:
+                  - generic [ref=e184]:
+                    - generic [ref=e185]: Jewellery & Accessories
+                    - generic [ref=e186]: Nov 2026
+                  - heading "Rose Gold Floral Alphabet Keychain – S" [level=3] [ref=e187]
+                - generic [ref=e188]:
+                  - link "Want Same Piece?" [ref=e189] [cursor=pointer]:
+                    - /url: https://wa.me/919967313355?text=Hi%20Devangi%20Resin%20Studio!%20%E2%9C%A8%0A%0AI%20was%20browsing%20your%20Orders%20Showcase%20and%20loved%20this%20piece%3A%0A%E2%80%A2%20Piece%3A%20Rose%20Gold%20Floral%20Alphabet%20Keychain%20%E2%80%93%20S%0A%E2%80%A2%20Order%20Reference%3A%20%23OFF-20261102-9569%0A%0AI%20would%20love%20to%20get%20the%20same%20piece%20made!%20Could%20you%20please%20share%20the%20pricing%2C%20customization%20options%2C%20and%20availability%3F
+                  - paragraph [ref=e193]: Direct WhatsApp enquiry with artisan Devangi
+            - generic [ref=e194]:
+              - generic [ref=e195]:
+                - img "Golden Leaf – Glitter Resin Phone Charm" [ref=e196]
+                - generic [ref=e197]: Real Client Order
+                - generic [ref=e201]: "#OFF-20261102-9629"
+              - generic [ref=e202]:
+                - generic [ref=e203]:
+                  - generic [ref=e204]:
+                    - generic [ref=e205]: Custom Keepsake
+                    - generic [ref=e206]: Nov 2026
+                  - heading "Golden Leaf – Glitter Resin Phone Charm" [level=3] [ref=e207]
+                - generic [ref=e208]:
+                  - link "Want Same Piece?" [ref=e209] [cursor=pointer]:
+                    - /url: https://wa.me/919967313355?text=Hi%20Devangi%20Resin%20Studio!%20%E2%9C%A8%0A%0AI%20was%20browsing%20your%20Orders%20Showcase%20and%20loved%20this%20piece%3A%0A%E2%80%A2%20Piece%3A%20Golden%20Leaf%20%E2%80%93%20Glitter%20Resin%20Phone%20Charm%0A%E2%80%A2%20Order%20Reference%3A%20%23OFF-20261102-9629%0A%0AI%20would%20love%20to%20get%20the%20same%20piece%20made!%20Could%20you%20please%20share%20the%20pricing%2C%20customization%20options%2C%20and%20availability%3F
+                  - paragraph [ref=e213]: Direct WhatsApp enquiry with artisan Devangi
+            - generic [ref=e214]:
+              - generic [ref=e215]:
+                - img "Rose Gold Floral Alphabet Keychain - P" [ref=e216]
+                - generic [ref=e217]: Real Client Order
+                - generic [ref=e221]: "#OFF-20261102-6269"
+              - generic [ref=e222]:
+                - generic [ref=e223]:
+                  - generic [ref=e224]:
+                    - generic [ref=e225]: Jewellery & Accessories
+                    - generic [ref=e226]: Nov 2026
+                  - heading "Rose Gold Floral Alphabet Keychain - P" [level=3] [ref=e227]
+                - generic [ref=e228]:
+                  - link "Want Same Piece?" [ref=e229] [cursor=pointer]:
+                    - /url: https://wa.me/919967313355?text=Hi%20Devangi%20Resin%20Studio!%20%E2%9C%A8%0A%0AI%20was%20browsing%20your%20Orders%20Showcase%20and%20loved%20this%20piece%3A%0A%E2%80%A2%20Piece%3A%20Rose%20Gold%20Floral%20Alphabet%20Keychain%20-%20P%0A%E2%80%A2%20Order%20Reference%3A%20%23OFF-20261102-6269%0A%0AI%20would%20love%20to%20get%20the%20same%20piece%20made!%20Could%20you%20please%20share%20the%20pricing%2C%20customization%20options%2C%20and%20availability%3F
+                  - paragraph [ref=e233]: Direct WhatsApp enquiry with artisan Devangi
+            - generic [ref=e234]:
+              - generic [ref=e235]:
+                - img "Golden Leaf – Glitter Resin Phone Charm" [ref=e236]
+                - generic [ref=e237]: Real Client Order
+                - generic [ref=e241]: "#OFF-20261102-6269"
+              - generic [ref=e242]:
+                - generic [ref=e243]:
+                  - generic [ref=e244]:
+                    - generic [ref=e245]: Custom Keepsake
+                    - generic [ref=e246]: Nov 2026
+                  - heading "Golden Leaf – Glitter Resin Phone Charm" [level=3] [ref=e247]
+                - generic [ref=e248]:
+                  - link "Want Same Piece?" [ref=e249] [cursor=pointer]:
+                    - /url: https://wa.me/919967313355?text=Hi%20Devangi%20Resin%20Studio!%20%E2%9C%A8%0A%0AI%20was%20browsing%20your%20Orders%20Showcase%20and%20loved%20this%20piece%3A%0A%E2%80%A2%20Piece%3A%20Golden%20Leaf%20%E2%80%93%20Glitter%20Resin%20Phone%20Charm%0A%E2%80%A2%20Order%20Reference%3A%20%23OFF-20261102-6269%0A%0AI%20would%20love%20to%20get%20the%20same%20piece%20made!%20Could%20you%20please%20share%20the%20pricing%2C%20customization%20options%2C%20and%20availability%3F
+                  - paragraph [ref=e253]: Direct WhatsApp enquiry with artisan Devangi
+            - generic [ref=e254]:
+              - generic [ref=e255]:
+                - img "Custom Rosé Aura Keychain" [ref=e256]
+                - generic [ref=e257]: Real Client Order
+                - generic [ref=e261]: "#OFF-20261031-6531"
+              - generic [ref=e262]:
+                - generic [ref=e263]:
+                  - generic [ref=e264]:
+                    - generic [ref=e265]: Jewellery & Accessories
+                    - generic [ref=e266]: Oct 2026
+                  - heading "Custom Rosé Aura Keychain" [level=3] [ref=e267]
+                - generic [ref=e268]:
+                  - link "Want Same Piece?" [ref=e269] [cursor=pointer]:
+                    - /url: https://wa.me/919967313355?text=Hi%20Devangi%20Resin%20Studio!%20%E2%9C%A8%0A%0AI%20was%20browsing%20your%20Orders%20Showcase%20and%20loved%20this%20piece%3A%0A%E2%80%A2%20Piece%3A%20Custom%20Ros%C3%A9%20Aura%20Keychain%0A%E2%80%A2%20Order%20Reference%3A%20%23OFF-20261031-6531%0A%0AI%20would%20love%20to%20get%20the%20same%20piece%20made!%20Could%20you%20please%20share%20the%20pricing%2C%20customization%20options%2C%20and%20availability%3F
+                  - paragraph [ref=e273]: Direct WhatsApp enquiry with artisan Devangi
+          - generic [ref=e274]:
+            - generic [ref=e275]:
+              - generic [ref=e276]: Bespoke Resin Art Commission
+              - heading "Have a unique idea or personal keepsake in mind?" [level=2] [ref=e277]
+              - paragraph [ref=e278]: We preserve wedding garlands, floral keepsakes, baby memories, and craft customized geode clocks tailored to your exact color palette.
+            - link "Chat on WhatsApp" [ref=e279] [cursor=pointer]:
+              - /url: https://wa.me/919967313355?text=Hi%20Devangi!%20%E2%9C%A8%20I%20have%20a%20custom%20resin%20art%20requirement%20and%20would%20love%20to%20discuss%20custom%20design%20options%20with%20you.
+  - contentinfo [ref=e283]:
+    - generic [ref=e284]:
+      - generic [ref=e285]:
+        - generic [ref=e286]:
+          - link "Devangi Resin Studio Devangi Resin Studio Handcrafted Resin Creations by Devangi" [ref=e287] [cursor=pointer]:
+            - /url: /
+            - img "Devangi Resin Studio" [ref=e288]
+            - generic [ref=e289]:
+              - generic [ref=e290]: Devangi Resin Studio
+              - generic [ref=e291]: Handcrafted Resin Creations by Devangi
+          - paragraph [ref=e292]: We handcraft bespoke epoxy resin art, botanical floral jewellery, personalized nameplates, and crystal geode homeware in India. Each piece is hand-poured with love, intention, and non-yellowing archival UV-stable resin.
+          - generic [ref=e293]:
+            - link "Instagram" [ref=e294] [cursor=pointer]:
+              - /url: https://www.instagram.com/devangi_resin_studio?cplk=dGV0MmUydXN2azcy
+            - link "WhatsApp Chat" [ref=e298] [cursor=pointer]:
+              - /url: https://wa.me/919876543210?text=Hi%20Devangi%20Resin%20Studio,%20I%20have%20an%20inquiry%20about%20a%20custom%20order!
+        - generic [ref=e301]:
+          - heading "Collections" [level=3] [ref=e302]
+          - list [ref=e306]:
+            - listitem [ref=e307]:
+              - link "Shop All Boutique" [ref=e308] [cursor=pointer]:
+                - /url: /shop
+            - listitem [ref=e309]:
+              - link "Geode & Ocean Coasters" [ref=e310] [cursor=pointer]:
+                - /url: /shop?category=resin-coasters
+            - listitem [ref=e311]:
+              - link "Floral Keychains" [ref=e312] [cursor=pointer]:
+                - /url: /shop?category=resin-keychains
+            - listitem [ref=e313]:
+              - link "Botanical Jewellery" [ref=e314] [cursor=pointer]:
+                - /url: /shop?category=resin-jewellery
+            - listitem [ref=e315]:
+              - link "Entrance Nameplates" [ref=e316] [cursor=pointer]:
+                - /url: /shop?category=resin-nameplates
+        - generic [ref=e317]:
+          - heading "Customer Care" [level=3] [ref=e318]
+          - list [ref=e319]:
+            - listitem [ref=e320]:
+              - link "Track Your Order" [ref=e321] [cursor=pointer]:
+                - /url: /track-order
+            - listitem [ref=e322]:
+              - link "Sign In / Register" [ref=e323] [cursor=pointer]:
+                - /url: /account/login
+            - listitem [ref=e324]:
+              - link "Bespoke Custom Orders" [ref=e325] [cursor=pointer]:
+                - /url: /custom-orders
+            - listitem [ref=e326]:
+              - link "Shipping & Dispatch" [ref=e327] [cursor=pointer]:
+                - /url: /policies/shipping
+            - listitem [ref=e328]:
+              - link "Returns & Exchange Policy" [ref=e329] [cursor=pointer]:
+                - /url: /policies/returns
+            - listitem [ref=e330]:
+              - link "Resin Care Guide" [ref=e331] [cursor=pointer]:
+                - /url: /policies/care
+            - listitem [ref=e332]:
+              - link "Privacy Policy" [ref=e333] [cursor=pointer]:
+                - /url: /policies/privacy
+        - generic [ref=e334]:
+          - heading "Artisan Newsletter" [level=3] [ref=e335]
+          - paragraph [ref=e336]:
+            - text: Subscribe to receive new collection drops, preservation guides, and bespoke order slots. Enjoy 10% off with coupon
+            - strong [ref=e337]: WELCOME10
+            - text: .
+          - generic [ref=e338]:
+            - textbox "Your email address" [ref=e339]
+            - button "Get 10% Discount" [ref=e340]
+          - generic [ref=e341]:
+            - paragraph [ref=e342]:
+              - generic [ref=e346]: hello@devangiresinstudio.com
+            - paragraph [ref=e347]:
+              - generic [ref=e350]: +91 98765 43210
+      - paragraph [ref=e352]:
+        - generic [ref=e353]: © 2026 Devangi Resin Studio. Handcrafted with Love in India.
+        - generic [ref=e354]: •
+        - generic [ref=e355]: UPI & QR Verified Payment
+  - button "Open Next.js Dev Tools" [ref=e365] [cursor=pointer]

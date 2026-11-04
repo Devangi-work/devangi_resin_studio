@@ -43,7 +43,11 @@ function CustomerLoginForm() {
       }
 
       window.dispatchEvent(new Event("customer-auth-changed"));
-      window.location.href = redirectUrl;
+      if (data.profileIncomplete && !redirectUrl.includes("/account/profile")) {
+        window.location.href = `/account/profile?required=true&redirect=${encodeURIComponent(redirectUrl)}`;
+      } else {
+        window.location.href = redirectUrl;
+      }
     } catch {
       setError("An unexpected network error occurred.");
       setLoading(false);

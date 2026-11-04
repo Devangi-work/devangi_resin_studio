@@ -109,14 +109,16 @@ export const products = pgTable(
     lowStockThreshold: integer("low_stock_threshold").default(3).notNull(),
     allowBackorders: boolean("allow_backorders").default(false).notNull(),
 
-    // Variants toggle
+    // Variants toggle & Multi-title Groups
     enableVariants: boolean("enable_variants").default(false).notNull(),
+    variantGroups: jsonb("variant_groups"), // [{ id: string, title: string, options: [{ id: string, name: string, priceAdjustment: number, skuModifier?: string, inStock?: boolean }] }]
 
     // Resin Customisation Fields
     enablePersonalization: boolean("enable_personalization").default(false).notNull(),
     customNameEnabled: boolean("custom_name_enabled").default(false).notNull(),
     customInitialsEnabled: boolean("custom_initials_enabled").default(false).notNull(),
     customColorEnabled: boolean("custom_color_enabled").default(false).notNull(),
+    customColorPalette: jsonb("custom_color_palette"), // string[] array of color names or objects
     customDesignEnabled: boolean("custom_design_enabled").default(false).notNull(),
     customImageUploadEnabled: boolean("custom_image_upload_enabled").default(false).notNull(),
     personalizationSurcharge: numeric("personalization_surcharge", { precision: 10, scale: 2 }).default("0.00").notNull(),

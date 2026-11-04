@@ -419,9 +419,11 @@ export const dbStore = {
             p.regular_price as "regularPrice", p.sale_price as "salePrice", p.cost_price as "costPrice",
             p.currency, p.track_inventory as "trackInventory", p.stock_quantity as "stockQuantity",
             p.low_stock_threshold as "lowStockThreshold", p.allow_backorders as "allowBackorders",
-            p.enable_variants as "enableVariants", p.enable_personalization as "enablePersonalization",
+            p.enable_variants as "enableVariants", p.variant_groups as "variantGroups",
+            p.enable_personalization as "enablePersonalization",
             p.custom_name_enabled as "customNameEnabled", p.custom_initials_enabled as "customInitialsEnabled",
-            p.custom_color_enabled as "customColorEnabled", p.custom_design_enabled as "customDesignEnabled",
+            p.custom_color_enabled as "customColorEnabled", p.custom_color_palette as "customColorPalette",
+            p.custom_design_enabled as "customDesignEnabled",
             p.custom_image_upload_enabled as "customImageUploadEnabled",
             p.personalization_surcharge as "personalizationSurcharge",
             p.customization_instructions as "customizationInstructions",
@@ -441,13 +443,15 @@ export const dbStore = {
           const allImages = await sql`
             SELECT id, product_id as "productId", image_url as "imageUrl", alt_text as "altText", is_primary as "isPrimary", display_order as "displayOrder"
             FROM product_images
-            ORDER BY display_order ASC;
+            ORDER BY is_primary DESC, display_order ASC;
           `;
           const allCats = await this.getCategories(false);
           prods = rows.map((p: any) => ({
             ...p,
             regularPrice: Number(p.regularPrice).toFixed(2),
             salePrice: p.salePrice ? Number(p.salePrice).toFixed(2) : null,
+            variantGroups: typeof p.variantGroups === "string" ? JSON.parse(p.variantGroups) : (p.variantGroups || []),
+            customColorPalette: typeof p.customColorPalette === "string" ? JSON.parse(p.customColorPalette) : (p.customColorPalette || []),
             images: allImages.filter((img: any) => img.productId === p.id),
             category: allCats.find((c: any) => c.id === p.categoryId),
           }));
@@ -569,9 +573,11 @@ export const dbStore = {
             p.regular_price as "regularPrice", p.sale_price as "salePrice", p.cost_price as "costPrice",
             p.currency, p.track_inventory as "trackInventory", p.stock_quantity as "stockQuantity",
             p.low_stock_threshold as "lowStockThreshold", p.allow_backorders as "allowBackorders",
-            p.enable_variants as "enableVariants", p.enable_personalization as "enablePersonalization",
+            p.enable_variants as "enableVariants", p.variant_groups as "variantGroups",
+            p.enable_personalization as "enablePersonalization",
             p.custom_name_enabled as "customNameEnabled", p.custom_initials_enabled as "customInitialsEnabled",
-            p.custom_color_enabled as "customColorEnabled", p.custom_design_enabled as "customDesignEnabled",
+            p.custom_color_enabled as "customColorEnabled", p.custom_color_palette as "customColorPalette",
+            p.custom_design_enabled as "customDesignEnabled",
             p.custom_image_upload_enabled as "customImageUploadEnabled",
             p.personalization_surcharge as "personalizationSurcharge",
             p.customization_instructions as "customizationInstructions",
@@ -594,14 +600,23 @@ export const dbStore = {
             SELECT id, product_id as "productId", image_url as "imageUrl", alt_text as "altText", is_primary as "isPrimary", display_order as "displayOrder"
             FROM product_images
             WHERE product_id = ${p.id}
-            ORDER BY display_order ASC;
+            ORDER BY is_primary DESC, display_order ASC;
+          `;
+          const variants = await sql`
+            SELECT id, product_id as "productId", name, sku, price_adjustment as "priceAdjustment", inventory, image_url as "imageUrl", is_active as "isActive"
+            FROM product_variants
+            WHERE product_id = ${p.id} AND is_active = true
+            ORDER BY created_at ASC;
           `;
           const cat = await this.getCategoryById(p.categoryId);
           return {
             ...p,
             regularPrice: Number(p.regularPrice).toFixed(2),
             salePrice: p.salePrice ? Number(p.salePrice).toFixed(2) : null,
+            variantGroups: typeof p.variantGroups === "string" ? JSON.parse(p.variantGroups) : (p.variantGroups || []),
+            customColorPalette: typeof p.customColorPalette === "string" ? JSON.parse(p.customColorPalette) : (p.customColorPalette || []),
             images: images || [],
+            variants: variants || [],
             category: cat,
           };
         }
@@ -612,7 +627,10 @@ export const dbStore = {
     const prod = store.products.find((p) => p.slug === slug);
     if (!prod) return null;
     const cat = store.categories.find((c) => c.id === prod.categoryId);
-    return { ...prod, category: cat };
+    const sortedImages = (prod.images || []).slice().sort((a: any, b: any) =>
+      (b.isPrimary ? 1 : 0) - (a.isPrimary ? 1 : 0) || (a.displayOrder || 0) - (b.displayOrder || 0)
+    );
+    return { ...prod, images: sortedImages, category: cat };
   },
 
   async getProductById(id: string) {
@@ -627,9 +645,11 @@ export const dbStore = {
             p.regular_price as "regularPrice", p.sale_price as "salePrice", p.cost_price as "costPrice",
             p.currency, p.track_inventory as "trackInventory", p.stock_quantity as "stockQuantity",
             p.low_stock_threshold as "lowStockThreshold", p.allow_backorders as "allowBackorders",
-            p.enable_variants as "enableVariants", p.enable_personalization as "enablePersonalization",
+            p.enable_variants as "enableVariants", p.variant_groups as "variantGroups",
+            p.enable_personalization as "enablePersonalization",
             p.custom_name_enabled as "customNameEnabled", p.custom_initials_enabled as "customInitialsEnabled",
-            p.custom_color_enabled as "customColorEnabled", p.custom_design_enabled as "customDesignEnabled",
+            p.custom_color_enabled as "customColorEnabled", p.custom_color_palette as "customColorPalette",
+            p.custom_design_enabled as "customDesignEnabled",
             p.custom_image_upload_enabled as "customImageUploadEnabled",
             p.personalization_surcharge as "personalizationSurcharge",
             p.customization_instructions as "customizationInstructions",
@@ -652,14 +672,23 @@ export const dbStore = {
             SELECT id, product_id as "productId", image_url as "imageUrl", alt_text as "altText", is_primary as "isPrimary", display_order as "displayOrder"
             FROM product_images
             WHERE product_id = ${p.id}
-            ORDER BY display_order ASC;
+            ORDER BY is_primary DESC, display_order ASC;
+          `;
+          const variants = await sql`
+            SELECT id, product_id as "productId", name, sku, price_adjustment as "priceAdjustment", inventory, image_url as "imageUrl", is_active as "isActive"
+            FROM product_variants
+            WHERE product_id = ${p.id} AND is_active = true
+            ORDER BY created_at ASC;
           `;
           const cat = await this.getCategoryById(p.categoryId);
           return {
             ...p,
             regularPrice: Number(p.regularPrice).toFixed(2),
             salePrice: p.salePrice ? Number(p.salePrice).toFixed(2) : null,
+            variantGroups: typeof p.variantGroups === "string" ? JSON.parse(p.variantGroups) : (p.variantGroups || []),
+            customColorPalette: typeof p.customColorPalette === "string" ? JSON.parse(p.customColorPalette) : (p.customColorPalette || []),
             images: images || [],
+            variants: variants || [],
             category: cat,
           };
         }
@@ -670,7 +699,10 @@ export const dbStore = {
     const prod = store.products.find((p) => p.id === id);
     if (!prod) return null;
     const cat = store.categories.find((c) => c.id === prod.categoryId);
-    return { ...prod, category: cat };
+    const sortedImages = (prod.images || []).slice().sort((a: any, b: any) =>
+      (b.isPrimary ? 1 : 0) - (a.isPrimary ? 1 : 0) || (a.displayOrder || 0) - (b.displayOrder || 0)
+    );
+    return { ...prod, images: sortedImages, category: cat };
   },
 
   async createProduct(data: any) {
@@ -682,6 +714,10 @@ export const dbStore = {
     const costPrice = data.costPrice ? Number(data.costPrice).toFixed(2) : null;
     const stockQuantity = Number(data.stockQuantity) || 0;
 
+    const sortedImages = (data.images || []).slice().sort((a: any, b: any) =>
+      (b.isPrimary ? 1 : 0) - (a.isPrimary ? 1 : 0) || (a.displayOrder || 0) - (b.displayOrder || 0)
+    );
+
     if (sql) {
       try {
         await sql`
@@ -690,8 +726,8 @@ export const dbStore = {
             product_type, status, is_featured, is_bestseller, is_festival_special, festival_discount_percentage,
             regular_price, sale_price, cost_price,
             currency, track_inventory, stock_quantity, low_stock_threshold, allow_backorders,
-            enable_variants, enable_personalization, custom_name_enabled, custom_initials_enabled,
-            custom_color_enabled, custom_design_enabled, custom_image_upload_enabled,
+            enable_variants, variant_groups, enable_personalization, custom_name_enabled, custom_initials_enabled,
+            custom_color_enabled, custom_color_palette, custom_design_enabled, custom_image_upload_enabled,
             personalization_surcharge, customization_instructions, production_time_days,
             gift_wrapping_available, gift_wrapping_charge, custom_order_notes_enabled,
             weight, dimensions, shipping_class, is_free_shipping, care_instructions,
@@ -704,9 +740,11 @@ export const dbStore = {
             ${regularPrice}, ${salePrice}, ${costPrice},
             ${data.currency || 'INR'}, ${data.trackInventory !== false}, ${stockQuantity},
             ${Number(data.lowStockThreshold) || 3}, ${Boolean(data.allowBackorders)},
-            ${Boolean(data.enableVariants)}, ${Boolean(data.enablePersonalization)},
+            ${Boolean(data.enableVariants)}, ${data.variantGroups ? JSON.stringify(data.variantGroups) : null}::jsonb,
+            ${Boolean(data.enablePersonalization)},
             ${Boolean(data.customNameEnabled)}, ${Boolean(data.customInitialsEnabled)},
-            ${Boolean(data.customColorEnabled)}, ${Boolean(data.customDesignEnabled)},
+            ${Boolean(data.customColorEnabled)}, ${data.customColorPalette ? JSON.stringify(data.customColorPalette) : null}::jsonb,
+            ${Boolean(data.customDesignEnabled)},
             ${Boolean(data.customImageUploadEnabled)},
             ${data.personalizationSurcharge ? String(Number(data.personalizationSurcharge).toFixed(2)) : '0.00'},
             ${data.customizationInstructions || null}, ${Number(data.productionTimeDays) || 3},
@@ -722,13 +760,13 @@ export const dbStore = {
           );
         `;
 
-        if (Array.isArray(data.images) && data.images.length > 0) {
-          for (let i = 0; i < data.images.length; i++) {
-            const img = data.images[i];
+        if (Array.isArray(sortedImages) && sortedImages.length > 0) {
+          for (let i = 0; i < sortedImages.length; i++) {
+            const img = sortedImages[i];
             if (img && img.imageUrl) {
               await sql`
                 INSERT INTO product_images (id, product_id, image_url, alt_text, display_order, is_primary, created_at)
-                VALUES (${img.id || `img_${Date.now()}_${i}`}, ${id}, ${img.imageUrl}, ${img.altText || ''}, ${img.displayOrder ?? i}, ${Boolean(img.isPrimary)}, NOW());
+                VALUES (${img.id || `img_${Date.now()}_${i}`}, ${id}, ${img.imageUrl}, ${img.altText || ''}, ${i + 1}, ${Boolean(img.isPrimary)}, NOW());
               `;
             }
           }
@@ -749,8 +787,10 @@ export const dbStore = {
       stockQuantity,
       isFestivalSpecial: Boolean(data.isFestivalSpecial),
       festivalDiscountPercentage: data.festivalDiscountPercentage || null,
-      images: data.images || [],
+      images: sortedImages,
       variants: data.variants || [],
+      variantGroups: data.variantGroups || [],
+      customColorPalette: data.customColorPalette || [],
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -770,22 +810,50 @@ export const dbStore = {
           SET
             name = COALESCE(${data.name || null}, name),
             slug = COALESCE(${data.slug || null}, slug),
-            short_description = COALESCE(${data.shortDescription !== undefined ? data.shortDescription : null}, short_description),
+            short_description = CASE WHEN ${data.shortDescription !== undefined} THEN ${data.shortDescription} ELSE short_description END,
             description = COALESCE(${data.description || null}, description),
             category_id = COALESCE(${data.categoryId || null}, category_id),
             sku = COALESCE(${data.sku || null}, sku),
             product_type = COALESCE(${data.productType || null}, product_type),
             status = COALESCE(${data.status || null}, status),
-            is_featured = COALESCE(${data.isFeatured !== undefined ? Boolean(data.isFeatured) : null}, is_featured),
-            is_bestseller = COALESCE(${data.isBestseller !== undefined ? Boolean(data.isBestseller) : null}, is_bestseller),
-            is_festival_special = COALESCE(${data.isFestivalSpecial !== undefined ? Boolean(data.isFestivalSpecial) : null}, is_festival_special),
+            is_featured = CASE WHEN ${data.isFeatured !== undefined} THEN ${Boolean(data.isFeatured)} ELSE is_featured END,
+            is_bestseller = CASE WHEN ${data.isBestseller !== undefined} THEN ${Boolean(data.isBestseller)} ELSE is_bestseller END,
+            is_festival_special = CASE WHEN ${data.isFestivalSpecial !== undefined} THEN ${Boolean(data.isFestivalSpecial)} ELSE is_festival_special END,
             festival_discount_percentage = CASE WHEN ${data.festivalDiscountPercentage !== undefined} THEN ${data.festivalDiscountPercentage ? String(Number(data.festivalDiscountPercentage)) : null} ELSE festival_discount_percentage END,
             regular_price = COALESCE(${regularPriceVal}, regular_price),
             sale_price = CASE WHEN ${data.salePrice !== undefined} THEN ${salePriceVal || null} ELSE sale_price END,
             cost_price = CASE WHEN ${data.costPrice !== undefined} THEN ${costPriceVal || null} ELSE cost_price END,
-            stock_quantity = COALESCE(${data.stockQuantity !== undefined ? Number(data.stockQuantity) : null}, stock_quantity),
-            track_inventory = COALESCE(${data.trackInventory !== undefined ? Boolean(data.trackInventory) : null}, track_inventory),
-            enable_personalization = COALESCE(${data.enablePersonalization !== undefined ? Boolean(data.enablePersonalization) : null}, enable_personalization),
+            stock_quantity = CASE WHEN ${data.stockQuantity !== undefined} THEN ${Number(data.stockQuantity)} ELSE stock_quantity END,
+            track_inventory = CASE WHEN ${data.trackInventory !== undefined} THEN ${Boolean(data.trackInventory)} ELSE track_inventory END,
+            low_stock_threshold = CASE WHEN ${data.lowStockThreshold !== undefined} THEN ${Number(data.lowStockThreshold)} ELSE low_stock_threshold END,
+            allow_backorders = CASE WHEN ${data.allowBackorders !== undefined} THEN ${Boolean(data.allowBackorders)} ELSE allow_backorders END,
+
+            enable_variants = CASE WHEN ${data.enableVariants !== undefined} THEN ${Boolean(data.enableVariants)} ELSE enable_variants END,
+            variant_groups = CASE WHEN ${data.variantGroups !== undefined} THEN ${data.variantGroups ? JSON.stringify(data.variantGroups) : null}::jsonb ELSE variant_groups END,
+
+            enable_personalization = CASE WHEN ${data.enablePersonalization !== undefined} THEN ${Boolean(data.enablePersonalization)} ELSE enable_personalization END,
+            custom_name_enabled = CASE WHEN ${data.customNameEnabled !== undefined} THEN ${Boolean(data.customNameEnabled)} ELSE custom_name_enabled END,
+            custom_initials_enabled = CASE WHEN ${data.customInitialsEnabled !== undefined} THEN ${Boolean(data.customInitialsEnabled)} ELSE custom_initials_enabled END,
+            custom_color_enabled = CASE WHEN ${data.customColorEnabled !== undefined} THEN ${Boolean(data.customColorEnabled)} ELSE custom_color_enabled END,
+            custom_color_palette = CASE WHEN ${data.customColorPalette !== undefined} THEN ${data.customColorPalette ? JSON.stringify(data.customColorPalette) : null}::jsonb ELSE custom_color_palette END,
+            custom_design_enabled = CASE WHEN ${data.customDesignEnabled !== undefined} THEN ${Boolean(data.customDesignEnabled)} ELSE custom_design_enabled END,
+            custom_image_upload_enabled = CASE WHEN ${data.customImageUploadEnabled !== undefined} THEN ${Boolean(data.customImageUploadEnabled)} ELSE custom_image_upload_enabled END,
+            personalization_surcharge = CASE WHEN ${data.personalizationSurcharge !== undefined} THEN ${data.personalizationSurcharge ? String(Number(data.personalizationSurcharge).toFixed(2)) : '0.00'} ELSE personalization_surcharge END,
+            customization_instructions = CASE WHEN ${data.customizationInstructions !== undefined} THEN ${data.customizationInstructions || null} ELSE customization_instructions END,
+            production_time_days = CASE WHEN ${data.productionTimeDays !== undefined} THEN ${Number(data.productionTimeDays) || 3} ELSE production_time_days END,
+            gift_wrapping_available = CASE WHEN ${data.giftWrappingAvailable !== undefined} THEN ${Boolean(data.giftWrappingAvailable)} ELSE gift_wrapping_available END,
+            gift_wrapping_charge = CASE WHEN ${data.giftWrappingCharge !== undefined} THEN ${data.giftWrappingCharge ? String(Number(data.giftWrappingCharge).toFixed(2)) : '49.00'} ELSE gift_wrapping_charge END,
+            custom_order_notes_enabled = CASE WHEN ${data.customOrderNotesEnabled !== undefined} THEN ${Boolean(data.customOrderNotesEnabled)} ELSE custom_order_notes_enabled END,
+
+            weight = CASE WHEN ${data.weight !== undefined} THEN ${data.weight ? String(Number(data.weight)) : null} ELSE weight END,
+            dimensions = CASE WHEN ${data.dimensions !== undefined} THEN ${data.dimensions || null} ELSE dimensions END,
+            shipping_class = CASE WHEN ${data.shippingClass !== undefined} THEN ${data.shippingClass || 'standard'} ELSE shipping_class END,
+            is_free_shipping = CASE WHEN ${data.isFreeShipping !== undefined} THEN ${Boolean(data.isFreeShipping)} ELSE is_free_shipping END,
+            care_instructions = CASE WHEN ${data.careInstructions !== undefined} THEN ${data.careInstructions || null} ELSE care_instructions END,
+            materials = CASE WHEN ${data.materials !== undefined} THEN ${data.materials || null} ELSE materials END,
+            dispatch_time_days = CASE WHEN ${data.dispatchTimeDays !== undefined} THEN ${Number(data.dispatchTimeDays) || 2} ELSE dispatch_time_days END,
+            seo_title = CASE WHEN ${data.seoTitle !== undefined} THEN ${data.seoTitle || null} ELSE seo_title END,
+            seo_description = CASE WHEN ${data.seoDescription !== undefined} THEN ${data.seoDescription || null} ELSE seo_description END,
             updated_at = NOW()
           WHERE id = ${id};
         `;
@@ -797,7 +865,7 @@ export const dbStore = {
             if (img && img.imageUrl) {
               await sql`
                 INSERT INTO product_images (id, product_id, image_url, alt_text, display_order, is_primary, created_at)
-                VALUES (${img.id || `img_${Date.now()}_${i}`}, ${id}, ${img.imageUrl}, ${img.altText || ''}, ${img.displayOrder ?? i}, ${Boolean(img.isPrimary)}, NOW());
+                VALUES (${img.id || `img_${Date.now()}_${i}`}, ${id}, ${img.imageUrl}, ${img.altText || ''}, ${i + 1}, ${Boolean(img.isPrimary)}, NOW());
               `;
             }
           }
@@ -2545,6 +2613,7 @@ export const dbStore = {
     const mem = store.customers?.find((c) => c.id === id);
     if (mem) {
       if (data.name !== undefined) mem.name = data.name;
+      if (data.email !== undefined) mem.email = data.email;
       if (data.phone !== undefined) mem.phone = data.phone;
       if (data.avatarUrl !== undefined) mem.avatarUrl = data.avatarUrl;
       if (data.addressLine1 !== undefined) mem.addressLine1 = data.addressLine1;
@@ -2561,6 +2630,7 @@ export const dbStore = {
           UPDATE customers
           SET
             name = COALESCE(${data.name || null}, name),
+            email = COALESCE(${data.email || null}, email),
             phone = COALESCE(${data.phone || null}, phone),
             avatar_url = COALESCE(${data.avatarUrl || null}, avatar_url),
             address_line1 = COALESCE(${data.addressLine1 || null}, address_line1),

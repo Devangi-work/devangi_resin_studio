@@ -1569,14 +1569,30 @@ export default function AdminOrdersPage() {
                                       >
                                         {it.productName}
                                       </p>
-                                      <div className="flex items-center gap-1.5 text-[10px] text-[#736C66] mt-0.5">
+                                      <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-[#736C66] mt-0.5">
                                         <span className="font-semibold text-[#800020] bg-[#FAF0F3] px-1.5 py-0.5 rounded">
                                           Qty: {it.quantity}
                                         </span>
                                         {it.variantName && (
-                                          <span className="truncate text-[#736C66]" title={it.variantName}>
+                                          <span className="truncate text-[#736C66] max-w-[200px]" title={it.variantName}>
                                             • {it.variantName}
                                           </span>
+                                        )}
+                                        {it.personalizationDetails?.color && (
+                                          <span className="text-[#800020] font-medium bg-[#FFF0F4] border border-[#FADBD8] px-1.5 py-0.5 rounded text-[9px]">
+                                            {it.personalizationDetails.color}
+                                          </span>
+                                        )}
+                                        {it.referenceImageUrl && (
+                                          <a
+                                            href={it.referenceImageUrl}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            onClick={(e) => e.stopPropagation()}
+                                            className="text-[#2E7D32] font-semibold underline text-[9px] hover:text-[#1e5822]"
+                                          >
+                                            📷 Reference Photo
+                                          </a>
                                         )}
                                       </div>
                                       {it.personalizationDetails?.customName && (
@@ -2741,24 +2757,64 @@ export default function AdminOrdersPage() {
                           <Package className="w-5 h-5 text-[#B8972E]" />
                         )}
                       </div>
-                      <div className="space-y-1">
-                        <p className="font-semibold text-[#2C332D]">{item.productName}</p>
-                        {item.variantName && <p className="text-[#736C66]">{item.variantName}</p>}
+                      <div className="space-y-1.5">
+                        <p className="font-semibold text-[#2C332D] text-xs">{item.productName}</p>
+                        {item.variantName && (
+                          <p className="text-[#736C66] text-[11px] leading-relaxed">
+                            <strong className="text-[#2C332D]">Options:</strong> {item.variantName}
+                          </p>
+                        )}
+                        {item.personalizationDetails?.color && (
+                          <div className="flex items-center gap-1.5 text-[11px]">
+                            <span className="font-semibold text-[#2C332D]">Palette:</span>
+                            <span className="bg-[#FAF4EC] border border-[#D4AF37]/50 text-[#800020] font-bold px-2 py-0.5 rounded-md text-[10px]">
+                              {item.personalizationDetails.color}
+                            </span>
+                          </div>
+                        )}
                         {item.personalizationDetails?.customName && (
-                          <p className="text-[#B8972E] font-medium">
+                          <p className="text-[#B8972E] font-medium text-xs">
                             Custom Name: &ldquo;{item.personalizationDetails.customName}&rdquo;
                           </p>
                         )}
+                        {item.personalizationDetails?.initials && (
+                          <p className="text-[#2C332D] font-medium text-xs">
+                            Monogram Initials: {item.personalizationDetails.initials}
+                          </p>
+                        )}
+                        {item.personalizationDetails?.notes && (
+                          <p className="text-[#736C66] italic text-[11px]">
+                            Notes: {item.personalizationDetails.notes}
+                          </p>
+                        )}
                         {item.referenceImageUrl && (
-                          <a
-                            href={item.referenceImageUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex items-center space-x-1 text-[11px] text-[#2E7D32] underline"
-                          >
-                            <span>View Reference Photo</span>
-                            <ExternalLink className="w-3 h-3" />
-                          </a>
+                          <div className="flex items-center gap-2 pt-1">
+                            <a
+                              href={item.referenceImageUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="w-11 h-11 rounded-lg border border-[#D4AF37] overflow-hidden shrink-0 block hover:opacity-90 transition shadow-2xs"
+                              title="Click to view reference image"
+                            >
+                              <img
+                                src={item.referenceImageUrl}
+                                alt="Customer Reference"
+                                className="w-full h-full object-cover"
+                              />
+                            </a>
+                            <div>
+                              <a
+                                href={item.referenceImageUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center space-x-1 text-[11px] font-semibold text-[#2E7D32] hover:underline"
+                              >
+                                <span>Customer Reference Photo</span>
+                                <ExternalLink className="w-3 h-3" />
+                              </a>
+                              <span className="text-[10px] text-[#8C7A72] block">Verified Blob Storage</span>
+                            </div>
+                          </div>
                         )}
                       </div>
                     </div>

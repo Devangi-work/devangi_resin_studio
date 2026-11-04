@@ -24,6 +24,11 @@ export function buildSingleProductWhatsAppMessage(params: {
     color?: string;
     design?: string;
     notes?: string;
+    selectedVariants?: Array<{
+      groupTitle?: string;
+      name: string;
+      priceAdjustment?: number;
+    }>;
   } | null;
   referenceImageUrl?: string | null;
   customer?: {
@@ -55,9 +60,17 @@ export function buildSingleProductWhatsAppMessage(params: {
     msg += `*Order Reference:* ${orderNumber}\n\n`;
   }
   msg += `*Product:* ${product.name}\n`;
-  if (variantName) {
+
+  if (Array.isArray(personalizationDetails?.selectedVariants) && personalizationDetails.selectedVariants.length > 0) {
+    msg += `*Selected Variants / Custom Options:*\n`;
+    personalizationDetails.selectedVariants.forEach((v: any) => {
+      const adj = Number(v.priceAdjustment) > 0 ? ` (+₹${Number(v.priceAdjustment).toFixed(2)})` : "";
+      msg += `• ${v.groupTitle || "Option"}: ${v.name}${adj}\n`;
+    });
+  } else if (variantName) {
     msg += `*Variant / Option:* ${variantName}\n`;
   }
+
   msg += `*Quantity:* ${quantity}\n`;
   msg += `*Unit Price:* ₹${unitPrice.toFixed(2)}\n`;
   if (giftWrapped) {
@@ -67,14 +80,14 @@ export function buildSingleProductWhatsAppMessage(params: {
   }
 
   if (personalizationDetails) {
+    if (personalizationDetails.color) {
+      msg += `*Selected Color:* ${personalizationDetails.color}\n`;
+    }
     if (personalizationDetails.customName) {
       msg += `*Custom Name / Text:* "${personalizationDetails.customName}"\n`;
     }
     if (personalizationDetails.initials) {
       msg += `*Initials:* ${personalizationDetails.initials}\n`;
-    }
-    if (personalizationDetails.color) {
-      msg += `*Selected Color:* ${personalizationDetails.color}\n`;
     }
     if (personalizationDetails.design) {
       msg += `*Design / Theme:* ${personalizationDetails.design}\n`;
@@ -155,21 +168,27 @@ export function buildCartWhatsAppMessage(params: {
   items.forEach((item, idx) => {
     const itemTotal = (item.price + (item.giftWrapped ? item.giftWrapCharge || 0 : 0)) * item.quantity;
     msg += `${idx + 1}. *${item.name}*\n`;
-    if (item.variantName) {
+    if (Array.isArray(item.personalizationDetails?.selectedVariants) && item.personalizationDetails.selectedVariants.length > 0) {
+      msg += `   • Selected Variants:\n`;
+      item.personalizationDetails.selectedVariants.forEach((v: any) => {
+        const adj = Number(v.priceAdjustment) > 0 ? ` (+₹${Number(v.priceAdjustment).toFixed(2)})` : "";
+        msg += `     - ${v.groupTitle || "Option"}: ${v.name}${adj}\n`;
+      });
+    } else if (item.variantName) {
       msg += `   • Variant: ${item.variantName}\n`;
     }
     msg += `   • Qty: ${item.quantity} × ₹${item.price.toFixed(2)} = ₹${(item.price * item.quantity).toFixed(2)}\n`;
     if (item.giftWrapped) {
       msg += `   • Gift Packaging: Yes (+₹${((item.giftWrapCharge || 0) * item.quantity).toFixed(2)})\n`;
     }
+    if (item.personalizationDetails?.color) {
+      msg += `   • Color Theme: ${item.personalizationDetails.color}\n`;
+    }
     if (item.personalizationDetails?.customName) {
       msg += `   • Custom Name: "${item.personalizationDetails.customName}"\n`;
     }
     if (item.personalizationDetails?.initials) {
-      msg += `   • Initials: ${item.personalizationDetails.initials}\n`;
-    }
-    if (item.personalizationDetails?.color) {
-      msg += `   • Color: ${item.personalizationDetails.color}\n`;
+      msg += `   • Monogram Initials: ${item.personalizationDetails.initials}\n`;
     }
     if (item.personalizationDetails?.design) {
       msg += `   • Design: ${item.personalizationDetails.design}\n`;
@@ -178,7 +197,7 @@ export function buildCartWhatsAppMessage(params: {
       msg += `   • Notes: ${item.personalizationDetails.notes}\n`;
     }
     if (item.referenceImageUrl) {
-      msg += `   • Ref Image: ${item.referenceImageUrl}\n`;
+      msg += `   • Reference Photo (Blob URL): ${item.referenceImageUrl}\n`;
     }
     msg += `   • Item Total: ₹${itemTotal.toFixed(2)}\n\n`;
   });

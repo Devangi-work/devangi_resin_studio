@@ -58,11 +58,33 @@ export const productSchema = z.object({
   allowBackorders: z.boolean().default(false),
 
   enableVariants: z.boolean().default(false),
+  variantGroups: z
+    .array(
+      z.object({
+        id: z.string().optional(),
+        title: z.string().min(1, "Group title required"),
+        options: z
+          .array(
+            z.object({
+              id: z.string().optional(),
+              name: z.string().min(1, "Option name required"),
+              priceAdjustment: z.coerce.number().default(0),
+              skuModifier: z.string().optional().nullable(),
+              inStock: z.boolean().default(true),
+              isDefault: z.boolean().optional().default(false),
+            })
+          )
+          .default([]),
+      })
+    )
+    .optional()
+    .default([]),
 
   enablePersonalization: z.boolean().default(false),
   customNameEnabled: z.boolean().default(false),
   customInitialsEnabled: z.boolean().default(false),
   customColorEnabled: z.boolean().default(false),
+  customColorPalette: z.array(z.string()).optional().default([]),
   customDesignEnabled: z.boolean().default(false),
   customImageUploadEnabled: z.boolean().default(false),
   personalizationSurcharge: z.preprocess(
@@ -133,6 +155,7 @@ export const checkoutItemSchema = z.object({
       color: z.string().optional(),
       design: z.string().optional(),
       notes: z.string().optional(),
+      selectedVariants: z.any().optional(),
     })
     .nullable()
     .optional(),

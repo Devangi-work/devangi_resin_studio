@@ -7,6 +7,7 @@ import { Footer } from "@/components/layout/Footer";
 import { CartDrawer } from "@/components/cart/CartDrawer";
 import { UnpaidOrderModal } from "@/components/customer/UnpaidOrderModal";
 import { DeliveredOrderModal } from "@/components/orders/DeliveredOrderModal";
+import { ProfileCompletionModal } from "@/components/customer/ProfileCompletionModal";
 
 export function StorefrontShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -23,6 +24,7 @@ export function StorefrontShell({ children }: { children: React.ReactNode }) {
       <CartDrawer />
       <UnpaidOrderModal />
       <DeliveredOrderModal />
+      <ProfileCompletionModal />
       <Footer />
     </>
   );

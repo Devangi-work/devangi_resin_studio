@@ -302,23 +302,39 @@ export function CartDrawer() {
 
                       {/* Variant & Personalization badges */}
                       {item.variantName && (
-                        <p className="text-[11px] text-[#736C66] mt-0.5">
+                        <p className="text-[11px] text-[#736C66] mt-0.5 leading-snug">
                           {item.variantName}
                         </p>
                       )}
 
-                      {item.personalizationDetails?.customName && (
-                        <span className="inline-block mt-1 text-[10px] bg-[#F4EBE6] text-[#B8972E] font-medium px-2 py-0.5 rounded">
-                          Name: "{item.personalizationDetails.customName}"
-                        </span>
-                      )}
-
-                      {item.giftWrapped && (
-                        <span className="inline-flex items-center space-x-1 mt-1 text-[10px] bg-[#E8EFE8] text-[#2E7D32] px-2 py-0.5 rounded ml-1">
-                          <Gift className="w-2.5 h-2.5" />
-                          <span>Gift Wrapped</span>
-                        </span>
-                      )}
+                      <div className="flex flex-wrap items-center gap-1 mt-1">
+                        {item.personalizationDetails?.color && (
+                          <span className="text-[10px] bg-[#FFF0F4] border border-[#FADBD8] text-[#800020] font-semibold px-2 py-0.5 rounded">
+                            {item.personalizationDetails.color}
+                          </span>
+                        )}
+                        {item.personalizationDetails?.customName && (
+                          <span className="text-[10px] bg-[#F4EBE6] text-[#B8972E] font-medium px-2 py-0.5 rounded">
+                            Name: "{item.personalizationDetails.customName}"
+                          </span>
+                        )}
+                        {item.referenceImageUrl && (
+                          <a
+                            href={item.referenceImageUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-[10px] bg-[#E8EFE8] text-[#2E7D32] font-semibold px-2 py-0.5 rounded underline hover:text-[#1e5822]"
+                          >
+                            📷 Reference Photo
+                          </a>
+                        )}
+                        {item.giftWrapped && (
+                          <span className="inline-flex items-center space-x-1 text-[10px] bg-[#E8EFE8] text-[#2E7D32] px-2 py-0.5 rounded">
+                            <Gift className="w-2.5 h-2.5" />
+                            <span>Gift Wrapped</span>
+                          </span>
+                        )}
+                      </div>
 
                       {item.isFestivalSpecial && (
                         <span className="inline-flex items-center space-x-1 mt-1 text-[10px] bg-[#FFF0F4] text-[#800020] border border-[#D4AF37]/40 px-2 py-0.5 rounded font-bold">

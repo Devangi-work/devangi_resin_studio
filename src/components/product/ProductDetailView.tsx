@@ -33,20 +33,112 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailPro
   const router = useRouter();
   const { addItem, setIsCartOpen } = useCart();
 
-  // Gallery state
+  // Gallery state - ensure primary image is selected first
   const images = product.images && product.images.length > 0
     ? product.images
     : [{ id: "def", imageUrl: "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=800", isPrimary: true }];
-  const [activeImage, setActiveImage] = useState(images[0]?.imageUrl);
+  const primaryImgUrl = images.find((img: any) => img.isPrimary)?.imageUrl || images[0]?.imageUrl;
+  const [activeImage, setActiveImage] = useState(primaryImgUrl);
 
-  // Variant state
+  // Variant state: Multi-title variant groups or legacy flat variants
+  const hasVariantGroups = Array.isArray(product.variantGroups) && product.variantGroups.length > 0;
+  const variantGroups = product.variantGroups || [];
   const variants = product.variants || [];
+
+  // Selected variants array allowing multiple variant selections across/within groups
+  const [selectedVariants, setSelectedVariants] = useState<Array<{
+    id: string;
+    name: string;
+    priceAdjustment: number;
+    groupTitle: string;
+    skuModifier?: string;
+  }>>(() => {
+    const init: Array<any> = [];
+    if (hasVariantGroups) {
+      variantGroups.forEach((group: any) => {
+        (group.options || []).forEach((opt: any) => {
+          if (opt.isDefault) {
+            init.push({
+              id: opt.id || opt.name,
+              name: opt.name,
+              priceAdjustment: Number(opt.priceAdjustment) || 0,
+              groupTitle: group.title || "Option",
+              skuModifier: opt.skuModifier,
+            });
+          }
+        });
+      });
+    } else if (variants.length > 0) {
+      const def = variants.find((v: any) => v.isDefault);
+      if (def) {
+        init.push({
+          id: def.id || def.name,
+          name: def.name,
+          priceAdjustment: Number(def.priceAdjustment) || 0,
+          groupTitle: "Option",
+        });
+      }
+    }
+    return init;
+  });
+
   const [selectedVariant, setSelectedVariant] = useState(variants[0] || null);
+
+  const toggleVariantOption = (group: any, opt: any) => {
+    const optId = opt.id || opt.name;
+    setSelectedVariants((prev) => {
+      const exists = prev.some((v) => v.id === optId);
+      if (exists) {
+        return prev.filter((v) => v.id !== optId);
+      } else {
+        return [
+          ...prev,
+          {
+            id: optId,
+            name: opt.name,
+            priceAdjustment: Number(opt.priceAdjustment) || 0,
+            groupTitle: group?.title || "Option",
+            skuModifier: opt.skuModifier,
+          },
+        ];
+      }
+    });
+  };
+
+  const toggleFlatVariant = (v: any) => {
+    const vId = v.id || v.name;
+    setSelectedVariants((prev) => {
+      const exists = prev.some((x) => x.id === vId);
+      if (exists) {
+        return prev.filter((x) => x.id !== vId);
+      } else {
+        return [
+          ...prev,
+          {
+            id: vId,
+            name: v.name,
+            priceAdjustment: Number(v.priceAdjustment) || 0,
+            groupTitle: "Option",
+          },
+        ];
+      }
+    });
+  };
+
+  // Available Resin Color Palette from admin configuration
+  const availableColors = Array.isArray(product.customColorPalette) && product.customColorPalette.length > 0
+    ? product.customColorPalette
+    : [
+        "Ocean Blue & Gold Leaf",
+        "Rose Gold & Blush Pink",
+        "Emerald Green & Gold",
+        "Cosmic Lavender & Pearl",
+      ];
 
   // Personalization state
   const [customName, setCustomName] = useState("");
   const [initials, setInitials] = useState("");
-  const [selectedColor, setSelectedColor] = useState("Ocean Blue & Gold Leaf");
+  const [selectedColor, setSelectedColor] = useState(availableColors[0] || "Rose Gold & Blush Pink");
   const [selectedDesign, setSelectedDesign] = useState("Floral Botanical Inlay");
   const [personalizationNotes, setPersonalizationNotes] = useState("");
   const [referenceImageUrl, setReferenceImageUrl] = useState<string | null>(null);
@@ -81,15 +173,44 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailPro
     hasDiscount = true;
   }
 
-  const variantAdj = selectedVariant ? Number(selectedVariant.priceAdjustment || 0) : 0;
+  const hasSelectedVariants = selectedVariants.length > 0;
+  const variantsSum = hasSelectedVariants
+    ? selectedVariants.reduce((acc: number, cur: any) => acc + (Number(cur?.priceAdjustment) || 0), 0)
+    : 0;
+
+  const hasCustomization = Boolean(
+    product.enablePersonalization ||
+    product.customColorEnabled ||
+    product.customImageUploadEnabled ||
+    product.customNameEnabled ||
+    product.customInitialsEnabled
+  );
+
   const persSurcharge =
-    product.enablePersonalization && customName.trim()
+    (product.enablePersonalization || product.customNameEnabled) && customName.trim()
       ? Number(product.personalizationSurcharge || 0)
       : 0;
 
-  const currentUnitPrice = discountedBase + variantAdj + persSurcharge;
-  const regularUnitPrice = baseRegular + variantAdj + persSurcharge;
+  // When variant(s) are selected: display ONLY the sum of selected variant(s) prices.
+  // If no variant is selected: display product regular/discounted base price.
+  const currentUnitPrice = hasSelectedVariants
+    ? variantsSum + persSurcharge
+    : discountedBase + persSurcharge;
+
+  const regularUnitPrice = hasSelectedVariants
+    ? variantsSum + persSurcharge
+    : baseRegular + persSurcharge;
+
   const giftWrapCharge = product.giftWrappingAvailable ? Number(product.giftWrappingCharge || 49) : 0;
+
+  const getSelectedVariantsSummary = () => {
+    if (selectedVariants.length === 0) {
+      return selectedVariant ? selectedVariant.name : null;
+    }
+    return selectedVariants
+      .map((s: any) => `${s.groupTitle}: ${s.name}${Number(s.priceAdjustment) > 0 ? ` (₹${Number(s.priceAdjustment).toFixed(2)})` : ""}`)
+      .join(" + ");
+  };
 
   // Stock calculations
   const maxStock = selectedVariant
@@ -133,18 +254,24 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailPro
     if (e) e.preventDefault();
     if (isOutOfStock) return;
 
-    const personalizationDetails = product.enablePersonalization
+    const variantSummary = getSelectedVariantsSummary();
+    const primaryVariantId = selectedVariants.length > 0
+      ? selectedVariants.map((v: any) => v.id).join("_")
+      : selectedVariant?.id || null;
+
+    const personalizationDetails = (hasCustomization || selectedVariants.length > 0)
       ? {
           customName: customName.trim() || undefined,
           initials: initials.trim() || undefined,
           color: product.customColorEnabled ? selectedColor : undefined,
           design: product.customDesignEnabled ? selectedDesign : undefined,
           notes: personalizationNotes.trim() || undefined,
+          selectedVariants: selectedVariants.length > 0 ? selectedVariants : undefined,
         }
-      : null;
+      : undefined;
 
     addItem({
-      id: `${product.id}_${selectedVariant?.id || "std"}_${customName || "none"}`,
+      id: `${product.id}_${primaryVariantId || "std"}_${customName || "none"}`,
       productId: product.id,
       name: product.name,
       slug: product.slug,
@@ -154,8 +281,8 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailPro
       festivalDiscountPercentage: rawFestPct > 0 ? rawFestPct : null,
       image: activeImage,
       quantity,
-      variantId: selectedVariant?.id || null,
-      variantName: selectedVariant?.name || null,
+      variantId: primaryVariantId,
+      variantName: variantSummary,
       personalizationDetails,
       referenceImageUrl,
       giftWrapped,
@@ -195,26 +322,31 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailPro
 
   const triggerWhatsAppRedirect = async (cust: any, customSelections?: any) => {
     const qty = customSelections?.quantity || quantity;
-    const pers = customSelections?.personalizationDetails !== undefined
-      ? customSelections.personalizationDetails
-      : (product.enablePersonalization
-          ? {
-              customName: customName.trim() || undefined,
-              initials: initials.trim() || undefined,
-              color: product.customColorEnabled ? selectedColor : undefined,
-              design: product.customDesignEnabled ? selectedDesign : undefined,
-              notes: personalizationNotes.trim() || undefined,
-            }
-          : null);
+    const variantSummary = getSelectedVariantsSummary();
     const vName = customSelections?.variantName !== undefined
       ? customSelections.variantName
-      : (selectedVariant?.name || null);
+      : variantSummary;
     const refImg = customSelections?.referenceImageUrl !== undefined
       ? customSelections.referenceImageUrl
       : referenceImageUrl;
     const isGift = customSelections?.giftWrapped !== undefined
       ? customSelections.giftWrapped
       : giftWrapped;
+
+    const activeSelectedVariants = customSelections?.selectedVariants || selectedVariants;
+
+    const pers = customSelections?.personalizationDetails !== undefined
+      ? customSelections.personalizationDetails
+      : ((hasCustomization || activeSelectedVariants.length > 0)
+          ? {
+              customName: customName.trim() || undefined,
+              initials: initials.trim() || undefined,
+              color: product.customColorEnabled ? selectedColor : undefined,
+              design: product.customDesignEnabled ? selectedDesign : undefined,
+              notes: personalizationNotes.trim() || undefined,
+              selectedVariants: activeSelectedVariants.length > 0 ? activeSelectedVariants : undefined,
+            }
+          : undefined);
 
     setRedirectingWhatsApp(true);
 
@@ -230,7 +362,9 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailPro
               name: product.name,
               price: currentUnitPrice,
               quantity: qty,
-              variantId: selectedVariant?.id || null,
+              variantId: activeSelectedVariants.length > 0
+                ? activeSelectedVariants.map((v: any) => v.id).join("_")
+                : selectedVariant?.id || null,
               variantName: vName,
               sku: product.sku,
               image: activeImage,
@@ -301,6 +435,9 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailPro
                 if (saved.personalizationNotes) setPersonalizationNotes(saved.personalizationNotes);
                 if (saved.referenceImageUrl) setReferenceImageUrl(saved.referenceImageUrl);
                 if (saved.giftWrapped !== undefined) setGiftWrapped(saved.giftWrapped);
+                if (saved.selectedVariants && Array.isArray(saved.selectedVariants)) {
+                  setSelectedVariants(saved.selectedVariants);
+                }
                 sessionStorage.removeItem(`pending_buy1click_${product.id}`);
               }
             } catch {}
@@ -331,7 +468,8 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailPro
         `pending_buy1click_${product.id}`,
         JSON.stringify({
           quantity,
-          variantName: selectedVariant?.name || null,
+          variantName: getSelectedVariantsSummary(),
+          selectedVariants,
           customName,
           initials,
           selectedColor,
@@ -339,15 +477,16 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailPro
           personalizationNotes,
           referenceImageUrl,
           giftWrapped,
-          personalizationDetails: product.enablePersonalization
+          personalizationDetails: (hasCustomization || selectedVariants.length > 0)
             ? {
                 customName: customName.trim() || undefined,
                 initials: initials.trim() || undefined,
                 color: product.customColorEnabled ? selectedColor : undefined,
                 design: product.customDesignEnabled ? selectedDesign : undefined,
                 notes: personalizationNotes.trim() || undefined,
+                selectedVariants: selectedVariants.length > 0 ? selectedVariants : undefined,
               }
-            : null,
+            : undefined,
         })
       );
     } catch {}
@@ -432,7 +571,7 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailPro
                 <span className="underline group-hover:text-[#B8972E]">Verified Customer Feedback</span>
               </a>
               <span>•</span>
-              <span>SKU: <strong className="text-[#2C332D]">{selectedVariant?.sku || product.sku}</strong></span>
+              <span>SKU: <strong className="text-[#2C332D]">{selectedVariants.length > 0 && selectedVariants[0].skuModifier ? `${product.sku}-${selectedVariants.map((v: any) => v.skuModifier || v.name).join("-")}` : selectedVariant?.sku || product.sku}</strong></span>
               <span>•</span>
               <span>
                 Type:{" "}
@@ -449,12 +588,12 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailPro
               <span className="font-serif text-3xl font-bold text-[#2C332D]">
                 ₹{currentUnitPrice.toFixed(2)}
               </span>
-              {hasDiscount && (
+              {!hasSelectedVariants && hasDiscount && (
                 <span className="text-base text-[#A69E96] line-through">
                   ₹{regularUnitPrice.toFixed(2)}
                 </span>
               )}
-              {isFestive && (
+              {!hasSelectedVariants && isFestive && (
                 <span className="text-xs font-black uppercase tracking-wider bg-[#FFF0F4] text-[#800020] border border-[#D4AF37]/50 px-2.5 py-0.5 rounded-full shadow-xs flex items-center space-x-1 font-mono">
                   <Sparkles className="w-3 h-3 text-[#D4AF37]" />
                   <span>{rawFestPct > 0 ? `${rawFestPct}% FESTIVE DEAL` : "Festive Special"}</span>
@@ -489,37 +628,97 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailPro
             </p>
           )}
 
-          {/* ---------------- VARIANTS SELECTOR ---------------- */}
-          {variants.length > 0 && (
+          {/* ---------------- VARIANTS SELECTOR (MULTI-TITLE GROUPS & SINGLE) ---------------- */}
+          {hasVariantGroups ? (
+            <div className="space-y-4 pt-2">
+              {variantGroups.map((group: any, gIdx: number) => {
+                const groupSelections = selectedVariants.filter((v: any) => v.groupTitle === group.title);
+                return (
+                  <div key={group.id || gIdx} className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold text-[#2C332D] uppercase tracking-wider block">
+                        {group.title || `Variant Category ${gIdx + 1}`}
+                      </label>
+                      {groupSelections.length > 0 && (
+                        <span className="text-[11px] text-[#B8972E] font-semibold">
+                          Selected: {groupSelections.map((v: any) => v.name).join(", ")}
+                        </span>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      {(group.options || []).map((opt: any, oIdx: number) => {
+                        const isSelected = selectedVariants.some((v: any) => v.id === (opt.id || opt.name));
+                        return (
+                          <button
+                            key={opt.id || oIdx}
+                            type="button"
+                            onClick={() => toggleVariantOption(group, opt)}
+                            className={`p-3 rounded-xl text-left border transition-all text-xs flex flex-col justify-between ${
+                              isSelected
+                                ? "border-[#2C332D] bg-[#FAF8F5] ring-2 ring-[#2C332D] shadow-xs"
+                                : "border-[#E8E0D5] bg-white hover:border-[#D4AF37] text-[#736C66]"
+                            }`}
+                          >
+                            <div className="flex items-center justify-between w-full">
+                              <span className="font-semibold text-[#2C332D]">{opt.name}</span>
+                              {isSelected && (
+                                <span className="w-2 h-2 rounded-full bg-[#2C332D]" />
+                              )}
+                            </div>
+                            {Number(opt.priceAdjustment) > 0 ? (
+                              <span className="text-[11px] text-[#B8972E] font-semibold mt-1">
+                                ₹{Number(opt.priceAdjustment).toFixed(2)}
+                              </span>
+                            ) : (
+                              <span className="text-[10px] text-[#8C7A72] mt-1">Included</span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : variants.length > 0 ? (
             <div className="space-y-2 pt-2">
               <label className="text-xs font-bold text-[#2C332D] uppercase tracking-wider block">
                 Select Option / Finish
               </label>
               <div className="grid grid-cols-2 gap-2">
-                {variants.map((v: any) => (
-                  <button
-                    key={v.id}
-                    onClick={() => setSelectedVariant(v)}
-                    className={`p-3 rounded-xl text-left border transition-all text-xs flex flex-col justify-between ${
-                      selectedVariant?.id === v.id
-                        ? "border-[#2C332D] bg-white ring-1 ring-[#2C332D] shadow-sm"
-                        : "border-[#E8E0D5] bg-[#FAF8F5] hover:bg-white text-[#736C66]"
-                    }`}
-                  >
-                    <span className="font-semibold text-[#2C332D]">{v.name}</span>
-                    {Number(v.priceAdjustment) > 0 && (
-                      <span className="text-[11px] text-[#B8972E] mt-0.5">
-                        +₹{Number(v.priceAdjustment).toFixed(2)}
-                      </span>
-                    )}
-                  </button>
-                ))}
+                {variants.map((v: any) => {
+                  const isSelected = selectedVariants.some((x: any) => x.id === (v.id || v.name));
+                  return (
+                    <button
+                      key={v.id}
+                      type="button"
+                      onClick={() => toggleFlatVariant(v)}
+                      className={`p-3 rounded-xl text-left border transition-all text-xs flex flex-col justify-between ${
+                        isSelected
+                          ? "border-[#2C332D] bg-white ring-2 ring-[#2C332D] shadow-sm font-semibold"
+                          : "border-[#E8E0D5] bg-[#FAF8F5] hover:bg-white text-[#736C66]"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between w-full">
+                        <span className="font-semibold text-[#2C332D]">{v.name}</span>
+                        {isSelected && (
+                          <span className="w-2 h-2 rounded-full bg-[#2C332D]" />
+                        )}
+                      </div>
+                      {Number(v.priceAdjustment) > 0 && (
+                        <span className="text-[11px] text-[#B8972E] font-semibold mt-0.5">
+                          ₹{Number(v.priceAdjustment).toFixed(2)}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             </div>
-          )}
+          ) : null}
 
           {/* ---------------- RESIN PERSONALISATION FIELDS ---------------- */}
-          {product.enablePersonalization && (
+          {hasCustomization && (
             <div className="bg-white p-5 rounded-2xl border border-[#D4AF37]/50 shadow-sm space-y-4">
               <div className="flex items-center space-x-2 border-b border-[#F4EBE6] pb-2">
                 <Sparkles className="w-4 h-4 text-[#D4AF37]" />
@@ -571,24 +770,24 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailPro
               {/* Color Theme Selector */}
               {product.customColorEnabled && (
                 <div>
-                  <label className="text-xs font-semibold text-[#2C332D] block mb-1.5">
-                    Resin Color Palette
-                  </label>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-xs font-semibold text-[#2C332D] block">
+                      Resin Color Palette
+                    </label>
+                    <span className="text-[11px] text-[#B8972E] font-semibold">
+                      {selectedColor}
+                    </span>
+                  </div>
                   <div className="grid grid-cols-2 gap-2">
-                    {[
-                      "Ocean Blue & Gold Leaf",
-                      "Rose Gold & Blush Pink",
-                      "Emerald Green & Gold",
-                      "Cosmic Lavender & Pearl",
-                    ].map((col) => (
+                    {availableColors.map((col: string) => (
                       <button
                         key={col}
                         type="button"
                         onClick={() => setSelectedColor(col)}
                         className={`px-3 py-2 text-[11px] rounded-lg text-left border transition-all ${
                           selectedColor === col
-                            ? "bg-[#FAF4EC] border-[#B8972E] text-[#2C332D] font-bold"
-                            : "bg-[#FAF8F5] border-[#E8E0D5] text-[#736C66]"
+                            ? "bg-[#FAF4EC] border-[#B8972E] text-[#2C332D] font-bold shadow-xs"
+                            : "bg-[#FAF8F5] border-[#E8E0D5] text-[#736C66] hover:bg-white"
                         }`}
                       >
                         {col}

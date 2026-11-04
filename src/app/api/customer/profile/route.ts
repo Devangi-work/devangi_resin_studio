@@ -5,6 +5,7 @@ import { z } from "zod";
 
 const updateProfileSchema = z.object({
   name: z.string().min(2).optional(),
+  email: z.string().email("Invalid email").optional(),
   phone: z.string().min(10, "10-digit phone number is required").optional(),
   avatarUrl: z.string().url().nullable().optional(),
   addressLine1: z.string().min(3, "Address is required").optional(),

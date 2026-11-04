@@ -75,71 +75,8 @@ export default async function OrdersCataloguePage() {
     }
   }
 
-  // 2. Add signature showcase pieces if needed so catalogue has full representation
-  const signaturePieces = [
-    {
-      id: "sig_1",
-      orderNumber: "RA-20261011-8942",
-      orderDate: new Date(Date.now() - 2 * 24 * 3600 * 1000).toISOString(),
-      productName: "Golden Geode Resin Wall Clock (16-Inch)",
-      variantName: "Royal Emerald & Crushed Quartz",
-      customName: "The Sharma Family",
-      imageUrl: "https://images.unsplash.com/photo-1563245372-f21724e3856d?w=800&auto=format&fit=crop&q=80",
-      categoryTag: "Clocks",
-      isDelivered: true,
-    },
-    {
-      id: "sig_2",
-      orderNumber: "RA-20261009-4120",
-      orderDate: new Date(Date.now() - 4 * 24 * 3600 * 1000).toISOString(),
-      productName: "Wedding Varmala & Preserved Rose Keepsake Block",
-      variantName: "Deep Crimson Petals with 24K Gold Flakes",
-      customName: "Rohan & Ananya • 18.02.2026",
-      imageUrl: "https://images.unsplash.com/photo-1582562124811-c09040d0a901?w=800&auto=format&fit=crop&q=80",
-      categoryTag: "Frames & Flowers",
-      isDelivered: true,
-    },
-    {
-      id: "sig_3",
-      orderNumber: "OFF-20261007-6391",
-      orderDate: new Date(Date.now() - 6 * 24 * 3600 * 1000).toISOString(),
-      productName: "Ocean Wave Resin Serving Tray with Brass Handles",
-      variantName: "Pacific Turquoise with Real White Sand Inlay",
-      customName: "Bespoke Anniversary Gift",
-      imageUrl: "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=800&auto=format&fit=crop&q=80",
-      categoryTag: "Coasters & Trays",
-      isDelivered: true,
-    },
-    {
-      id: "sig_4",
-      orderNumber: "RA-20261004-7128",
-      orderDate: new Date(Date.now() - 9 * 24 * 3600 * 1000).toISOString(),
-      productName: "Personalized Resin Floral LED Nameplate",
-      variantName: "Warm Fairy Lights & Pressed Hydrangeas",
-      customName: "Dr. Mihir & Pooja",
-      imageUrl: "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=800&auto=format&fit=crop&q=80",
-      categoryTag: "Nameplates",
-      isDelivered: true,
-    },
-    {
-      id: "sig_5",
-      orderNumber: "RA-20260928-3482",
-      orderDate: new Date(Date.now() - 14 * 24 * 3600 * 1000).toISOString(),
-      productName: "Handmade Resin Agate Coasters with Gold Leaf Edges",
-      variantName: "Rose Quartz Shimmer (Set of 6)",
-      customName: "Corporate Festive Gift Set",
-      imageUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80",
-      categoryTag: "Coasters & Trays",
-      isDelivered: true,
-    },
-  ];
-
-  // Combine real pieces with signature examples ensuring no duplicate order numbers
-  const existingOrderNumbers = new Set(pieces.map((p) => p.orderNumber));
-  const finalPieces = [
-    ...pieces,
-    ...signaturePieces.filter((p) => !existingOrderNumbers.has(p.orderNumber)),
-  ];
+  // Only display real client orders from the database
+  const finalPieces = pieces;
 
   const whatsappNumber =
     settings?.whatsappNumber || settings?.contactPhone || "+919967313355";

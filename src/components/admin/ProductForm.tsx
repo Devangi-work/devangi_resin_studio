@@ -14,6 +14,8 @@ import {
   Layers,
   ArrowLeft,
   Gift,
+  Palette,
+  X,
 } from "lucide-react";
 import { MediaPickerModal } from "@/components/admin/MediaPickerModal";
 
@@ -58,11 +60,36 @@ export function ProductForm({ initialData, isEditing = false }: ProductFormProps
 
     enableVariants: initialData?.enableVariants || false,
     variants: initialData?.variants || [],
+    variantGroups: Array.isArray(initialData?.variantGroups) && initialData.variantGroups.length > 0
+      ? initialData.variantGroups
+      : initialData?.variants?.length
+        ? [
+          {
+            id: `vg_${Date.now()}`,
+            title: "Options & Finishes",
+            options: initialData.variants.map((v: any, idx: number) => ({
+              id: v.id || `opt_${idx}`,
+              name: v.name,
+              priceAdjustment: Number(v.priceAdjustment) || 0,
+              skuModifier: v.sku?.split("-").pop() || "",
+              inStock: v.isActive !== false,
+            })),
+          },
+        ]
+        : [],
 
     enablePersonalization: initialData?.enablePersonalization || false,
     customNameEnabled: initialData?.customNameEnabled || false,
     customInitialsEnabled: initialData?.customInitialsEnabled || false,
     customColorEnabled: initialData?.customColorEnabled || false,
+    customColorPalette: Array.isArray(initialData?.customColorPalette) && initialData.customColorPalette.length > 0
+      ? initialData.customColorPalette
+      : [
+        "Ocean Blue & Gold Leaf",
+        "Rose Gold & Blush Pink",
+        "Emerald Green & Gold",
+        "Cosmic Lavender & Pearl",
+      ],
     customDesignEnabled: initialData?.customDesignEnabled || false,
     customImageUploadEnabled: initialData?.customImageUploadEnabled || false,
     personalizationSurcharge: initialData?.personalizationSurcharge || "0.00",
@@ -88,6 +115,7 @@ export function ProductForm({ initialData, isEditing = false }: ProductFormProps
 
   const [uploadingImage, setUploadingImage] = useState(false);
   const [isMediaPickerOpen, setIsMediaPickerOpen] = useState(false);
+  const [newColorInput, setNewColorInput] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
@@ -180,51 +208,128 @@ export function ProductForm({ initialData, isEditing = false }: ProductFormProps
   const removeImage = (index: number) => {
     const updated = [...formData.images];
     updated.splice(index, 1);
-    if (updated.length > 0 && !updated.some((i: any) => i.isPrimary)) {
-      updated[0].isPrimary = true;
-    }
-    setFormData({ ...formData, images: updated });
+    const reordered = updated.map((img: any, i: number) => ({
+      ...img,
+      isPrimary: i === 0,
+      displayOrder: i + 1,
+    }));
+    setFormData({ ...formData, images: reordered });
   };
 
   const setPrimaryImage = (index: number) => {
-    const updated = formData.images.map((img: any, i: number) => ({
+    const selected = formData.images[index];
+    if (!selected) return;
+    const remaining = formData.images.filter((_: any, i: number) => i !== index);
+    const reordered = [selected, ...remaining].map((img: any, i: number) => ({
       ...img,
-      isPrimary: i === index,
+      isPrimary: i === 0,
+      displayOrder: i + 1,
     }));
-    setFormData({ ...formData, images: updated });
+    setFormData({ ...formData, images: reordered });
   };
 
-  // Add / Remove Variant
-  const addVariant = () => {
-    const newVariant = {
-      id: `var_${Date.now()}`,
-      name: "Option Name",
-      sku: `${formData.sku || "VAR"}-${formData.variants.length + 1}`,
-      priceAdjustment: 0,
-      inventory: 10,
-      isActive: true,
+  // Variant Groups with Titles & Multiple Options
+  const addVariantGroup = () => {
+    const newGroup = {
+      id: `vg_${Date.now()}`,
+      title: "",
+      options: [
+        {
+          id: `opt_${Date.now()}_1`,
+          name: "",
+          priceAdjustment: 0,
+          skuModifier: "",
+          inStock: true,
+        },
+      ],
     };
-    setFormData({
-      ...formData,
+    setFormData((prev) => ({
+      ...prev,
       enableVariants: true,
-      variants: [...formData.variants, newVariant],
-    });
+      variantGroups: [...(prev.variantGroups || []), newGroup],
+    }));
   };
 
-  const updateVariant = (index: number, field: string, value: any) => {
-    const updated = [...formData.variants];
-    updated[index] = { ...updated[index], [field]: value };
-    setFormData({ ...formData, variants: updated });
+  const updateVariantGroupTitle = (groupIndex: number, title: string) => {
+    const updated = [...(formData.variantGroups || [])];
+    if (updated[groupIndex]) {
+      updated[groupIndex] = { ...updated[groupIndex], title };
+      setFormData({ ...formData, variantGroups: updated });
+    }
   };
 
-  const removeVariant = (index: number) => {
-    const updated = [...formData.variants];
-    updated.splice(index, 1);
+  const removeVariantGroup = (groupIndex: number) => {
+    const updated = [...(formData.variantGroups || [])];
+    updated.splice(groupIndex, 1);
     setFormData({
       ...formData,
-      variants: updated,
+      variantGroups: updated,
       enableVariants: updated.length > 0,
     });
+  };
+
+  const addVariantOption = (groupIndex: number) => {
+    const updated = [...(formData.variantGroups || [])];
+    if (!updated[groupIndex]) return;
+    const isFirst = (!updated[groupIndex].options || updated[groupIndex].options.length === 0);
+    updated[groupIndex].options = [
+      ...(updated[groupIndex].options || []),
+      {
+        id: `opt_${Date.now()}_${(updated[groupIndex].options || []).length + 1}`,
+        name: "",
+        priceAdjustment: 0,
+        skuModifier: "",
+        inStock: true,
+        isDefault: isFirst,
+      },
+    ];
+    setFormData({ ...formData, variantGroups: updated });
+  };
+
+  const setDefaultVariantOption = (groupIndex: number, optionIndex: number) => {
+    const updated = [...(formData.variantGroups || [])];
+    if (!updated[groupIndex] || !updated[groupIndex].options) return;
+    updated[groupIndex].options.forEach((o: any, oi: number) => {
+      o.isDefault = oi === optionIndex;
+    });
+    setFormData({ ...formData, variantGroups: updated });
+  };
+
+  const updateVariantOption = (groupIndex: number, optionIndex: number, field: string, value: any) => {
+    const updated = [...(formData.variantGroups || [])];
+    if (!updated[groupIndex] || !updated[groupIndex].options[optionIndex]) return;
+    updated[groupIndex].options[optionIndex] = {
+      ...updated[groupIndex].options[optionIndex],
+      [field]: value,
+    };
+    setFormData({ ...formData, variantGroups: updated });
+  };
+
+  const removeVariantOption = (groupIndex: number, optionIndex: number) => {
+    const updated = [...(formData.variantGroups || [])];
+    if (!updated[groupIndex]) return;
+    updated[groupIndex].options.splice(optionIndex, 1);
+    setFormData({ ...formData, variantGroups: updated });
+  };
+
+  // Resin Color Palette Handlers
+  const addColorToPalette = (colorName: string) => {
+    const trimmed = colorName.trim();
+    if (!trimmed) return;
+    const current = formData.customColorPalette || [];
+    if (!current.includes(trimmed)) {
+      setFormData({
+        ...formData,
+        customColorPalette: [...current, trimmed],
+      });
+    }
+    setNewColorInput("");
+  };
+
+  const removeColorFromPalette = (index: number) => {
+    const updated = [...(formData.customColorPalette || [])];
+    updated.splice(index, 1);
+    setFormData({ ...formData, customColorPalette: updated });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -240,8 +345,28 @@ export function ProductForm({ initialData, isEditing = false }: ProductFormProps
 
       const method = isEditing ? "PUT" : "POST";
 
+      const flattenedVariants = (formData.variantGroups || []).flatMap((g: any) =>
+        (g.options || []).map((o: any) => ({
+          id: o.id || `var_${Date.now()}`,
+          name: g.title ? `${g.title}: ${o.name}` : o.name,
+          sku: `${formData.sku || "VAR"}-${(o.skuModifier || o.name || "OPT").replace(/[^a-zA-Z0-9]/g, "").slice(0, 4).toUpperCase()}`,
+          priceAdjustment: Number(o.priceAdjustment) || 0,
+          inventory: o.inStock !== false ? 10 : 0,
+          isActive: o.inStock !== false,
+        }))
+      );
+
+      const hasAnyCustomization =
+        Boolean(formData.customColorEnabled) ||
+        Boolean(formData.customImageUploadEnabled) ||
+        Boolean(formData.customNameEnabled) ||
+        Boolean(formData.customInitialsEnabled) ||
+        Boolean(formData.enablePersonalization);
+
       const payload = {
         ...formData,
+        enablePersonalization: hasAnyCustomization,
+        variants: flattenedVariants.length > 0 ? flattenedVariants : formData.variants,
         sku: formData.sku?.trim() || `RA-${formData.name.replace(/[^a-zA-Z0-9]/g, "").slice(0, 4).toUpperCase() || "ART"}-${Math.floor(100 + Math.random() * 900)}`,
         slug: formData.slug?.trim() || formData.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, ""),
       };
@@ -277,7 +402,7 @@ export function ProductForm({ initialData, isEditing = false }: ProductFormProps
 
   return (
     <div className="space-y-6">
-      
+
       {/* Top Header */}
       <div className="flex items-center justify-between border-b border-[#E8E0D5] pb-4">
         <div className="flex items-center space-x-3">
@@ -344,11 +469,10 @@ export function ProductForm({ initialData, isEditing = false }: ProductFormProps
             key={tab.key}
             type="button"
             onClick={() => setActiveTab(tab.key as any)}
-            className={`px-4 py-2.5 rounded-xl transition-all whitespace-nowrap ${
-              activeTab === tab.key
+            className={`px-4 py-2.5 rounded-xl transition-all whitespace-nowrap ${activeTab === tab.key
                 ? "bg-[#2C332D] text-white shadow-sm"
                 : "text-[#736C66] hover:text-[#2C332D] hover:bg-white"
-            }`}
+              }`}
           >
             {tab.label}
           </button>
@@ -356,7 +480,7 @@ export function ProductForm({ initialData, isEditing = false }: ProductFormProps
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        
+
         {/* ==================== TAB 1: GENERAL ==================== */}
         {activeTab === "general" && (
           <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#E8E0D5] shadow-sm space-y-6">
@@ -753,94 +877,200 @@ export function ProductForm({ initialData, isEditing = false }: ProductFormProps
           </div>
         )}
 
-        {/* ==================== TAB 4: VARIANTS ==================== */}
+        {/* ==================== TAB 4: VARIANTS (MULTI-TITLE GROUPS) ==================== */}
         {activeTab === "variants" && (
           <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#E8E0D5] shadow-sm space-y-6">
-            <div className="flex items-center justify-between border-b border-[#F4EBE6] pb-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#F4EBE6] pb-4 gap-3">
               <div>
-                <h3 className="font-serif text-base font-bold text-[#2C332D]">
-                  Product Variants
+                <h3 className="font-serif text-base font-bold text-[#2C332D] flex items-center gap-2">
+                  <Layers className="w-4 h-4 text-[#B8972E]" />
+                  <span>Product Variants & Custom Options</span>
                 </h3>
-                <p className="text-xs text-[#736C66]">
-                  Configure shapes, sizes, chains, or finishes with custom price adjustments and SKUs.
+                <p className="text-xs text-[#736C66] mt-0.5">
+                  Enter a title for each variant category (e.g. &ldquo;Size&rdquo;, &ldquo;Hardware Tone&rdquo;, &ldquo;Stand Base&rdquo;) and add multiple options under each title.
                 </p>
               </div>
               <button
                 type="button"
-                onClick={addVariant}
-                className="px-4 py-2 bg-[#2C332D] text-white rounded-xl text-xs font-semibold flex items-center space-x-1.5 hover:bg-[#3D473E]"
+                onClick={addVariantGroup}
+                className="px-4 py-2 bg-[#2C332D] text-white rounded-xl text-xs font-semibold flex items-center space-x-1.5 hover:bg-[#3D473E] shadow-sm transition"
               >
                 <Plus className="w-3.5 h-3.5" />
-                <span>Add Variant</span>
+                <span>Add Variant Title / Group</span>
               </button>
             </div>
 
-            {formData.variants.length === 0 ? (
-              <div className="p-8 border border-dashed border-[#E8E0D5] rounded-2xl text-center text-xs text-[#736C66] bg-[#FAF8F5]">
-                No variants configured for this product. Click "Add Variant" to add options.
+            {(!formData.variantGroups || formData.variantGroups.length === 0) ? (
+              <div className="p-10 border-2 border-dashed border-[#E8E0D5] rounded-2xl text-center space-y-3 bg-[#FAF8F5]">
+                <Layers className="w-8 h-8 text-[#8C7A72] mx-auto opacity-70" />
+                <p className="text-xs text-[#736C66] max-w-md mx-auto">
+                  No variant categories configured yet. Click below to add a variant title (e.g., &ldquo;Select Size&rdquo; or &ldquo;Hardware Color&rdquo;) and configure its options.
+                </p>
+                <button
+                  type="button"
+                  onClick={addVariantGroup}
+                  className="px-4 py-2 bg-[#2C332D] text-white rounded-xl text-xs font-semibold inline-flex items-center space-x-1.5 hover:bg-[#3D473E]"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Create First Variant Title</span>
+                </button>
               </div>
             ) : (
-              <div className="space-y-3">
-                {formData.variants.map((v: any, idx: number) => (
+              <div className="space-y-6">
+                {formData.variantGroups.map((group: any, gIdx: number) => (
                   <div
-                    key={v.id || idx}
-                    className="p-4 bg-[#FAF8F5] rounded-xl border border-[#E8E0D5] grid grid-cols-1 sm:grid-cols-5 gap-3 items-center"
+                    key={group.id || gIdx}
+                    className="p-5 bg-[#FAF8F5] rounded-2xl border border-[#E8E0D5] shadow-xs space-y-4"
                   >
-                    <div className="sm:col-span-2">
-                      <label className="text-[10px] text-[#736C66] block">Option Name</label>
-                      <input
-                        type="text"
-                        value={v.name}
-                        onChange={(e) => updateVariant(idx, "name", e.target.value)}
-                        placeholder="e.g. Size: Large (16x8 inch)"
-                        className="w-full px-2.5 py-1.5 text-xs bg-white border border-[#E8E0D5] rounded-lg"
-                      />
+                    {/* Variant Group Title Header */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#E8E0D5] pb-3">
+                      <div className="flex-1 max-w-md">
+                        <label className="text-[11px] font-bold uppercase tracking-wider text-[#2C332D] block mb-1">
+                          Variant Title #{gIdx + 1} (e.g. Size, Hardware, Frame Finish) *
+                        </label>
+                        <input
+                          type="text"
+                          value={group.title}
+                          onChange={(e) => updateVariantGroupTitle(gIdx, e.target.value)}
+                          placeholder="e.g. Size, Hardware Finish, Chain Style"
+                          className="w-full px-3 py-2 text-xs font-semibold bg-white border border-[#D4AF37]/50 rounded-xl focus:ring-1 focus:ring-[#D4AF37] focus:outline-none"
+                        />
+                      </div>
+                      <div className="flex items-center space-x-2 self-end sm:self-center">
+                        <button
+                          type="button"
+                          onClick={() => addVariantOption(gIdx)}
+                          className="px-3 py-1.5 bg-[#2C332D] text-white rounded-lg text-[11px] font-semibold flex items-center space-x-1 hover:bg-[#3D473E] shadow-xs transition"
+                        >
+                          <Plus className="w-3 h-3" />
+                          <span>Add Option</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => removeVariantGroup(gIdx)}
+                          className="p-1.5 text-[#DF4C4C] hover:bg-[#FDF2F2] rounded-lg transition"
+                          title="Delete this entire title/group"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
-                    <div>
-                      <label className="text-[10px] text-[#736C66] block">SKU</label>
-                      <input
-                        type="text"
-                        value={v.sku}
-                        onChange={(e) => updateVariant(idx, "sku", e.target.value)}
-                        className="w-full px-2.5 py-1.5 text-xs bg-white border border-[#E8E0D5] rounded-lg font-mono"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[10px] text-[#736C66] block">Price Adj (+₹)</label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={v.priceAdjustment}
-                        onChange={(e) => updateVariant(idx, "priceAdjustment", Number(e.target.value))}
-                        className="w-full px-2.5 py-1.5 text-xs bg-white border border-[#E8E0D5] rounded-lg"
-                      />
-                    </div>
-                    <div className="flex items-center space-x-2 pt-3 sm:pt-0 justify-end">
-                      <button
-                        type="button"
-                        onClick={() => removeVariant(idx)}
-                        className="text-[#DF4C4C] hover:bg-[#FDF2F2] p-1.5 rounded-lg"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+
+                    {/* Options list under this title */}
+                    <div className="space-y-2.5">
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-[#8C7A72] hidden sm:grid grid-cols-12 gap-3 px-2">
+                        <span className="col-span-4">Option Name (e.g. P / Medium)</span>
+                        <span className="col-span-3">Price (₹)</span>
+                        <span className="col-span-2">SKU Suffix</span>
+                        <span className="col-span-3 text-right">Default / Actions</span>
+                      </div>
+
+                      {(!group.options || group.options.length === 0) ? (
+                        <p className="text-xs text-[#8C7A72] italic py-2">
+                          No options added under &ldquo;{group.title || "this title"}&rdquo;. Click &ldquo;Add Option&rdquo; above.
+                        </p>
+                      ) : (
+                        group.options.map((opt: any, oIdx: number) => (
+                          <div
+                            key={opt.id || oIdx}
+                            className="bg-white p-3 rounded-xl border border-[#E8E0D5] grid grid-cols-1 sm:grid-cols-12 gap-3 items-center"
+                          >
+                            <div className="sm:col-span-4">
+                              <label className="text-[10px] text-[#8C7A72] block sm:hidden">Option Name</label>
+                              <input
+                                type="text"
+                                value={opt.name}
+                                onChange={(e) => updateVariantOption(gIdx, oIdx, "name", e.target.value)}
+                                placeholder="e.g. Medium (8-inch)"
+                                className="w-full px-2.5 py-1.5 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
+                              />
+                            </div>
+                            <div className="sm:col-span-3">
+                              <label className="text-[10px] text-[#8C7A72] block sm:hidden">Price (₹)</label>
+                              <div className="relative">
+                                <span className="absolute left-2.5 top-1.5 text-xs font-bold text-[#8C7A72]">₹</span>
+                                <input
+                                  type="number"
+                                  step="0.01"
+                                  value={opt.priceAdjustment}
+                                  onChange={(e) => updateVariantOption(gIdx, oIdx, "priceAdjustment", Number(e.target.value))}
+                                  placeholder="0.00"
+                                  className="w-full pl-6 pr-2.5 py-1.5 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-lg font-mono focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
+                                />
+                              </div>
+                            </div>
+                            <div className="sm:col-span-2">
+                              <label className="text-[10px] text-[#8C7A72] block sm:hidden">SKU Suffix</label>
+                              <input
+                                type="text"
+                                value={opt.skuModifier || ""}
+                                onChange={(e) => updateVariantOption(gIdx, oIdx, "skuModifier", e.target.value)}
+                                placeholder="e.g. P"
+                                className="w-full px-2.5 py-1.5 text-xs uppercase bg-[#FAF8F5] border border-[#E8E0D5] rounded-lg font-mono focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
+                              />
+                            </div>
+                            <div className="sm:col-span-3 flex items-center justify-between sm:justify-end space-x-2">
+                              <button
+                                type="button"
+                                onClick={() => setDefaultVariantOption(gIdx, oIdx)}
+                                className={`px-2 py-1 rounded-md text-[10px] font-bold transition flex items-center space-x-1 ${
+                                  opt.isDefault
+                                    ? "bg-[#2C332D] text-[#D4AF37] ring-1 ring-[#D4AF37] shadow-xs"
+                                    : "bg-[#FAF4EC] text-[#736C66] hover:bg-[#F3E8DB] hover:text-[#2C332D]"
+                                }`}
+                                title={opt.isDefault ? "Default selected option" : "Click to make this option the default selected"}
+                              >
+                                <span>{opt.isDefault ? "★ Default" : "Set Default"}</span>
+                              </button>
+                              <label className="flex items-center space-x-1 text-[11px] text-[#2C332D] cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={opt.inStock !== false}
+                                  onChange={(e) => updateVariantOption(gIdx, oIdx, "inStock", e.target.checked)}
+                                  className="rounded text-[#2C332D]"
+                                />
+                                <span className="text-[10px]">Stock</span>
+                              </label>
+                              <button
+                                type="button"
+                                onClick={() => removeVariantOption(gIdx, oIdx)}
+                                className="p-1.5 text-[#DF4C4C] hover:bg-[#FDF2F2] rounded-lg transition"
+                                title="Remove this option"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        ))
+                      )}
                     </div>
                   </div>
                 ))}
+
+                <button
+                  type="button"
+                  onClick={addVariantGroup}
+                  className="w-full py-3 bg-[#FAF8F5] border-2 border-dashed border-[#E8E0D5] hover:border-[#D4AF37] text-[#2C332D] rounded-2xl text-xs font-bold flex items-center justify-center space-x-2 transition"
+                >
+                  <Plus className="w-4 h-4 text-[#B8972E]" />
+                  <span>+ Add Another Variant Title / Category</span>
+                </button>
               </div>
             )}
           </div>
         )}
 
-        {/* ==================== TAB 5: RESIN PERSONALISATION ==================== */}
+        {/* ==================== TAB 5: RESIN PERSONALISATION & CUSTOMISATION ==================== */}
         {activeTab === "customization" && (
           <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#E8E0D5] shadow-sm space-y-6">
             <div className="flex items-center justify-between border-b border-[#F4EBE6] pb-3">
               <div>
-                <h3 className="font-serif text-base font-bold text-[#2C332D]">
-                  Resin Art Customisation & Personalisation
+                <h3 className="font-serif text-base font-bold text-[#2C332D] flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-[#D4AF37]" />
+                  <span>Resin Art Customisation & Personalisation</span>
                 </h3>
-                <p className="text-xs text-[#736C66]">
-                  Enable customer inputs like custom names, initials, color selection, and reference image uploads.
+                <p className="text-xs text-[#736C66] mt-0.5">
+                  Configure bespoke customer inputs: reference photo upload, resin color palette, custom names, and monogram initials.
                 </p>
               </div>
               <label className="flex items-center space-x-2 text-xs font-bold text-[#2C332D] cursor-pointer">
@@ -855,46 +1085,159 @@ export function ProductForm({ initialData, isEditing = false }: ProductFormProps
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <label className="flex items-center space-x-2.5 p-3 rounded-xl border border-[#E8E0D5] bg-[#FAF8F5] cursor-pointer text-xs">
-                <input
-                  type="checkbox"
-                  checked={formData.customNameEnabled}
-                  onChange={(e) => setFormData({ ...formData, customNameEnabled: e.target.checked })}
-                  className="rounded text-[#2C332D]"
-                />
-                <span>Allow Custom Name / Word</span>
-              </label>
-
-              <label className="flex items-center space-x-2.5 p-3 rounded-xl border border-[#E8E0D5] bg-[#FAF8F5] cursor-pointer text-xs">
-                <input
-                  type="checkbox"
-                  checked={formData.customInitialsEnabled}
-                  onChange={(e) => setFormData({ ...formData, customInitialsEnabled: e.target.checked })}
-                  className="rounded text-[#2C332D]"
-                />
-                <span>Allow Monogram Initials</span>
-              </label>
-
-              <label className="flex items-center space-x-2.5 p-3 rounded-xl border border-[#E8E0D5] bg-[#FAF8F5] cursor-pointer text-xs">
-                <input
-                  type="checkbox"
-                  checked={formData.customColorEnabled}
-                  onChange={(e) => setFormData({ ...formData, customColorEnabled: e.target.checked })}
-                  className="rounded text-[#2C332D]"
-                />
-                <span>Allow Color Palette Selection</span>
-              </label>
-
-              <label className="flex items-center space-x-2.5 p-3 rounded-xl border border-[#E8E0D5] bg-[#FAF8F5] cursor-pointer text-xs">
+              <label className="flex items-center space-x-2.5 p-3.5 rounded-xl border border-[#E8E0D5] bg-[#FAF8F5] hover:bg-white cursor-pointer text-xs transition">
                 <input
                   type="checkbox"
                   checked={formData.customImageUploadEnabled}
                   onChange={(e) => setFormData({ ...formData, customImageUploadEnabled: e.target.checked })}
                   className="rounded text-[#2C332D]"
                 />
-                <span>Allow Customer Reference Image Upload</span>
+                <div className="flex-1">
+                  <span className="font-semibold text-[#2C332D] block">Allow Reference Photo Upload</span>
+                  <span className="text-[10px] text-[#736C66] block">Customer can upload reference image (HEIC/JPG/PNG) sent to WhatsApp</span>
+                </div>
+              </label>
+
+              <label className="flex items-center space-x-2.5 p-3.5 rounded-xl border border-[#E8E0D5] bg-[#FAF8F5] hover:bg-white cursor-pointer text-xs transition">
+                <input
+                  type="checkbox"
+                  checked={formData.customColorEnabled}
+                  onChange={(e) => setFormData({ ...formData, customColorEnabled: e.target.checked })}
+                  className="rounded text-[#2C332D]"
+                />
+                <div className="flex-1">
+                  <span className="font-semibold text-[#2C332D] block">Allow Resin Color Palette Selection</span>
+                  <span className="text-[10px] text-[#736C66] block">Customer chooses from custom curated resin pigment colors</span>
+                </div>
+              </label>
+
+              <label className="flex items-center space-x-2.5 p-3.5 rounded-xl border border-[#E8E0D5] bg-[#FAF8F5] hover:bg-white cursor-pointer text-xs transition">
+                <input
+                  type="checkbox"
+                  checked={formData.customNameEnabled}
+                  onChange={(e) => setFormData({ ...formData, customNameEnabled: e.target.checked })}
+                  className="rounded text-[#2C332D]"
+                />
+                <div className="flex-1">
+                  <span className="font-semibold text-[#2C332D] block">Allow Custom Name / Word</span>
+                  <span className="text-[10px] text-[#736C66] block">Customer enters custom name or phrase to be embedded in resin</span>
+                </div>
+              </label>
+
+              <label className="flex items-center space-x-2.5 p-3.5 rounded-xl border border-[#E8E0D5] bg-[#FAF8F5] hover:bg-white cursor-pointer text-xs transition">
+                <input
+                  type="checkbox"
+                  checked={formData.customInitialsEnabled}
+                  onChange={(e) => setFormData({ ...formData, customInitialsEnabled: e.target.checked })}
+                  className="rounded text-[#2C332D]"
+                />
+                <div className="flex-1">
+                  <span className="font-semibold text-[#2C332D] block">Allow Monogram Initials</span>
+                  <span className="text-[10px] text-[#736C66] block">Customer specifies 1-4 uppercase initials</span>
+                </div>
               </label>
             </div>
+
+            {/* Resin Color Palette Manager (when customColorEnabled is true) */}
+            {formData.customColorEnabled && (
+              <div className="p-5 bg-[#FAF8F5] rounded-2xl border border-[#D4AF37]/50 space-y-4 shadow-xs">
+                <div className="flex items-center justify-between border-b border-[#E8E0D5] pb-2">
+                  <div className="flex items-center space-x-2">
+                    <Palette className="w-4 h-4 text-[#B8972E]" />
+                    <h4 className="font-serif text-xs font-bold text-[#2C332D] uppercase tracking-wider">
+                      Resin Color Palette Options for this Product
+                    </h4>
+                  </div>
+                  <span className="text-[10px] text-[#8C7A72]">
+                    {(formData.customColorPalette || []).length} colors configured
+                  </span>
+                </div>
+
+                {/* Active color chips */}
+                <div className="flex flex-wrap gap-2">
+                  {(formData.customColorPalette || []).map((col: string, idx: number) => (
+                    <span
+                      key={idx}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-[#D4AF37]/60 text-[#2C332D] text-xs font-semibold rounded-full shadow-xs"
+                    >
+                      <span>{col}</span>
+                      <button
+                        type="button"
+                        onClick={() => removeColorFromPalette(idx)}
+                        className="text-[#8C7A72] hover:text-[#DF4C4C] transition p-0.5"
+                        title="Remove color"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  ))}
+                  {(!formData.customColorPalette || formData.customColorPalette.length === 0) && (
+                    <p className="text-xs text-[#8C7A72] italic">
+                      No colors added yet. Type a color below or click a studio preset.
+                    </p>
+                  )}
+                </div>
+
+                {/* Add Custom Color Input */}
+                <div className="flex gap-2 pt-1">
+                  <input
+                    type="text"
+                    value={newColorInput}
+                    onChange={(e) => setNewColorInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        addColorToPalette(newColorInput);
+                      }
+                    }}
+                    placeholder="Enter custom pigment / theme (e.g. Sunset Amber & Gold Leaf)"
+                    className="flex-1 px-3 py-2 text-xs bg-white border border-[#E8E0D5] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => addColorToPalette(newColorInput)}
+                    className="px-4 py-2 bg-[#2C332D] text-white rounded-xl text-xs font-semibold hover:bg-[#3D473E] shadow-xs transition"
+                  >
+                    + Add Color
+                  </button>
+                </div>
+
+                {/* Preset Studio Pigments Quick Add */}
+                <div className="space-y-1.5 pt-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#8C7A72] block">
+                    Quick Add Studio Favorites:
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {[
+                      "Ocean Blue & Gold Leaf",
+                      "Rose Gold & Blush Pink",
+                      "Emerald Green & Gold",
+                      "Cosmic Lavender & Pearl",
+                      "Obsidian Black & 24K Gold",
+                      "Royal Navy Blue",
+                      "Sunset Amber & Copper",
+                      "Pearl White Minimalist",
+                    ].map((preset) => {
+                      const alreadyAdded = (formData.customColorPalette || []).includes(preset);
+                      return (
+                        <button
+                          key={preset}
+                          type="button"
+                          disabled={alreadyAdded}
+                          onClick={() => addColorToPalette(preset)}
+                          className={`text-[10px] px-2.5 py-1 rounded-lg border transition ${alreadyAdded
+                              ? "bg-[#FAF4EC] border-[#D4AF37]/30 text-[#8C7A72] opacity-60 cursor-not-allowed"
+                              : "bg-white border-[#E8E0D5] hover:border-[#D4AF37] text-[#2C332D] font-medium"
+                            }`}
+                        >
+                          + {preset}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-2">
               <div>
