@@ -218,15 +218,15 @@ export function Navbar() {
       {/* Main Navbar - Solid porcelain cream in mobile view (never transparent), logo colors */}
       <nav
         ref={dropdownRef}
-        className="relative bg-[#FCFAF8] sm:bg-[#FCFAF8]/95 sm:backdrop-blur-md border-b border-[#EFE3E7] px-3 sm:px-6 lg:px-8 transition-colors duration-200 shadow-[0_1px_3px_rgba(58,24,35,0.04)]"
+        className="relative bg-[#FCFAF8] sm:bg-[#FCFAF8]/95 sm:backdrop-blur-md border-b border-[#EFE3E7] px-2.5 xs:px-3 sm:px-6 lg:px-8 transition-colors duration-200 shadow-[0_1px_3px_rgba(58,24,35,0.04)]"
       >
-        <div className="max-w-7xl mx-auto flex items-center justify-between h-16 sm:h-20 lg:h-24 gap-2 sm:gap-4 w-full">
+        <div className="max-w-7xl mx-auto flex items-center justify-between h-15 xs:h-16 sm:h-20 lg:h-24 gap-1.5 xs:gap-2 sm:gap-4 w-full">
 
           {/* Mobile Menu Button with smooth icon rotation animation */}
           <div className="flex items-center lg:hidden flex-shrink-0">
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="p-2 -ml-1 rounded-xl text-[#3A1823] hover:bg-[#FAF0F3] active:scale-95 transition-all duration-200 focus:outline-none"
+              className="p-1.5 sm:p-2 -ml-0.5 sm:-ml-1 rounded-xl text-[#3A1823] hover:bg-[#FAF0F3] active:scale-95 transition-all duration-200 focus:outline-none"
               aria-label="Toggle menu"
             >
               <div className="relative w-5 h-5 flex items-center justify-center">
@@ -242,16 +242,19 @@ export function Navbar() {
             </button>
           </div>
 
-          {/* Brand Logo - Scaled elegantly across screen sizes so it never crowds links */}
-          <div className="flex-1 lg:flex-none min-w-0 px-0.5 sm:px-0">
-            <Link href="/" className="flex items-center space-x-2 sm:space-x-3 group text-left">
+          {/* Brand Logo - Tight, elegant spacing on mobile so logo & name stay cohesive, with guaranteed buffer before search icon */}
+          <div className="flex-1 lg:flex-none min-w-0 pr-1 sm:pr-0">
+            <Link
+              href="/"
+              className="flex items-center gap-1.5 xs:gap-2 sm:gap-3 group text-left min-w-0"
+            >
               <img
                 src="/images/logo/resin_logo.png"
                 alt="Devangi Resin Studio Logo"
-                className="w-9 h-9 sm:w-12 sm:h-12 lg:w-13 lg:h-13 xl:w-16 xl:h-16 object-contain drop-shadow-xs group-hover:scale-105 transition-transform flex-shrink-0"
+                className="w-8 h-8 xs:w-9 xs:h-9 sm:w-11 sm:h-11 lg:w-13 lg:h-13 xl:w-15 xl:h-15 object-contain drop-shadow-xs group-hover:scale-105 transition-transform flex-shrink-0"
               />
-              <div className="flex flex-col justify-center">
-                <span className="font-serif text-[15px] sm:text-xl lg:text-[18px] xl:text-2xl 2xl:text-3xl font-bold tracking-tight text-[#3A1823] group-hover:text-[#B84A67] transition-colors whitespace-nowrap block leading-tight">
+              <div className="flex flex-col justify-center min-w-0">
+                <span className="font-serif text-[13px] xs:text-[14.5px] sm:text-lg lg:text-[18px] xl:text-2xl 2xl:text-3xl font-bold tracking-tight text-[#3A1823] group-hover:text-[#B84A67] transition-colors truncate block leading-tight">
                   {settings?.storeName || "Devangi Resin Studio"}
                 </span>
                 <span className="hidden xl:block text-[9px] sm:text-[10px] uppercase tracking-[0.2em] text-[#8C6E79] font-sans font-medium whitespace-nowrap">
@@ -329,16 +332,16 @@ export function Navbar() {
             </Link>
           </div>
 
-          {/* Right Action Icons */}
-          <div className="flex items-center space-x-1.5 sm:space-x-3 flex-shrink-0">
+          {/* Right Action Icons - Balanced spacing and touch targets on mobile */}
+          <div className="flex items-center space-x-1 xs:space-x-1.5 sm:space-x-3 flex-shrink-0">
             {/* Search Trigger */}
             <button
               onClick={() => setIsSearchOpen(!isSearchOpen)}
-              className="p-2 text-[#3A1823] hover:text-[#B84A67] hover:bg-[#FAF0F3] active:scale-95 rounded-full transition-all"
+              className="p-1.5 sm:p-2 text-[#3A1823] hover:text-[#B84A67] hover:bg-[#FAF0F3] active:scale-95 rounded-full transition-all"
               aria-label="Search products"
               title="Search Boutique"
             >
-              <Search className="w-5 h-5" />
+              <Search className="w-4.5 h-4.5 sm:w-5 sm:h-5" />
             </button>
 
             {/* Customer Account / Avatar Dropdown */}
@@ -483,12 +486,12 @@ export function Navbar() {
             {/* Cart Trigger Button */}
             <button
               onClick={() => setIsCartOpen(true)}
-              className="relative p-2 sm:p-2.5 bg-[#3A1823] text-[#FAF4EE] rounded-full hover:bg-[#4E2230] active:scale-95 transition-all shadow-sm flex items-center justify-center group"
+              className="relative p-1.5 xs:p-2 sm:p-2.5 bg-[#3A1823] text-[#FAF4EE] rounded-full hover:bg-[#4E2230] active:scale-95 transition-all shadow-sm flex items-center justify-center group"
               aria-label="View Shopping Cart"
             >
-              <ShoppingBag className="w-5 h-5 group-hover:scale-105 transition-transform" />
+              <ShoppingBag className="w-4.5 h-4.5 sm:w-5 sm:h-5 group-hover:scale-105 transition-transform" />
               {totalItems > 0 && (
-                <span className="absolute -top-1 -right-1 bg-[#D4AF37] text-[#230E16] text-[10px] sm:text-[11px] font-bold w-4.5 h-4.5 sm:w-5 sm:h-5 rounded-full flex items-center justify-center shadow-md">
+                <span className="absolute -top-1 -right-1 bg-[#D4AF37] text-[#230E16] text-[9px] sm:text-[11px] font-bold w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center shadow-md">
                   {totalItems}
                 </span>
               )}
@@ -512,13 +515,13 @@ export function Navbar() {
                   placeholder="Search keychains, geode coasters, floral jewellery..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-11 pr-24 py-2.5 text-xs sm:text-sm bg-white border border-[#EFE3E7] rounded-full focus:outline-none focus:ring-2 focus:ring-[#D4AF37] text-[#2E161F] shadow-sm"
+                  className="w-full pl-9 xs:pl-10 pr-20 sm:pr-24 py-2 xs:py-2.5 text-xs sm:text-sm bg-white border border-[#EFE3E7] rounded-full focus:outline-none focus:ring-2 focus:ring-[#D4AF37] text-[#2E161F] shadow-sm"
                   autoFocus
                 />
-                <Search className="w-4 h-4 text-[#8C6E79] absolute left-4" />
+                <Search className="w-4 h-4 text-[#8C6E79] absolute left-3 xs:left-3.5" />
                 <button
                   type="submit"
-                  className="absolute right-1.5 px-4 py-1.5 text-xs font-semibold bg-[#3A1823] text-white rounded-full hover:bg-[#4E2230] transition-colors"
+                  className="absolute right-1 xs:right-1.5 px-3 sm:px-4 py-1 sm:py-1.5 text-[11px] sm:text-xs font-semibold bg-[#3A1823] text-white rounded-full hover:bg-[#4E2230] transition-colors"
                 >
                   Search
                 </button>
