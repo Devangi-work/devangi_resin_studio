@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   Settings,
   Save,
@@ -36,6 +37,7 @@ import {
   Eye,
   Video,
   BarChart3,
+  Megaphone,
 } from "lucide-react";
 import { MediaPickerModal } from "@/components/admin/MediaPickerModal";
 import { getStoredAdminTheme, applyAdminTheme, AdminTheme } from "@/lib/admin-theme";
@@ -85,6 +87,12 @@ export default function AdminSettingsPage() {
     festivalBannerBg: "royal_wine",
     festivalCtaText: "Shop Festive Collection",
     festivalCtaUrl: "/shop?filter=festival",
+    popupBannerActive: false,
+    popupBannerTagline: "",
+    popupBannerImageUrl: "",
+    popupBannerLinkUrl: "/shop",
+    popupBannerButtonText: "Explore Now",
+    popupBannerExpiresAt: "",
     cityShippingRates: [] as Array<{ id: string; name: string; charge: string | number }>,
     policyPagesConfig: {} as Record<string, any>,
   });
@@ -1474,6 +1482,239 @@ export default function AdminSettingsPage() {
                     </span>
                   )}
                 </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Promotional Announcement Banner & 3-Second Welcome Popup */}
+        <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#E8E0D5] shadow-sm space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#F4EBE6] pb-4">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-xl bg-[#FAF0F3] text-[#B84A67] flex items-center justify-center shadow-xs">
+                <Megaphone className="w-5 h-5 text-[#B84A67]" />
+              </div>
+              <div>
+                <h2 className="font-serif text-base font-bold text-[#2C332D] flex items-center space-x-2">
+                  <span>Promotional Tagline & 3-Second Welcome Popup Banner</span>
+                  <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-[#FAF0F3] text-[#800020] border border-[#EFE3E7]">
+                    Popup + Moving Strip
+                  </span>
+                </h2>
+                <p className="text-xs text-[#736C66]">
+                  Upload an announcement image or write a studio tagline with an expiration timer. Visitors see a welcome popup 3 seconds after opening the website (dismissible by clicking [✕] or anywhere on the screen), and the tagline moves as a header strip at the same top location until expiry.
+                </p>
+              </div>
+            </div>
+
+            <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
+              <input
+                type="checkbox"
+                checked={Boolean(settings.popupBannerActive)}
+                onChange={(e) => setSettings({ ...settings, popupBannerActive: e.target.checked })}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#6A162B]"></div>
+              <span className="ml-3 text-xs font-bold text-[#2C332D]">
+                {settings.popupBannerActive ? "Active" : "Disabled"}
+              </span>
+            </label>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Left Column: Form Controls */}
+            <div className="space-y-4">
+              <div>
+                <label className="text-xs font-semibold text-[#2C332D] block mb-1">
+                  Announcement Tagline (Moving Header Strip & Popup Headline)
+                </label>
+                <textarea
+                  rows={2}
+                  placeholder="e.g. ✨ Studio Special: Complimentary Custom Gift Packaging on all Personalized Keepsakes! Handcrafted with Love ✨"
+                  value={settings.popupBannerTagline || ""}
+                  onChange={(e) => setSettings({ ...settings, popupBannerTagline: e.target.value })}
+                  className="w-full px-3.5 py-2 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl focus:ring-1 focus:ring-[#D4AF37]"
+                />
+                <p className="text-[10px] text-[#7A5E68] mt-1">
+                  When set, this is displayed as a moving ticker strip across the top of the website (at the same place as the festive strip).
+                </p>
+              </div>
+
+              {/* Expiry Date & Time */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs font-semibold text-[#2C332D]">
+                    Duration & Expiration (Date & Time)
+                  </label>
+                  {settings.popupBannerExpiresAt && (
+                    <button
+                      type="button"
+                      onClick={() => setSettings({ ...settings, popupBannerExpiresAt: null })}
+                      className="text-[10px] text-red-600 hover:underline"
+                    >
+                      Clear Expiry (No Expiry)
+                    </button>
+                  )}
+                </div>
+                <input
+                  type="datetime-local"
+                  value={toDateTimeLocal(settings.popupBannerExpiresAt)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setSettings({
+                      ...settings,
+                      popupBannerExpiresAt: val ? new Date(val).toISOString() : null,
+                    });
+                  }}
+                  className="w-full px-3.5 py-2 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl focus:ring-1 focus:ring-[#D4AF37]"
+                />
+                <p className="text-[10px] text-[#7A5E68] mt-1">
+                  After this date & time, both the 3-second popup and announcement strip will automatically stop displaying.
+                </p>
+              </div>
+
+              {/* Target Link & Button Text */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-semibold text-[#2C332D] block mb-1">
+                    Button Text
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Explore Now / Shop Deals"
+                    value={settings.popupBannerButtonText || ""}
+                    onChange={(e) => setSettings({ ...settings, popupBannerButtonText: e.target.value })}
+                    className="w-full px-3.5 py-2 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl focus:ring-1 focus:ring-[#D4AF37]"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-[#2C332D] block mb-1">
+                    Target Link URL
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. /shop or /custom-orders"
+                    value={settings.popupBannerLinkUrl || ""}
+                    onChange={(e) => setSettings({ ...settings, popupBannerLinkUrl: e.target.value })}
+                    className="w-full px-3.5 py-2 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl focus:ring-1 focus:ring-[#D4AF37]"
+                  />
+                </div>
+              </div>
+
+              {/* Image Upload for Popup */}
+              <div>
+                <label className="text-xs font-semibold text-[#2C332D] block mb-1">
+                  Popup Banner Image (Optional)
+                </label>
+                <div className="flex items-center space-x-3">
+                  <input
+                    type="file"
+                    id="popupBannerImageInput"
+                    accept="image/png, image/jpeg, image/webp, image/heic, image/heif, .heic, .heif"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      const formData = new FormData();
+                      formData.append("file", file);
+                      try {
+                        const res = await fetch("/api/admin/upload", {
+                          method: "POST",
+                          body: formData,
+                        });
+                        const data = await res.json();
+                        if (data.url) {
+                          setSettings((prev: any) => ({ ...prev, popupBannerImageUrl: data.url }));
+                        } else {
+                          alert(data.error || "Failed to upload banner image.");
+                        }
+                      } catch {
+                        alert("Upload error.");
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => document.getElementById("popupBannerImageInput")?.click()}
+                    className="px-4 py-2 bg-[#2C332D] text-white text-xs font-semibold rounded-xl hover:bg-[#3D473E] transition shadow-xs flex items-center space-x-1.5 cursor-pointer"
+                  >
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>{settings.popupBannerImageUrl ? "Replace Banner Image" : "Upload Banner Image"}</span>
+                  </button>
+                  {settings.popupBannerImageUrl && (
+                    <button
+                      type="button"
+                      onClick={() => setSettings({ ...settings, popupBannerImageUrl: "" })}
+                      className="px-3 py-2 text-xs text-red-600 hover:text-red-700 font-semibold cursor-pointer"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+                <p className="text-[10px] text-[#7A5E68] mt-1">
+                  Upload promotional banner artwork (PNG, JPEG, WEBP). Recommended: 1200×630px or 16:9 banner format.
+                </p>
+              </div>
+            </div>
+
+            {/* Right Column: Live Previews */}
+            <div className="space-y-4">
+              <label className="text-xs font-semibold text-[#2C332D] block">
+                Live Preview: 3-Second Welcome Popup Modal
+              </label>
+              <div className="bg-[#FAF8F5] border border-[#E8E0D5] rounded-2xl p-4 flex flex-col items-center justify-center min-h-[220px] relative overflow-hidden">
+                <div className="w-full max-w-sm bg-white rounded-2xl border border-[#D4AF37]/40 shadow-lg overflow-hidden text-center relative">
+                  <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/60 text-white flex items-center justify-center text-[11px] font-bold z-10">
+                    ✕
+                  </div>
+                  {settings.popupBannerImageUrl ? (
+                    <div className="relative w-full h-36 bg-gradient-to-br from-[#260B14] to-[#4A1525]">
+                      <Image
+                        src={settings.popupBannerImageUrl}
+                        alt="Preview"
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                  ) : null}
+                  <div className="p-4 space-y-2">
+                    <span className="inline-flex items-center space-x-1 text-[10px] font-bold text-[#800020] bg-[#FAF0F3] px-2 py-0.5 rounded-full">
+                      <Sparkles className="w-3 h-3 text-[#D4AF37]" />
+                      <span>Studio Announcement</span>
+                    </span>
+                    <p className="text-xs font-serif font-bold text-[#260B14] line-clamp-2 px-1">
+                      {settings.popupBannerTagline || "Your announcement tagline will appear here"}
+                    </p>
+                    <div className="pt-1">
+                      <span className="inline-block px-4 py-1.5 rounded-full bg-[#260B14] text-[#FFF6E5] text-[10px] font-bold uppercase tracking-wider">
+                        {settings.popupBannerButtonText || "Explore Now"} →
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-2 text-center">
+                  <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                    settings.popupBannerActive ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"
+                  }`}>
+                    {settings.popupBannerActive ? "● Active on Website" : "○ Currently Inactive"}
+                  </span>
+                </div>
+              </div>
+
+              {/* Strip Preview */}
+              <div>
+                <label className="text-xs font-semibold text-[#2C332D] block mb-1">
+                  Live Preview: Header Announcement Strip
+                </label>
+                <div className="w-full bg-[#260B14] border-y border-[#D4AF37]/40 py-2 px-3 text-white flex items-center space-x-3 text-xs overflow-hidden rounded-xl">
+                  <Sparkles className="w-3.5 h-3.5 text-[#D4AF37] flex-shrink-0 animate-pulse" />
+                  <span className="truncate text-[#FFECC7] text-xs flex-1">
+                    {settings.popupBannerTagline || "✨ Announcement tagline moves across the full width here ✨"}
+                  </span>
+                  <span className="flex-shrink-0 text-[10px] font-bold bg-[#D4AF37] text-[#260B14] px-2 py-0.5 rounded-full">
+                    {settings.popupBannerButtonText || "Explore Now"}
+                  </span>
+                </div>
               </div>
             </div>
           </div>

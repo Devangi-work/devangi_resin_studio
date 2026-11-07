@@ -1064,5 +1064,39 @@ test("E-Commerce Test Suite", async (t) => {
       festivalDiscountAmount: 400,
     });
     assert.equal(Number(updatedProd.festivalDiscountAmount), 400);
+
+    // 7. Festive coupon with direct fixed amount (e.g. ₹20 fixed discount)
+    await dbStore.updateSiteSettings({
+      festivalDiscountActive: true,
+      festivalCouponCode: "FESTIVEFIX20",
+      festivalDiscountType: "fixed",
+      festivalDiscountAmount: 20,
+      festivalDiscountPercentage: "₹20 OFF",
+      festivalExpiresAt: new Date(Date.now() + 86400000).toISOString(),
+    });
+
+    const fixedCouponVal = await dbStore.validateCoupon("FESTIVEFIX20", 500);
+    assert.equal(fixedCouponVal.valid, true);
+    assert.equal(fixedCouponVal.coupon.discountType, "fixed");
+    assert.equal(fixedCouponVal.coupon.discountValue, "20");
+    assert.equal(fixedCouponVal.discountAmount, 20); // Exactly ₹20, NOT 20% (which would have been 100)
+
+    // 8. Promotional announcement banner & 3-second popup settings persistence
+    await dbStore.updateSiteSettings({
+      popupBannerActive: true,
+      popupBannerTagline: "✨ Special Studio Announcement: Flat ₹150 OFF on All Keepsakes ✨",
+      popupBannerImageUrl: "https://example.com/banner.jpg",
+      popupBannerLinkUrl: "/shop?filter=announcement",
+      popupBannerButtonText: "Claim Offer",
+      popupBannerExpiresAt: new Date(Date.now() + 86400000).toISOString(),
+    });
+
+    const savedSettings = await dbStore.getSiteSettings();
+    assert.equal(savedSettings.popupBannerActive, true);
+    assert.equal(savedSettings.popupBannerTagline, "✨ Special Studio Announcement: Flat ₹150 OFF on All Keepsakes ✨");
+    assert.equal(savedSettings.popupBannerImageUrl, "https://example.com/banner.jpg");
+    assert.equal(savedSettings.popupBannerLinkUrl, "/shop?filter=announcement");
+    assert.equal(savedSettings.popupBannerButtonText, "Claim Offer");
+    assert.ok(savedSettings.popupBannerExpiresAt);
   });
 });

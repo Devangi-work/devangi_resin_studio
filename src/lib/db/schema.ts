@@ -580,6 +580,14 @@ export const siteSettings = pgTable("site_settings", {
   festivalCtaText: text("festival_cta_text").default("Shop Festive Collection"),
   festivalCtaUrl: text("festival_cta_url").default("/shop?filter=festival"),
 
+  // Promotional Announcement Banner & 3-Second Welcome Popup
+  popupBannerActive: boolean("popup_banner_active").default(false).notNull(),
+  popupBannerTagline: text("popup_banner_tagline").default(""),
+  popupBannerImageUrl: text("popup_banner_image_url").default(""),
+  popupBannerLinkUrl: text("popup_banner_link_url").default("/shop"),
+  popupBannerButtonText: text("popup_banner_button_text").default("Explore Now"),
+  popupBannerExpiresAt: timestamp("popup_banner_expires_at"),
+
   // Personalised Keepsake Studio Showcase Images
   keepsakeStudioImages: jsonb("keepsake_studio_images").default([]),
 

@@ -46,6 +46,12 @@ if (sql) {
   sql`ALTER TABLE coupons ADD COLUMN IF NOT EXISTS applicable_product_ids JSONB DEFAULT '[]'::jsonb;`.catch(() => { });
   sql`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS city_shipping_rates JSONB DEFAULT '[]'::jsonb;`.catch(() => { });
   sql`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS policy_pages_config JSONB DEFAULT '{}'::jsonb;`.catch(() => { });
+  sql`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS popup_banner_active BOOLEAN DEFAULT FALSE;`.catch(() => { });
+  sql`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS popup_banner_tagline TEXT DEFAULT '';`.catch(() => { });
+  sql`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS popup_banner_image_url TEXT DEFAULT '';`.catch(() => { });
+  sql`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS popup_banner_link_url TEXT DEFAULT '/shop';`.catch(() => { });
+  sql`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS popup_banner_button_text TEXT DEFAULT 'Explore Now';`.catch(() => { });
+  sql`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS popup_banner_expires_at TIMESTAMP;`.catch(() => { });
   sql`CREATE TABLE IF NOT EXISTS media_items (
     id TEXT PRIMARY KEY,
     file_name TEXT NOT NULL,
@@ -203,6 +209,12 @@ function getInitialStoreState(): StoreState {
       festivalBannerBg: "royal_wine",
       festivalCtaText: "Shop Festive Collection",
       festivalCtaUrl: "/shop?filter=festival",
+      popupBannerActive: false,
+      popupBannerTagline: "",
+      popupBannerImageUrl: "",
+      popupBannerLinkUrl: "/shop",
+      popupBannerButtonText: "Explore Now",
+      popupBannerExpiresAt: null,
       keepsakeStudioImages: [],
       cityShippingRates: [],
       policyPagesConfig: {},
@@ -2267,16 +2279,27 @@ export const dbStore = {
           return { valid: false, message: "This festival special discount offer has expired." };
         }
 
-        const pct = Number(String(settings.festivalDiscountPercentage || "20").replace(/%/g, "").trim()) || 20;
-        const discountAmount = Number(((cartAmount * pct) / 100).toFixed(2));
+        const isFixed = settings.festivalDiscountType === "fixed";
+        let discountAmount = 0;
+        let discountValue = "0";
+
+        if (isFixed && settings.festivalDiscountAmount) {
+          const fixedAmt = Number(settings.festivalDiscountAmount);
+          discountAmount = Number(Math.min(cartAmount, fixedAmt).toFixed(2));
+          discountValue = String(fixedAmt);
+        } else {
+          const pct = Number(String(settings.festivalDiscountPercentage || "20").replace(/%/g, "").trim()) || 20;
+          discountAmount = Number(((cartAmount * pct) / 100).toFixed(2));
+          discountValue = String(pct);
+        }
 
         return {
           valid: true,
           coupon: {
             id: "festival_special_coupon",
             code: settings.festivalCouponCode.trim().toUpperCase(),
-            discountType: "percentage",
-            discountValue: String(pct),
+            discountType: isFixed ? "fixed" : "percentage",
+            discountValue,
             minCartAmount: "0",
             maxDiscount: null,
             isActive: true,
@@ -2548,6 +2571,12 @@ export const dbStore = {
             festival_banner_bg as "festivalBannerBg",
             festival_cta_text as "festivalCtaText",
             festival_cta_url as "festivalCtaUrl",
+            popup_banner_active as "popupBannerActive",
+            popup_banner_tagline as "popupBannerTagline",
+            popup_banner_image_url as "popupBannerImageUrl",
+            popup_banner_link_url as "popupBannerLinkUrl",
+            popup_banner_button_text as "popupBannerButtonText",
+            popup_banner_expires_at as "popupBannerExpiresAt",
             COALESCE(keepsake_studio_images, '[]'::jsonb) as "keepsakeStudioImages",
             COALESCE(city_shipping_rates, '[]'::jsonb) as "cityShippingRates",
             COALESCE(policy_pages_config, '{}'::jsonb) as "policyPagesConfig",
@@ -2590,6 +2619,7 @@ export const dbStore = {
             shipping_policy, return_policy, privacy_policy, terms_policy, care_instructions_default,
             festival_discount_active, festival_name, festival_tagline, festival_discount_type, festival_discount_percentage, festival_discount_amount,
             festival_coupon_code, festival_expires_at, festival_banner_bg, festival_cta_text, festival_cta_url,
+            popup_banner_active, popup_banner_tagline, popup_banner_image_url, popup_banner_link_url, popup_banner_button_text, popup_banner_expires_at,
             upi_id, upi_qr_code_url, account_holder_name, keepsake_studio_images, city_shipping_rates, policy_pages_config, updated_at
           ) VALUES (
             'default',
@@ -2623,6 +2653,12 @@ export const dbStore = {
             ${data.festivalBannerBg ?? store.siteSettings.festivalBannerBg ?? 'royal_wine'},
             ${data.festivalCtaText ?? store.siteSettings.festivalCtaText ?? 'Shop Festive Deals'},
             ${data.festivalCtaUrl ?? store.siteSettings.festivalCtaUrl ?? '/shop?filter=festival'},
+            ${data.popupBannerActive !== undefined ? Boolean(data.popupBannerActive) : Boolean(store.siteSettings.popupBannerActive)},
+            ${data.popupBannerTagline ?? store.siteSettings.popupBannerTagline ?? ''},
+            ${data.popupBannerImageUrl ?? store.siteSettings.popupBannerImageUrl ?? ''},
+            ${data.popupBannerLinkUrl ?? store.siteSettings.popupBannerLinkUrl ?? '/shop'},
+            ${data.popupBannerButtonText ?? store.siteSettings.popupBannerButtonText ?? 'Explore Now'},
+            ${data.popupBannerExpiresAt !== undefined ? (data.popupBannerExpiresAt ? new Date(data.popupBannerExpiresAt) : null) : (store.siteSettings.popupBannerExpiresAt ? new Date(store.siteSettings.popupBannerExpiresAt) : null)},
             ${data.upiId ?? store.siteSettings.upiId ?? 'devangi0403@okaxis'},
             ${data.upiQrCodeUrl ?? store.siteSettings.upiQrCodeUrl ?? ''},
             ${data.accountHolderName ?? store.siteSettings.accountHolderName ?? 'Devangi Resin Studio'},
@@ -2662,6 +2698,12 @@ export const dbStore = {
             festival_banner_bg = EXCLUDED.festival_banner_bg,
             festival_cta_text = EXCLUDED.festival_cta_text,
             festival_cta_url = EXCLUDED.festival_cta_url,
+            popup_banner_active = EXCLUDED.popup_banner_active,
+            popup_banner_tagline = EXCLUDED.popup_banner_tagline,
+            popup_banner_image_url = EXCLUDED.popup_banner_image_url,
+            popup_banner_link_url = EXCLUDED.popup_banner_link_url,
+            popup_banner_button_text = EXCLUDED.popup_banner_button_text,
+            popup_banner_expires_at = EXCLUDED.popup_banner_expires_at,
             upi_id = EXCLUDED.upi_id,
             upi_qr_code_url = EXCLUDED.upi_qr_code_url,
             account_holder_name = EXCLUDED.account_holder_name,
