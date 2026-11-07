@@ -46,7 +46,9 @@ export function ProductForm({ initialData, isEditing = false }: ProductFormProps
     isFeatured: initialData?.isFeatured || false,
     isBestseller: initialData?.isBestseller || false,
     isFestivalSpecial: initialData?.isFestivalSpecial || false,
+    festivalDiscountType: initialData?.festivalDiscountType || "percentage",
     festivalDiscountPercentage: initialData?.festivalDiscountPercentage || "",
+    festivalDiscountAmount: initialData?.festivalDiscountAmount || "",
 
     regularPrice: initialData?.regularPrice || "",
     salePrice: initialData?.salePrice || "",
@@ -366,6 +368,10 @@ export function ProductForm({ initialData, isEditing = false }: ProductFormProps
 
       const payload = {
         ...formData,
+        isFestivalSpecial: Boolean(formData.isFestivalSpecial),
+        festivalDiscountType: formData.festivalDiscountType || "percentage",
+        festivalDiscountPercentage: formData.festivalDiscountType === "fixed" ? null : (formData.festivalDiscountPercentage ? Number(formData.festivalDiscountPercentage) : null),
+        festivalDiscountAmount: formData.festivalDiscountType === "fixed" ? (formData.festivalDiscountAmount ? Number(formData.festivalDiscountAmount) : null) : null,
         enablePersonalization: hasAnyCustomization,
         customColorEnabled: hasAnyCustomization ? Boolean(formData.customColorEnabled) : false,
         customImageUploadEnabled: hasAnyCustomization ? Boolean(formData.customImageUploadEnabled) : false,
@@ -669,26 +675,113 @@ export function ProductForm({ initialData, isEditing = false }: ProductFormProps
               </div>
 
               {formData.isFestivalSpecial && (
-                <div className="pt-3 border-t border-[#F2DECE] grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="pt-3 border-t border-[#F2DECE] space-y-3">
                   <div>
-                    <label className="text-xs font-semibold text-[#2C332D] block mb-1">
-                      Festival Discount Percentage (%)
+                    <label className="text-xs font-semibold text-[#2C332D] block mb-1.5">
+                      Festive Discount Method
                     </label>
-                    <div className="relative">
-                      <input
-                        type="number"
-                        min="0"
-                        max="100"
-                        placeholder="e.g. 20 (for 20% OFF)"
-                        value={formData.festivalDiscountPercentage}
-                        onChange={(e) => setFormData({ ...formData, festivalDiscountPercentage: e.target.value })}
-                        className="w-full pl-3.5 pr-8 py-2 text-xs bg-white border border-[#D4AF37] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#D4AF37] font-semibold text-[#6A162B]"
-                      />
-                      <span className="absolute right-3 top-2 text-xs font-bold text-[#D4AF37]">%</span>
+                    <div className="grid grid-cols-2 gap-2 max-w-sm">
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, festivalDiscountType: "percentage" })}
+                        className={`py-2 px-3 rounded-xl text-xs font-semibold border transition-all flex items-center justify-center space-x-1.5 ${
+                          (formData.festivalDiscountType || "percentage") === "percentage"
+                            ? "bg-[#6A162B] text-white border-[#6A162B] shadow-xs"
+                            : "bg-white text-[#736C66] border-[#E8E0D5] hover:bg-[#FAF8F5]"
+                        }`}
+                      >
+                        <span>% Percentage Discount</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, festivalDiscountType: "fixed" })}
+                        className={`py-2 px-3 rounded-xl text-xs font-semibold border transition-all flex items-center justify-center space-x-1.5 ${
+                          formData.festivalDiscountType === "fixed"
+                            ? "bg-[#6A162B] text-white border-[#6A162B] shadow-xs"
+                            : "bg-white text-[#736C66] border-[#E8E0D5] hover:bg-[#FAF8F5]"
+                        }`}
+                      >
+                        <span>₹ Direct Fixed Amount</span>
+                      </button>
                     </div>
-                    <p className="text-[10px] text-[#7A5E68] mt-1">
-                      Will display as a highlighted badge on the product card (e.g., 20% FESTIVE OFF).
-                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                    {formData.festivalDiscountType === "fixed" ? (
+                      <div>
+                        <label className="text-xs font-semibold text-[#2C332D] block mb-1">
+                          Direct Fixed Discount Amount (₹)
+                        </label>
+                        <div className="relative">
+                          <span className="absolute left-3 top-2 text-xs font-bold text-[#D4AF37]">₹</span>
+                          <input
+                            type="number"
+                            min="0"
+                            step="1"
+                            placeholder="e.g. 150 (for ₹150 OFF)"
+                            value={formData.festivalDiscountAmount}
+                            onChange={(e) => setFormData({ ...formData, festivalDiscountAmount: e.target.value })}
+                            className="w-full pl-8 pr-3.5 py-2 text-xs bg-white border border-[#D4AF37] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#D4AF37] font-semibold text-[#6A162B]"
+                          />
+                        </div>
+                        <p className="text-[10px] text-[#7A5E68] mt-1">
+                          Customers will receive a flat ₹{Number(formData.festivalDiscountAmount || 0)} discount off regular price.
+                        </p>
+                      </div>
+                    ) : (
+                      <div>
+                        <label className="text-xs font-semibold text-[#2C332D] block mb-1">
+                          Festival Discount Percentage (%)
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="number"
+                            min="0"
+                            max="100"
+                            placeholder="e.g. 20 (for 20% OFF)"
+                            value={formData.festivalDiscountPercentage}
+                            onChange={(e) => setFormData({ ...formData, festivalDiscountPercentage: e.target.value })}
+                            className="w-full pl-3.5 pr-8 py-2 text-xs bg-white border border-[#D4AF37] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#D4AF37] font-semibold text-[#6A162B]"
+                          />
+                          <span className="absolute right-3 top-2 text-xs font-bold text-[#D4AF37]">%</span>
+                        </div>
+                        <p className="text-[10px] text-[#7A5E68] mt-1">
+                          Will display as a highlighted badge on the product card (e.g. 20% FESTIVE OFF).
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Live Calculated Price Preview */}
+                    {formData.regularPrice && (
+                      <div className="p-3 bg-white rounded-xl border border-[#D4AF37]/50 flex flex-col justify-center">
+                        <span className="text-[10px] uppercase font-bold text-[#8C6E79] tracking-wider block">
+                          Customer Selling Price Preview
+                        </span>
+                        <div className="flex items-baseline space-x-2 mt-1">
+                          <span className="font-serif text-base font-bold text-[#6A162B]">
+                            ₹{(() => {
+                              const reg = Number(formData.regularPrice) || 0;
+                              if (formData.festivalDiscountType === "fixed") {
+                                const amt = Number(formData.festivalDiscountAmount) || 0;
+                                return Math.max(0, reg - amt).toFixed(2);
+                              } else {
+                                const pct = Number(formData.festivalDiscountPercentage) || 0;
+                                return Math.max(0, reg - (reg * pct) / 100).toFixed(2);
+                              }
+                            })()}
+                          </span>
+                          <span className="text-xs text-[#8C6E79] line-through">
+                            ₹{Number(formData.regularPrice).toFixed(2)}
+                          </span>
+                          <span className="text-[10px] font-bold text-green-700 bg-green-50 px-1.5 py-0.5 rounded">
+                            {formData.festivalDiscountType === "fixed"
+                              ? `Save ₹${Number(formData.festivalDiscountAmount || 0)}`
+                              : `Save ${formData.festivalDiscountPercentage || 0}%`}
+                          </span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

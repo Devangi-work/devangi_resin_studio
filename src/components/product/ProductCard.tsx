@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { useCart } from "@/lib/store/cart";
 import { ShoppingBag, Sparkles, Check } from "lucide-react";
+import { computeFestivePrice } from "@/lib/festival";
 
 export interface ProductCardProps {
   product: {
@@ -16,7 +17,9 @@ export interface ProductCardProps {
     isBestseller?: boolean;
     isFeatured?: boolean;
     isFestivalSpecial?: boolean;
+    festivalDiscountType?: "percentage" | "fixed" | string | null;
     festivalDiscountPercentage?: number | string | null;
+    festivalDiscountAmount?: number | string | null;
     stockQuantity?: number;
     trackInventory?: boolean;
     images?: Array<{ imageUrl: string; altText?: string; isPrimary?: boolean }>;
@@ -29,27 +32,19 @@ export function ProductCard({ product, aspectRatio = "square" }: ProductCardProp
   const { addItem } = useCart();
   const [added, setAdded] = React.useState(false);
   const regular = Number(product.regularPrice) || 0;
-  const sale = product.salePrice ? Number(product.salePrice) : null;
   const isFestive = Boolean(product.isFestivalSpecial);
-  const rawFestPct = product.festivalDiscountPercentage
-    ? Number(String(product.festivalDiscountPercentage).replace(/%/g, "").trim())
-    : 0;
-  const festDiscount = rawFestPct > 0 ? String(rawFestPct) : null;
 
-  let currentPrice = regular;
-  let hasDiscount = false;
-  let discountPercent = "0";
-
-  if (isFestive && rawFestPct > 0) {
-    const festDiscountAmount = (regular * rawFestPct) / 100;
-    currentPrice = Math.max(0, Number((regular - festDiscountAmount).toFixed(2)));
-    hasDiscount = currentPrice < regular;
-    discountPercent = String(Math.round(rawFestPct));
-  } else if (sale && sale < regular) {
-    currentPrice = sale;
-    hasDiscount = true;
-    discountPercent = (((regular - sale) / regular) * 100).toFixed(0);
-  }
+  const {
+    discountedPrice: currentPrice,
+    discountBadge,
+    hasDiscount,
+  } = computeFestivePrice(product.regularPrice, {
+    isFestivalSpecial: product.isFestivalSpecial,
+    festivalDiscountType: product.festivalDiscountType,
+    festivalDiscountPercentage: product.festivalDiscountPercentage,
+    festivalDiscountAmount: product.festivalDiscountAmount,
+    salePrice: product.salePrice,
+  });
 
   const primaryImage =
     product.images?.find((img) => img.isPrimary)?.imageUrl ||
@@ -78,7 +73,9 @@ export function ProductCard({ product, aspectRatio = "square" }: ProductCardProp
       price: currentPrice,
       originalPrice: hasDiscount ? regular : undefined,
       isFestivalSpecial: isFestive,
-      festivalDiscountPercentage: rawFestPct > 0 ? rawFestPct : null,
+      festivalDiscountType: product.festivalDiscountType || "percentage",
+      festivalDiscountPercentage: product.festivalDiscountPercentage || null,
+      festivalDiscountAmount: product.festivalDiscountAmount || null,
       image: primaryImage,
       quantity: 1,
     });
@@ -133,11 +130,11 @@ export function ProductCard({ product, aspectRatio = "square" }: ProductCardProp
           {isFestive ? (
             <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider bg-gradient-to-r from-[#6A162B] via-[#8F223D] to-[#6A162B] text-[#FFDF78] border border-[#FFDF78]/70 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full shadow-md flex items-center space-x-1 whitespace-nowrap">
               <Sparkles className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-[#FFDF78] flex-shrink-0" />
-              <span>{festDiscount ? `${festDiscount}% FESTIVE OFF` : "Festive Special"}</span>
+              <span>{discountBadge ? `${discountBadge} FESTIVE` : "Festive Special"}</span>
             </span>
           ) : hasDiscount ? (
             <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider bg-[#C04E6C] text-white px-2 sm:px-2.5 py-0.5 rounded-full shadow-sm">
-              {discountPercent}% OFF
+              {discountBadge || "SALE"}
             </span>
           ) : null}
 
@@ -246,7 +243,7 @@ export function ProductCard({ product, aspectRatio = "square" }: ProductCardProp
           {isFestive && (
             <span className="hidden md:inline-flex items-center space-x-1 text-[9px] font-black text-[#800020] bg-[#FFF0F4] border border-[#D4AF37]/50 px-2 py-0.5 rounded-full uppercase tracking-wider whitespace-nowrap flex-shrink-0">
               <Sparkles className="w-2.5 h-2.5 text-[#D4AF37]" />
-              <span>{rawFestPct > 0 ? `${rawFestPct}% OFF` : "Festive"}</span>
+              <span>{discountBadge || "Festive"}</span>
             </span>
           )}
         </div>

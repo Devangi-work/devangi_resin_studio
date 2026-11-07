@@ -9,7 +9,9 @@ export interface FestivalNewsHeaderProps {
     festivalDiscountActive?: boolean;
     festivalName?: string;
     festivalTagline?: string;
+    festivalDiscountType?: "percentage" | "fixed" | string | null;
     festivalDiscountPercentage?: string;
+    festivalDiscountAmount?: number | string | null;
     festivalCouponCode?: string;
     festivalExpiresAt?: string | null;
     festivalBannerBg?: string;
@@ -29,8 +31,11 @@ export function FestivalNewsHeader({ settings }: FestivalNewsHeaderProps) {
   const name = settings.festivalName || "FESTIVAL SPECIAL CELEBRATION";
   const tagline =
     settings.festivalTagline ||
-    "✨ Special Festival Offers on Handcrafted Resin Art & Keepsakes! Enjoy Flat 20% OFF ✨ Free Express Delivery across India over ₹999 ✨ Limited Period Festive Treats! ✨";
-  const discount = settings.festivalDiscountPercentage || "20% OFF";
+    "✨ Special Festival Offers on Handcrafted Resin Art & Keepsakes! Enjoy Special Savings ✨ Free Express Delivery across India over ₹999 ✨ Limited Period Festive Treats! ✨";
+  const discount =
+    settings.festivalDiscountType === "fixed" && settings.festivalDiscountAmount
+      ? `₹${Number(settings.festivalDiscountAmount)} OFF`
+      : settings.festivalDiscountPercentage || "20% OFF";
   const coupon = settings.festivalCouponCode || "FESTIVE20";
   const ctaText = settings.festivalCtaText || "Explore Festival Deals";
   const ctaUrl = settings.festivalCtaUrl || "/shop";

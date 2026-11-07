@@ -36,7 +36,12 @@ export const productSchema = z.object({
   isFeatured: z.boolean().default(false),
   isBestseller: z.boolean().default(false),
   isFestivalSpecial: z.boolean().default(false),
+  festivalDiscountType: z.enum(["percentage", "fixed"]).default("percentage"),
   festivalDiscountPercentage: z.preprocess(
+    (val) => (val === "" || val === null || val === undefined ? null : Number(val)),
+    z.number().nonnegative().nullable().optional()
+  ),
+  festivalDiscountAmount: z.preprocess(
     (val) => (val === "" || val === null || val === undefined ? null : Number(val)),
     z.number().nonnegative().nullable().optional()
   ),

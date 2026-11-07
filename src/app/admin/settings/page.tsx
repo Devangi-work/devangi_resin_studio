@@ -77,7 +77,9 @@ export default function AdminSettingsPage() {
     festivalDiscountActive: false,
     festivalName: "Festive Sparkle Celebration",
     festivalTagline: "✨ FESTIVAL SPECIAL: Enjoy Flat 20% OFF on all Handcrafted Keepsakes, Geode Clocks & Floral Frames! Use Code FESTIVE20 at checkout ✨ Free Express Delivery across India over ₹999 ✨ Limited Period Festive Treats! ✨",
+    festivalDiscountType: "percentage",
     festivalDiscountPercentage: "20%",
+    festivalDiscountAmount: "",
     festivalCouponCode: "FESTIVE20",
     festivalExpiresAt: "",
     festivalBannerBg: "royal_wine",
@@ -1272,31 +1274,89 @@ export default function AdminSettingsPage() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs font-semibold text-[#2C332D] block mb-1">
-                  Highlight Discount (%)
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. 20% or 25% OFF"
-                  value={settings.festivalDiscountPercentage || ""}
-                  onChange={(e) => setSettings({ ...settings, festivalDiscountPercentage: e.target.value })}
-                  className="w-full px-3.5 py-2 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl focus:ring-1 focus:ring-[#D4AF37]"
-                />
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-semibold text-[#2C332D] block mb-1">
+                    Discount Type
+                  </label>
+                  <select
+                    value={settings.festivalDiscountType || "percentage"}
+                    onChange={(e) => {
+                      const type = e.target.value;
+                      setSettings({
+                        ...settings,
+                        festivalDiscountType: type,
+                        festivalDiscountPercentage: type === "fixed" && settings.festivalDiscountAmount ? `₹${settings.festivalDiscountAmount} OFF` : settings.festivalDiscountPercentage,
+                      });
+                    }}
+                    className="w-full px-3 py-2 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl focus:ring-1 focus:ring-[#D4AF37]"
+                  >
+                    <option value="percentage">Percentage (%) Discount</option>
+                    <option value="fixed">Direct Fixed Amount (₹) Discount</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold text-[#2C332D] block mb-1">
+                    Promo / Coupon Code
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. FESTIVE20"
+                    value={settings.festivalCouponCode || ""}
+                    onChange={(e) => setSettings({ ...settings, festivalCouponCode: e.target.value.toUpperCase() })}
+                    className="w-full px-3.5 py-2 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl focus:ring-1 focus:ring-[#D4AF37] font-mono uppercase"
+                  />
+                </div>
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-[#2C332D] block mb-1">
-                  Promo / Coupon Code
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. FESTIVE20"
-                  value={settings.festivalCouponCode || ""}
-                  onChange={(e) => setSettings({ ...settings, festivalCouponCode: e.target.value.toUpperCase() })}
-                  className="w-full px-3.5 py-2 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl focus:ring-1 focus:ring-[#D4AF37] font-mono uppercase"
-                />
+                {settings.festivalDiscountType === "fixed" ? (
+                  <div>
+                    <label className="text-xs font-semibold text-[#2C332D] block mb-1">
+                      Direct Fixed Discount Amount (₹)
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-2 text-xs font-bold text-[#D4AF37]">₹</span>
+                      <input
+                        type="number"
+                        min="0"
+                        step="1"
+                        placeholder="e.g. 150 (for ₹150 OFF)"
+                        value={settings.festivalDiscountAmount || ""}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setSettings({
+                            ...settings,
+                            festivalDiscountAmount: val,
+                            festivalDiscountPercentage: val ? `₹${val} OFF` : "",
+                          });
+                        }}
+                        className="w-full pl-8 pr-3.5 py-2 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl focus:ring-1 focus:ring-[#D4AF37] font-semibold text-[#6A162B]"
+                      />
+                    </div>
+                    <p className="text-[10px] text-[#7A5E68] mt-1">
+                      Customers will receive a flat direct ₹{Number(settings.festivalDiscountAmount || 0)} discount.
+                    </p>
+                  </div>
+                ) : (
+                  <div>
+                    <label className="text-xs font-semibold text-[#2C332D] block mb-1">
+                      Highlight Discount (%)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. 20% or 25% OFF"
+                      value={settings.festivalDiscountPercentage || ""}
+                      onChange={(e) => setSettings({ ...settings, festivalDiscountPercentage: e.target.value })}
+                      className="w-full px-3.5 py-2 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl focus:ring-1 focus:ring-[#D4AF37]"
+                    />
+                    <p className="text-[10px] text-[#7A5E68] mt-1">
+                      Percentage discount applied across festival catalog and announcement banners.
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </div>

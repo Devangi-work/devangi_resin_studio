@@ -4,6 +4,7 @@ import { checkoutSchema } from "@/lib/validations";
 import { getCustomerSession } from "@/lib/auth/customer";
 import { sendBrevoEmail } from "@/lib/email/brevo";
 import { resolveShippingCharge } from "@/lib/shipping";
+import { computeFestivePrice, computeGlobalFestiveDiscount } from "@/lib/festival";
 
 export async function POST(request: Request) {
   try {
@@ -63,23 +64,24 @@ export async function POST(request: Request) {
       const regularPrice = Number(product.regularPrice) || 0;
       let baseUnitPrice = Number(product.salePrice || product.regularPrice);
 
-      const festPct = product.isFestivalSpecial && product.festivalDiscountPercentage
-        ? Number(String(product.festivalDiscountPercentage).replace(/%/g, "").trim())
-        : 0;
+      const prodFestive = computeFestivePrice(regularPrice, {
+        isFestivalSpecial: product.isFestivalSpecial,
+        festivalDiscountType: product.festivalDiscountType,
+        festivalDiscountPercentage: product.festivalDiscountPercentage,
+        festivalDiscountAmount: product.festivalDiscountAmount,
+        salePrice: product.salePrice,
+      });
 
-      if (product.isFestivalSpecial && festPct > 0) {
-        const festDiscount = (regularPrice * festPct) / 100;
-        baseUnitPrice = Math.max(0, Number((regularPrice - festDiscount).toFixed(2)));
+      if (product.isFestivalSpecial && prodFestive.hasDiscount && prodFestive.discountAmount > 0) {
+        baseUnitPrice = prodFestive.discountedPrice;
       } else if (
         product.isFestivalSpecial &&
         settings.festivalDiscountActive &&
-        settings.festivalDiscountPercentage &&
         (!settings.festivalExpiresAt || new Date(settings.festivalExpiresAt) >= new Date())
       ) {
-        const globalFestPct = Number(String(settings.festivalDiscountPercentage).replace(/%/g, "").trim()) || 0;
-        if (globalFestPct > 0) {
-          const festDiscount = (regularPrice * globalFestPct) / 100;
-          baseUnitPrice = Math.max(0, Number((regularPrice - festDiscount).toFixed(2)));
+        const globalFestive = computeGlobalFestiveDiscount(regularPrice, settings);
+        if (globalFestive.discountAmount > 0) {
+          baseUnitPrice = globalFestive.finalPrice;
         }
       }
 

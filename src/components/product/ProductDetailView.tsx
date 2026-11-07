@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/lib/store/cart";
+import { computeFestivePrice } from "@/lib/festival";
 import {
   Sparkles,
   ShieldCheck,
@@ -160,19 +161,18 @@ export function ProductDetailView({ product, relatedProducts, settings: initialS
   const baseRegular = Number(product.regularPrice) || 0;
   const baseSale = product.salePrice ? Number(product.salePrice) : null;
   const isFestive = Boolean(product.isFestivalSpecial);
-  const rawFestPct = product.festivalDiscountPercentage
-    ? Number(String(product.festivalDiscountPercentage).replace(/%/g, "").trim())
-    : 0;
-  const festDiscount = rawFestPct > 0 ? String(rawFestPct) : null;
 
-  let discountedBase = baseRegular;
+  const festiveCalc = computeFestivePrice(baseRegular, {
+    isFestivalSpecial: product.isFestivalSpecial,
+    festivalDiscountType: product.festivalDiscountType,
+    festivalDiscountPercentage: product.festivalDiscountPercentage,
+    festivalDiscountAmount: product.festivalDiscountAmount,
+    salePrice: product.salePrice,
+  });
 
-  if (isFestive && rawFestPct > 0) {
-    const festDiscountAmount = (baseRegular * rawFestPct) / 100;
-    discountedBase = Math.max(0, Number((baseRegular - festDiscountAmount).toFixed(2)));
-  } else if (baseSale && baseSale < baseRegular) {
-    discountedBase = baseSale;
-  }
+  const discountedBase = festiveCalc.discountedPrice;
+  const festDiscountBadge = festiveCalc.discountBadge;
+  const festDiscountAmount = festiveCalc.discountAmount;
 
   const hasSelectedVariants = selectedVariants.length > 0;
   const variantsSum = hasSelectedVariants
@@ -203,8 +203,8 @@ export function ProductDetailView({ product, relatedProducts, settings: initialS
   const regularUnitPrice = hasSelectedVariants
     ? (baseSale && baseSale > 0 && baseRegular > baseSale
         ? Math.max(baseRegular, variantsSum + (baseRegular - baseSale))
-        : isFestive && rawFestPct > 0
-        ? Math.max(baseRegular, Math.round(variantsSum / (1 - rawFestPct / 100)))
+        : isFestive && festDiscountAmount > 0
+        ? Math.max(baseRegular, variantsSum + festDiscountAmount)
         : Math.max(baseRegular, variantsSum)) + persSurcharge
     : baseRegular + persSurcharge;
 
@@ -288,7 +288,9 @@ export function ProductDetailView({ product, relatedProducts, settings: initialS
       price: currentUnitPrice,
       originalPrice: hasDiscount ? regularUnitPrice : undefined,
       isFestivalSpecial: isFestive,
-      festivalDiscountPercentage: rawFestPct > 0 ? rawFestPct : null,
+      festivalDiscountType: product.festivalDiscountType || "percentage",
+      festivalDiscountPercentage: product.festivalDiscountPercentage || null,
+      festivalDiscountAmount: product.festivalDiscountAmount || null,
       image: activeImage,
       quantity,
       variantId: primaryVariantId,
@@ -552,7 +554,7 @@ export function ProductDetailView({ product, relatedProducts, settings: initialS
             {isFestive ? (
               <span className="absolute top-4 left-4 text-xs font-black uppercase tracking-wider bg-gradient-to-r from-[#6A162B] via-[#8F223D] to-[#6A162B] text-[#FFDF78] border border-[#FFDF78]/70 px-3.5 py-1.5 rounded-full shadow-lg flex items-center space-x-1.5">
                 <Sparkles className="w-3.5 h-3.5 text-[#FFDF78]" />
-                <span>{rawFestPct > 0 ? `${rawFestPct}% FESTIVE OFF` : "Festive Special"}</span>
+                <span>{festDiscountBadge ? `${festDiscountBadge} FESTIVE` : "Festive Special"}</span>
               </span>
             ) : hasDiscount ? (
               <span className="absolute top-4 left-4 text-xs font-bold uppercase tracking-wider bg-[#DF4C4C] text-white px-3 py-1 rounded-full shadow-sm">
@@ -641,7 +643,7 @@ export function ProductDetailView({ product, relatedProducts, settings: initialS
               {isFestive && (
                 <span className="text-xs font-black uppercase tracking-wider bg-[#FFF0F4] text-[#800020] border border-[#D4AF37]/50 px-2.5 py-0.5 rounded-full shadow-xs flex items-center space-x-1 font-mono">
                   <Sparkles className="w-3 h-3 text-[#D4AF37]" />
-                  <span>{rawFestPct > 0 ? `${rawFestPct}% FESTIVE DEAL` : "Festive Special"}</span>
+                  <span>{festDiscountBadge ? `${festDiscountBadge} FESTIVE DEAL` : "Festive Special"}</span>
                 </span>
               )}
             </div>
@@ -1147,20 +1149,23 @@ export function ProductDetailView({ product, relatedProducts, settings: initialS
                   >
                     {rel.name}
                   </a>
-                  {rel.isFestivalSpecial && (rel.festivalDiscountPercentage ? Number(String(rel.festivalDiscountPercentage).replace(/%/g, "")) > 0 : false) ? (
-                    <div className="flex items-baseline space-x-1.5 mt-1">
-                      <p className="text-xs font-bold text-[#6A162B]">
-                        ₹{(Number(rel.regularPrice) * (1 - Number(String(rel.festivalDiscountPercentage).replace(/%/g, "")) / 100)).toFixed(2)}
-                      </p>
-                      <p className="text-[10px] text-[#A69E96] line-through">
+                  {(() => {
+                    const relCalc = computeFestivePrice(rel.regularPrice, rel);
+                    return relCalc.hasDiscount ? (
+                      <div className="flex items-baseline space-x-1.5 mt-1">
+                        <p className={`text-xs font-bold ${rel.isFestivalSpecial ? "text-[#6A162B]" : "text-[#2C332D]"}`}>
+                          ₹{relCalc.discountedPrice.toFixed(2)}
+                        </p>
+                        <p className="text-[10px] text-[#A69E96] line-through">
+                          ₹{Number(rel.regularPrice).toFixed(2)}
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="text-xs font-bold text-[#2C332D] mt-1">
                         ₹{Number(rel.regularPrice).toFixed(2)}
                       </p>
-                    </div>
-                  ) : (
-                    <p className="text-xs font-bold text-[#2C332D] mt-1">
-                      ₹{Number(rel.salePrice || rel.regularPrice).toFixed(2)}
-                    </p>
-                  )}
+                    );
+                  })()}
                 </div>
               </div>
             ))}

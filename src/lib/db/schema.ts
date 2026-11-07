@@ -93,7 +93,9 @@ export const products = pgTable(
     isFeatured: boolean("is_featured").default(false).notNull(),
     isBestseller: boolean("is_bestseller").default(false).notNull(),
     isFestivalSpecial: boolean("is_festival_special").default(false).notNull(),
+    festivalDiscountType: text("festival_discount_type").default("percentage").notNull(), // 'percentage' | 'fixed'
     festivalDiscountPercentage: numeric("festival_discount_percentage", { precision: 5, scale: 2 }),
+    festivalDiscountAmount: numeric("festival_discount_amount", { precision: 10, scale: 2 }),
 
     // Pricing (Stored as numeric string in DB, 2 decimal places)
     regularPrice: numeric("regular_price", { precision: 10, scale: 2 }).notNull(),
@@ -569,7 +571,9 @@ export const siteSettings = pgTable("site_settings", {
   festivalDiscountActive: boolean("festival_discount_active").default(false).notNull(),
   festivalName: text("festival_name").default("Festival Special Celebration"),
   festivalTagline: text("festival_tagline").default("✨ FESTIVAL SPECIAL: Enjoy Flat 20% OFF on all Handcrafted Keepsakes & Geode Clocks! Use Code FESTIVE20 ✨ Limited Period Offer! ✨"),
+  festivalDiscountType: text("festival_discount_type").default("percentage").notNull(), // 'percentage' | 'fixed'
   festivalDiscountPercentage: text("festival_discount_percentage").default("20%"),
+  festivalDiscountAmount: numeric("festival_discount_amount", { precision: 10, scale: 2 }),
   festivalCouponCode: text("festival_coupon_code").default("FESTIVE20"),
   festivalExpiresAt: timestamp("festival_expires_at"),
   festivalBannerBg: text("festival_banner_bg").default("royal_wine"),

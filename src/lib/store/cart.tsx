@@ -11,7 +11,9 @@ export interface CartItem {
   price: number;
   originalPrice?: number;
   isFestivalSpecial?: boolean;
+  festivalDiscountType?: "percentage" | "fixed" | string | null;
   festivalDiscountPercentage?: number | string | null;
+  festivalDiscountAmount?: number | string | null;
   image: string;
   quantity: number;
   variantId?: string | null;

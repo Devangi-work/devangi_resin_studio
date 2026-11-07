@@ -462,8 +462,12 @@ export function CartDrawer() {
                         <span className="inline-flex items-center space-x-1 mt-1 text-[10px] bg-[#FFF0F4] text-[#800020] border border-[#D4AF37]/40 px-2 py-0.5 rounded font-bold">
                           <Sparkles className="w-2.5 h-2.5 text-[#D4AF37]" />
                           <span>
-                            {item.festivalDiscountPercentage
+                            {item.festivalDiscountType === "fixed" && item.festivalDiscountAmount
+                              ? `₹${Number(item.festivalDiscountAmount)} Festive Deal`
+                              : item.festivalDiscountPercentage
                               ? `${String(item.festivalDiscountPercentage).replace(/%/g, "")}% Festive Deal`
+                              : item.festivalDiscountAmount
+                              ? `₹${Number(item.festivalDiscountAmount)} Festive Deal`
                               : "Festive Deal"}
                           </span>
                         </span>

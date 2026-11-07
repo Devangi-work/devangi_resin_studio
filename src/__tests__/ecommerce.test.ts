@@ -985,4 +985,84 @@ test("E-Commerce Test Suite", async (t) => {
     assert.equal(checkO2, null);
     assert.equal(checkO3, null);
   });
+
+  // 21. Festive Discount in Direct Fixed Amount & Percentage (Product & Store Settings)
+  await t.test("Festive discount supports direct fixed amount and percentage on products and store settings", async () => {
+    const { computeFestivePrice, computeGlobalFestiveDiscount } = await import("@/lib/festival");
+
+    // 1. Product with Direct Fixed Amount Festive Discount
+    const fixedProdResult = computeFestivePrice(1200, {
+      isFestivalSpecial: true,
+      festivalDiscountType: "fixed",
+      festivalDiscountAmount: 250,
+      festivalDiscountPercentage: null,
+    });
+    assert.equal(fixedProdResult.hasDiscount, true);
+    assert.equal(fixedProdResult.regularPrice, 1200);
+    assert.equal(fixedProdResult.discountAmount, 250);
+    assert.equal(fixedProdResult.discountedPrice, 950);
+    assert.equal(fixedProdResult.discountBadge, "₹250 OFF");
+
+    // 2. Product with Percentage Festive Discount
+    const pctProdResult = computeFestivePrice(1200, {
+      isFestivalSpecial: true,
+      festivalDiscountType: "percentage",
+      festivalDiscountPercentage: 20,
+      festivalDiscountAmount: null,
+    });
+    assert.equal(pctProdResult.hasDiscount, true);
+    assert.equal(pctProdResult.discountAmount, 240);
+    assert.equal(pctProdResult.discountedPrice, 960);
+    assert.equal(pctProdResult.discountBadge, "20% OFF");
+
+    // 3. Store Settings Global Festive Discount in Direct Fixed Amount
+    const storeFixedResult = computeGlobalFestiveDiscount(1500, {
+      festivalDiscountActive: true,
+      festivalDiscountType: "fixed",
+      festivalDiscountAmount: 300,
+      festivalDiscountPercentage: "₹300 OFF",
+    });
+    assert.equal(storeFixedResult.discountAmount, 300);
+    assert.equal(storeFixedResult.finalPrice, 1200);
+    assert.equal(storeFixedResult.discountBadge, "₹300 OFF");
+
+    // 4. Store Settings Global Festive Discount in Percentage
+    const storePctResult = computeGlobalFestiveDiscount(1500, {
+      festivalDiscountActive: true,
+      festivalDiscountType: "percentage",
+      festivalDiscountPercentage: "15%",
+      festivalDiscountAmount: null,
+    });
+    assert.equal(storePctResult.discountAmount, 225);
+    assert.equal(storePctResult.finalPrice, 1275);
+    assert.equal(storePctResult.discountBadge, "15% OFF");
+
+    // 5. Product creation and persistence with festivalDiscountType and festivalDiscountAmount
+    const cat = await dbStore.createCategory({
+      name: "Festive Art Category",
+      slug: `festive-cat-${Date.now()}`,
+      description: "Festive special creations",
+    });
+
+    const festiveProduct = await dbStore.createProduct({
+      name: "Festive Gold Clock",
+      slug: `festive-gold-clock-${Date.now()}`,
+      description: "Handcrafted clock with fixed festive discount",
+      categoryId: cat.id,
+      regularPrice: 2000,
+      isFestivalSpecial: true,
+      festivalDiscountType: "fixed",
+      festivalDiscountAmount: 350,
+    });
+
+    assert.equal(festiveProduct.isFestivalSpecial, true);
+    assert.equal(festiveProduct.festivalDiscountType, "fixed");
+    assert.equal(Number(festiveProduct.festivalDiscountAmount), 350);
+
+    // 6. Product update with fixed discount
+    const updatedProd = await dbStore.updateProduct(festiveProduct.id, {
+      festivalDiscountAmount: 400,
+    });
+    assert.equal(Number(updatedProd.festivalDiscountAmount), 400);
+  });
 });
