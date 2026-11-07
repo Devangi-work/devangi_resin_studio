@@ -277,9 +277,13 @@ html.admin-dark .admin-main-wrapper button[class*="bg-white"]:hover,
   width: max-content;
   animation: festivalMarquee 38s linear infinite;
   will-change: transform;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
 }
 
-.animate-festival-marquee:hover {
+.animate-festival-marquee:hover,
+.animate-festival-marquee:active,
+.animate-festival-marquee:focus-within {
   animation-play-state: paused;
 }
 

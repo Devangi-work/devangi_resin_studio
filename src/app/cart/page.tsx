@@ -344,10 +344,10 @@ function CartContent() {
                           {item.festivalDiscountType === "fixed" && item.festivalDiscountAmount
                             ? `₹${Number(item.festivalDiscountAmount)} Festive Deal`
                             : item.festivalDiscountPercentage
-                            ? `${String(item.festivalDiscountPercentage).replace(/%/g, "")}% Festive Deal`
-                            : item.festivalDiscountAmount
-                            ? `₹${Number(item.festivalDiscountAmount)} Festive Deal`
-                            : "Festive Deal"}
+                              ? `${String(item.festivalDiscountPercentage).replace(/%/g, "")}% Festive Deal`
+                              : item.festivalDiscountAmount
+                                ? `₹${Number(item.festivalDiscountAmount)} Festive Deal`
+                                : "Festive Deal"}
                         </span>
                       </span>
                     )}
