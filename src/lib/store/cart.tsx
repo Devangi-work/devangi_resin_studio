@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
+import { clarityIdentify, claritySet, clarityEvent } from "@/lib/analytics/clarity";
 
 export interface CartItem {
   id: string; // unique composite key for item + variant + personalization
@@ -58,6 +59,16 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       const isAuthenticated = Boolean(data?.authenticated && data?.customer?.id);
       const key = isAuthenticated ? `resin_cart_${data.customer.id}` : "resin_cart_guest";
       setStorageKey(key);
+
+      // Track customer identity and segments in Microsoft Clarity
+      if (isAuthenticated && data?.customer) {
+        clarityIdentify(data.customer.id, data.customer.fullName || data.customer.name);
+        claritySet("user_type", "customer");
+        if (data.customer.city) claritySet("customer_city", data.customer.city);
+        if (data.customer.state) claritySet("customer_state", data.customer.state);
+      } else {
+        claritySet("user_type", "guest");
+      }
       const stored = localStorage.getItem(key);
       let userItems: CartItem[] = stored ? JSON.parse(stored) : [];
 
@@ -127,6 +138,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       return [...prev, newItem];
     });
     setIsCartOpen(true);
+
+    // Send high-intent event to Microsoft Clarity to enable e-commerce funnel filtering
+    clarityEvent("add_to_cart");
+    claritySet("last_added_product", newItem.name);
+    claritySet("last_added_price", newItem.price);
   };
 
   const removeItem = (id: string) => {

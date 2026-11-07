@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { CartProvider } from "@/lib/store/cart";
 import { StorefrontShell } from "@/components/layout/StorefrontShell";
+import { MicrosoftClarity } from "@/components/analytics/MicrosoftClarity";
 
 export const metadata: Metadata = {
   title: "Devangi Resin Studio | Handcrafted Resin Creations by Devangi",
@@ -40,6 +41,7 @@ export default function RootLayout({
         <CartProvider>
           <StorefrontShell>{children}</StorefrontShell>
         </CartProvider>
+        <MicrosoftClarity />
       </body>
     </html>
   );

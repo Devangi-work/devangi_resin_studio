@@ -28,9 +28,18 @@ import {
   PenTool,
   Plus,
   MapPin,
+  CheckCircle2,
+  AlertTriangle,
+  Layers,
+  Copy,
+  Activity,
+  Eye,
+  Video,
+  BarChart3,
 } from "lucide-react";
 import { MediaPickerModal } from "@/components/admin/MediaPickerModal";
 import { getStoredAdminTheme, applyAdminTheme, AdminTheme } from "@/lib/admin-theme";
+import { defaultPolicyTemplates } from "@/lib/policies-default";
 
 function toDateTimeLocal(dateVal: any): string {
   if (!dateVal) return "";
@@ -75,11 +84,74 @@ export default function AdminSettingsPage() {
     festivalCtaText: "Shop Festive Collection",
     festivalCtaUrl: "/shop?filter=festival",
     cityShippingRates: [] as Array<{ id: string; name: string; charge: string | number }>,
+    policyPagesConfig: {} as Record<string, any>,
   });
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
+  const [selectedPolicyType, setSelectedPolicyType] = useState<"shipping" | "returns" | "care" | "privacy" | "terms">("shipping");
+
+  const getActivePolicyConfig = (type: string) => {
+    const existing = settings.policyPagesConfig?.[type];
+    if (existing && typeof existing === "object") {
+      return {
+        statement: existing.statement ?? "",
+        highlights: Array.isArray(existing.highlights) ? existing.highlights : [],
+        detailedSections: Array.isArray(existing.detailedSections) ? existing.detailedSections : [],
+        alertBox: existing.alertBox ? { ...existing.alertBox } : { enabled: false, title: "", message: "", type: "note" },
+      };
+    }
+    let legacyStatement = "";
+    if (type === "shipping") legacyStatement = settings.shippingPolicy || "";
+    if (type === "returns") legacyStatement = settings.returnPolicy || "";
+    if (type === "care") legacyStatement = settings.careInstructionsDefault || "";
+    if (type === "privacy") legacyStatement = settings.privacyPolicy || "";
+    if (type === "terms") legacyStatement = settings.termsPolicy || "";
+
+    const defaultTmpl = defaultPolicyTemplates[type];
+    return {
+      statement: legacyStatement || defaultTmpl?.statement || "",
+      highlights: defaultTmpl?.highlights ? JSON.parse(JSON.stringify(defaultTmpl.highlights)) : [],
+      detailedSections: defaultTmpl?.detailedSections ? JSON.parse(JSON.stringify(defaultTmpl.detailedSections)) : [],
+      alertBox: defaultTmpl?.alertBox ? JSON.parse(JSON.stringify(defaultTmpl.alertBox)) : { enabled: true, title: "", message: "", type: "note" },
+    };
+  };
+
+  const updateActivePolicy = (updater: (prev: any) => any) => {
+    setSettings((prev: any) => {
+      const cfg = { ...(prev.policyPagesConfig || {}) };
+      const current = getActivePolicyConfig(selectedPolicyType);
+      const updated = updater(current);
+      cfg[selectedPolicyType] = updated;
+
+      const legacyUpdates: any = {};
+      if (selectedPolicyType === "shipping" && updated.statement !== undefined) legacyUpdates.shippingPolicy = updated.statement;
+      if (selectedPolicyType === "returns" && updated.statement !== undefined) legacyUpdates.returnPolicy = updated.statement;
+      if (selectedPolicyType === "care" && updated.statement !== undefined) legacyUpdates.careInstructionsDefault = updated.statement;
+      if (selectedPolicyType === "privacy" && updated.statement !== undefined) legacyUpdates.privacyPolicy = updated.statement;
+      if (selectedPolicyType === "terms" && updated.statement !== undefined) legacyUpdates.termsPolicy = updated.statement;
+
+      return {
+        ...prev,
+        ...legacyUpdates,
+        policyPagesConfig: cfg,
+      };
+    });
+  };
+
+  const handleLoadDefaultTemplate = (type: string) => {
+    const defaultTmpl = defaultPolicyTemplates[type];
+    if (!defaultTmpl) return;
+    if (confirm(`Load the studio default template for "${defaultTmpl.name}"? This will populate standard highlight cards, procedures, and advisory notes.`)) {
+      updateActivePolicy(() => ({
+        statement: defaultTmpl.statement,
+        highlights: JSON.parse(JSON.stringify(defaultTmpl.highlights || [])),
+        detailedSections: JSON.parse(JSON.stringify(defaultTmpl.detailedSections || [])),
+        alertBox: JSON.parse(JSON.stringify(defaultTmpl.alertBox || { enabled: true, title: "", message: "", type: "note" })),
+      }));
+    }
+  };
 
   // Admin Profile & Appearance state
   const [adminUser, setAdminUser] = useState<any>(null);
@@ -512,6 +584,114 @@ export default function AdminSettingsPage() {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* Microsoft Clarity Analytics, Recordings & Heatmaps */}
+        <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#E8E0D5] shadow-sm space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#F4EBE6] pb-4">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-xl bg-[#FAF4EC] text-[#B8972E] border border-[#E8E0D5] flex items-center justify-center flex-shrink-0">
+                <Activity className="w-5 h-5 text-[#B8972E]" />
+              </div>
+              <div>
+                <div className="flex items-center space-x-2">
+                  <h2 className="font-serif text-base font-bold text-[#2C332D]">
+                    Microsoft Clarity Analytics & Visitor Recordings
+                  </h2>
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#E8EFE8] text-[#2E7D32] border border-[#C5D8C5]">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#2E7D32] animate-pulse mr-1" />
+                    Tracking Active
+                  </span>
+                </div>
+                <p className="text-xs text-[#736C66] mt-0.5">
+                  Full behavior analytics: daily visitor counts, session recordings playback, heatmaps, and funnel insights.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <a
+                href="https://clarity.microsoft.com/projects/view/z9u8cerkjx/dashboard"
+                target="_blank"
+                rel="noreferrer"
+                className="px-4 py-2 bg-[#2C332D] text-white hover:bg-[#3D473E] text-xs font-semibold rounded-xl flex items-center space-x-1.5 shadow-sm transition-all"
+              >
+                <BarChart3 className="w-3.5 h-3.5 text-[#D4AF37]" />
+                <span>Open Clarity Dashboard</span>
+                <ExternalLink className="w-3 h-3 ml-0.5" />
+              </a>
+            </div>
+          </div>
+
+          {/* Quick Metrics & Links Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <a
+              href="https://clarity.microsoft.com/projects/view/z9u8cerkjx/dashboard"
+              target="_blank"
+              rel="noreferrer"
+              className="p-4 rounded-xl border border-[#E8E0D5] bg-[#FAF8F5]/70 hover:bg-white hover:border-[#D4AF37] hover:shadow-xs transition-all group"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <div className="w-8 h-8 rounded-lg bg-white border border-[#E8E0D5] flex items-center justify-center text-[#B8972E]">
+                  <Eye className="w-4 h-4" />
+                </div>
+                <ExternalLink className="w-3.5 h-3.5 text-[#8C827A] group-hover:text-[#2C332D]" />
+              </div>
+              <h3 className="text-xs font-bold text-[#2C332D]">Daily Traffic & Visitors</h3>
+              <p className="text-[11px] text-[#736C66] mt-1 leading-relaxed">
+                See exact daily traffic, distinct visitors, pages viewed per session, active live users, and top geographic cities across India.
+              </p>
+            </a>
+
+            <a
+              href="https://clarity.microsoft.com/projects/view/z9u8cerkjx/recordings"
+              target="_blank"
+              rel="noreferrer"
+              className="p-4 rounded-xl border border-[#E8E0D5] bg-[#FAF8F5]/70 hover:bg-white hover:border-[#D4AF37] hover:shadow-xs transition-all group"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <div className="w-8 h-8 rounded-lg bg-white border border-[#E8E0D5] flex items-center justify-center text-[#B8972E]">
+                  <Video className="w-4 h-4" />
+                </div>
+                <ExternalLink className="w-3.5 h-3.5 text-[#8C827A] group-hover:text-[#2C332D]" />
+              </div>
+              <h3 className="text-xs font-bold text-[#2C332D]">Visitor Session Recordings</h3>
+              <p className="text-[11px] text-[#736C66] mt-1 leading-relaxed">
+                Watch full video recordings of customers browsing your shop, selecting resin colors, adding to cart, and checking out.
+              </p>
+            </a>
+
+            <a
+              href="https://clarity.microsoft.com/projects/view/z9u8cerkjx/heatmaps"
+              target="_blank"
+              rel="noreferrer"
+              className="p-4 rounded-xl border border-[#E8E0D5] bg-[#FAF8F5]/70 hover:bg-white hover:border-[#D4AF37] hover:shadow-xs transition-all group"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <div className="w-8 h-8 rounded-lg bg-white border border-[#E8E0D5] flex items-center justify-center text-[#B8972E]">
+                  <Activity className="w-4 h-4" />
+                </div>
+                <ExternalLink className="w-3.5 h-3.5 text-[#8C827A] group-hover:text-[#2C332D]" />
+              </div>
+              <h3 className="text-xs font-bold text-[#2C332D]">Click & Scroll Heatmaps</h3>
+              <p className="text-[11px] text-[#736C66] mt-1 leading-relaxed">
+                Visual heatmaps on desktop and mobile revealing where visitors click the most and how deep down pages they scroll.
+              </p>
+            </a>
+          </div>
+
+          {/* Project Details Footer */}
+          <div className="p-3 bg-[#FAF8F5] rounded-xl border border-[#E8E0D5] flex flex-col sm:flex-row sm:items-center justify-between text-xs gap-2">
+            <div className="flex items-center space-x-2">
+              <span className="text-[#736C66]">Clarity Project ID:</span>
+              <code className="font-mono font-bold text-[#2C332D] bg-white px-2 py-0.5 rounded border border-[#E8E0D5]">
+                z9u8cerkjx
+              </code>
+            </div>
+            <span className="text-[11px] text-[#736C66]">
+              Configured globally across storefront, cart, product catalogs, and checkout.
+            </span>
           </div>
         </div>
 
@@ -1394,180 +1574,525 @@ export default function AdminSettingsPage() {
           </div>
         </div>
 
-        {/* Customer Policies & Resin Care Instructions */}
+        {/* Customer Policies & Resin Care Instructions - Structured Studio Editor */}
         <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#E8E0D5] shadow-sm space-y-6">
-          <div className="border-b border-[#F4EBE6] pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="border-b border-[#F4EBE6] pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <h2 className="font-serif text-base font-bold text-[#2C332D]">
-                Dynamic Customer Policies & Resin Care Guide
-              </h2>
-              <p className="text-xs text-[#736C66]">
-                These details dynamically power the public policy pages. Any updates saved here are instantly reflected live.
+              <div className="flex items-center space-x-2">
+                <FileText className="w-5 h-5 text-[#B8972E]" />
+                <h2 className="font-serif text-base font-bold text-[#2C332D]">
+                  Customer Policy Pages & Resin Care Studio Editor
+                </h2>
+              </div>
+              <p className="text-xs text-[#736C66] mt-1">
+                Configure structured policy content matching the live page design: Official Statement, Key Highlight Cards, Detailed Guidelines & Tips, and Highlighted Advisory Callout boxes.
               </p>
             </div>
-            <div className="flex flex-wrap gap-2 text-[11px]">
+
+            {/* Quick Live Links */}
+            <div className="flex flex-wrap items-center gap-2 text-[11px]">
+              <span className="text-[#8C827A] font-medium">Live pages:</span>
               <Link
                 href="/policies/shipping"
                 target="_blank"
-                className="inline-flex items-center space-x-1 text-[#8C6E79] hover:text-[#2C332D] underline"
+                className="inline-flex items-center space-x-1 text-[#8C6E79] hover:text-[#2C332D] underline font-medium"
               >
-                <span>Shipping Page</span>
-                <ExternalLink className="w-3 h-3" />
+                <span>Shipping</span>
+                <ExternalLink className="w-2.5 h-2.5" />
               </Link>
               <span>•</span>
               <Link
                 href="/policies/returns"
                 target="_blank"
-                className="inline-flex items-center space-x-1 text-[#8C6E79] hover:text-[#2C332D] underline"
+                className="inline-flex items-center space-x-1 text-[#8C6E79] hover:text-[#2C332D] underline font-medium"
               >
-                <span>Returns Page</span>
-                <ExternalLink className="w-3 h-3" />
+                <span>Returns</span>
+                <ExternalLink className="w-2.5 h-2.5" />
               </Link>
               <span>•</span>
               <Link
                 href="/policies/care"
                 target="_blank"
-                className="inline-flex items-center space-x-1 text-[#8C6E79] hover:text-[#2C332D] underline"
+                className="inline-flex items-center space-x-1 text-[#8C6E79] hover:text-[#2C332D] underline font-medium"
               >
                 <span>Care Guide</span>
-                <ExternalLink className="w-3 h-3" />
+                <ExternalLink className="w-2.5 h-2.5" />
               </Link>
               <span>•</span>
               <Link
                 href="/policies/privacy"
                 target="_blank"
-                className="inline-flex items-center space-x-1 text-[#8C6E79] hover:text-[#2C332D] underline"
+                className="inline-flex items-center space-x-1 text-[#8C6E79] hover:text-[#2C332D] underline font-medium"
               >
-                <span>Privacy Page</span>
-                <ExternalLink className="w-3 h-3" />
+                <span>Privacy</span>
+                <ExternalLink className="w-2.5 h-2.5" />
               </Link>
-            </div>
-          </div>
-
-          {/* 1. Shipping & Dispatch Policy */}
-          <div className="p-4 rounded-xl border border-[#E8E0D5] bg-[#FAF8F5]/60 space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-[#2C332D] flex items-center space-x-2">
-                <Truck className="w-4 h-4 text-[#B8972E]" />
-                <span>1. Shipping & Dispatch Policy</span>
-              </label>
-              <Link
-                href="/policies/shipping"
-                target="_blank"
-                className="text-[11px] text-[#B8972E] hover:underline flex items-center space-x-1"
-              >
-                <span>View Live Page</span>
-                <ExternalLink className="w-3 h-3" />
-              </Link>
-            </div>
-            <textarea
-              rows={4}
-              value={settings.shippingPolicy || ""}
-              onChange={(e) => setSettings({ ...settings, shippingPolicy: e.target.value })}
-              placeholder="Explain curing timelines, domestic dispatch duration, insured courier partners, free shipping thresholds, and tracking..."
-              className="w-full px-3.5 py-2.5 text-xs bg-white border border-[#E8E0D5] rounded-xl focus:ring-1 focus:ring-[#D4AF37] leading-relaxed"
-            />
-          </div>
-
-          {/* 2. Returns & Exchange Policy */}
-          <div className="p-4 rounded-xl border border-[#E8E0D5] bg-[#FAF8F5]/60 space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-[#2C332D] flex items-center space-x-2">
-                <RotateCcw className="w-4 h-4 text-[#B8972E]" />
-                <span>2. Returns & Exchange Policy</span>
-              </label>
-              <Link
-                href="/policies/returns"
-                target="_blank"
-                className="text-[11px] text-[#B8972E] hover:underline flex items-center space-x-1"
-              >
-                <span>View Live Page</span>
-                <ExternalLink className="w-3 h-3" />
-              </Link>
-            </div>
-            <textarea
-              rows={4}
-              value={settings.returnPolicy || ""}
-              onChange={(e) => setSettings({ ...settings, returnPolicy: e.target.value })}
-              placeholder="Outline policies for handmade bespoke items, transit damage replacement guarantee, 7-day window, unboxing video requirements..."
-              className="w-full px-3.5 py-2.5 text-xs bg-white border border-[#E8E0D5] rounded-xl focus:ring-1 focus:ring-[#D4AF37] leading-relaxed"
-            />
-          </div>
-
-          {/* 3. Resin Care Guide */}
-          <div className="p-4 rounded-xl border border-[#E8E0D5] bg-[#FAF8F5]/60 space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-[#2C332D] flex items-center space-x-2">
-                <Sparkles className="w-4 h-4 text-[#B8972E]" />
-                <span>3. Resin Care Guide & Maintenance</span>
-              </label>
-              <Link
-                href="/policies/care"
-                target="_blank"
-                className="text-[11px] text-[#B8972E] hover:underline flex items-center space-x-1"
-              >
-                <span>View Live Page</span>
-                <ExternalLink className="w-3 h-3" />
-              </Link>
-            </div>
-            <textarea
-              rows={4}
-              value={settings.careInstructionsDefault || ""}
-              onChange={(e) => setSettings({ ...settings, careInstructionsDefault: e.target.value })}
-              placeholder="Explain cleaning instructions (microfiber, mild soap), temperature limits, avoidance of abrasive sponges, UV resistance..."
-              className="w-full px-3.5 py-2.5 text-xs bg-white border border-[#E8E0D5] rounded-xl focus:ring-1 focus:ring-[#D4AF37] leading-relaxed"
-            />
-          </div>
-
-          {/* 4. Privacy Policy */}
-          <div className="p-4 rounded-xl border border-[#E8E0D5] bg-[#FAF8F5]/60 space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-[#2C332D] flex items-center space-x-2">
-                <Lock className="w-4 h-4 text-[#B8972E]" />
-                <span>4. Privacy & Data Protection Policy</span>
-              </label>
-              <Link
-                href="/policies/privacy"
-                target="_blank"
-                className="text-[11px] text-[#B8972E] hover:underline flex items-center space-x-1"
-              >
-                <span>View Live Page</span>
-                <ExternalLink className="w-3 h-3" />
-              </Link>
-            </div>
-            <textarea
-              rows={4}
-              value={settings.privacyPolicy || ""}
-              onChange={(e) => setSettings({ ...settings, privacyPolicy: e.target.value })}
-              placeholder="Detail user data confidentiality, how delivery addresses and phone numbers are handled, secure payment protection..."
-              className="w-full px-3.5 py-2.5 text-xs bg-white border border-[#E8E0D5] rounded-xl focus:ring-1 focus:ring-[#D4AF37] leading-relaxed"
-            />
-          </div>
-
-          {/* 5. Terms & Conditions */}
-          <div className="p-4 rounded-xl border border-[#E8E0D5] bg-[#FAF8F5]/60 space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-[#2C332D] flex items-center space-x-2">
-                <FileText className="w-4 h-4 text-[#B8972E]" />
-                <span>5. Terms & Conditions of Artisan Keepsakes</span>
-              </label>
+              <span>•</span>
               <Link
                 href="/policies/terms"
                 target="_blank"
-                className="text-[11px] text-[#B8972E] hover:underline flex items-center space-x-1"
+                className="inline-flex items-center space-x-1 text-[#8C6E79] hover:text-[#2C332D] underline font-medium"
               >
-                <span>View Live Page</span>
-                <ExternalLink className="w-3 h-3" />
+                <span>Terms</span>
+                <ExternalLink className="w-2.5 h-2.5" />
               </Link>
             </div>
-            <textarea
-              rows={3}
-              value={settings.termsPolicy || ""}
-              onChange={(e) => setSettings({ ...settings, termsPolicy: e.target.value })}
-              placeholder="Terms of custom handmade orders, petal placement variations, payment policies, cancellation window..."
-              className="w-full px-3.5 py-2.5 text-xs bg-white border border-[#E8E0D5] rounded-xl focus:ring-1 focus:ring-[#D4AF37] leading-relaxed"
-            />
           </div>
+
+          {/* 5 Policy Selection Tabs */}
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 bg-[#FAF8F5] p-2 rounded-xl border border-[#E8E0D5]">
+            {([
+              { key: "shipping", label: "Shipping Policy", icon: Truck },
+              { key: "returns", label: "Returns & Exchange", icon: RotateCcw },
+              { key: "care", label: "Resin Care Guide", icon: Sparkles },
+              { key: "privacy", label: "Privacy Policy", icon: Lock },
+              { key: "terms", label: "Terms & Conditions", icon: FileText },
+            ] as const).map((tab) => {
+              const TabIcon = tab.icon;
+              const isSelected = selectedPolicyType === tab.key;
+              return (
+                <button
+                  type="button"
+                  key={tab.key}
+                  onClick={() => setSelectedPolicyType(tab.key)}
+                  className={`flex items-center justify-center space-x-2 py-2.5 px-3 rounded-lg text-xs font-semibold transition-all ${
+                    isSelected
+                      ? "bg-[#2C332D] text-white shadow-sm"
+                      : "bg-white text-[#5C554E] hover:text-[#2C332D] hover:bg-[#F2ECE4] border border-[#E8E0D5]"
+                  }`}
+                >
+                  <TabIcon className={`w-3.5 h-3.5 ${isSelected ? "text-[#D4AF37]" : "text-[#8C827A]"}`} />
+                  <span className="truncate">{tab.label}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Active Policy Config Editor */}
+          {(() => {
+            const activePolicy = getActivePolicyConfig(selectedPolicyType);
+            const template = defaultPolicyTemplates[selectedPolicyType];
+
+            return (
+              <div className="space-y-6 pt-2">
+                {/* Policy Header Bar */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl bg-[#FAF8F5] border border-[#E8E0D5]">
+                  <div>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#B8972E] bg-white px-2 py-0.5 rounded-full border border-[#E8E0D5]">
+                        Editing Policy Page
+                      </span>
+                      <h3 className="text-sm font-bold text-[#2C332D] font-serif">
+                        {template?.name || selectedPolicyType}
+                      </h3>
+                    </div>
+                    <p className="text-xs text-[#736C66] mt-0.5">
+                      Configure custom data for this policy, or load pre-curated studio defaults anytime.
+                    </p>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <Link
+                      href={`/policies/${selectedPolicyType}`}
+                      target="_blank"
+                      className="px-3 py-1.5 bg-white text-[#2C332D] hover:text-[#B8972E] text-xs font-semibold rounded-lg border border-[#E8E0D5] flex items-center space-x-1.5 transition-colors"
+                    >
+                      <span>View Live Page</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </Link>
+
+                    <button
+                      type="button"
+                      onClick={() => handleLoadDefaultTemplate(selectedPolicyType)}
+                      className="px-3 py-1.5 bg-[#F4EBE6] hover:bg-[#EADED7] text-[#2C332D] text-xs font-semibold rounded-lg border border-[#DAC9BF] flex items-center space-x-1.5 transition-colors"
+                      title="Reset or prefill this policy with standard studio cards and sections"
+                    >
+                      <Copy className="w-3 h-3 text-[#B8972E]" />
+                      <span>Load Studio Default Template</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* 1. Official Studio Policy Statement */}
+                <div className="p-4 rounded-xl border border-[#E8E0D5] bg-white space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-[#2C332D] flex items-center space-x-2">
+                      <Sparkles className="w-4 h-4 text-[#B8972E]" />
+                      <span>1. Official Studio Policy Statement</span>
+                    </label>
+                    <span className="text-[11px] text-[#736C66]">
+                      Top highlighted statement on the live page
+                    </span>
+                  </div>
+                  <textarea
+                    rows={3}
+                    value={activePolicy.statement || ""}
+                    onChange={(e) =>
+                      updateActivePolicy((prev: any) => ({
+                        ...prev,
+                        statement: e.target.value,
+                      }))
+                    }
+                    placeholder="Enter the official introductory policy statement..."
+                    className="w-full px-3.5 py-2.5 text-xs bg-[#FAF8F5]/50 border border-[#E8E0D5] rounded-xl focus:ring-1 focus:ring-[#D4AF37] leading-relaxed"
+                  />
+                </div>
+
+                {/* 2. Key Highlight Cards */}
+                <div className="p-4 rounded-xl border border-[#E8E0D5] bg-white space-y-4">
+                  <div className="flex items-center justify-between border-b border-[#F4EBE6] pb-3">
+                    <div>
+                      <div className="flex items-center space-x-2">
+                        <Layers className="w-4 h-4 text-[#B8972E]" />
+                        <label className="text-xs font-bold text-[#2C332D]">
+                          2. Key Highlight Cards
+                        </label>
+                        <span className="text-[10px] font-bold text-[#B8972E] bg-[#FAF4EC] px-2 py-0.5 rounded-full border border-[#E8E0D5]">
+                          {activePolicy.highlights?.length || 0} Cards
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-[#736C66] mt-0.5">
+                        Feature overview cards displayed in the top visual grid of the policy page.
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        updateActivePolicy((prev: any) => ({
+                          ...prev,
+                          highlights: [
+                            ...(prev.highlights || []),
+                            { title: "", desc: "" },
+                          ],
+                        }))
+                      }
+                      className="px-3 py-1.5 bg-[#FAF8F5] hover:bg-[#F2ECE4] text-[#2C332D] text-xs font-semibold rounded-lg border border-[#E8E0D5] flex items-center space-x-1 transition-colors"
+                    >
+                      <Plus className="w-3.5 h-3.5 text-[#B8972E]" />
+                      <span>Add Display Card</span>
+                    </button>
+                  </div>
+
+                  {(!activePolicy.highlights || activePolicy.highlights.length === 0) ? (
+                    <div className="p-4 text-center rounded-xl border border-dashed border-[#E8E0D5] bg-[#FAF8F5] text-xs text-[#736C66]">
+                      No highlight cards added yet. Click &quot;Add Display Card&quot; or &quot;Load Studio Default Template&quot; above.
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {activePolicy.highlights.map((card: any, idx: number) => (
+                        <div
+                          key={idx}
+                          className="p-3.5 rounded-xl border border-[#E8E0D5] bg-[#FAF8F5]/60 space-y-2 relative group"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-[#8C827A] bg-white px-2 py-0.5 rounded border border-[#E8E0D5]">
+                              Card #{idx + 1}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                updateActivePolicy((prev: any) => ({
+                                  ...prev,
+                                  highlights: (prev.highlights || []).filter(
+                                    (_: any, i: number) => i !== idx
+                                  ),
+                                }))
+                              }
+                              className="p-1 text-[#8C827A] hover:text-[#DC2626] transition-colors rounded"
+                              title="Delete this card"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+
+                          <div>
+                            <label className="text-[10px] font-bold text-[#5C554E] uppercase tracking-wider block mb-1">
+                              Card Title
+                            </label>
+                            <input
+                              type="text"
+                              value={card.title || ""}
+                              onChange={(e) =>
+                                updateActivePolicy((prev: any) => {
+                                  const next = [...(prev.highlights || [])];
+                                  next[idx] = { ...next[idx], title: e.target.value };
+                                  return { ...prev, highlights: next };
+                                })
+                              }
+                              placeholder="e.g. 3-5 Days Curing Time"
+                              className="w-full px-3 py-1.5 text-xs bg-white border border-[#E8E0D5] rounded-lg focus:ring-1 focus:ring-[#D4AF37]"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="text-[10px] font-bold text-[#5C554E] uppercase tracking-wider block mb-1">
+                              Card Description
+                            </label>
+                            <textarea
+                              rows={2}
+                              value={card.desc || ""}
+                              onChange={(e) =>
+                                updateActivePolicy((prev: any) => {
+                                  const next = [...(prev.highlights || [])];
+                                  next[idx] = { ...next[idx], desc: e.target.value };
+                                  return { ...prev, highlights: next };
+                                })
+                              }
+                              placeholder="Brief description for this highlight card..."
+                              className="w-full px-3 py-1.5 text-xs bg-white border border-[#E8E0D5] rounded-lg focus:ring-1 focus:ring-[#D4AF37] leading-relaxed"
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* 3. Comprehensive Policy Guidelines & Procedures */}
+                <div className="p-4 rounded-xl border border-[#E8E0D5] bg-white space-y-4">
+                  <div className="flex items-center justify-between border-b border-[#F4EBE6] pb-3">
+                    <div>
+                      <div className="flex items-center space-x-2">
+                        <FileText className="w-4 h-4 text-[#B8972E]" />
+                        <label className="text-xs font-bold text-[#2C332D]">
+                          3. Comprehensive Policy Guidelines & Procedures
+                        </label>
+                        <span className="text-[10px] font-bold text-[#B8972E] bg-[#FAF4EC] px-2 py-0.5 rounded-full border border-[#E8E0D5]">
+                          {activePolicy.detailedSections?.length || 0} Sections
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-[#736C66] mt-0.5">
+                        In-depth clauses, procedure timelines, and bullet point tips for the policy page.
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        updateActivePolicy((prev: any) => ({
+                          ...prev,
+                          detailedSections: [
+                            ...(prev.detailedSections || []),
+                            { title: "", desc: "", tips: [] },
+                          ],
+                        }))
+                      }
+                      className="px-3 py-1.5 bg-[#FAF8F5] hover:bg-[#F2ECE4] text-[#2C332D] text-xs font-semibold rounded-lg border border-[#E8E0D5] flex items-center space-x-1 transition-colors"
+                    >
+                      <Plus className="w-3.5 h-3.5 text-[#B8972E]" />
+                      <span>Add Guideline Section</span>
+                    </button>
+                  </div>
+
+                  {(!activePolicy.detailedSections || activePolicy.detailedSections.length === 0) ? (
+                    <div className="p-4 text-center rounded-xl border border-dashed border-[#E8E0D5] bg-[#FAF8F5] text-xs text-[#736C66]">
+                      No guideline sections added yet. Click &quot;Add Guideline Section&quot; to begin.
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {activePolicy.detailedSections.map((sec: any, idx: number) => {
+                        const tipsText = Array.isArray(sec.tips)
+                          ? sec.tips.join("\n")
+                          : typeof sec.tips === "string"
+                          ? sec.tips
+                          : "";
+
+                        return (
+                          <div
+                            key={idx}
+                            className="p-4 rounded-xl border border-[#E8E0D5] bg-[#FAF8F5]/60 space-y-3"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-[#8C827A] bg-white px-2.5 py-0.5 rounded border border-[#E8E0D5]">
+                                Guideline Section #{idx + 1}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  updateActivePolicy((prev: any) => ({
+                                    ...prev,
+                                    detailedSections: (prev.detailedSections || []).filter(
+                                      (_: any, i: number) => i !== idx
+                                    ),
+                                  }))
+                                }
+                                className="p-1 text-[#8C827A] hover:text-[#DC2626] transition-colors rounded"
+                                title="Delete this section"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+
+                            <div>
+                              <label className="text-[10px] font-bold text-[#5C554E] uppercase tracking-wider block mb-1">
+                                Section Heading / Title
+                              </label>
+                              <input
+                                type="text"
+                                value={sec.title || ""}
+                                onChange={(e) =>
+                                  updateActivePolicy((prev: any) => {
+                                    const next = [...(prev.detailedSections || [])];
+                                    next[idx] = { ...next[idx], title: e.target.value };
+                                    return { ...prev, detailedSections: next };
+                                  })
+                                }
+                                placeholder="e.g. 1. Order Processing & Artisan Crafting Schedule"
+                                className="w-full px-3 py-1.5 text-xs bg-white border border-[#E8E0D5] rounded-lg focus:ring-1 focus:ring-[#D4AF37]"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="text-[10px] font-bold text-[#5C554E] uppercase tracking-wider block mb-1">
+                                Policy Clause Description
+                              </label>
+                              <textarea
+                                rows={3}
+                                value={sec.desc || ""}
+                                onChange={(e) =>
+                                  updateActivePolicy((prev: any) => {
+                                    const next = [...(prev.detailedSections || [])];
+                                    next[idx] = { ...next[idx], desc: e.target.value };
+                                    return { ...prev, detailedSections: next };
+                                  })
+                                }
+                                placeholder="Full procedure details, guidelines, or policy explanation..."
+                                className="w-full px-3 py-2 text-xs bg-white border border-[#E8E0D5] rounded-lg focus:ring-1 focus:ring-[#D4AF37] leading-relaxed"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="text-[10px] font-bold text-[#5C554E] uppercase tracking-wider block mb-1">
+                                Actionable Tips & Bullet Points (One per line)
+                              </label>
+                              <textarea
+                                rows={2}
+                                value={tipsText}
+                                onChange={(e) =>
+                                  updateActivePolicy((prev: any) => {
+                                    const next = [...(prev.detailedSections || [])];
+                                    const lines = e.target.value
+                                      .split("\n")
+                                      .map((l) => l.trim())
+                                      .filter(Boolean);
+                                    next[idx] = { ...next[idx], tips: lines };
+                                    return { ...prev, detailedSections: next };
+                                  })
+                                }
+                                placeholder="Optional bullet points or guidelines (one per line)..."
+                                className="w-full px-3 py-2 text-xs bg-white border border-[#E8E0D5] rounded-lg focus:ring-1 focus:ring-[#D4AF37] leading-relaxed font-mono"
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* 4. Highlighted Note / Studio Advisory Callout */}
+                <div className="p-4 rounded-xl border border-[#E8E0D5] bg-white space-y-4">
+                  <div className="flex items-center justify-between border-b border-[#F4EBE6] pb-3">
+                    <div className="flex items-center space-x-2">
+                      <AlertTriangle className="w-4 h-4 text-[#B8972E]" />
+                      <label className="text-xs font-bold text-[#2C332D]">
+                        4. Highlighted Note / Studio Advisory Callout
+                      </label>
+                    </div>
+
+                    <label className="flex items-center space-x-2 cursor-pointer text-xs font-semibold text-[#2C332D]">
+                      <input
+                        type="checkbox"
+                        checked={activePolicy.alertBox?.enabled !== false}
+                        onChange={(e) =>
+                          updateActivePolicy((prev: any) => ({
+                            ...prev,
+                            alertBox: {
+                              ...(prev.alertBox || {}),
+                              enabled: e.target.checked,
+                            },
+                          }))
+                        }
+                        className="w-4 h-4 text-[#2C332D] rounded border-[#E8E0D5] focus:ring-[#D4AF37]"
+                      />
+                      <span>Show Advisory Box on Live Page</span>
+                    </label>
+                  </div>
+
+                  {activePolicy.alertBox?.enabled !== false && (
+                    <div className="p-4 rounded-xl border border-[#E8E0D5] bg-[#FAF8F5]/60 space-y-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-[10px] font-bold text-[#5C554E] uppercase tracking-wider block mb-1">
+                            Callout Style
+                          </label>
+                          <select
+                            value={activePolicy.alertBox?.type || "note"}
+                            onChange={(e) =>
+                              updateActivePolicy((prev: any) => ({
+                                ...prev,
+                                alertBox: {
+                                  ...(prev.alertBox || {}),
+                                  type: e.target.value,
+                                },
+                              }))
+                            }
+                            className="w-full px-3 py-1.5 text-xs bg-white border border-[#E8E0D5] rounded-lg focus:ring-1 focus:ring-[#D4AF37]"
+                          >
+                            <option value="note">Artisan Studio Note (Amber / Warm Gold)</option>
+                            <option value="warning">Important Warning / Claim Requirement (Rose / Red Alert)</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="text-[10px] font-bold text-[#5C554E] uppercase tracking-wider block mb-1">
+                            Advisory Box Title
+                          </label>
+                          <input
+                            type="text"
+                            value={activePolicy.alertBox?.title || ""}
+                            onChange={(e) =>
+                              updateActivePolicy((prev: any) => ({
+                                ...prev,
+                                alertBox: {
+                                  ...(prev.alertBox || {}),
+                                  title: e.target.value,
+                                },
+                              }))
+                            }
+                            placeholder="e.g. How to File a Quick Claim or Artisan Note"
+                            className="w-full px-3 py-1.5 text-xs bg-white border border-[#E8E0D5] rounded-lg focus:ring-1 focus:ring-[#D4AF37]"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-[10px] font-bold text-[#5C554E] uppercase tracking-wider block mb-1">
+                          Advisory Message & Guidance
+                        </label>
+                        <textarea
+                          rows={2}
+                          value={activePolicy.alertBox?.message || ""}
+                          onChange={(e) =>
+                            updateActivePolicy((prev: any) => ({
+                              ...prev,
+                              alertBox: {
+                                ...(prev.alertBox || {}),
+                                message: e.target.value,
+                              },
+                            }))
+                          }
+                          placeholder="e.g. Simply WhatsApp our studio with your unboxing video..."
+                          className="w-full px-3 py-2 text-xs bg-white border border-[#E8E0D5] rounded-lg focus:ring-1 focus:ring-[#D4AF37] leading-relaxed"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
         </div>
       </form>
 

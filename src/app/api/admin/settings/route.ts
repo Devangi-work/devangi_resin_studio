@@ -31,6 +31,7 @@ export async function PUT(request: Request) {
       revalidatePath("/policies/returns");
       revalidatePath("/policies/care");
       revalidatePath("/policies/privacy");
+      revalidatePath("/policies/terms");
     } catch {
       // ignore
     }

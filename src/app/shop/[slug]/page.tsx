@@ -38,14 +38,34 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
     notFound();
   }
 
-  // Related products from the same category
-  const relatedRes = await dbStore.getProducts({
-    categoryId: product.categoryId,
-    status: "published",
-    limit: 5,
-  });
+  // Strictly fetch related products only from the same category as the active product
+  const targetCategoryId = product.categoryId || product.category?.id || null;
+  const targetCategorySlug = product.category?.slug || null;
 
-  const relatedProducts = relatedRes.products.filter((p: any) => p.id !== product.id).slice(0, 4);
+  let relatedProducts: any[] = [];
+  if (targetCategoryId || targetCategorySlug) {
+    const relatedRes = await dbStore.getProducts({
+      categoryId: targetCategoryId || undefined,
+      categorySlug: targetCategorySlug || undefined,
+      status: "published",
+      limit: 50,
+    });
+
+    relatedProducts = (relatedRes.products || [])
+      .filter((p: any) => {
+        if (p.id === product.id) return false;
+        const pCatId = p.categoryId || p.category?.id;
+        const pCatSlug = p.category?.slug;
+        if (targetCategoryId && pCatId) {
+          return pCatId === targetCategoryId;
+        }
+        if (targetCategorySlug && pCatSlug) {
+          return pCatSlug === targetCategorySlug;
+        }
+        return false;
+      })
+      .slice(0, 4);
+  }
   const settings = await dbStore.getSiteSettings();
 
   return (

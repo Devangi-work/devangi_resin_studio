@@ -359,7 +359,46 @@ export default async function PolicyPage({ params }: PolicyPageProps) {
     },
   };
 
-  const currentPolicy = policyConfigs[type] || policyConfigs.shipping;
+  const basePolicy = policyConfigs[type] || policyConfigs.shipping;
+  const customConfig = (settings.policyPagesConfig as any)?.[type] || {};
+
+  const currentPolicy = {
+    ...basePolicy,
+    dynamicContent:
+      customConfig.statement?.trim() ||
+      basePolicy.dynamicContent,
+    highlights:
+      Array.isArray(customConfig.highlights) && customConfig.highlights.length > 0
+        ? customConfig.highlights.map((h: any, idx: number) => ({
+            icon: basePolicy.highlights[idx]?.icon || [Clock, Package, Truck, MessageCircle, ShieldCheck, Calendar, Sparkles, HeartHandshake, Sun, Droplets, ShieldAlert, Lock, FileText][idx % 13] || Sparkles,
+            title: h.title,
+            desc: h.desc,
+          }))
+        : basePolicy.highlights,
+    detailedSections:
+      Array.isArray(customConfig.detailedSections) && customConfig.detailedSections.length > 0
+        ? customConfig.detailedSections.map((s: any) => ({
+            title: s.title,
+            desc: s.desc,
+            tips: Array.isArray(s.tips)
+              ? s.tips
+              : typeof s.tips === "string"
+              ? s.tips.split("\n").map((t: string) => t.trim()).filter(Boolean)
+              : undefined,
+          }))
+        : basePolicy.detailedSections,
+    alertBox:
+      customConfig.alertBox && customConfig.alertBox.enabled === false
+        ? undefined
+        : customConfig.alertBox && (customConfig.alertBox.title || customConfig.alertBox.message)
+        ? {
+            title: customConfig.alertBox.title,
+            message: customConfig.alertBox.message,
+            type: customConfig.alertBox.type || "note",
+          }
+        : basePolicy.alertBox,
+  };
+
   const Icon = currentPolicy.icon;
 
   const policyTabs = [
@@ -463,7 +502,7 @@ export default async function PolicyPage({ params }: PolicyPageProps) {
 
         {/* ---------------- 3. KEY HIGHLIGHTS CARDS ---------------- */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {currentPolicy.highlights.map((h, idx) => {
+          {currentPolicy.highlights.map((h: any, idx: number) => {
             const CardIcon = h.icon;
             return (
               <div
@@ -498,7 +537,7 @@ export default async function PolicyPage({ params }: PolicyPageProps) {
           </div>
 
           <div className="space-y-6">
-            {currentPolicy.detailedSections.map((sec, i) => (
+            {currentPolicy.detailedSections.map((sec: any, i: number) => (
               <div key={i} className="space-y-2.5 pb-5 border-b border-[#FAF0F3] last:border-b-0 last:pb-0">
                 <h3 className="font-serif text-base font-bold text-[#3A1823] flex items-center space-x-2">
                   <CheckCircle2 className="w-4 h-4 text-[#D4AF37] flex-shrink-0" />
@@ -511,7 +550,7 @@ export default async function PolicyPage({ params }: PolicyPageProps) {
                 {sec.tips && sec.tips.length > 0 && (
                   <div className="pl-6 pt-2">
                     <ul className="space-y-1.5">
-                      {sec.tips.map((tip, tIdx) => (
+                      {sec.tips.map((tip: any, tIdx: number) => (
                         <li key={tIdx} className="text-xs text-[#3A1823] flex items-center space-x-2">
                           <span className="w-1.5 h-1.5 rounded-full bg-[#B84A67]" />
                           <span>{tip}</span>

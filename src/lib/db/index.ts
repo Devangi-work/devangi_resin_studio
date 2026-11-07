@@ -41,6 +41,7 @@ if (sql) {
   sql`ALTER TABLE coupons ADD COLUMN IF NOT EXISTS applicable_product_id TEXT;`.catch(() => { });
   sql`ALTER TABLE coupons ADD COLUMN IF NOT EXISTS applicable_product_ids JSONB DEFAULT '[]'::jsonb;`.catch(() => { });
   sql`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS city_shipping_rates JSONB DEFAULT '[]'::jsonb;`.catch(() => { });
+  sql`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS policy_pages_config JSONB DEFAULT '{}'::jsonb;`.catch(() => { });
   sql`CREATE TABLE IF NOT EXISTS media_items (
     id TEXT PRIMARY KEY,
     file_name TEXT NOT NULL,
@@ -198,6 +199,7 @@ function getInitialStoreState(): StoreState {
       festivalCtaUrl: "/shop?filter=festival",
       keepsakeStudioImages: [],
       cityShippingRates: [],
+      policyPagesConfig: {},
       updatedAt: new Date(),
     },
     customRequests: [],
@@ -2516,6 +2518,7 @@ export const dbStore = {
             festival_cta_url as "festivalCtaUrl",
             COALESCE(keepsake_studio_images, '[]'::jsonb) as "keepsakeStudioImages",
             COALESCE(city_shipping_rates, '[]'::jsonb) as "cityShippingRates",
+            COALESCE(policy_pages_config, '{}'::jsonb) as "policyPagesConfig",
             updated_at as "updatedAt"
           FROM site_settings
           WHERE id = 'default'
@@ -2527,6 +2530,7 @@ export const dbStore = {
             ...store.siteSettings,
             ...row,
             cityShippingRates: Array.isArray(row.cityShippingRates) ? row.cityShippingRates : [],
+            policyPagesConfig: (row.policyPagesConfig && typeof row.policyPagesConfig === 'object') ? row.policyPagesConfig : {},
           };
           return store.siteSettings;
         }
@@ -2554,7 +2558,7 @@ export const dbStore = {
             shipping_policy, return_policy, privacy_policy, terms_policy, care_instructions_default,
             festival_discount_active, festival_name, festival_tagline, festival_discount_percentage,
             festival_coupon_code, festival_expires_at, festival_banner_bg, festival_cta_text, festival_cta_url,
-            upi_id, upi_qr_code_url, account_holder_name, keepsake_studio_images, city_shipping_rates, updated_at
+            upi_id, upi_qr_code_url, account_holder_name, keepsake_studio_images, city_shipping_rates, policy_pages_config, updated_at
           ) VALUES (
             'default',
             ${data.storeName ?? store.siteSettings.storeName},
@@ -2590,6 +2594,7 @@ export const dbStore = {
             ${data.accountHolderName ?? store.siteSettings.accountHolderName ?? 'Devangi Resin Studio'},
             ${JSON.stringify(data.keepsakeStudioImages ?? store.siteSettings.keepsakeStudioImages ?? [])}::jsonb,
             ${JSON.stringify(data.cityShippingRates ?? store.siteSettings.cityShippingRates ?? [])}::jsonb,
+            ${JSON.stringify(data.policyPagesConfig ?? store.siteSettings.policyPagesConfig ?? {})}::jsonb,
             NOW()
           )
           ON CONFLICT (id) DO UPDATE SET
@@ -2626,6 +2631,7 @@ export const dbStore = {
             account_holder_name = EXCLUDED.account_holder_name,
             keepsake_studio_images = EXCLUDED.keepsake_studio_images,
             city_shipping_rates = EXCLUDED.city_shipping_rates,
+            policy_pages_config = EXCLUDED.policy_pages_config,
             updated_at = NOW();
         `;
       } catch (err) {

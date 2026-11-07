@@ -582,6 +582,9 @@ export const siteSettings = pgTable("site_settings", {
   // City-specific Shipping Charges
   cityShippingRates: jsonb("city_shipping_rates").default([]),
 
+  // Custom Structured Policy Pages Configuration (Cards, Detailed Clauses, Notes)
+  policyPagesConfig: jsonb("policy_pages_config").default({}),
+
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 

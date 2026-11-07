@@ -357,15 +357,20 @@ export function ProductForm({ initialData, isEditing = false }: ProductFormProps
       );
 
       const hasAnyCustomization =
-        Boolean(formData.customColorEnabled) ||
-        Boolean(formData.customImageUploadEnabled) ||
-        Boolean(formData.customNameEnabled) ||
-        Boolean(formData.customInitialsEnabled) ||
-        Boolean(formData.enablePersonalization);
+        Boolean(formData.enablePersonalization) && (
+          Boolean(formData.customColorEnabled) ||
+          Boolean(formData.customImageUploadEnabled) ||
+          Boolean(formData.customNameEnabled) ||
+          Boolean(formData.customInitialsEnabled)
+        );
 
       const payload = {
         ...formData,
         enablePersonalization: hasAnyCustomization,
+        customColorEnabled: hasAnyCustomization ? Boolean(formData.customColorEnabled) : false,
+        customImageUploadEnabled: hasAnyCustomization ? Boolean(formData.customImageUploadEnabled) : false,
+        customNameEnabled: hasAnyCustomization ? Boolean(formData.customNameEnabled) : false,
+        customInitialsEnabled: hasAnyCustomization ? Boolean(formData.customInitialsEnabled) : false,
         variants: flattenedVariants.length > 0 ? flattenedVariants : formData.variants,
         sku: formData.sku?.trim() || `RA-${formData.name.replace(/[^a-zA-Z0-9]/g, "").slice(0, 4).toUpperCase() || "ART"}-${Math.floor(100 + Math.random() * 900)}`,
         slug: formData.slug?.trim() || formData.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, ""),

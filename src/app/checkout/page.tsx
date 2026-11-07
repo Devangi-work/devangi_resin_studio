@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useCart } from "@/lib/store/cart";
 import { resolveShippingCharge } from "@/lib/shipping";
+import { clarityEvent, claritySet, clarityIdentify } from "@/lib/analytics/clarity";
 import {
   Lock,
   ArrowRight,
@@ -475,6 +476,10 @@ export default function CheckoutPage() {
       }
 
       // Order created successfully!
+      clarityEvent("order_completed");
+      claritySet("last_order_number", data.orderNumber);
+      claritySet("last_order_amount", finalTotal);
+
       setOrderSuccessMessage(
         "Thank you for shopping! Your payment is getting validated. After confirmation, your order will start processing."
       );

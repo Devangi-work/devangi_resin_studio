@@ -180,11 +180,12 @@ export function ProductDetailView({ product, relatedProducts, settings: initialS
     : 0;
 
   const hasCustomization = Boolean(
-    product.enablePersonalization ||
-    product.customColorEnabled ||
-    product.customImageUploadEnabled ||
-    product.customNameEnabled ||
-    product.customInitialsEnabled
+    product.enablePersonalization && (
+      product.customColorEnabled ||
+      product.customImageUploadEnabled ||
+      product.customNameEnabled ||
+      product.customInitialsEnabled
+    )
   );
 
   const persSurcharge =
@@ -1124,7 +1125,7 @@ export function ProductDetailView({ product, relatedProducts, settings: initialS
       {relatedProducts.length > 0 && (
         <div className="space-y-6">
           <h3 className="font-serif text-2xl font-bold text-[#2C332D]">
-            More from this Collection
+            More from {product.category?.name ? product.category.name : "this Collection"}
           </h3>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6">
             {relatedProducts.map((rel: any) => (
