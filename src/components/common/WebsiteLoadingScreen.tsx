@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 
 export function WebsiteLoadingScreen() {
-  // Check session storage synchronously on client to prevent any mount delay
+  // Check session storage synchronously on client
   const [isMounted, setIsMounted] = useState(() => {
     if (typeof window !== "undefined") {
       try {
@@ -13,6 +13,16 @@ export function WebsiteLoadingScreen() {
       }
     }
     return true;
+  });
+
+  // Pick desktop vs mobile video synchronously on client initialization
+  const [videoSrc] = useState(() => {
+    if (typeof window !== "undefined") {
+      return window.innerWidth >= 768
+        ? "/video/pc_Website_loading_screen_animation_25e5f393.mp4"
+        : "/video/Website_loading_screen_animation_25e5f393.mp4";
+    }
+    return "/video/Website_loading_screen_animation_25e5f393.mp4";
   });
 
   const [isFadingOut, setIsFadingOut] = useState(false);
@@ -28,40 +38,54 @@ export function WebsiteLoadingScreen() {
 
     const video = videoRef.current;
     if (video) {
-      // 1. Start playback immediately with zero delay
+      // Ensure muted for guaranteed instant mobile autoplay without browser block
+      video.muted = true;
+      video.defaultMuted = true;
+
       const playPromise = video.play();
-
-      // 2. Attempt unmuted playback for audio
-      video.muted = false;
-
       if (playPromise !== undefined) {
-        playPromise.catch(() => {
-          // If browser policy prevents unmuted autoplay before interaction,
-          // continue playing muted and seamlessly unmute on first tap/click/touch
-          if (video) {
-            video.muted = true;
-            video.play().catch(() => {});
-
-            const unlockAudio = () => {
-              if (video) {
+        playPromise
+          .then(() => {
+            // On desktop viewports, attempt to unmute for audio
+            if (typeof window !== "undefined" && window.innerWidth >= 768) {
+              try {
                 video.muted = false;
+              } catch {
+                // ignore
               }
-              window.removeEventListener("pointerdown", unlockAudio);
-              window.removeEventListener("touchstart", unlockAudio);
-              window.removeEventListener("click", unlockAudio);
-              window.removeEventListener("keydown", unlockAudio);
-            };
-
-            window.addEventListener("pointerdown", unlockAudio, { once: true });
-            window.addEventListener("touchstart", unlockAudio, { once: true });
-            window.addEventListener("click", unlockAudio, { once: true });
-            window.addEventListener("keydown", unlockAudio, { once: true });
-          }
-        });
+            }
+          })
+          .catch(() => {
+            // Autoplay fallback with muted
+            if (video) {
+              video.muted = true;
+              video.play().catch(() => {});
+            }
+          });
       }
+
+      // Audio unlock on user interaction (tap, touch, click anywhere on screen)
+      const unlockAudio = () => {
+        if (video) {
+          try {
+            video.muted = false;
+          } catch {
+            // ignore
+          }
+        }
+        window.removeEventListener("pointerdown", unlockAudio);
+        window.removeEventListener("touchstart", unlockAudio);
+        window.removeEventListener("click", unlockAudio);
+        window.removeEventListener("keydown", unlockAudio);
+      };
+
+      window.addEventListener("pointerdown", unlockAudio, { once: true });
+      window.addEventListener("touchstart", unlockAudio, { once: true });
+      window.addEventListener("click", unlockAudio, { once: true });
+      window.addEventListener("keydown", unlockAudio, { once: true });
     }
 
-    // Safety fallback: if video stalls or takes longer than 9.5s, smoothly finish
+    // Safety fallback: only trigger after 9.5s if video stalled
     const safetyTimer = setTimeout(() => {
       handleComplete();
     }, 9500);
@@ -99,11 +123,10 @@ export function WebsiteLoadingScreen() {
   const handleTimeUpdate = () => {
     if (videoRef.current) {
       const { currentTime, duration } = videoRef.current;
-      if (duration && !isNaN(duration) && duration > 0) {
-        // Smoothly fade out right as animation reaches the finish
-        if (currentTime >= duration - 0.2) {
-          handleComplete();
-        }
+      // CRITICAL: Must have loaded real duration (> 4s) and played past 4s
+      // This prevents any premature exit on mobile metadata load!
+      if (duration && duration > 4 && currentTime > 4 && currentTime >= duration - 0.3) {
+        handleComplete();
       }
     }
   };
@@ -116,39 +139,39 @@ export function WebsiteLoadingScreen() {
     <div
       role="dialog"
       aria-label="Website Loading Screen"
-      className={`fixed inset-0 z-[99999] w-screen h-screen overflow-hidden bg-black flex items-center justify-center transition-all duration-800 ease-in-out select-none pointer-events-none ${
-        isFadingOut ? "opacity-0 scale-105" : "opacity-100 scale-100"
+      onClick={() => {
+        if (videoRef.current) {
+          try {
+            videoRef.current.muted = false;
+          } catch {}
+        }
+      }}
+      onTouchStart={() => {
+        if (videoRef.current) {
+          try {
+            videoRef.current.muted = false;
+          } catch {}
+        }
+      }}
+      className={`fixed inset-0 z-[99999] w-screen h-screen overflow-hidden bg-black flex items-center justify-center transition-all duration-800 ease-in-out select-none ${
+        isFadingOut ? "opacity-0 scale-105 pointer-events-none" : "opacity-100 scale-100"
       }`}
     >
-      {/* 
-        Native HTML5 Video with responsive <source> tags:
-        Browser selects the right resolution in C++ network layer with 0ms delay!
-        Desktop (>= 768px): pc_Website_loading_screen_animation_25e5f393.mp4 (1280x720 16:9)
-        Mobile (< 768px): Website_loading_screen_animation_25e5f393.mp4 (720x1280 9:16)
-      */}
       <video
         ref={videoRef}
+        src={videoSrc}
         autoPlay
         playsInline
+        muted
         preload="auto"
         controls={false}
         disablePictureInPicture
         disableRemotePlayback
         onEnded={handleComplete}
         onTimeUpdate={handleTimeUpdate}
-        onError={handleComplete}
-        className="w-full h-full object-cover pointer-events-none"
-      >
-        <source
-          media="(min-width: 768px)"
-          src="/video/pc_Website_loading_screen_animation_25e5f393.mp4"
-          type="video/mp4"
-        />
-        <source
-          src="/video/Website_loading_screen_animation_25e5f393.mp4"
-          type="video/mp4"
-        />
-      </video>
+        className="w-full h-full object-cover"
+        {...({ "webkit-playsinline": "true" } as any)}
+      />
     </div>
   );
 }
