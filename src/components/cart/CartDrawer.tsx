@@ -29,6 +29,7 @@ export function CartDrawer() {
     setIsCartOpen,
     updateQuantity,
     removeItem,
+    clearCart,
     subtotal,
     appliedCoupon,
     setAppliedCoupon,
@@ -196,6 +197,7 @@ export function CartDrawer() {
     });
 
     const url = getWhatsAppUrl(adminPhone, message);
+    clearCart();
     setIsCartOpen(false);
     window.location.href = url;
   };

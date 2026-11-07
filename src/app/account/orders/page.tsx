@@ -171,6 +171,8 @@ export default function CustomerOrdersPage() {
                               className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold capitalize border ${
                                 isCancelled
                                   ? "bg-[#FDF2F2] text-[#DF4C4C] border-[#FADBD8]"
+                                  : ord.orderStatus === "waiting"
+                                  ? "bg-[#FFF8E1] text-[#D97706] border-[#FDE68A]"
                                   : isPaid
                                   ? "bg-[#FFF8E1] text-[#B8972E] border-[#FFE082]"
                                   : "bg-[#FAF8F5] text-[#736C66] border-[#E8E0D5]"
@@ -215,34 +217,51 @@ export default function CustomerOrdersPage() {
 
                     {/* Order Items */}
                     <div className="space-y-3">
-                      {(ord.items || []).map((item: any, idx: number) => (
-                        <div
-                          key={idx}
-                          className="flex items-center justify-between text-xs py-1"
-                        >
-                          <div className="flex items-center space-x-3">
-                            <div className="w-12 h-12 rounded-xl bg-[#FAF8F5] border border-[#E8E0D5] flex items-center justify-center font-bold text-xs text-[#B84A67] shrink-0 overflow-hidden">
-                              <Sparkles className="w-5 h-5 text-[#D4AF37]" />
-                            </div>
-                            <div>
-                              <p className="font-semibold text-[#2C332D] text-xs">
-                                {item.productName}
-                              </p>
-                              {item.variantName && (
-                                <p className="text-[10px] text-[#8C7A72]">
-                                  {item.variantName}
+                      {(ord.items || []).map((item: any, idx: number) => {
+                        const itemImage =
+                          item.productImage ||
+                          item.image ||
+                          item.referenceImageUrl ||
+                          (Array.isArray(ord.productImages) && (ord.productImages[idx] || ord.productImages[0])) ||
+                          null;
+
+                        return (
+                          <div
+                            key={idx}
+                            className="flex items-center justify-between text-xs py-1"
+                          >
+                            <div className="flex items-center space-x-3">
+                              <div className="w-12 h-12 rounded-xl bg-[#FAF8F5] border border-[#E8E0D5] flex items-center justify-center font-bold text-xs text-[#B84A67] shrink-0 overflow-hidden">
+                                {itemImage ? (
+                                  <img
+                                    src={itemImage}
+                                    alt={item.productName || "Product"}
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <Sparkles className="w-5 h-5 text-[#D4AF37]" />
+                                )}
+                              </div>
+                              <div>
+                                <p className="font-semibold text-[#2C332D] text-xs">
+                                  {item.productName}
                                 </p>
-                              )}
-                              <p className="text-[10px] text-[#8C7A72]">
-                                Qty: {item.quantity} × ₹{Number(item.unitPrice).toFixed(2)}
-                              </p>
+                                {item.variantName && (
+                                  <p className="text-[10px] text-[#8C7A72]">
+                                    {item.variantName}
+                                  </p>
+                                )}
+                                <p className="text-[10px] text-[#8C7A72]">
+                                  Qty: {item.quantity} × ₹{Number(item.unitPrice).toFixed(2)}
+                                </p>
+                              </div>
                             </div>
+                            <span className="font-bold text-[#2C332D]">
+                              ₹{Number(item.totalPrice).toFixed(2)}
+                            </span>
                           </div>
-                          <span className="font-bold text-[#2C332D]">
-                            ₹{Number(item.totalPrice).toFixed(2)}
-                          </span>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
 
                     {/* Tracking details if available */}

@@ -187,6 +187,59 @@ test("WhatsApp Integration Test Suite", async (t) => {
     await dbStore.deleteOrder(created.id);
   });
 
+  await t.test("WhatsApp 1-click and cart checkout sets default orderStatus to waiting and prevents auto-cancellation", async () => {
+    const { dbStore } = await import("../lib/db");
+    const testOrderNumber = `WA-WAITING-${Date.now()}`;
+    const custEmail = "waiting_test@example.com";
+    const created = await dbStore.createOrder({
+      orderNumber: testOrderNumber,
+      customerName: "Rohan Varma",
+      customerEmail: custEmail,
+      orderSource: "whatsapp",
+      paymentMethod: "upi",
+      paymentStatus: "unpaid",
+      orderStatus: "waiting",
+      subtotal: 999,
+      totalAmount: 999,
+      items: [
+        {
+          productName: "Resin Art Coaster",
+          quantity: 1,
+          unitPrice: 999,
+          totalPrice: 999,
+        },
+      ],
+    });
+
+    assert.equal(created.orderStatus, "waiting");
+
+    // 1. Unpaid check should ignore waiting orders so they are not cancelled on refresh/revisit
+    let unpaid = await dbStore.getCustomerLatestUnpaidOrder(custEmail);
+    assert.equal(unpaid, null, "Order in waiting status should not be returned as unpaid discard candidate");
+
+    // 2. When admin sets orderStatus to 'confirmed', it must also NOT be returned as unpaid discard candidate
+    await dbStore.updateOrderStatus(created.id, "confirmed");
+    unpaid = await dbStore.getCustomerLatestUnpaidOrder(custEmail);
+    assert.equal(unpaid, null, "Order in confirmed status should not be cancelled on visit");
+
+    // Attempting to discard confirmed order should be ignored
+    await dbStore.discardUnpaidOrder(created.id);
+    let fetched = await dbStore.getOrderById(created.id);
+    assert.equal(fetched?.orderStatus, "confirmed", "Confirmed order must not be cancelled automatically");
+
+    // 3. ONLY when admin marks order as 'pending_payment', unpaid check triggers and allows discard
+    await dbStore.updateOrderStatus(created.id, "pending_payment");
+    unpaid = await dbStore.getCustomerLatestUnpaidOrder(custEmail);
+    assert.ok(unpaid, "Pending payment order should be returned by unpaid check");
+    assert.equal(unpaid?.orderNumber, testOrderNumber);
+
+    await dbStore.discardUnpaidOrder(created.id);
+    fetched = await dbStore.getOrderById(created.id);
+    assert.equal(fetched?.orderStatus, "cancelled", "Pending payment order gets cancelled when discarded");
+
+    await dbStore.deleteOrder(created.id);
+  });
+
   await t.test("buildSingleProductWhatsAppMessage auto-fills multi-title variant selections, color palette, and blob reference URL", () => {
     const msg = buildSingleProductWhatsAppMessage({
       product: {

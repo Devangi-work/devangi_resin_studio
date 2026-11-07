@@ -16,7 +16,7 @@ const createOfflineOrderSchema = z.object({
   orderSource: z.enum(["offline", "exhibition", "instagram", "custom", "online"]).default("offline"),
   paymentMethod: z.enum(["cash", "upi", "card", "bank_transfer"]).default("cash"),
   paymentStatus: z.enum(["paid", "unpaid", "pending"]).default("paid"),
-  orderStatus: z.enum(["confirmed", "processing", "ready_to_ship", "shipped", "delivered"]).default("confirmed"),
+  orderStatus: z.enum(["waiting", "confirmed", "processing", "ready_to_ship", "shipped", "delivered"]).default("confirmed"),
   items: z.array(
     z.object({
       productId: z.string().optional().nullable(),

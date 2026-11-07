@@ -326,8 +326,8 @@ export const orders = pgTable(
     totalAmount: numeric("total_amount", { precision: 10, scale: 2 }).notNull(),
 
     // Order & Payment Status
-    orderStatus: text("order_status").default("pending_payment").notNull(),
-    // 'pending_payment' | 'confirmed' | 'processing' | 'ready_to_ship' | 'shipped' | 'delivered' | 'cancelled' | 'refunded'
+    orderStatus: text("order_status").default("waiting").notNull(),
+    // 'waiting' | 'pending_payment' | 'confirmed' | 'processing' | 'ready_to_ship' | 'shipped' | 'delivered' | 'cancelled' | 'refunded'
     paymentStatus: text("payment_status").default("pending").notNull(),
     // 'pending' | 'paid' | 'failed' | 'partially_refunded' | 'refunded'
 

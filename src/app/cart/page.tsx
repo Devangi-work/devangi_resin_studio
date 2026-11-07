@@ -29,6 +29,7 @@ function CartContent() {
     items,
     updateQuantity,
     removeItem,
+    clearCart,
     subtotal,
     appliedCoupon,
     setAppliedCoupon,
@@ -193,6 +194,7 @@ function CartContent() {
     });
 
     const url = getWhatsAppUrl(adminPhone, message);
+    clearCart();
     window.location.href = url;
   };
 

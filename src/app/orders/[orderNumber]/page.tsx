@@ -52,44 +52,66 @@ export default async function OrderConfirmationPage({ params, searchParams }: Or
 
   // Visual status timeline steps
   const steps = [
-    { key: "confirmed", label: "Confirmed", desc: "Payment received & order verified" },
-    { key: "processing", label: "Crafting & Curing", desc: "Resin pouring and 3-5 day curing" },
-    { key: "ready_to_ship", label: "Quality Check", desc: "Inspection & boutique gift packaging" },
-    { key: "shipped", label: "Dispatched", desc: "In transit with courier tracking" },
-    { key: "delivered", label: "Delivered", desc: "Safely arrived at destination" },
+    { key: "confirmed", label: "Confirmed", desc: "Payment received & order verified", image: "/images/order_status/1st.png" },
+    { key: "processing", label: "Crafting & Curing", desc: "Resin pouring and 3-5 day curing", image: "/images/order_status/2nd.png" },
+    { key: "ready_to_ship", label: "Quality Check", desc: "Inspection & boutique gift packaging", image: "/images/order_status/3rd.png" },
+    { key: "dispatched", label: "Dispatched", desc: "In transit with courier tracking", image: "/images/order_status/4th.png" },
+    { key: "delivered", label: "Delivered", desc: "Safely arrived at destination", image: "/images/order_status/5th.png" },
   ];
 
-  const statusOrder = ["pending_payment", "confirmed", "processing", "ready_to_ship", "shipped", "delivered"];
-  const currentStepIdx = statusOrder.indexOf(order.orderStatus);
+  const getTimelineStepIndex = (status: string) => {
+    switch (status) {
+      case "waiting":
+      case "pending_payment":
+        return 0; // Not yet in handcrafting pipeline
+      case "confirmed":
+        return 1;
+      case "processing":
+        return 2;
+      case "ready_to_ship":
+        return 3;
+      case "dispatched":
+      case "shipped":
+        return 4;
+      case "delivered":
+        return 5;
+      default:
+        return 0;
+    }
+  };
+
+  const currentStep = getTimelineStepIndex(order.orderStatus);
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16 space-y-8">
       
       {/* Dynamic Status Banner */}
       <div className="bg-white p-8 rounded-3xl border border-[#E8E0D5] shadow-sm text-center space-y-3">
-        <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto shadow-sm ${
-          order.orderStatus === "delivered"
-            ? "bg-[#E8EFE8] text-[#2E7D32]"
-            : order.orderStatus === "shipped"
-            ? "bg-[#EBF3FA] text-[#1E5B94]"
-            : order.orderStatus === "cancelled"
-            ? "bg-[#FDF2F2] text-[#DF4C4C]"
-            : "bg-[#FAF4EC] text-[#B8972E]"
-        }`}>
-          {order.orderStatus === "delivered" ? (
-            <CheckCircle2 className="w-9 h-9" />
-          ) : order.orderStatus === "shipped" ? (
-            <Truck className="w-9 h-9" />
-          ) : order.orderStatus === "cancelled" ? (
-            <Clock className="w-9 h-9" />
-          ) : (
-            <Sparkles className="w-9 h-9" />
-          )}
-        </div>
+        {order.orderStatus !== "waiting" && (
+          <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto shadow-sm ${
+            order.orderStatus === "delivered"
+              ? "bg-[#E8EFE8] text-[#2E7D32]"
+              : order.orderStatus === "dispatched" || order.orderStatus === "shipped"
+              ? "bg-[#EBF3FA] text-[#1E5B94]"
+              : order.orderStatus === "cancelled"
+              ? "bg-[#FDF2F2] text-[#DF4C4C]"
+              : "bg-[#FAF4EC] text-[#B8972E]"
+          }`}>
+            {order.orderStatus === "delivered" ? (
+              <CheckCircle2 className="w-9 h-9" />
+            ) : order.orderStatus === "dispatched" || order.orderStatus === "shipped" ? (
+              <Truck className="w-9 h-9" />
+            ) : order.orderStatus === "cancelled" ? (
+              <Clock className="w-9 h-9" />
+            ) : (
+              <Package className="w-9 h-9" />
+            )}
+          </div>
+        )}
         <span className="text-xs uppercase font-bold tracking-widest text-[#B8972E] block">
           {order.orderStatus === "delivered"
             ? "Order Delivered"
-            : order.orderStatus === "shipped"
+            : order.orderStatus === "dispatched" || order.orderStatus === "shipped"
             ? "Order In Transit / Dispatched"
             : order.orderStatus === "ready_to_ship"
             ? "Packed & Ready to Ship"
@@ -97,6 +119,8 @@ export default async function OrderConfirmationPage({ params, searchParams }: Or
             ? "Crafting & Curing in Progress"
             : order.orderStatus === "confirmed"
             ? "Order Confirmed"
+            : order.orderStatus === "waiting"
+            ? "Waiting for Confirmation"
             : order.orderStatus === "cancelled"
             ? "Order Cancelled"
             : "Payment Verification in Progress"}
@@ -104,8 +128,10 @@ export default async function OrderConfirmationPage({ params, searchParams }: Or
         <h1 className="font-serif text-2xl sm:text-3xl font-bold text-[#2C332D]">
           {order.orderStatus === "delivered"
             ? "Your Resin Artwork has Arrived!"
-            : order.orderStatus === "shipped"
+            : order.orderStatus === "dispatched" || order.orderStatus === "shipped"
             ? "Your Package is on the Way!"
+            : order.orderStatus === "waiting"
+            ? "Order Received (Waiting for Confirmation)"
             : order.orderStatus === "cancelled"
             ? "Order Cancelled"
             : "Thank you for shopping!"}
@@ -114,7 +140,7 @@ export default async function OrderConfirmationPage({ params, searchParams }: Or
           <p className="text-xs sm:text-sm font-medium text-[#2C332D] leading-relaxed">
             {order.orderStatus === "delivered"
               ? "Your package has been successfully delivered! We hope you love your handcrafted creation."
-              : order.orderStatus === "shipped"
+              : order.orderStatus === "dispatched" || order.orderStatus === "shipped"
               ? `Dispatched with courier ${order.courierName || "Express Courier"}${order.trackingNumber ? ` (AWB Tracking: ${order.trackingNumber})` : ""}.`
               : order.orderStatus === "ready_to_ship"
               ? "Your order has passed quality inspection and is packaged with boutique gift wrapping, ready for courier pickup."
@@ -122,6 +148,8 @@ export default async function OrderConfirmationPage({ params, searchParams }: Or
               ? "Our artisan is handcrafting and curing your piece in the studio with high-grade UV-resistant resin."
               : order.orderStatus === "confirmed"
               ? "Payment verified! Your order has been scheduled for handcrafting in the studio."
+              : order.orderStatus === "waiting"
+              ? "Your order request has been received and is waiting for confirmation. We will reach out on WhatsApp to finalize your pieces!"
               : order.orderStatus === "cancelled"
               ? `This order was cancelled. ${order.cancellationReason ? `Note: ${order.cancellationReason}` : ""}`
               : "Your payment details are being verified by our team. After confirmation, your order will start processing."}
@@ -149,28 +177,52 @@ export default async function OrderConfirmationPage({ params, searchParams }: Or
         </div>
 
         {/* Steps display */}
-        <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-4">
           {steps.map((st, idx) => {
             const stepNum = idx + 1; // 1 to 5
-            const isCompleted = currentStepIdx > stepNum || (currentStepIdx === 5 && stepNum === 5);
-            const isCurrent = currentStepIdx === stepNum && currentStepIdx < 5;
+            const isCompleted = currentStep > stepNum || (currentStep === 5 && stepNum === 5);
+            const isCurrent = currentStep === stepNum && currentStep < 5;
 
             return (
-              <div key={st.key} className="flex sm:flex-col items-center sm:text-center space-x-3 sm:space-x-0 space-y-0 sm:space-y-2">
+              <div
+                key={st.key}
+                className={`flex flex-col items-center text-center p-3 rounded-2xl transition-all ${
+                  isCurrent
+                    ? "bg-[#FAF4EC] ring-2 ring-[#D4AF37]/50 shadow-sm"
+                    : isCompleted
+                    ? "bg-[#FAF8F5]/80"
+                    : "bg-[#FAF8F5]/40 opacity-70"
+                } ${idx === 4 ? "col-span-2 sm:col-span-1 max-w-[240px] sm:max-w-none mx-auto sm:mx-0 w-full" : ""}`}
+              >
+                {/* Illustration Image above phase */}
+                <div className="w-20 h-20 sm:w-24 sm:h-24 mb-2 flex items-center justify-center">
+                  <img
+                    src={st.image}
+                    alt={st.label}
+                    className={`w-full h-full object-contain transition-all duration-300 ${
+                      isCompleted || isCurrent
+                        ? "opacity-100 scale-100 drop-shadow-sm"
+                        : "opacity-35 grayscale"
+                    }`}
+                  />
+                </div>
+
+                {/* Step indicator circle */}
                 <div
-                  className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                  className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all mb-1.5 ${
                     isCompleted
                       ? "bg-[#2E7D32] text-white shadow-sm"
                       : isCurrent
                       ? "bg-[#D4AF37] text-white ring-4 ring-[#FAF4EC]"
-                      : "bg-[#F4EBE6] text-[#A69E96]"
+                      : "bg-[#E8E0D5] text-[#8C7A72]"
                   }`}
                 >
-                  {isCompleted ? <CheckCircle2 className="w-4 h-4" /> : idx + 1}
+                  {isCompleted ? <CheckCircle2 className="w-4 h-4" /> : stepNum}
                 </div>
+
                 <div>
                   <p className="text-xs font-bold text-[#2C332D]">{st.label}</p>
-                  <p className="text-[10px] text-[#736C66] hidden sm:block mt-0.5 leading-tight">{st.desc}</p>
+                  <p className="text-[10px] text-[#736C66] mt-0.5 leading-tight">{st.desc}</p>
                 </div>
               </div>
             );
@@ -274,20 +326,28 @@ export default async function OrderConfirmationPage({ params, searchParams }: Or
           Purchased Items ({order.items?.length || 0})
         </h3>
         <div className="divide-y divide-[#F4EBE6]">
-          {order.items?.map((item: any) => (
-            <div key={item.id} className="py-3 flex items-center justify-between text-xs gap-3">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-[#FAF4EC] border border-[#E8E0D5] overflow-hidden shrink-0 flex items-center justify-center">
-                  {item.productImage || item.referenceImageUrl ? (
-                    <img
-                      src={item.productImage || item.referenceImageUrl}
-                      alt={item.productName}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <Package className="w-5 h-5 text-[#B8972E]" />
-                  )}
-                </div>
+          {order.items?.map((item: any, idx: number) => {
+            const itemImage =
+              item.productImage ||
+              item.image ||
+              item.referenceImageUrl ||
+              (Array.isArray(order.productImages) && (order.productImages[idx] || order.productImages[0])) ||
+              null;
+
+            return (
+              <div key={item.id || idx} className="py-3 flex items-center justify-between text-xs gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-[#FAF4EC] border border-[#E8E0D5] overflow-hidden shrink-0 flex items-center justify-center">
+                    {itemImage ? (
+                      <img
+                        src={itemImage}
+                        alt={item.productName || "Product"}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <Package className="w-5 h-5 text-[#B8972E]" />
+                    )}
+                  </div>
                 <div>
                   <p className="font-semibold text-[#2C332D]">{item.productName}</p>
                   {item.variantName && <p className="text-[#736C66]">{item.variantName}</p>}
@@ -308,7 +368,8 @@ export default async function OrderConfirmationPage({ params, searchParams }: Or
                 <p className="text-[11px] text-[#8C7A72]">Qty: {item.quantity}</p>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 

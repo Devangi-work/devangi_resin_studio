@@ -1079,7 +1079,7 @@ export const dbStore = {
           await sql`
             INSERT INTO inventory_movements (id, product_id, variant_id, previous_quantity, new_quantity, change_amount, reason, admin_user_id, created_at)
             VALUES (${movId}, ${productId}, ${variantId || null}, ${prev}, ${newQty}, ${changeAmount}, ${reason}, ${adminUserId}, NOW());
-          `.catch(() => {});
+          `.catch(() => { });
         }
       } catch (e) {
         console.error("DB adjustStock err:", e);
@@ -1137,7 +1137,7 @@ export const dbStore = {
           await sql`
             INSERT INTO inventory_movements (id, product_id, variant_id, previous_quantity, new_quantity, change_amount, reason, admin_user_id, created_at)
             VALUES (${movId}, ${productId}, null, ${prevQty}, ${Number(data.stockQuantity)}, ${diff}, ${data.reason || "Manual Stock Count Update"}, ${adminUserId}, NOW());
-          `.catch(() => {});
+          `.catch(() => { });
         }
       } catch (e) {
         console.error("DB updateProductInventorySettings err:", e);
@@ -1560,7 +1560,7 @@ export const dbStore = {
       shippingCharge: Number(data.shippingCharge || 0).toFixed(2),
       taxAmount: Number(data.taxAmount || 0).toFixed(2),
       totalAmount: Number(data.totalAmount).toFixed(2),
-      orderStatus: data.orderStatus || "confirmed",
+      orderStatus: data.orderStatus || "waiting",
       paymentStatus: data.paymentStatus || "pending_verification",
       paymentMethod: data.paymentMethod || "upi",
       orderSource: data.orderSource || "online",
@@ -1610,7 +1610,7 @@ export const dbStore = {
               try {
                 const [pRow] = await sql`SELECT id FROM products WHERE id = ${item.productId} LIMIT 1;`;
                 if (pRow) safeProductId = pRow.id;
-              } catch {}
+              } catch { }
             }
 
             let safeVariantId = null;
@@ -1618,7 +1618,7 @@ export const dbStore = {
               try {
                 const [vRow] = await sql`SELECT id FROM product_variants WHERE id = ${item.variantId} LIMIT 1;`;
                 if (vRow) safeVariantId = vRow.id;
-              } catch {}
+              } catch { }
             }
 
             await sql`
@@ -1773,7 +1773,7 @@ export const dbStore = {
               ${adminEmail || 'admin'},
               NOW()
             );
-          `.catch(() => {});
+          `.catch(() => { });
         }
 
         if (Array.isArray(data.items) && data.items.length > 0) {
@@ -1952,7 +1952,7 @@ export const dbStore = {
           SET 
             payment_status = ${paymentStatus},
             order_status = CASE 
-              WHEN ${paymentStatus} = 'paid' AND order_status IN ('pending_payment', 'unpaid') THEN 'confirmed' 
+              WHEN ${paymentStatus} = 'paid' AND order_status IN ('waiting', 'pending_payment', 'unpaid') THEN 'confirmed' 
               ELSE order_status 
             END,
             updated_at = NOW()
@@ -2012,10 +2012,12 @@ export const dbStore = {
           SELECT 
             id, order_number as "orderNumber", customer_id as "customerId",
             customer_email as "customerEmail", payment_status as "paymentStatus",
+            order_status as "orderStatus",
             is_discarded as "isDiscarded", created_at as "createdAt"
           FROM orders
           WHERE (customer_id = ${customerIdOrEmail} OR LOWER(customer_email) = ${clean})
             AND payment_status = 'unpaid'
+            AND order_status = 'pending_payment'
             AND (is_discarded IS FALSE OR is_discarded IS NULL)
           ORDER BY created_at DESC
           LIMIT 1;
@@ -2030,6 +2032,7 @@ export const dbStore = {
       (o) =>
         (o.customerId === customerIdOrEmail || o.customerEmail?.toLowerCase() === clean) &&
         o.paymentStatus === "unpaid" &&
+        o.orderStatus === "pending_payment" &&
         !o.isDiscarded
     );
     return mem || null;
@@ -2037,6 +2040,9 @@ export const dbStore = {
 
   async discardUnpaidOrder(orderNumberOrId: string) {
     const ord = store.orders.find((o) => o.id === orderNumberOrId || o.orderNumber === orderNumberOrId);
+    if (ord && ord.orderStatus !== "pending_payment") {
+      return true;
+    }
     if (ord) {
       ord.isDiscarded = true;
       ord.discardedAt = new Date();
@@ -2052,7 +2058,8 @@ export const dbStore = {
             discarded_at = NOW(),
             order_status = 'cancelled',
             updated_at = NOW()
-          WHERE id = ${orderNumberOrId} OR order_number = ${orderNumberOrId};
+          WHERE (id = ${orderNumberOrId} OR order_number = ${orderNumberOrId})
+            AND order_status = 'pending_payment';
         `;
       } catch (err) {
         console.error("DB discardUnpaidOrder err:", err);
@@ -2117,12 +2124,12 @@ export const dbStore = {
 
     if (sql) {
       try {
-        await sql`DELETE FROM order_items WHERE order_id = ${targetId};`.catch(() => {});
-        await sql`DELETE FROM order_status_history WHERE order_id = ${targetId};`.catch(() => {});
-        await sql`DELETE FROM refunds WHERE order_id = ${targetId};`.catch(() => {});
-        await sql`DELETE FROM payments WHERE order_id = ${targetId};`.catch(() => {});
-        await sql`DELETE FROM coupon_usages WHERE order_id = ${targetId};`.catch(() => {});
-        await sql`UPDATE reviews SET order_id = NULL WHERE order_id = ${targetId};`.catch(() => {});
+        await sql`DELETE FROM order_items WHERE order_id = ${targetId};`.catch(() => { });
+        await sql`DELETE FROM order_status_history WHERE order_id = ${targetId};`.catch(() => { });
+        await sql`DELETE FROM refunds WHERE order_id = ${targetId};`.catch(() => { });
+        await sql`DELETE FROM payments WHERE order_id = ${targetId};`.catch(() => { });
+        await sql`DELETE FROM coupon_usages WHERE order_id = ${targetId};`.catch(() => { });
+        await sql`UPDATE reviews SET order_id = NULL WHERE order_id = ${targetId};`.catch(() => { });
         await sql`DELETE FROM orders WHERE id = ${targetId} OR order_number = ${idOrNumber};`;
       } catch (err) {
         console.error("DB deleteOrder err:", err);
@@ -2981,9 +2988,30 @@ export const dbStore = {
 
   async getCustomerOrders(customerIdOrEmail: string) {
     const clean = customerIdOrEmail.trim().toLowerCase();
-    const memOrders = store.orders.filter(
-      (o) => o.customerId === customerIdOrEmail || o.customerEmail?.toLowerCase() === clean
-    );
+    const memOrders = store.orders
+      .filter((o) => o.customerId === customerIdOrEmail || o.customerEmail?.toLowerCase() === clean)
+      .map((ord) => {
+        const items = (ord.items || []).map((it: any, idx: number) => {
+          let productImage = it.productImage || it.image || it.referenceImageUrl || null;
+          if (!productImage && it.productId) {
+            const p = store.products.find((prod) => prod.id === it.productId);
+            if (p) {
+              productImage = (Array.isArray(p.images) ? p.images[0] : null) || p.imageUrl || null;
+            }
+          }
+          if (!productImage && Array.isArray((ord as any).productImages) && (ord as any).productImages.length > 0) {
+            productImage = (ord as any).productImages[idx] || (ord as any).productImages[0];
+          }
+          return {
+            ...it,
+            productImage,
+          };
+        });
+        return {
+          ...ord,
+          items,
+        };
+      });
 
     if (sql) {
       try {
@@ -3011,6 +3039,7 @@ export const dbStore = {
             cancelled_at as "cancelledAt",
             tracking_number as "trackingNumber",
             courier_name as "courierName",
+            product_images as "productImages",
             created_at as "createdAt",
             updated_at as "updatedAt"
           FROM orders
@@ -3021,11 +3050,33 @@ export const dbStore = {
           for (const ord of rows) {
             const items = await sql`
               SELECT 
-                id, product_id as "productId", product_name as "productName",
-                variant_name as "variantName", unit_price as "unitPrice", quantity, total_price as "totalPrice"
-              FROM order_items
-              WHERE order_id = ${ord.id};
+                oi.id, oi.product_id as "productId", oi.variant_id as "variantId",
+                oi.product_name as "productName", oi.variant_name as "variantName",
+                oi.sku, oi.unit_price as "unitPrice", oi.quantity, oi.total_price as "totalPrice",
+                oi.personalization_details as "personalizationDetails",
+                oi.reference_image_url as "referenceImageUrl",
+                COALESCE(
+                  pi.image_url,
+                  pi2.image_url,
+                  oi.reference_image_url
+                ) as "productImage"
+              FROM order_items oi
+              LEFT JOIN LATERAL (
+                SELECT image_url FROM product_images WHERE product_id = oi.product_id ORDER BY is_primary DESC, display_order ASC LIMIT 1
+              ) pi ON true
+              LEFT JOIN products p ON LOWER(p.name) = LOWER(oi.product_name) OR LOWER(p.sku) = LOWER(oi.sku)
+              LEFT JOIN LATERAL (
+                SELECT image_url FROM product_images WHERE product_id = p.id ORDER BY is_primary DESC, display_order ASC LIMIT 1
+              ) pi2 ON true
+              WHERE oi.order_id = ${ord.id};
             `;
+            if (Array.isArray(items)) {
+              for (const it of items) {
+                if (!it.productImage && Array.isArray(ord.productImages) && ord.productImages.length > 0) {
+                  it.productImage = ord.productImages[0];
+                }
+              }
+            }
             ord.items = items || [];
           }
           return rows;
@@ -3692,7 +3743,7 @@ export const dbStore = {
             SET has_reviewed = TRUE
             WHERE product_id = ${data.productId}
               AND (customer_id = ${data.customerId || ""} OR LOWER(customer_email) = ${data.customerEmail.toLowerCase()});
-          `.catch(() => {});
+          `.catch(() => { });
         }
 
         if (data.orderId) {
@@ -3700,7 +3751,7 @@ export const dbStore = {
             UPDATE orders
             SET delivered_popup_seen = TRUE
             WHERE id = ${data.orderId} OR order_number = ${data.orderId};
-          `.catch(() => {});
+          `.catch(() => { });
         }
       } catch (err) {
         console.error("DB createReview err:", err);
@@ -3761,7 +3812,7 @@ export const dbStore = {
             SELECT review_id as "reviewId" FROM review_likes WHERE user_identifier = ${userIdentifier};
           `;
           likedReviewIds = new Set(likes.map((l: any) => l.reviewId));
-        } catch {}
+        } catch { }
       } else {
         likedReviewIds = new Set(
           store.reviewLikes.filter((l) => l.userIdentifier === userIdentifier).map((l) => l.reviewId)
@@ -3965,7 +4016,7 @@ export const dbStore = {
         if (rows && rows.length > 0) {
           userReview = rows[0];
         }
-      } catch {}
+      } catch { }
     }
 
     if (userReview) {
@@ -4038,7 +4089,7 @@ export const dbStore = {
         if (rows && rows.length > 0) {
           grantedPerm = rows[0];
         }
-      } catch {}
+      } catch { }
     }
 
     if (grantedPerm) {

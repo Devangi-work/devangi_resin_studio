@@ -585,6 +585,33 @@ test("E-Commerce Test Suite", async (t) => {
     }
   });
 
+  await t.test("Customer orders retrieval includes items with productImage", async () => {
+    const custEmail = "cust_view_test@example.com";
+    const ord = await dbStore.createOrder({
+      customerName: "View Orders Test",
+      customerEmail: custEmail,
+      customerPhone: "9876543210",
+      subtotal: 1200,
+      totalAmount: 1200,
+      items: [
+        {
+          productName: "Bespoke Resin Clock",
+          price: 1200,
+          quantity: 1,
+          image: "https://example.com/resin-clock.jpg",
+          productImage: "https://example.com/resin-clock.jpg",
+        },
+      ],
+    });
+
+    const custOrders = await dbStore.getCustomerOrders(custEmail);
+    assert.ok(Array.isArray(custOrders));
+    const foundOrd = custOrders.find((o: any) => o.id === ord.id || o.orderNumber === ord.orderNumber);
+    assert.ok(foundOrd, "Order should be found in getCustomerOrders");
+    assert.ok(Array.isArray(foundOrd?.items) && foundOrd.items.length > 0, "Order should have items");
+    assert.ok(foundOrd?.items[0].productImage, "Item should have productImage populated");
+  });
+
   // 14. Custom Studio Inquiry Conversion to Order
   await t.test("Custom Studio inquiry converted to order marks status as converted and retains reference details", async () => {
     const customInquiry = await dbStore.createCustomRequest({

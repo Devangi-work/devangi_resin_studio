@@ -115,7 +115,7 @@ export default function AdminOrdersPage() {
     paymentStatus: "paid" as "paid" | "unpaid",
     paymentScreenshotUrl: "",
     upiTransactionId: "",
-    orderStatus: "confirmed" as "confirmed" | "processing" | "ready_to_ship" | "delivered",
+    orderStatus: "confirmed" as "confirmed" | "processing" | "dispatched" | "shipped" | "delivered",
     items: [
       { productId: "", productName: "", quantity: 1, unitPrice: 0 },
     ],
@@ -319,7 +319,13 @@ export default function AdminOrdersPage() {
   }, []);
 
   const filteredOrders = orders.filter((o) => {
-    if (statusFilter !== "all" && o.orderStatus !== statusFilter) return false;
+    if (statusFilter !== "all") {
+      if (statusFilter === "dispatched") {
+        if (o.orderStatus !== "dispatched" && o.orderStatus !== "shipped") return false;
+      } else if (o.orderStatus !== statusFilter) {
+        return false;
+      }
+    }
     if (paymentFilter !== "all" && o.paymentStatus !== paymentFilter) return false;
     if (sourceFilter !== "all") {
       const src = o.orderSource || "online";
@@ -1408,11 +1414,11 @@ export default function AdminOrdersPage() {
                 className="py-2 px-3 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl text-[#2C332D]"
               >
                 <option value="all">All Fulfilment Statuses</option>
+                <option value="waiting">Waiting</option>
                 <option value="pending_payment">Pending Payment</option>
                 <option value="confirmed">Confirmed</option>
                 <option value="processing">Processing (Curing)</option>
-                <option value="ready_to_ship">Ready to Ship</option>
-                <option value="shipped">Shipped</option>
+                <option value="dispatched">Dispatched</option>
                 <option value="delivered">Delivered</option>
                 <option value="cancelled">Cancelled</option>
               </select>
@@ -1635,27 +1641,27 @@ export default function AdminOrdersPage() {
                         <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
                           {/* Interactive Fulfilment Status Selector for Admin */}
                           <select
-                            value={o.orderStatus}
+                            value={o.orderStatus === "shipped" ? "dispatched" : o.orderStatus}
                             onChange={(e) => handleUpdateOrderStatus(o, e.target.value, e)}
                             title="Click to change Fulfilment Status"
                             className={`capitalize px-2.5 py-1 rounded-full text-[10px] font-bold border transition-colors cursor-pointer focus:outline-none shadow-xs ${o.orderStatus === "delivered"
                               ? "bg-[#E8EFE8] text-[#2E7D32] border-[#C5D8C5]"
-                              : o.orderStatus === "shipped"
+                              : o.orderStatus === "dispatched" || o.orderStatus === "shipped"
                                 ? "bg-[#EBF3FA] text-[#1E5B94] border-[#BDD7EE]"
-                                : o.orderStatus === "ready_to_ship"
-                                  ? "bg-[#F3E8FF] text-[#6B21A8] border-[#E9D5FF]"
-                                  : o.orderStatus === "processing"
-                                    ? "bg-[#FFF8E6] text-[#B8860B] border-[#FDE047]"
+                                : o.orderStatus === "processing"
+                                  ? "bg-[#FFF8E6] text-[#B8860B] border-[#FDE047]"
+                                  : o.orderStatus === "waiting"
+                                    ? "bg-[#FFF8E1] text-[#D97706] border-[#FDE68A]"
                                     : o.orderStatus === "cancelled"
                                       ? "bg-[#FDF2F2] text-[#DF4C4C] border-[#FADBD8]"
                                       : "bg-[#FAF4EC] text-[#B8972E] border-[#E8E0D5]"
                               }`}
                           >
+                            <option value="waiting">Waiting</option>
                             <option value="pending_payment">Pending Payment</option>
                             <option value="confirmed">Confirmed</option>
                             <option value="processing">Processing</option>
-                            <option value="ready_to_ship">Ready to Ship</option>
-                            <option value="shipped">Shipped</option>
+                            <option value="dispatched">Dispatched</option>
                             <option value="delivered">Delivered</option>
                             <option value="cancelled">Cancelled</option>
                           </select>
@@ -3070,15 +3076,15 @@ export default function AdminOrdersPage() {
                     Fulfilment Status
                   </label>
                   <select
-                    value={newStatus}
+                    value={newStatus === "shipped" ? "dispatched" : newStatus}
                     onChange={(e) => setNewStatus(e.target.value)}
                     className="w-full px-3 py-2 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl text-[#2C332D]"
                   >
+                    <option value="waiting">Waiting</option>
                     <option value="pending_payment">Pending Payment</option>
                     <option value="confirmed">Confirmed</option>
                     <option value="processing">Processing (Curing / Handcrafting)</option>
-                    <option value="ready_to_ship">Ready to Ship</option>
-                    <option value="shipped">Shipped</option>
+                    <option value="dispatched">Dispatched</option>
                     <option value="delivered">Delivered</option>
                     <option value="cancelled">Cancelled</option>
                   </select>
@@ -3433,15 +3439,15 @@ export default function AdminOrdersPage() {
                   <div>
                     <label className="font-semibold text-[#2C332D] block mb-1">Fulfilment Status</label>
                     <select
-                      value={editForm.orderStatus}
+                      value={editForm.orderStatus === "shipped" ? "dispatched" : editForm.orderStatus}
                       onChange={(e) => setEditForm({ ...editForm, orderStatus: e.target.value as any })}
                       className="w-full px-3 py-2 bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl text-xs text-[#2C332D] font-medium"
                     >
+                      <option value="waiting">Waiting</option>
                       <option value="pending_payment">Pending Payment</option>
                       <option value="confirmed">Confirmed</option>
                       <option value="processing">Processing (Handcrafting)</option>
-                      <option value="ready_to_ship">Ready to Ship</option>
-                      <option value="shipped">Shipped</option>
+                      <option value="dispatched">Dispatched</option>
                       <option value="delivered">Delivered</option>
                       <option value="cancelled">Cancelled</option>
                     </select>

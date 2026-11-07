@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
       orderSource: "whatsapp",
       paymentMethod: "upi",
       paymentStatus: "unpaid",
-      orderStatus: "confirmed",
+      orderStatus: "waiting",
       subtotal,
       discountAmount,
       discountReason: couponCode || null,
