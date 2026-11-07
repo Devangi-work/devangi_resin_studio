@@ -2,21 +2,13 @@
 
 import React, { useState, useEffect, useRef } from "react";
 
-export function WebsiteLoadingScreen() {
-  // Check session storage synchronously on client
-  const [isMounted, setIsMounted] = useState(() => {
-    if (typeof window !== "undefined") {
-      try {
-        return sessionStorage.getItem("resin_website_intro_shown") !== "true";
-      } catch {
-        return true;
-      }
-    }
-    return true;
-  });
+// In-memory flag: resets on full page reload/visit, but persists across client-side page transitions
+let hasPlayedInCurrentNavigation = false;
 
+export function WebsiteLoadingScreen() {
+  const [isMounted, setIsMounted] = useState(() => !hasPlayedInCurrentNavigation);
   const [isFadingOut, setIsFadingOut] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
   const hasTriggeredEndRef = useRef(false);
 
   useEffect(() => {
@@ -26,74 +18,51 @@ export function WebsiteLoadingScreen() {
     const originalOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
-    const video = videoRef.current;
-    if (video) {
-      const isDesktop = typeof window !== "undefined" && window.innerWidth >= 768;
-      const expectedSrc = isDesktop
-        ? "/video/pc_Website_loading_screen_animation_25e5f393.mp4"
-        : "/video/Website_loading_screen_animation_25e5f393.mp4";
-
-      // Ensure explicit source assignment if not already playing expected video
-      if (!video.src && !video.currentSrc) {
-        video.src = expectedSrc;
-        video.load();
-      }
-
-      // Ensure muted for guaranteed instant autoplay without browser rejection
-      video.muted = true;
-      video.defaultMuted = true;
-
-      const playPromise = video.play();
-      if (playPromise !== undefined) {
-        playPromise
-          .then(() => {
-            // On desktop viewports, attempt to unmute for audio immediately
-            if (isDesktop) {
-              try {
-                video.muted = false;
-              } catch {
-                // ignore
-              }
-            }
-          })
-          .catch(() => {
-            // Autoplay fallback with muted
-            if (video) {
-              video.muted = true;
-              video.play().catch(() => {});
-            }
-          });
-      }
-
-      // Audio unlock on user interaction (tap, touch, click anywhere on screen)
-      const unlockAudio = () => {
-        if (video && !hasTriggeredEndRef.current) {
-          try {
-            video.muted = false;
-            // Ensure video NEVER pauses when touched/unmuted
-            if (video.paused) {
-              video.play().catch(() => {});
-            }
-          } catch {
-            // ignore
+    // Play active video element with guaranteed autoplay
+    const playCurrentVideo = () => {
+      const video = videoRef.current;
+      if (video) {
+        video.muted = true;
+        video.defaultMuted = true;
+        video.play().catch(() => {
+          if (video) {
+            video.muted = true;
+            video.play().catch(() => {});
           }
+        });
+      }
+    };
+
+    playCurrentVideo();
+
+    // Enable audio on user interaction (touch, tap, click anywhere on screen)
+    const enableAudio = () => {
+      const video = videoRef.current;
+      if (video && !hasTriggeredEndRef.current) {
+        try {
+          video.muted = false;
+          if (video.paused) {
+            video.play().catch(() => {});
+          }
+        } catch {
+          // ignore
         }
-        window.removeEventListener("pointerdown", unlockAudio);
-        window.removeEventListener("touchstart", unlockAudio);
-        window.removeEventListener("click", unlockAudio);
-        window.removeEventListener("keydown", unlockAudio);
-      };
+      }
+      window.removeEventListener("pointerdown", enableAudio);
+      window.removeEventListener("touchstart", enableAudio);
+      window.removeEventListener("click", enableAudio);
+      window.removeEventListener("keydown", enableAudio);
+    };
 
-      window.addEventListener("pointerdown", unlockAudio, { once: true });
-      window.addEventListener("touchstart", unlockAudio, { once: true });
-      window.addEventListener("click", unlockAudio, { once: true });
-      window.addEventListener("keydown", unlockAudio, { once: true });
-    }
+    window.addEventListener("pointerdown", enableAudio, { once: true });
+    window.addEventListener("touchstart", enableAudio, { once: true });
+    window.addEventListener("click", enableAudio, { once: true });
+    window.addEventListener("keydown", enableAudio, { once: true });
 
-    // Safety fallback: only trigger after 10s if video stalled
+    // Safety fallback: only trigger after 9.5s if video stalled
     const safetyTimer = setTimeout(() => {
       handleComplete();
-    }, 10000);
+    }, 9500);
 
     return () => {
       document.body.style.overflow = originalOverflow;
@@ -104,13 +73,7 @@ export function WebsiteLoadingScreen() {
   const handleComplete = () => {
     if (hasTriggeredEndRef.current) return;
     hasTriggeredEndRef.current = true;
-
-    // Save session flag so subpage navigation doesn't replay intro repeatedly
-    try {
-      sessionStorage.setItem("resin_website_intro_shown", "true");
-    } catch {
-      // ignore
-    }
+    hasPlayedInCurrentNavigation = true;
 
     // Initiate smooth exit transition to dashboard/website
     setIsFadingOut(true);
@@ -126,10 +89,11 @@ export function WebsiteLoadingScreen() {
   };
 
   const handleTimeUpdate = () => {
-    if (videoRef.current) {
-      const { currentTime, duration } = videoRef.current;
+    const video = videoRef.current;
+    if (video) {
+      const { currentTime, duration } = video;
       // CRITICAL: Must have loaded real duration (> 4s) and played past 4s
-      // This prevents any premature exit on mobile metadata load!
+      // Never trigger on initial 0s load!
       if (duration && duration > 4 && currentTime > 4 && currentTime >= duration - 0.3) {
         handleComplete();
       }
@@ -168,8 +132,14 @@ export function WebsiteLoadingScreen() {
       }`}
       style={{ backgroundColor: "#3A1823" }}
     >
+      {/* Desktop Video (md and above >= 768px): 1280x720 16:9 Widescreen */}
       <video
-        ref={videoRef}
+        ref={(el) => {
+          if (el && typeof window !== "undefined" && window.innerWidth >= 768) {
+            videoRef.current = el;
+          }
+        }}
+        src="/video/pc_Website_loading_screen_animation_25e5f393.mp4"
         autoPlay
         playsInline
         muted
@@ -178,27 +148,43 @@ export function WebsiteLoadingScreen() {
         disablePictureInPicture
         disableRemotePlayback
         onPause={() => {
-          // CRITICAL: If browser tries to pause for any reason, immediately resume!
           if (!hasTriggeredEndRef.current && videoRef.current) {
             videoRef.current.play().catch(() => {});
           }
         }}
         onEnded={handleComplete}
         onTimeUpdate={handleTimeUpdate}
-        className="w-full h-full max-w-full max-h-[100dvh] object-contain sm:object-cover object-center pointer-events-none"
+        className="hidden md:block w-full h-full max-w-full max-h-[100dvh] object-cover object-center pointer-events-none"
         style={{ backgroundColor: "#3A1823" }}
         {...({ "webkit-playsinline": "true" } as any)}
-      >
-        <source
-          media="(min-width: 768px)"
-          src="/video/pc_Website_loading_screen_animation_25e5f393.mp4"
-          type="video/mp4"
-        />
-        <source
-          src="/video/Website_loading_screen_animation_25e5f393.mp4"
-          type="video/mp4"
-        />
-      </video>
+      />
+
+      {/* Mobile Video (below md < 768px): 720x1280 9:16 Portrait */}
+      <video
+        ref={(el) => {
+          if (el && typeof window !== "undefined" && window.innerWidth < 768) {
+            videoRef.current = el;
+          }
+        }}
+        src="/video/Website_loading_screen_animation_25e5f393.mp4"
+        autoPlay
+        playsInline
+        muted
+        preload="auto"
+        controls={false}
+        disablePictureInPicture
+        disableRemotePlayback
+        onPause={() => {
+          if (!hasTriggeredEndRef.current && videoRef.current) {
+            videoRef.current.play().catch(() => {});
+          }
+        }}
+        onEnded={handleComplete}
+        onTimeUpdate={handleTimeUpdate}
+        className="block md:hidden w-full h-full max-w-full max-h-[100dvh] object-contain object-center pointer-events-none"
+        style={{ backgroundColor: "#3A1823" }}
+        {...({ "webkit-playsinline": "true" } as any)}
+      />
     </div>
   );
 }
