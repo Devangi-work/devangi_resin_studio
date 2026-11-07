@@ -37,22 +37,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <head>
-        <link
-          rel="preload"
-          as="video"
-          href="/video/pc_Website_loading_screen_animation_25e5f393.mp4"
-          type="video/mp4"
-          media="(min-width: 768px)"
-        />
-        <link
-          rel="preload"
-          as="video"
-          href="/video/Website_loading_screen_animation_25e5f393.mp4"
-          type="video/mp4"
-          media="(max-width: 767px)"
-        />
-      </head>
       <body className="min-h-screen flex flex-col bg-[#FAF8F5] text-[#222523] selection:bg-[#D4AF37]/30">
         <CartProvider>
           <StorefrontShell>{children}</StorefrontShell>

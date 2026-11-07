@@ -15,16 +15,6 @@ export function WebsiteLoadingScreen() {
     return true;
   });
 
-  // Pick desktop vs mobile video synchronously on client initialization
-  const [videoSrc] = useState(() => {
-    if (typeof window !== "undefined") {
-      return window.innerWidth >= 768
-        ? "/video/pc_Website_loading_screen_animation_25e5f393.mp4"
-        : "/video/Website_loading_screen_animation_25e5f393.mp4";
-    }
-    return "/video/Website_loading_screen_animation_25e5f393.mp4";
-  });
-
   const [isFadingOut, setIsFadingOut] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const hasTriggeredEndRef = useRef(false);
@@ -38,7 +28,18 @@ export function WebsiteLoadingScreen() {
 
     const video = videoRef.current;
     if (video) {
-      // Ensure muted for guaranteed instant mobile autoplay without browser block
+      const isDesktop = typeof window !== "undefined" && window.innerWidth >= 768;
+      const expectedSrc = isDesktop
+        ? "/video/pc_Website_loading_screen_animation_25e5f393.mp4"
+        : "/video/Website_loading_screen_animation_25e5f393.mp4";
+
+      // Ensure explicit source assignment if not already playing expected video
+      if (!video.src && !video.currentSrc) {
+        video.src = expectedSrc;
+        video.load();
+      }
+
+      // Ensure muted for guaranteed instant autoplay without browser rejection
       video.muted = true;
       video.defaultMuted = true;
 
@@ -46,8 +47,8 @@ export function WebsiteLoadingScreen() {
       if (playPromise !== undefined) {
         playPromise
           .then(() => {
-            // On desktop viewports, attempt to unmute for audio
-            if (typeof window !== "undefined" && window.innerWidth >= 768) {
+            // On desktop viewports, attempt to unmute for audio immediately
+            if (isDesktop) {
               try {
                 video.muted = false;
               } catch {
@@ -69,7 +70,7 @@ export function WebsiteLoadingScreen() {
         if (video && !hasTriggeredEndRef.current) {
           try {
             video.muted = false;
-            // CRITICAL: Ensure video NEVER pauses when touched/unmuted
+            // Ensure video NEVER pauses when touched/unmuted
             if (video.paused) {
               video.play().catch(() => {});
             }
@@ -89,10 +90,10 @@ export function WebsiteLoadingScreen() {
       window.addEventListener("keydown", unlockAudio, { once: true });
     }
 
-    // Safety fallback: only trigger after 9.5s if video stalled
+    // Safety fallback: only trigger after 10s if video stalled
     const safetyTimer = setTimeout(() => {
       handleComplete();
-    }, 9500);
+    }, 10000);
 
     return () => {
       document.body.style.overflow = originalOverflow;
@@ -169,7 +170,6 @@ export function WebsiteLoadingScreen() {
     >
       <video
         ref={videoRef}
-        src={videoSrc}
         autoPlay
         playsInline
         muted
@@ -188,7 +188,17 @@ export function WebsiteLoadingScreen() {
         className="w-full h-full max-w-full max-h-[100dvh] object-contain sm:object-cover object-center pointer-events-none"
         style={{ backgroundColor: "#3A1823" }}
         {...({ "webkit-playsinline": "true" } as any)}
-      />
+      >
+        <source
+          media="(min-width: 768px)"
+          src="/video/pc_Website_loading_screen_animation_25e5f393.mp4"
+          type="video/mp4"
+        />
+        <source
+          src="/video/Website_loading_screen_animation_25e5f393.mp4"
+          type="video/mp4"
+        />
+      </video>
     </div>
   );
 }
