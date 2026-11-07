@@ -66,9 +66,13 @@ export function WebsiteLoadingScreen() {
 
       // Audio unlock on user interaction (tap, touch, click anywhere on screen)
       const unlockAudio = () => {
-        if (video) {
+        if (video && !hasTriggeredEndRef.current) {
           try {
             video.muted = false;
+            // CRITICAL: Ensure video NEVER pauses when touched/unmuted
+            if (video.paused) {
+              video.play().catch(() => {});
+            }
           } catch {
             // ignore
           }
@@ -131,6 +135,22 @@ export function WebsiteLoadingScreen() {
     }
   };
 
+  const handleInteraction = (e: React.SyntheticEvent) => {
+    e.stopPropagation();
+    const video = videoRef.current;
+    if (video && !hasTriggeredEndRef.current) {
+      try {
+        video.muted = false;
+        // CRITICAL: Touching screen must NEVER stop video!
+        if (video.paused) {
+          video.play().catch(() => {});
+        }
+      } catch {
+        // ignore
+      }
+    }
+  };
+
   if (!isMounted) {
     return null;
   }
@@ -139,21 +159,10 @@ export function WebsiteLoadingScreen() {
     <div
       role="dialog"
       aria-label="Website Loading Screen"
-      onClick={() => {
-        if (videoRef.current) {
-          try {
-            videoRef.current.muted = false;
-          } catch {}
-        }
-      }}
-      onTouchStart={() => {
-        if (videoRef.current) {
-          try {
-            videoRef.current.muted = false;
-          } catch {}
-        }
-      }}
-      className={`fixed inset-0 z-[99999] w-screen h-screen overflow-hidden bg-black flex items-center justify-center transition-all duration-800 ease-in-out select-none ${
+      onClick={handleInteraction}
+      onTouchStart={handleInteraction}
+      onTouchEnd={handleInteraction}
+      className={`fixed inset-0 z-[99999] w-full h-[100dvh] overflow-hidden bg-black flex items-center justify-center transition-all duration-800 ease-in-out select-none ${
         isFadingOut ? "opacity-0 scale-105 pointer-events-none" : "opacity-100 scale-100"
       }`}
     >
@@ -167,9 +176,15 @@ export function WebsiteLoadingScreen() {
         controls={false}
         disablePictureInPicture
         disableRemotePlayback
+        onPause={() => {
+          // CRITICAL: If browser tries to pause for any reason, immediately resume!
+          if (!hasTriggeredEndRef.current && videoRef.current) {
+            videoRef.current.play().catch(() => {});
+          }
+        }}
         onEnded={handleComplete}
         onTimeUpdate={handleTimeUpdate}
-        className="w-full h-full object-cover"
+        className="w-full h-full max-w-full max-h-[100dvh] object-contain sm:object-cover object-center pointer-events-none"
         {...({ "webkit-playsinline": "true" } as any)}
       />
     </div>
