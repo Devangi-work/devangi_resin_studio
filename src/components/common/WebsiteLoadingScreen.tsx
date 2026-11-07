@@ -162,9 +162,10 @@ export function WebsiteLoadingScreen() {
       onClick={handleInteraction}
       onTouchStart={handleInteraction}
       onTouchEnd={handleInteraction}
-      className={`fixed inset-0 z-[99999] w-full h-[100dvh] overflow-hidden bg-black flex items-center justify-center transition-all duration-800 ease-in-out select-none ${
+      className={`fixed inset-0 z-[99999] w-full h-[100dvh] overflow-hidden bg-[#3A1823] flex items-center justify-center transition-all duration-800 ease-in-out select-none ${
         isFadingOut ? "opacity-0 scale-105 pointer-events-none" : "opacity-100 scale-100"
       }`}
+      style={{ backgroundColor: "#3A1823" }}
     >
       <video
         ref={videoRef}
@@ -185,6 +186,7 @@ export function WebsiteLoadingScreen() {
         onEnded={handleComplete}
         onTimeUpdate={handleTimeUpdate}
         className="w-full h-full max-w-full max-h-[100dvh] object-contain sm:object-cover object-center pointer-events-none"
+        style={{ backgroundColor: "#3A1823" }}
         {...({ "webkit-playsinline": "true" } as any)}
       />
     </div>
