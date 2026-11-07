@@ -242,7 +242,7 @@ export function Navbar() {
             </button>
           </div>
 
-          {/* Brand Logo - Tight, elegant spacing on mobile so logo & name stay cohesive, with guaranteed buffer before search icon */}
+          {/* Brand Logo - Perfectly leveled horizontally with logo on mobile and desktop */}
           <div className="flex-1 lg:flex-none min-w-0 pr-1 sm:pr-0">
             <Link
               href="/"
@@ -253,7 +253,7 @@ export function Navbar() {
                 alt="Devangi Resin Studio Logo"
                 className="w-8 h-8 xs:w-9 xs:h-9 sm:w-11 sm:h-11 lg:w-13 lg:h-13 xl:w-15 xl:h-15 object-contain drop-shadow-xs group-hover:scale-105 transition-transform flex-shrink-0"
               />
-              <div className="flex flex-col justify-center min-w-0">
+              <div className="flex flex-col justify-center min-w-0 translate-y-[2px] sm:translate-y-0">
                 <span className="font-serif text-[13px] xs:text-[14.5px] sm:text-lg lg:text-[18px] xl:text-2xl 2xl:text-3xl font-bold tracking-tight text-[#3A1823] group-hover:text-[#B84A67] transition-colors truncate block leading-tight">
                   {settings?.storeName || "Devangi Resin Studio"}
                 </span>

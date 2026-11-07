@@ -125,13 +125,13 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
           {isFestivalActive && (
             <Link
               href="/shop?festival=true"
-              className={`text-xs px-4 py-2 rounded-full font-bold transition-all flex items-center space-x-1.5 shadow-xs ${isFestivalOnly
+              className={`text-xs px-3.5 sm:px-4 py-2 rounded-full font-bold transition-all flex items-center space-x-1.5 shadow-xs whitespace-nowrap flex-shrink-0 ${isFestivalOnly
                   ? "bg-gradient-to-r from-[#6A162B] via-[#851E39] to-[#6A162B] text-[#FFDF78] ring-2 ring-[#D4AF37] shadow-md scale-105"
                   : "bg-gradient-to-r from-[#FAF0F3] to-[#FFF5F8] border-2 border-[#D4AF37]/70 text-[#6A162B] hover:border-[#D4AF37] hover:scale-102"
                 }`}
             >
               <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />
-              <span>✨ Festive Specials</span>
+              <span>Festive Specials</span>
               <span className="text-[9px] bg-[#D4AF37] text-[#2D121C] px-1.5 py-0.2 rounded-full font-black">
                 DEALS
               </span>
@@ -187,7 +187,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
               </Link>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 xs:gap-3.5 sm:gap-6">
               {products.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}

@@ -263,33 +263,33 @@ export default async function HomePage() {
 
         {/* ---------------- FESTIVAL SPECIAL SHOWCASE (If Festival Products Exist) ---------------- */}
         {festivalProducts.length > 0 && (
-          <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-            <div className="p-6 sm:p-10 rounded-3xl bg-gradient-to-r from-[#FFF9F6] via-[#FFFDF9] to-[#FFF5F8] border-2 border-[#D4AF37]/60 shadow-lg relative overflow-hidden">
+          <section className="max-w-7xl mx-auto px-2.5 xs:px-4 sm:px-6 lg:px-8 w-full">
+            <div className="p-3.5 xs:p-5 sm:p-8 lg:p-10 rounded-2xl sm:rounded-3xl bg-gradient-to-r from-[#FFF9F6] via-[#FFFDF9] to-[#FFF5F8] border-2 border-[#D4AF37]/60 shadow-lg relative overflow-hidden">
               <div className="absolute -top-12 -right-12 w-48 h-48 bg-[#D4AF37]/15 rounded-full blur-2xl pointer-events-none" />
 
-              <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 space-y-3 sm:space-y-0 relative z-10">
+              <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-4 sm:mb-8 space-y-2 sm:space-y-0 relative z-10">
                 <div>
-                  <span className="text-xs uppercase font-extrabold tracking-widest text-[#A83250] flex items-center space-x-1.5">
+                  <span className="text-[10px] xs:text-xs uppercase font-extrabold tracking-widest text-[#A83250] flex items-center space-x-1.5">
                     <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />
                     <span>Limited Period Celebrations</span>
                   </span>
-                  <h2 className="font-serif text-2xl sm:text-4xl font-bold text-[#3A1823] tracking-tight mt-1">
+                  <h2 className="font-serif text-xl xs:text-2xl sm:text-4xl font-bold text-[#3A1823] tracking-tight mt-1">
                     {settings.festivalName || "Festival Special Editions"}
                   </h2>
-                  <p className="text-xs sm:text-sm text-[#7A5E68] mt-1 max-w-xl">
+                  <p className="text-[11px] xs:text-xs sm:text-sm text-[#7A5E68] mt-1 max-w-xl">
                     Exclusive handcrafted geode pieces, personalized gift hampers, and illuminated art frames on special festival discount.
                   </p>
                 </div>
                 <Link
                   href="/shop?festival=true"
-                  className="text-xs font-bold uppercase tracking-wider text-[#6A162B] hover:text-[#D4AF37] flex items-center space-x-1.5 transition-colors group"
+                  className="text-[11px] xs:text-xs font-bold uppercase tracking-wider text-[#6A162B] hover:text-[#D4AF37] flex items-center space-x-1.5 transition-colors group pt-1 sm:pt-0"
                 >
                   <span>View All Festive Offers</span>
                   <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </Link>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 relative z-10">
+              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 xs:gap-3.5 sm:gap-6 relative z-10">
                 {festivalProducts.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}
