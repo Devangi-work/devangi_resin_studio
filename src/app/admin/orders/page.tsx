@@ -29,6 +29,7 @@ import {
   Sparkles,
   Phone,
   Mail,
+  Send,
   MessageCircle,
   RefreshCw,
   User,
@@ -92,6 +93,8 @@ export default function AdminOrdersPage() {
   const [deletingOrderId, setDeletingOrderId] = useState<string | null>(null);
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
   const [actionMessage, setActionMessage] = useState("");
+  const [sendingEmailId, setSendingEmailId] = useState<string | null>(null);
+  const [emailFeedback, setEmailFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
   // Registered customers & Available website products
   const [customersList, setCustomersList] = useState<any[]>([]);
@@ -757,6 +760,10 @@ export default function AdminOrdersPage() {
         if (selectedOrder?.id === editingOrder.id) {
           setSelectedOrder(data.order);
         }
+        if (data.emailSent) {
+          setActionMessage(`Order updated and notification email dispatched to ${data.order?.customerEmail}!`);
+          setTimeout(() => setActionMessage(""), 5000);
+        }
         setEditingOrder(null);
       } else {
         const errorDetails = data.details
@@ -768,6 +775,46 @@ export default function AdminOrdersPage() {
       setEditError(err.message || "Network error updating order");
     } finally {
       setSavingEdit(false);
+    }
+  };
+
+  // Dedicated Brevo Email Dispatcher for Order Confirmation & Status Updates
+  const handleSendEmail = async (ord: any, targetStatus = "confirmed", e?: React.SyntheticEvent) => {
+    if (e && 'stopPropagation' in e) e.stopPropagation();
+    if (!ord?.id) return;
+    if (!ord.customerEmail || ord.customerEmail.startsWith("offline_") || !ord.customerEmail.includes("@")) {
+      alert("Cannot send email: This order does not have a valid customer email address.");
+      return;
+    }
+
+    setSendingEmailId(ord.id);
+    setEmailFeedback(null);
+    try {
+      const res = await fetch(`/api/admin/orders/${ord.id}/send-email`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "status", status: targetStatus }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setEmailFeedback({
+          type: "success",
+          message: data.message || `Order ${targetStatus} email sent to ${ord.customerEmail}!`,
+        });
+        setTimeout(() => setEmailFeedback(null), 6000);
+      } else {
+        setEmailFeedback({
+          type: "error",
+          message: data.error || "Failed to deliver email through Brevo. Please check your Brevo credentials in .env.",
+        });
+      }
+    } catch (err: any) {
+      setEmailFeedback({
+        type: "error",
+        message: err.message || "Network error while contacting email service.",
+      });
+    } finally {
+      setSendingEmailId(null);
     }
   };
 
@@ -789,6 +836,13 @@ export default function AdminOrdersPage() {
         if (selectedOrder?.id === ord.id) {
           setSelectedOrder((prev: any) => (prev ? { ...prev, ...updated, orderStatus: nextStatus } : prev));
           setNewStatus(nextStatus);
+        }
+        if (data.emailSent) {
+          setEmailFeedback({
+            type: "success",
+            message: `Order #${ord.orderNumber} updated to "${nextStatus.replace(/_/g, " ")}" & status email dispatched to ${updated.customerEmail || ord.customerEmail}!`,
+          });
+          setTimeout(() => setEmailFeedback(null), 6000);
         }
       } else {
         alert(data.error || "Failed to update order status");
@@ -1059,7 +1113,10 @@ export default function AdminOrdersPage() {
 
       const data = await res.json();
       if (res.ok) {
-        setUpdateMsg("Order & shipping details updated successfully!");
+        const emailMsg = data.emailSent
+          ? ` (Notification email dispatched to ${data.order?.customerEmail})`
+          : "";
+        setUpdateMsg(`Order & shipping details updated successfully!${emailMsg}`);
         setSelectedOrder(data.order);
         setOrders((prev) => prev.map((o) => (o.id === data.order?.id ? data.order : o)));
         loadOrders();
@@ -1383,6 +1440,29 @@ export default function AdminOrdersPage() {
             </div>
           )}
 
+          {/* Email Feedback Banner */}
+          {emailFeedback && (
+            <div
+              className={`p-3 text-xs rounded-xl flex items-center justify-between shadow-xs border ${
+                emailFeedback.type === "success"
+                  ? "bg-[#FAF0F3] border-[#800020]/25 text-[#800020]"
+                  : "bg-red-50 border-red-200 text-red-800"
+              }`}
+            >
+              <div className="flex items-center space-x-2">
+                <Mail className="w-4 h-4 shrink-0 text-[#800020]" />
+                <span className="font-semibold">{emailFeedback.message}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEmailFeedback(null)}
+                className="text-gray-500 hover:text-gray-800"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+
           {/* Filters Bar & Bulk Action Controls */}
           <div className="bg-white p-4 rounded-2xl border border-[#E8E0D5] shadow-sm flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-3">
@@ -1697,6 +1777,20 @@ export default function AdminOrdersPage() {
                         </td>
                         <td className="py-3 px-4 text-right">
                           <div className="flex items-center justify-end space-x-1.5">
+                            {o.customerEmail && !o.customerEmail.startsWith("offline_") && (
+                              <button
+                                type="button"
+                                onClick={(e) => handleSendEmail(o, "confirmed", e)}
+                                disabled={sendingEmailId === o.id}
+                                title={`Send Order Confirmation Email to ${o.customerEmail}`}
+                                className="p-1.5 bg-[#FAF0F3] hover:bg-[#F3E0E6] text-[#800020] border border-[#800020]/25 rounded-lg transition shadow-xs flex items-center gap-1 disabled:opacity-40 cursor-pointer"
+                              >
+                                <Mail className="w-3.5 h-3.5 text-[#800020]" />
+                                <span className="text-[10px] font-bold hidden 2xl:inline">
+                                  {sendingEmailId === o.id ? "Sending..." : "Email"}
+                                </span>
+                              </button>
+                            )}
                             {o.paymentStatus === "paid" && (
                               <a
                                 href={`/admin/orders/${o.id}/receipt`}
@@ -2646,6 +2740,18 @@ export default function AdminOrdersPage() {
                 </h2>
               </div>
               <div className="flex items-center space-x-2">
+                {selectedOrder.customerEmail && !selectedOrder.customerEmail.startsWith("offline_") && (
+                  <button
+                    type="button"
+                    onClick={() => handleSendEmail(selectedOrder, "confirmed")}
+                    disabled={sendingEmailId === selectedOrder.id}
+                    className="px-3 py-1.5 bg-[#FAF0F3] hover:bg-[#F3E0E6] text-[#800020] border border-[#800020]/30 text-xs font-bold rounded-xl flex items-center space-x-1.5 transition shadow-xs disabled:opacity-50 cursor-pointer"
+                    title="Send official order confirmation email to customer via Brevo"
+                  >
+                    <Mail className="w-3.5 h-3.5 text-[#800020]" />
+                    <span>{sendingEmailId === selectedOrder.id ? "Sending Email..." : "Send Confirmation Email"}</span>
+                  </button>
+                )}
                 {selectedOrder.paymentStatus === "paid" && (
                   <a
                     href={`/admin/orders/${selectedOrder.id}/receipt`}
@@ -2697,6 +2803,28 @@ export default function AdminOrdersPage() {
               </p>
             )}
 
+            {emailFeedback && (
+              <div
+                className={`p-3 text-xs rounded-xl flex items-center justify-between shadow-xs border ${
+                  emailFeedback.type === "success"
+                    ? "bg-[#FAF0F3] border-[#800020]/25 text-[#800020]"
+                    : "bg-red-50 border-red-200 text-red-800"
+                }`}
+              >
+                <div className="flex items-center space-x-2">
+                  <Mail className="w-4 h-4 shrink-0 text-[#800020]" />
+                  <span className="font-semibold">{emailFeedback.message}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setEmailFeedback(null)}
+                  className="text-gray-500 hover:text-gray-800"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+
             {/* Customer & Shipping Details */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs bg-[#FAF8F5] p-4 rounded-xl border border-[#E8E0D5]">
               <div>
@@ -2740,6 +2868,81 @@ export default function AdminOrdersPage() {
                     </div>
                   </div>
                 )}
+              </div>
+            </div>
+
+            {/* Customer Email Communication (Brevo Service) */}
+            <div className="bg-[#FAF8F5] p-3.5 sm:p-4 rounded-2xl border border-[#E8E0D5] space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#E8E0D5] pb-2.5">
+                <div className="flex items-center space-x-2">
+                  <div className="w-7 h-7 rounded-lg bg-[#FAF0F3] border border-[#800020]/25 flex items-center justify-center text-[#800020] shrink-0">
+                    <Mail className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold text-[#2C332D] block">
+                      Brevo Customer Email Notifications
+                    </span>
+                    <span className="text-[10px] text-[#736C66]">
+                      Professional branded email with studio logo &amp; direct tracking button
+                    </span>
+                  </div>
+                </div>
+
+                {selectedOrder.customerEmail && !selectedOrder.customerEmail.startsWith("offline_") && selectedOrder.customerEmail.includes("@") ? (
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#E8EFE8] text-[#2E7D32] border border-[#C5D8C5] self-start sm:self-center">
+                    Recipient: {selectedOrder.customerEmail}
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#FFF8E6] text-[#B8860B] border border-[#FDE047] self-start sm:self-center">
+                    No customer email on this order
+                  </span>
+                )}
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                <button
+                  type="button"
+                  onClick={() => handleSendEmail(selectedOrder, "confirmed")}
+                  disabled={sendingEmailId === selectedOrder.id || !selectedOrder.customerEmail || selectedOrder.customerEmail.startsWith("offline_")}
+                  className="px-3 py-1.5 bg-[#800020] hover:bg-[#68001a] text-white text-xs font-bold rounded-xl transition shadow-xs disabled:opacity-40 flex items-center gap-1.5 cursor-pointer"
+                  title="Send official Order Confirmation email with items & tracking button"
+                >
+                  <Send className="w-3.5 h-3.5 text-[#E8C568]" />
+                  <span>{sendingEmailId === selectedOrder.id ? "Sending..." : "Send Confirmation Email"}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleSendEmail(selectedOrder, selectedOrder.orderStatus || "confirmed")}
+                  disabled={sendingEmailId === selectedOrder.id || !selectedOrder.customerEmail || selectedOrder.customerEmail.startsWith("offline_")}
+                  className="px-3 py-1.5 bg-white hover:bg-[#FAF4EC] text-[#2C332D] border border-[#E8E0D5] text-xs font-bold rounded-xl transition shadow-xs disabled:opacity-40 flex items-center gap-1.5 cursor-pointer"
+                  title={`Send email for current status: ${selectedOrder.orderStatus}`}
+                >
+                  <Mail className="w-3.5 h-3.5 text-[#B8972E]" />
+                  <span>Send Current Status ({selectedOrder.orderStatus?.replace(/_/g, " ")})</span>
+                </button>
+
+                <div className="relative inline-block text-left">
+                  <select
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        handleSendEmail(selectedOrder, e.target.value);
+                        e.target.value = "";
+                      }
+                    }}
+                    defaultValue=""
+                    disabled={sendingEmailId === selectedOrder.id || !selectedOrder.customerEmail || selectedOrder.customerEmail.startsWith("offline_")}
+                    className="px-3 py-1.5 bg-white hover:bg-[#FAF4EC] text-[#2C332D] border border-[#E8E0D5] text-xs font-semibold rounded-xl transition shadow-xs disabled:opacity-40 cursor-pointer"
+                  >
+                    <option value="" disabled>Send Custom Phase Email...</option>
+                    <option value="confirmed">1. Confirmed Email</option>
+                    <option value="processing">2. Crafting &amp; Curing Email</option>
+                    <option value="ready_to_ship">3. Quality Check &amp; Packed Email</option>
+                    <option value="dispatched">4. Dispatched / In Transit Email</option>
+                    <option value="delivered">5. Delivered with Love Email</option>
+                    <option value="cancelled">Cancelled Email</option>
+                  </select>
+                </div>
               </div>
             </div>
 

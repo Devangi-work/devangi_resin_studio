@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { requireAdminAuth } from "@/lib/auth";
 import { dbStore } from "@/lib/db";
+import { sendOrderStatusEmail } from "@/lib/email/brevo";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
@@ -110,7 +111,28 @@ export async function PUT(
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
+    const previousStatus = order.orderStatus;
     const resolvedOrder = await dbStore.updateOrder(id, result.data, admin.email);
+
+    // If fulfillment status changed, dispatch the dedicated professional email via Brevo
+    let emailSent = false;
+    let emailMessage: string | null = null;
+    if (orderStatus && orderStatus !== previousStatus && resolvedOrder) {
+      if (resolvedOrder.customerEmail && !resolvedOrder.customerEmail.startsWith("offline_")) {
+        try {
+          const emailRes = await sendOrderStatusEmail(resolvedOrder, orderStatus);
+          emailSent = emailRes?.success || false;
+          if (emailRes?.success) {
+            emailMessage = `Notification email dispatched to ${resolvedOrder.customerEmail}`;
+          } else {
+            emailMessage = typeof emailRes?.error === "string" ? emailRes.error : "Failed to deliver email through Brevo";
+          }
+        } catch (emailErr: any) {
+          console.error("[OrderStatusEmail Auto-Send Error]", emailErr);
+          emailMessage = emailErr?.message || "Failed to trigger email";
+        }
+      }
+    }
 
     try {
       revalidatePath("/admin/orders");
@@ -123,7 +145,7 @@ export async function PUT(
       // ignore
     }
 
-    return NextResponse.json({ success: true, order: resolvedOrder });
+    return NextResponse.json({ success: true, order: resolvedOrder, emailSent, emailMessage });
   } catch (err: any) {
     if (err.message?.includes("Unauthorized")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

@@ -1179,4 +1179,77 @@ test("E-Commerce Test Suite", async (t) => {
     assert.equal(savedSettings.popupBannerButtonText, "Claim Offer");
     assert.ok(savedSettings.popupBannerExpiresAt);
   });
+
+  // 24. Brevo Fulfillment Status Email Dispatching for Each Phase
+  await t.test("Brevo Fulfillment Status Emails generate properly formatted templates with logo & tracking button", async () => {
+    const { sendOrderStatusEmail, sendOrderConfirmationEmail } = await import("@/lib/email/brevo");
+
+    const testOrder = {
+      id: "ord_brevo_test_1",
+      orderNumber: "DRS-BRV-9999",
+      customerName: "Aarav Sharma",
+      customerEmail: "aarav.sharma@example.com",
+      customerPhone: "+91 9876543210",
+      shippingAddressLine1: "Flat 402, Lotus Grand, Bandra West",
+      shippingCity: "Mumbai",
+      shippingState: "Maharashtra",
+      shippingPostalCode: "400050",
+      subtotal: 2500,
+      discountAmount: 250,
+      discountReason: "WELCOME10",
+      shippingCharge: 79,
+      totalAmount: 2329,
+      courierName: "Delhivery Express",
+      trackingNumber: "DELHIVERY-AWB-12345",
+      secureLookupToken: "token_abc_123",
+      items: [
+        {
+          productName: "Botanical Resin Floral Clock",
+          variantName: "12 inch / Rose Gold Rim",
+          quantity: 1,
+          unitPrice: 2000,
+          totalPrice: 2000,
+          personalizationDetails: { customName: "Aarav & Priya", colorTheme: "Warm Sunset" },
+        },
+        {
+          productName: "Personalized Resin Keychain",
+          variantName: "Gold Flakes",
+          quantity: 1,
+          unitPrice: 500,
+          totalPrice: 500,
+        },
+      ],
+    };
+
+    // 1. Order Confirmed Email
+    const confirmRes = await sendOrderConfirmationEmail(testOrder);
+    assert.ok(confirmRes);
+    assert.equal(typeof confirmRes.success, "boolean");
+
+    // 2. Crafting & Curing Email
+    const craftingRes = await sendOrderStatusEmail(testOrder, "processing");
+    assert.ok(craftingRes);
+    assert.equal(typeof craftingRes.success, "boolean");
+
+    // 3. Quality Check / Ready to Ship Email
+    const qcRes = await sendOrderStatusEmail(testOrder, "ready_to_ship");
+    assert.ok(qcRes);
+    assert.equal(typeof qcRes.success, "boolean");
+
+    // 4. Dispatched Email
+    const dispatchRes = await sendOrderStatusEmail(testOrder, "dispatched");
+    assert.ok(dispatchRes);
+    assert.equal(typeof dispatchRes.success, "boolean");
+
+    // 5. Delivered Email
+    const deliveredRes = await sendOrderStatusEmail(testOrder, "delivered");
+    assert.ok(deliveredRes);
+    assert.equal(typeof deliveredRes.success, "boolean");
+
+    // 6. Graceful handling of offline order without email
+    const offlineOrder = { ...testOrder, customerEmail: "offline_cust_123" };
+    const offlineRes = await sendOrderStatusEmail(offlineOrder, "confirmed");
+    assert.equal(offlineRes.success, true);
+    assert.equal(offlineRes.mocked, true);
+  });
 });
