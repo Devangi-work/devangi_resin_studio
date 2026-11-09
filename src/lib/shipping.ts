@@ -11,9 +11,832 @@ export function parseShippingFee(val: any, fallback = 0): number {
 }
 
 /**
+ * Standard Indian State & Union Territory mapping with aliases and constituent cities/districts.
+ * Setting a shipping rate for any city or state automatically links and applies across
+ * the entire parent state and all of its constituent cities.
+ */
+export const INDIAN_STATES_DATA: Record<
+  string,
+  { aliases: string[]; cities: string[] }
+> = {
+  Maharashtra: {
+    aliases: ["maharashtra", "mh", "maha"],
+    cities: [
+      "mumbai",
+      "bombay",
+      "pune",
+      "poona",
+      "nagpur",
+      "thane",
+      "nashik",
+      "nasik",
+      "kalyan",
+      "dombivli",
+      "vasai",
+      "virar",
+      "navi mumbai",
+      "aurangabad",
+      "chhatrapati sambhajinagar",
+      "solapur",
+      "sholapur",
+      "bhiwandi",
+      "amravati",
+      "nanded",
+      "kolhapur",
+      "akola",
+      "ulhasnagar",
+      "sangli",
+      "malegaon",
+      "jalgaon",
+      "latur",
+      "dhule",
+      "ahmednagar",
+      "chandrapur",
+      "parbhani",
+      "ichalkaranji",
+      "jalna",
+      "panvel",
+      "satara",
+      "beed",
+      "bid",
+      "yavatmal",
+      "gondia",
+      "wardha",
+      "ratnagiri",
+      "sindhudurg",
+      "raigad",
+      "alibaug",
+      "palghar",
+      "osmanabad",
+      "dharashiv",
+      "buldhana",
+      "bhandara",
+      "gadchiroli",
+      "hingoli",
+      "washim",
+      "nandurbar",
+      "miraj",
+      "shirdi",
+      "baramati",
+      "karad",
+      "chiplun",
+      "lonavala",
+      "khandala",
+      "mahabaleshwar",
+      "panchgani",
+      "badlapur",
+      "ambernath",
+      "pen",
+      "khopoli",
+      "karjat",
+      "dahanu",
+      "boisar",
+    ],
+  },
+  Delhi: {
+    aliases: ["delhi", "new delhi", "dl", "ncr", "delhi ncr", "national capital territory of delhi"],
+    cities: [
+      "delhi",
+      "new delhi",
+      "central delhi",
+      "north delhi",
+      "south delhi",
+      "east delhi",
+      "west delhi",
+      "dwarka",
+      "rohini",
+      "saket",
+      "connaught place",
+      "chandni chowk",
+      "janakpuri",
+      "karol bagh",
+      "lajpat nagar",
+      "vasant kunj",
+      "pitampura",
+      "shahdara",
+      "narela",
+      "najafgarh",
+    ],
+  },
+  Karnataka: {
+    aliases: ["karnataka", "ka", "kar"],
+    cities: [
+      "bengaluru",
+      "bangalore",
+      "mysuru",
+      "mysore",
+      "hubballi",
+      "hubli",
+      "dharwad",
+      "mangaluru",
+      "mangalore",
+      "belagavi",
+      "belgaum",
+      "davanagere",
+      "ballari",
+      "bellary",
+      "vijayapura",
+      "bijapur",
+      "shivamogga",
+      "shimoga",
+      "tumakuru",
+      "tumkur",
+      "raichur",
+      "bidar",
+      "hosapete",
+      "hospet",
+      "gadag",
+      "udupi",
+      "hassan",
+      "bhadravati",
+      "chitradurga",
+      "kolar",
+      "mandya",
+      "chikmagalur",
+      "chikkamagaluru",
+      "karwar",
+      "gangavathi",
+      "bagalkot",
+      "ranibennur",
+      "ramanagara",
+      "yadgir",
+      "dandeli",
+      "gokarna",
+      "madikeri",
+      "coorg",
+      "puttur",
+      "kundapura",
+    ],
+  },
+  Gujarat: {
+    aliases: ["gujarat", "gujrat", "gj"],
+    cities: [
+      "ahmedabad",
+      "surat",
+      "vadodara",
+      "baroda",
+      "rajkot",
+      "bhavnagar",
+      "jamnagar",
+      "junagadh",
+      "gandhinagar",
+      "anand",
+      "navsari",
+      "morbi",
+      "nadiad",
+      "surendranagar",
+      "bharuch",
+      "mehsana",
+      "bhuj",
+      "porbandar",
+      "valsad",
+      "vapi",
+      "godhra",
+      "patan",
+      "palanpur",
+      "gandhidham",
+      "veraval",
+      "ankleshwar",
+      "amreli",
+      "deesa",
+      "botad",
+      "dahej",
+      "kandla",
+      "somnath",
+      "dwarka",
+    ],
+  },
+  "Tamil Nadu": {
+    aliases: ["tamil nadu", "tamilnadu", "tn"],
+    cities: [
+      "chennai",
+      "madras",
+      "coimbatore",
+      "madurai",
+      "tiruchirappalli",
+      "trichy",
+      "salem",
+      "tiruppur",
+      "erode",
+      "tirunelveli",
+      "vellore",
+      "thoothukudi",
+      "tuticorin",
+      "dindigul",
+      "thanjavur",
+      "ranipet",
+      "sivakasi",
+      "karur",
+      "ooty",
+      "udhagamandalam",
+      "hosur",
+      "nagercoil",
+      "kanchipuram",
+      "kumarapalayam",
+      "karaikudi",
+      "neyveli",
+      "cuddalore",
+      "kumbakonam",
+      "tiruvannamalai",
+      "pollachi",
+      "rajapalayam",
+      "gudiyatham",
+      "kodaikanal",
+      "rameshwaram",
+      "ambur",
+      "pudukkottai",
+    ],
+  },
+  Telangana: {
+    aliases: ["telangana", "ts", "tg"],
+    cities: [
+      "hyderabad",
+      "secunderabad",
+      "warangal",
+      "nizamabad",
+      "khammam",
+      "karimnagar",
+      "ramagundam",
+      "mahbubnagar",
+      "nalgonda",
+      "adilabad",
+      "suryapet",
+      "siddipet",
+      "miryalaguda",
+      "jagtial",
+      "mancherial",
+      "nirmal",
+      "kothagudem",
+      "kamareddy",
+      "bodhan",
+    ],
+  },
+  "Andhra Pradesh": {
+    aliases: ["andhra pradesh", "andhra", "ap"],
+    cities: [
+      "visakhapatnam",
+      "vizag",
+      "vijayawada",
+      "guntur",
+      "nellore",
+      "kurnool",
+      "kakinada",
+      "rajahmundry",
+      "tirupati",
+      "kadapa",
+      "cuddapah",
+      "anantapur",
+      "vizianagaram",
+      "eluru",
+      "ongole",
+      "nandyal",
+      "machilipatnam",
+      "adoni",
+      "tenali",
+      "proddatur",
+      "chittoor",
+      "hindupur",
+      "bhimavaram",
+      "guntakal",
+      "srikakulam",
+      "mangalagiri",
+      "amaravati",
+      "tadepalligudem",
+    ],
+  },
+  Rajasthan: {
+    aliases: ["rajasthan", "raj", "rj"],
+    cities: [
+      "jaipur",
+      "jodhpur",
+      "kota",
+      "bikaner",
+      "ajmer",
+      "udaipur",
+      "bhilwara",
+      "alwar",
+      "bharatpur",
+      "sikar",
+      "pali",
+      "sri ganganagar",
+      "hanumangarh",
+      "beawar",
+      "kishangarh",
+      "tonk",
+      "jhunjhunu",
+      "baran",
+      "bundi",
+      "chittorgarh",
+      "churu",
+      "dholpur",
+      "jaisalmer",
+      "jalore",
+      "jhalawar",
+      "nagaur",
+      "pratapgarh",
+      "rajsamand",
+      "sawai madhopur",
+      "sirohi",
+      "mount abu",
+      "pushkar",
+      "makrana",
+      "sujangarh",
+    ],
+  },
+  "Uttar Pradesh": {
+    aliases: ["uttar pradesh", "up"],
+    cities: [
+      "lucknow",
+      "kanpur",
+      "ghaziabad",
+      "agra",
+      "varanasi",
+      "banaras",
+      "kashi",
+      "meerut",
+      "prayagraj",
+      "allahabad",
+      "bareilly",
+      "aligarh",
+      "moradabad",
+      "saharanpur",
+      "gorakhpur",
+      "noida",
+      "greater noida",
+      "firozabad",
+      "jhansi",
+      "muzaffarnagar",
+      "mathura",
+      "rampur",
+      "shahjahanpur",
+      "farrukhabad",
+      "mau",
+      "hapur",
+      "faizabad",
+      "ayodhya",
+      "etawah",
+      "mirzapur",
+      "bulandshahr",
+      "sambhal",
+      "amroha",
+      "hardoi",
+      "fatehpur",
+      "raebareli",
+      "orai",
+      "sitapur",
+      "bahraich",
+      "modinagar",
+      "unnao",
+      "jaunpur",
+      "lakhimpur",
+      "hathras",
+      "banda",
+      "pilibhit",
+      "barabanki",
+      "basti",
+      "vrindavan",
+    ],
+  },
+  "West Bengal": {
+    aliases: ["west bengal", "wb", "bengal"],
+    cities: [
+      "kolkata",
+      "calcutta",
+      "howrah",
+      "durgapur",
+      "asansol",
+      "siliguri",
+      "bardhaman",
+      "burdwan",
+      "malda",
+      "english bazar",
+      "baharampur",
+      "habra",
+      "kharagpur",
+      "shantipur",
+      "dankuni",
+      "dhulian",
+      "ranaghat",
+      "haldia",
+      "raiganj",
+      "krishnanagar",
+      "nabadwip",
+      "midnapore",
+      "jalpaiguri",
+      "balurghat",
+      "basirhat",
+      "bankura",
+      "darjeeling",
+      "kalimpong",
+      "alipurduar",
+      "purulia",
+      "cooch behar",
+    ],
+  },
+  "Madhya Pradesh": {
+    aliases: ["madhya pradesh", "mp"],
+    cities: [
+      "bhopal",
+      "indore",
+      "jabalpur",
+      "gwalior",
+      "ujjain",
+      "sagar",
+      "dewas",
+      "satna",
+      "ratlam",
+      "rewa",
+      "murwara",
+      "katni",
+      "singrauli",
+      "burhanpur",
+      "khandwa",
+      "bhind",
+      "chhindwara",
+      "guna",
+      "shivpuri",
+      "vidisha",
+      "chhatarpur",
+      "damoh",
+      "mandsaur",
+      "khargone",
+      "neemuch",
+      "pithampur",
+      "hoshangabad",
+      "narmadapuram",
+      "itarsi",
+      "sehore",
+      "khajuraho",
+    ],
+  },
+  Kerala: {
+    aliases: ["kerala", "kl"],
+    cities: [
+      "thiruvananthapuram",
+      "trivandrum",
+      "kochi",
+      "cochin",
+      "kozhikode",
+      "calicut",
+      "kollam",
+      "quilon",
+      "thrissur",
+      "trichur",
+      "kannur",
+      "cannalore",
+      "alappuzha",
+      "alleppey",
+      "kottayam",
+      "palakkad",
+      "manjeri",
+      "thalassery",
+      "ponnani",
+      "vatakara",
+      "kanhangad",
+      "payyanur",
+      "malappuram",
+      "kasaragod",
+      "wayanad",
+      "idukki",
+      "pathanamthitta",
+      "munnar",
+      "kovalam",
+      "varkala",
+    ],
+  },
+  Haryana: {
+    aliases: ["haryana", "hr"],
+    cities: [
+      "gurugram",
+      "gurgaon",
+      "faridabad",
+      "panipat",
+      "ambala",
+      "yamunanagar",
+      "rohtak",
+      "hisar",
+      "karnal",
+      "sonipat",
+      "panchkula",
+      "bhiwani",
+      "sirsa",
+      "bahadurgarh",
+      "jind",
+      "thanesar",
+      "kaithal",
+      "rewari",
+      "palwal",
+      "manesar",
+      "kurukshetra",
+    ],
+  },
+  Punjab: {
+    aliases: ["punjab", "pb"],
+    cities: [
+      "ludhiana",
+      "amritsar",
+      "jalandhar",
+      "patiala",
+      "bathinda",
+      "mohali",
+      "sas nagar",
+      "hoshiarpur",
+      "batala",
+      "pathankot",
+      "moga",
+      "abohar",
+      "malerkotla",
+      "khanna",
+      "phagwara",
+      "muktsar",
+      "barnala",
+      "rajpura",
+      "firozpur",
+      "kapurthala",
+      "zirakpur",
+    ],
+  },
+  Bihar: {
+    aliases: ["bihar", "br"],
+    cities: [
+      "patna",
+      "gaya",
+      "bhagalpur",
+      "muzaffarpur",
+      "purnia",
+      "darbhanga",
+      "bihar sharif",
+      "arrah",
+      "begusarai",
+      "katihar",
+      "munger",
+      "chhapra",
+      "danapur",
+      "bettiah",
+      "saharsa",
+      "hajipur",
+      "sasaram",
+      "dehri",
+      "siwan",
+      "motihari",
+      "nawada",
+      "buxar",
+      "kishanganj",
+      "sitamarhi",
+    ],
+  },
+  Odisha: {
+    aliases: ["odisha", "orissa", "or", "od"],
+    cities: [
+      "bhubaneswar",
+      "cuttack",
+      "rourkela",
+      "berhampur",
+      "sambalpur",
+      "puri",
+      "balasore",
+      "bhadrak",
+      "baripada",
+      "jharsuguda",
+      "jeypore",
+      "bargarh",
+      "rayagada",
+      "angul",
+      "paradip",
+    ],
+  },
+  Assam: {
+    aliases: ["assam", "as"],
+    cities: [
+      "guwahati",
+      "silchar",
+      "dibrugarh",
+      "jorhat",
+      "nagaon",
+      "tinsukia",
+      "tezpur",
+      "bongaigaon",
+      "karimganj",
+      "sivasagar",
+      "dhubri",
+      "diphu",
+      "north lakhimpur",
+    ],
+  },
+  Jharkhand: {
+    aliases: ["jharkhand", "jh"],
+    cities: [
+      "ranchi",
+      "jamshedpur",
+      "dhanbad",
+      "bokaro",
+      "deoghar",
+      "phusro",
+      "hazaribagh",
+      "giridih",
+      "ramgarh",
+      "medininagar",
+      "chirkunda",
+    ],
+  },
+  Chhattisgarh: {
+    aliases: ["chhattisgarh", "chattisgarh", "cg"],
+    cities: [
+      "raipur",
+      "bhilai",
+      "bilaspur",
+      "korba",
+      "rajnandgaon",
+      "jagdalpur",
+      "raigarh",
+      "ambikapur",
+      "dhamtari",
+    ],
+  },
+  Uttarakhand: {
+    aliases: ["uttarakhand", "uttaranchal", "uk", "ua"],
+    cities: [
+      "dehradun",
+      "haridwar",
+      "roorkee",
+      "haldwani",
+      "rudrapur",
+      "kashipur",
+      "rishikesh",
+      "nainital",
+      "mussoorie",
+      "almora",
+      "pithoragarh",
+    ],
+  },
+  "Himachal Pradesh": {
+    aliases: ["himachal pradesh", "himachal", "hp"],
+    cities: [
+      "shimla",
+      "dharamshala",
+      "solan",
+      "mandi",
+      "kullu",
+      "manali",
+      "baddi",
+      "bilaspur",
+      "hamirpur",
+      "una",
+      "chamba",
+      "palampur",
+    ],
+  },
+  Goa: {
+    aliases: ["goa", "ga"],
+    cities: [
+      "panaji",
+      "panjim",
+      "margao",
+      "madgaon",
+      "vasco da gama",
+      "mapusa",
+      "ponda",
+      "bicholim",
+      "curchorem",
+      "canacona",
+      "calangute",
+      "candolim",
+    ],
+  },
+  "Jammu and Kashmir": {
+    aliases: ["jammu and kashmir", "jammu & kashmir", "j&k", "jk"],
+    cities: [
+      "srinagar",
+      "jammu",
+      "anantnag",
+      "baramulla",
+      "kathua",
+      "sopore",
+      "udhampur",
+    ],
+  },
+  Chandigarh: {
+    aliases: ["chandigarh", "ch"],
+    cities: ["chandigarh"],
+  },
+  Puducherry: {
+    aliases: ["puducherry", "pondicherry", "py"],
+    cities: ["puducherry", "pondicherry", "karaikal", "mahe", "yanam"],
+  },
+  Tripura: {
+    aliases: ["tripura", "tr"],
+    cities: ["agartala", "dharmanagar", "kailasahar", "udaipur"],
+  },
+  Meghalaya: {
+    aliases: ["meghalaya", "ml"],
+    cities: ["shillong", "tura", "cherrapunji", "jowai"],
+  },
+  Manipur: {
+    aliases: ["manipur", "mn"],
+    cities: ["imphal", "churachandpur", "thoubal"],
+  },
+  Nagaland: {
+    aliases: ["nagaland", "nl"],
+    cities: ["kohima", "dimapur", "mokokchung"],
+  },
+  Mizoram: {
+    aliases: ["mizoram", "mz"],
+    cities: ["aizawl", "lunglei", "champhai"],
+  },
+  "Arunachal Pradesh": {
+    aliases: ["arunachal pradesh", "arunachal", "ar"],
+    cities: ["itanagar", "naharlagun", "pasighat", "tawang"],
+  },
+  Sikkim: {
+    aliases: ["sikkim", "sk"],
+    cities: ["gangtok", "namchi", "pelling"],
+  },
+  Ladakh: {
+    aliases: ["ladakh", "la"],
+    cities: ["leh", "kargil"],
+  },
+  "Andaman and Nicobar Islands": {
+    aliases: ["andaman and nicobar islands", "andaman", "nicobar", "an"],
+    cities: ["port blair", "havelock", "neil island"],
+  },
+  "Dadra and Nagar Haveli and Daman and Diu": {
+    aliases: [
+      "dadra and nagar haveli and daman and diu",
+      "daman and diu",
+      "dadra and nagar haveli",
+      "dn",
+    ],
+    cities: ["daman", "diu", "silvassa"],
+  },
+};
+
+/**
+ * Normalizes text by lowercasing, stripping extra punctuation, and trimming spaces.
+ */
+function cleanLocation(text?: string | null): string {
+  if (!text) return "";
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/**
+ * Resolves canonical state name for any given city, state alias, or state name.
+ */
+export function findStateForLocation(location?: string | null): string | null {
+  const clean = cleanLocation(location);
+  if (!clean) return null;
+
+  for (const [stateName, data] of Object.entries(INDIAN_STATES_DATA)) {
+    // 1. Direct state name match
+    if (clean === stateName.toLowerCase()) return stateName;
+
+    // 2. State alias match
+    if (data.aliases.some((alias) => clean === alias || clean.startsWith(alias + " ") || clean.endsWith(" " + alias))) {
+      return stateName;
+    }
+
+    // 3. Known city match
+    for (const city of data.cities) {
+      if (
+        clean === city ||
+        clean.startsWith(city + " ") ||
+        clean.endsWith(" " + city) ||
+        clean.includes(` ${city} `)
+      ) {
+        return stateName;
+      }
+    }
+  }
+
+  // 4. Secondary fallback: check substring inclusion
+  for (const [stateName, data] of Object.entries(INDIAN_STATES_DATA)) {
+    if (clean.includes(stateName.toLowerCase())) return stateName;
+    for (const city of data.cities) {
+      if (clean.includes(city) || city.includes(clean)) {
+        return stateName;
+      }
+    }
+  }
+
+  return null;
+}
+
+/**
  * Matches a user's delivery city or state against admin configured regional rates.
- * If user hasn't specified city/state, falls back to the first configured city rate
- * (e.g. Mumbai) or the default shipping charge.
+ * If user hasn't specified city/state, falls back to the default shipping charge.
+ *
+ * Regional Rate Matching Hierarchy:
+ * 1. Exact / direct city match (Score 100)
+ * 2. Exact / direct state match (Score 80)
+ * 3. Customer city belongs to configured state rate (Score 60)
+ * 4. Configured city belongs to customer's parent state / regional state (Score 40)
+ *
+ * This ensures that if admin configures a shipping rate for a city (e.g. Mumbai),
+ * it applies to the entire state (Maharashtra) and all cities within it, unless
+ * an exact city-specific override rate is also defined.
  */
 export function resolveShippingCharge(options: {
   subtotal: number;
@@ -36,7 +859,10 @@ export function resolveShippingCharge(options: {
 
   // Check if eligible for free delivery:
   // ONLY if product explicitly marked free shipping OR freeThreshold > 0 AND subtotal >= freeThreshold
-  if (options.isProductFreeShipping || (freeThreshold > 0 && options.subtotal > 0 && options.subtotal >= freeThreshold)) {
+  if (
+    options.isProductFreeShipping ||
+    (freeThreshold > 0 && options.subtotal > 0 && options.subtotal >= freeThreshold)
+  ) {
     return {
       charge: 0,
       isFree: true,
@@ -46,30 +872,92 @@ export function resolveShippingCharge(options: {
     };
   }
 
-  const cleanCity = (options.cityName || "").trim().toLowerCase();
-  const cleanState = (options.stateName || "").trim().toLowerCase();
+  const cleanCity = cleanLocation(options.cityName);
+  const cleanState = cleanLocation(options.stateName);
 
-  // Try matching by entered city or state from customer shipping profile
-  if (rates.length > 0 && (cleanCity || cleanState)) {
-    const matched = rates.find((r) => {
-      const rName = (r.name || "").trim().toLowerCase();
-      if (!rName) return false;
-      return (
-        (cleanCity && (cleanCity.includes(rName) || rName.includes(cleanCity))) ||
-        (cleanState && (cleanState.includes(rName) || rName.includes(cleanState)))
-      );
-    });
+  // If customer has not provided city or state, do not infer - use default shipping charge
+  if (rates.length === 0 || (!cleanCity && !cleanState)) {
+    return {
+      charge: defaultCharge,
+      isFree: defaultCharge === 0,
+      matchedCityName: null,
+      freeShippingThreshold: freeThreshold,
+      defaultShippingCharge: defaultCharge,
+    };
+  }
 
-    if (matched) {
-      const charge = parseShippingFee(matched.charge, defaultCharge);
-      return {
-        charge,
-        isFree: charge === 0,
-        matchedCityName: matched.name,
-        freeShippingThreshold: freeThreshold,
-        defaultShippingCharge: defaultCharge,
-      };
+  // Derive resolved state from customer city and customer state
+  const customerCityParentState = cleanCity ? findStateForLocation(cleanCity) : null;
+  const customerStateCanonical = cleanState ? findStateForLocation(cleanState) : null;
+  const customerEffectiveState = customerStateCanonical || customerCityParentState;
+
+  let bestRate: CityShippingRate | null = null;
+  let bestScore = 0;
+
+  for (const rate of rates) {
+    const rawRateName = rate.name || "";
+    const cleanRateName = cleanLocation(rawRateName);
+    if (!cleanRateName) continue;
+
+    const rateParentState = findStateForLocation(cleanRateName);
+    let currentScore = 0;
+
+    // 1. Direct exact or substring city match
+    if (cleanCity) {
+      if (cleanCity === cleanRateName) {
+        currentScore = Math.max(currentScore, 100);
+      } else if (cleanCity.includes(cleanRateName) || cleanRateName.includes(cleanCity)) {
+        currentScore = Math.max(currentScore, 90);
+      }
     }
+
+    // 2. Direct exact or substring state match
+    if (cleanState) {
+      if (cleanState === cleanRateName) {
+        currentScore = Math.max(currentScore, 80);
+      } else if (cleanState.includes(cleanRateName) || cleanRateName.includes(cleanState)) {
+        currentScore = Math.max(currentScore, 75);
+      }
+    }
+
+    // 3. Customer's effective state matches configured rate's name (e.g. rate is "Maharashtra" and customer is in Pune)
+    if (customerEffectiveState && cleanRateName === customerEffectiveState.toLowerCase()) {
+      currentScore = Math.max(currentScore, 70);
+    }
+
+    // 4. Rate's parent state matches customer's effective state
+    // (e.g. Admin set rate for "Mumbai" or "Pune", and customer is anywhere in "Maharashtra")
+    if (
+      rateParentState &&
+      customerEffectiveState &&
+      rateParentState.toLowerCase() === customerEffectiveState.toLowerCase()
+    ) {
+      currentScore = Math.max(currentScore, 60);
+    }
+
+    // 5. Rate is a state, and customer's city belongs to that state
+    if (
+      customerCityParentState &&
+      cleanRateName === customerCityParentState.toLowerCase()
+    ) {
+      currentScore = Math.max(currentScore, 65);
+    }
+
+    if (currentScore > bestScore) {
+      bestScore = currentScore;
+      bestRate = rate;
+    }
+  }
+
+  if (bestRate && bestScore > 0) {
+    const charge = parseShippingFee(bestRate.charge, defaultCharge);
+    return {
+      charge,
+      isFree: charge === 0,
+      matchedCityName: bestRate.name,
+      freeShippingThreshold: freeThreshold,
+      defaultShippingCharge: defaultCharge,
+    };
   }
 
   return {
@@ -80,4 +968,3 @@ export function resolveShippingCharge(options: {
     defaultShippingCharge: defaultCharge,
   };
 }
-

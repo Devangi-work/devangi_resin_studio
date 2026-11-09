@@ -535,6 +535,51 @@ test("E-Commerce Test Suite", async (t) => {
     assert.equal(zeroThresholdMum.charge, 50);
     assert.equal(zeroThresholdMum.isFree, false);
     assert.equal(zeroThresholdMum.matchedCityName, "Mumbai");
+
+    // 8. Regional inheritance: setting rate for a city (e.g. Mumbai) applies to all cities in that state (e.g. Pune, Nagpur)
+    const onlyCityRate = [
+      { name: "Mumbai", charge: "40" },
+    ];
+    const puneOrder = resolveShippingCharge({
+      subtotal: 300,
+      cityName: "Pune",
+      stateName: "Maharashtra",
+      cityRates: onlyCityRate,
+      defaultShippingCharge: "79.00",
+    });
+    assert.equal(puneOrder.charge, 40, "Pune should inherit the Mumbai/Maharashtra regional rate");
+    assert.equal(puneOrder.matchedCityName, "Mumbai");
+
+    // 9. When user enters city without state (e.g. Nagpur), it automatically identifies state and applies city rate
+    const nagpurNoState = resolveShippingCharge({
+      subtotal: 300,
+      cityName: "Nagpur",
+      cityRates: onlyCityRate,
+      defaultShippingCharge: "79.00",
+    });
+    assert.equal(nagpurNoState.charge, 40, "Nagpur should resolve to Maharashtra state and inherit Mumbai rate");
+
+    // 10. When admin sets rate for a State (e.g. Karnataka: 60), cities in that state (e.g. Bengaluru, Mysuru) inherit it
+    const stateRates = [
+      { name: "Karnataka", charge: "60" },
+    ];
+    const blrOrder = resolveShippingCharge({
+      subtotal: 300,
+      cityName: "Bengaluru",
+      cityRates: stateRates,
+      defaultShippingCharge: "79.00",
+    });
+    assert.equal(blrOrder.charge, 60, "Bengaluru should inherit Karnataka state rate");
+    assert.equal(blrOrder.matchedCityName, "Karnataka");
+
+    // 11. State abbreviation "MH" resolves properly
+    const mhOrder = resolveShippingCharge({
+      subtotal: 300,
+      stateName: "MH",
+      cityRates: onlyCityRate,
+      defaultShippingCharge: "79.00",
+    });
+    assert.equal(mhOrder.charge, 40, "MH state code should inherit Mumbai/Maharashtra rate");
   });
 
   // 11. Order Shipping Update & Total Recalculation (Edit Order)

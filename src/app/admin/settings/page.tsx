@@ -42,6 +42,7 @@ import {
 import { MediaPickerModal } from "@/components/admin/MediaPickerModal";
 import { getStoredAdminTheme, applyAdminTheme, AdminTheme } from "@/lib/admin-theme";
 import { defaultPolicyTemplates } from "@/lib/policies-default";
+import { findStateForLocation, INDIAN_STATES_DATA } from "@/lib/shipping";
 
 function toDateTimeLocal(dateVal: any): string {
   if (!dateVal) return "";
@@ -1022,7 +1023,7 @@ export default function AdminSettingsPage() {
                   <span>City & State Specific Shipping Charges</span>
                 </h3>
                 <p className="text-[11px] text-[#736C66] mt-0.5">
-                  Set custom delivery fees for specific cities or states (e.g. Mumbai, Maharashtra, Rajasthan, etc.).
+                  Set custom delivery fees for specific cities or states. Rates set for any city (e.g. Mumbai) or state (e.g. Maharashtra) automatically apply to the entire state and all cities within it, unless a specific city rate is defined.
                 </p>
               </div>
               <button
@@ -1044,6 +1045,41 @@ export default function AdminSettingsPage() {
               </button>
             </div>
 
+            {/* Indian State & City Suggestions Datalist */}
+            <datalist id="indian-region-suggestions">
+              {Object.keys(INDIAN_STATES_DATA).map((state) => (
+                <option key={state} value={state}>
+                  {state} (Entire State)
+                </option>
+              ))}
+              <option value="Mumbai">Mumbai (Maharashtra)</option>
+              <option value="Pune">Pune (Maharashtra)</option>
+              <option value="Nagpur">Nagpur (Maharashtra)</option>
+              <option value="Nashik">Nashik (Maharashtra)</option>
+              <option value="Thane">Thane (Maharashtra)</option>
+              <option value="Bengaluru">Bengaluru (Karnataka)</option>
+              <option value="Mysuru">Mysuru (Karnataka)</option>
+              <option value="Mangaluru">Mangaluru (Karnataka)</option>
+              <option value="Ahmedabad">Ahmedabad (Gujarat)</option>
+              <option value="Surat">Surat (Gujarat)</option>
+              <option value="Vadodara">Vadodara (Gujarat)</option>
+              <option value="Rajkot">Rajkot (Gujarat)</option>
+              <option value="Jaipur">Jaipur (Rajasthan)</option>
+              <option value="Jodhpur">Jodhpur (Rajasthan)</option>
+              <option value="Udaipur">Udaipur (Rajasthan)</option>
+              <option value="Delhi">Delhi NCR</option>
+              <option value="Noida">Noida (Uttar Pradesh)</option>
+              <option value="Lucknow">Lucknow (Uttar Pradesh)</option>
+              <option value="Kanpur">Kanpur (Uttar Pradesh)</option>
+              <option value="Kolkata">Kolkata (West Bengal)</option>
+              <option value="Chennai">Chennai (Tamil Nadu)</option>
+              <option value="Coimbatore">Coimbatore (Tamil Nadu)</option>
+              <option value="Hyderabad">Hyderabad (Telangana)</option>
+              <option value="Kochi">Kochi (Kerala)</option>
+              <option value="Chandigarh">Chandigarh</option>
+              <option value="Panaji">Panaji (Goa)</option>
+            </datalist>
+
             {Array.isArray(settings.cityShippingRates) && settings.cityShippingRates.length > 0 ? (
               <div className="border border-[#E8E0D5] rounded-xl overflow-hidden divide-y divide-[#F4EBE6] bg-[#FAF8F5]">
                 <div className="grid grid-cols-12 px-3.5 py-2 text-[10px] font-bold text-[#8C7A72] uppercase tracking-wider bg-[#F4EBE6]/60">
@@ -1051,51 +1087,69 @@ export default function AdminSettingsPage() {
                   <div className="col-span-4 sm:col-span-4">Shipping Price (₹)</div>
                   <div className="col-span-2 sm:col-span-1 text-right">Action</div>
                 </div>
-                {settings.cityShippingRates.map((rate: any, index: number) => (
-                  <div key={rate.id || index} className="grid grid-cols-12 items-center px-3 py-2 gap-2 bg-white hover:bg-[#FAF8F5] transition-colors">
-                    <div className="col-span-6 sm:col-span-7">
-                      <input
-                        type="text"
-                        placeholder="e.g. Mumbai, Maharashtra, Rajasthan..."
-                        value={rate.name || ""}
-                        onChange={(e) => {
-                          const updated = [...settings.cityShippingRates];
-                          updated[index] = { ...updated[index], name: e.target.value };
-                          setSettings({ ...settings, cityShippingRates: updated });
-                        }}
-                        className="w-full px-2.5 py-1.5 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-lg text-[#2C332D] focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
-                      />
+                {settings.cityShippingRates.map((rate: any, index: number) => {
+                  const resolvedState = rate.name ? findStateForLocation(rate.name) : null;
+                  const isDirectState =
+                    resolvedState &&
+                    rate.name.trim().toLowerCase() === resolvedState.toLowerCase();
+
+                  return (
+                    <div key={rate.id || index} className="grid grid-cols-12 items-center px-3 py-2.5 gap-2 bg-white hover:bg-[#FAF8F5] transition-colors">
+                      <div className="col-span-6 sm:col-span-7">
+                        <input
+                          type="text"
+                          list="indian-region-suggestions"
+                          placeholder="e.g. Mumbai, Maharashtra, Rajasthan, Delhi..."
+                          value={rate.name || ""}
+                          onChange={(e) => {
+                            const updated = [...settings.cityShippingRates];
+                            updated[index] = { ...updated[index], name: e.target.value };
+                            setSettings({ ...settings, cityShippingRates: updated });
+                          }}
+                          className="w-full px-2.5 py-1.5 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-lg text-[#2C332D] focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
+                        />
+                        {resolvedState && (
+                          <div className="mt-1 flex items-center gap-1 text-[10px] text-[#2F5233]">
+                            <CheckCircle2 className="w-3 h-3 text-[#2F5233] shrink-0" />
+                            <span>
+                              {isDirectState
+                                ? `State: ${resolvedState} (Applies to all cities in ${resolvedState})`
+                                : `Belongs to ${resolvedState} (Applies to all cities in ${resolvedState})`}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="col-span-4 sm:col-span-4 flex items-center gap-1">
+                        <span className="text-xs text-[#736C66] font-semibold">₹</span>
+                        <input
+                          type="number"
+                          step="0.01"
+                          placeholder="40.00"
+                          value={rate.charge ?? ""}
+                          onChange={(e) => {
+                            const updated = [...settings.cityShippingRates];
+                            updated[index] = { ...updated[index], charge: e.target.value };
+                            setSettings({ ...settings, cityShippingRates: updated });
+                          }}
+                          className="w-full px-2.5 py-1.5 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-lg text-[#2C332D] focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
+                        />
+                      </div>
+                      <div className="col-span-2 sm:col-span-1 text-right">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updated = settings.cityShippingRates.filter((_: any, i: number) => i !== index);
+                            setSettings({ ...settings, cityShippingRates: updated });
+                          }}
+                          className="p-1.5 text-[#DF4C4C] hover:bg-rose-50 rounded-lg transition-colors"
+                          title="Remove city rate"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
-                    <div className="col-span-4 sm:col-span-4 flex items-center gap-1">
-                      <span className="text-xs text-[#736C66] font-semibold">₹</span>
-                      <input
-                        type="number"
-                        step="0.01"
-                        placeholder="40.00"
-                        value={rate.charge ?? ""}
-                        onChange={(e) => {
-                          const updated = [...settings.cityShippingRates];
-                          updated[index] = { ...updated[index], charge: e.target.value };
-                          setSettings({ ...settings, cityShippingRates: updated });
-                        }}
-                        className="w-full px-2.5 py-1.5 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-lg text-[#2C332D] focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
-                      />
-                    </div>
-                    <div className="col-span-2 sm:col-span-1 text-right">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const updated = settings.cityShippingRates.filter((_: any, i: number) => i !== index);
-                          setSettings({ ...settings, cityShippingRates: updated });
-                        }}
-                        className="p-1.5 text-[#DF4C4C] hover:bg-rose-50 rounded-lg transition-colors"
-                        title="Remove city rate"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div className="p-4 rounded-xl border border-dashed border-[#E8E0D5] bg-[#FAF8F5] text-center">
