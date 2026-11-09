@@ -3,6 +3,26 @@ import { requireAdminAuth } from "@/lib/auth";
 import { dbStore } from "@/lib/db";
 import { couponSchema } from "@/lib/validations";
 
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    await requireAdminAuth();
+    const { id } = await params;
+    const coupon = await dbStore.getCouponById(decodeURIComponent(id));
+    if (!coupon) {
+      return NextResponse.json({ error: "Coupon not found" }, { status: 404 });
+    }
+    return NextResponse.json({ coupon });
+  } catch (err: any) {
+    if (err.message?.includes("Unauthorized")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
+}
+
 export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -10,6 +30,7 @@ export async function PUT(
   try {
     await requireAdminAuth();
     const { id } = await params;
+    const decodedId = decodeURIComponent(id);
     const body = await request.json();
     const result = couponSchema.safeParse(body);
 
@@ -20,7 +41,7 @@ export async function PUT(
       );
     }
 
-    const updated = await dbStore.updateCoupon(id, result.data);
+    const updated = await dbStore.updateCoupon(decodedId, result.data);
     if (!updated) {
       return NextResponse.json({ error: "Coupon not found" }, { status: 404 });
     }

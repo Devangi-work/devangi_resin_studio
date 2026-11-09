@@ -87,7 +87,7 @@ export default function AdminCouponsPage() {
       code: c.code,
       discountType: c.discountType,
       discountValue: c.discountValue,
-      minCartAmount: c.minCartAmount || "0.00",
+      minCartAmount: c.minCartAmount !== undefined && c.minCartAmount !== null ? String(c.minCartAmount) : "0.00",
       maxDiscount: c.maxDiscount || "",
       maxRedemptions: c.maxRedemptions || 100,
       isActive: c.isActive,
@@ -104,11 +104,13 @@ export default function AdminCouponsPage() {
     setMessage("");
 
     try {
-      const endpoint = editingId ? `/api/admin/coupons/${editingId}` : "/api/admin/coupons";
+      const endpoint = editingId ? `/api/admin/coupons/${encodeURIComponent(editingId)}` : "/api/admin/coupons";
       const method = editingId ? "PUT" : "POST";
 
       const payload = {
         ...formData,
+        minCartAmount: formData.minCartAmount ? Number(formData.minCartAmount) : 0,
+        maxDiscount: formData.maxDiscount ? Number(formData.maxDiscount) : null,
         applicableProductId: formData.applicableProductIds.length === 1 ? formData.applicableProductIds[0] : null,
         applicableProductIds: formData.applicableProductIds,
       };
@@ -384,268 +386,284 @@ export default function AdminCouponsPage() {
 
       {/* Modal */}
       {isOpen && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 space-y-5 border border-[#E8E0D5] shadow-2xl">
-            <div className="flex items-center justify-between border-b border-[#F4EBE6] pb-3">
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-lg w-full max-h-[90vh] flex flex-col border border-[#E8E0D5] shadow-2xl my-auto overflow-hidden">
+            <div className="flex items-center justify-between border-b border-[#F4EBE6] p-5 sm:p-6 pb-4 shrink-0 bg-[#FAF8F5]/80">
               <h2 className="font-serif text-lg font-bold text-[#2C332D]">
                 {editingId ? "Edit Coupon" : "Create New Coupon"}
               </h2>
-              <button onClick={() => setIsOpen(false)} className="p-1 text-[#736C66]">
+              <button
+                type="button"
+                onClick={() => setIsOpen(false)}
+                className="p-1 text-[#736C66] hover:text-[#2C332D] transition-colors"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {error && <p className="text-xs text-[#DF4C4C] bg-[#FDF2F2] p-2.5 rounded-lg">{error}</p>}
-
-            <form onSubmit={handleSave} className="space-y-4">
-              <div>
-                <label className="text-xs font-semibold text-[#2C332D] block mb-1">
-                  Coupon Code *
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. FESTIVE20"
-                  value={formData.code}
-                  onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
-                  className="w-full px-3 py-2 text-xs font-mono uppercase bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-semibold text-[#2C332D] block mb-1">
-                    Discount Type
-                  </label>
-                  <select
-                    value={formData.discountType}
-                    onChange={(e) => setFormData({ ...formData, discountType: e.target.value })}
-                    className="w-full px-3 py-2 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl text-[#2C332D]"
-                  >
-                    <option value="percentage">Percentage (%)</option>
-                    <option value="fixed">Fixed Amount (₹)</option>
-                  </select>
-                </div>
+            <form onSubmit={handleSave} className="flex flex-col flex-1 overflow-hidden">
+              <div className="overflow-y-auto p-5 sm:p-6 space-y-4 flex-1">
+                {error && <p className="text-xs text-[#DF4C4C] bg-[#FDF2F2] p-2.5 rounded-lg">{error}</p>}
 
                 <div>
                   <label className="text-xs font-semibold text-[#2C332D] block mb-1">
-                    Discount Value *
+                    Coupon Code *
                   </label>
                   <input
-                    type="number"
-                    step="0.01"
+                    type="text"
                     required
-                    value={formData.discountValue}
-                    onChange={(e) => setFormData({ ...formData, discountValue: e.target.value })}
-                    className="w-full px-3 py-2 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-semibold text-[#2C332D] block mb-1">
-                    Min Cart Subtotal (₹)
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={formData.minCartAmount}
-                    onChange={(e) => setFormData({ ...formData, minCartAmount: e.target.value })}
-                    className="w-full px-3 py-2 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl"
+                    placeholder="e.g. FESTIVE20"
+                    value={formData.code}
+                    onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
+                    className="w-full px-3 py-2 text-xs font-mono uppercase bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
                   />
                 </div>
 
-                <div>
-                  <label className="text-xs font-semibold text-[#2C332D] block mb-1">
-                    Max Cap Discount (₹)
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    placeholder="Optional"
-                    value={formData.maxDiscount}
-                    onChange={(e) => setFormData({ ...formData, maxDiscount: e.target.value })}
-                    className="w-full px-3 py-2 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl"
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-2 pt-2">
-                <input
-                  type="checkbox"
-                  id="act"
-                  checked={formData.isActive}
-                  onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                  className="rounded text-[#2C332D]"
-                />
-                <label htmlFor="act" className="text-xs font-semibold text-[#2C332D] cursor-pointer">
-                  Coupon Is Active & Usable at Checkout
-                </label>
-              </div>
-
-              {/* Product & Category Eligibility */}
-              <div className="space-y-3 pt-2 border-t border-[#F4EBE6]">
-                <div>
-                  <label className="text-xs font-semibold text-[#2C332D] block mb-1">
-                    Specific Product Category (Optional)
-                  </label>
-                  <select
-                    value={formData.applicableCategoryId}
-                    onChange={(e) =>
-                      setFormData({ ...formData, applicableCategoryId: e.target.value })
-                    }
-                    className="w-full px-3 py-2 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl text-[#2C332D] focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
-                  >
-                    <option value="">All Product Categories (Active for all)</option>
-                    {categories.map((cat: any) => (
-                      <option key={cat.id} value={cat.id}>
-                        {cat.name}
-                      </option>
-                    ))}
-                  </select>
-                  <p className="text-[10px] text-[#8C7A72] mt-0.5">
-                    Leave unselected to make this coupon valid across all categories.
-                  </p>
-                </div>
-
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="text-xs font-semibold text-[#2C332D]">
-                      Specific Products (Optional - Select Multiple)
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-semibold text-[#2C332D] block mb-1">
+                      Discount Type
                     </label>
-                    <span className="text-[10px] text-[#8C7A72]">
-                      {formData.applicableProductIds.length > 0
-                        ? `${formData.applicableProductIds.length} selected`
-                        : "Active for all"}
-                    </span>
+                    <select
+                      value={formData.discountType}
+                      onChange={(e) => setFormData({ ...formData, discountType: e.target.value })}
+                      className="w-full px-3 py-2 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl text-[#2C332D]"
+                    >
+                      <option value="percentage">Percentage (%)</option>
+                      <option value="fixed">Fixed Amount (₹)</option>
+                    </select>
                   </div>
 
-                  {/* Filter Search & Quick Actions */}
-                  <div className="flex items-center gap-2 mb-2">
+                  <div>
+                    <label className="text-xs font-semibold text-[#2C332D] block mb-1">
+                      Discount Value *
+                    </label>
                     <input
-                      type="text"
-                      placeholder="Search products by name or SKU..."
-                      value={productSearch}
-                      onChange={(e) => setProductSearch(e.target.value)}
-                      className="flex-1 px-3 py-1.5 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-lg text-[#2C332D] focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
+                      type="number"
+                      step="0.01"
+                      required
+                      value={formData.discountValue}
+                      onChange={(e) => setFormData({ ...formData, discountValue: e.target.value })}
+                      className="w-full px-3 py-2 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl"
                     />
-                    {formData.applicableProductIds.length > 0 && (
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setFormData({
-                            ...formData,
-                            applicableProductIds: [],
-                            applicableProductId: "",
-                          })
-                        }
-                        className="px-2 py-1.5 text-[10px] font-semibold text-[#DF4C4C] hover:bg-rose-50 rounded-lg border border-[#F4D0D8]"
-                      >
-                        Clear
-                      </button>
-                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-semibold text-[#2C332D] block mb-1">
+                      Min Cart Subtotal (₹)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={formData.minCartAmount}
+                      onChange={(e) => setFormData({ ...formData, minCartAmount: e.target.value })}
+                      className="w-full px-3 py-2 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl"
+                    />
+                    <p className="text-[10px] text-[#8C7A72] mt-0.5">
+                      Coupon activates only once cart subtotal reaches this amount.
+                    </p>
                   </div>
 
-                  {/* Selected Product Chips */}
-                  {formData.applicableProductIds.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mb-2 max-h-20 overflow-y-auto p-1.5 bg-[#FAF8F5] rounded-lg border border-[#E8E0D5]">
-                      {formData.applicableProductIds.map((pid) => {
-                        const prod = products.find((p) => p.id === pid);
-                        return (
-                          <span
-                            key={pid}
-                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#FFF4E5] text-[#B86200] border border-[#FFE2BA]"
-                          >
-                            <span className="max-w-[120px] truncate">{prod?.name || pid}</span>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setFormData({
-                                  ...formData,
-                                  applicableProductIds: formData.applicableProductIds.filter(
-                                    (id) => id !== pid
-                                  ),
-                                  applicableProductId:
-                                    formData.applicableProductIds.filter((id) => id !== pid)[0] ||
-                                    "",
-                                })
-                              }
-                              className="text-[#B86200] hover:text-red-700 ml-0.5 font-bold"
-                            >
-                              ×
-                            </button>
-                          </span>
-                        );
-                      })}
-                    </div>
-                  )}
+                  <div>
+                    <label className="text-xs font-semibold text-[#2C332D] block mb-1">
+                      Max Cap Discount (₹)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      placeholder="Optional"
+                      value={formData.maxDiscount}
+                      onChange={(e) => setFormData({ ...formData, maxDiscount: e.target.value })}
+                      className="w-full px-3 py-2 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl"
+                    />
+                    <p className="text-[10px] text-[#8C7A72] mt-0.5">
+                      Leave empty for uncapped percentage discounts.
+                    </p>
+                  </div>
+                </div>
 
-                  {/* Scrollable Products List with Checkboxes */}
-                  <div className="max-h-44 overflow-y-auto border border-[#E8E0D5] rounded-xl divide-y divide-[#F4EBE6] bg-white">
-                    {products
-                      .filter((p: any) =>
-                        productSearch
-                          ? p.name.toLowerCase().includes(productSearch.toLowerCase()) ||
-                          (p.sku && p.sku.toLowerCase().includes(productSearch.toLowerCase()))
-                          : true
-                      )
-                      .map((prod: any) => {
-                        const isSelected = formData.applicableProductIds.includes(prod.id);
-                        return (
-                          <label
-                            key={prod.id}
-                            className={`flex items-center justify-between px-3 py-2 text-xs cursor-pointer transition-colors ${isSelected ? "bg-[#FFF9F2]" : "hover:bg-[#FAF8F5]"
-                              }`}
-                          >
-                            <div className="flex items-center gap-2.5 min-w-0 pr-2">
-                              <input
-                                type="checkbox"
-                                checked={isSelected}
-                                onChange={() => {
-                                  const updated = isSelected
-                                    ? formData.applicableProductIds.filter((id) => id !== prod.id)
-                                    : [...formData.applicableProductIds, prod.id];
+                <div className="flex items-center space-x-2 pt-2">
+                  <input
+                    type="checkbox"
+                    id="act"
+                    checked={formData.isActive}
+                    onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                    className="rounded text-[#2C332D]"
+                  />
+                  <label htmlFor="act" className="text-xs font-semibold text-[#2C332D] cursor-pointer">
+                    Coupon Is Active & Usable at Checkout
+                  </label>
+                </div>
+
+                {/* Product & Category Eligibility */}
+                <div className="space-y-3 pt-2 border-t border-[#F4EBE6]">
+                  <div>
+                    <label className="text-xs font-semibold text-[#2C332D] block mb-1">
+                      Specific Product Category (Optional)
+                    </label>
+                    <select
+                      value={formData.applicableCategoryId}
+                      onChange={(e) =>
+                        setFormData({ ...formData, applicableCategoryId: e.target.value })
+                      }
+                      className="w-full px-3 py-2 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl text-[#2C332D] focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
+                    >
+                      <option value="">All Product Categories (Active for all)</option>
+                      {categories.map((cat: any) => (
+                        <option key={cat.id} value={cat.id}>
+                          {cat.name}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="text-[10px] text-[#8C7A72] mt-0.5">
+                      Leave unselected to make this coupon valid across all categories.
+                    </p>
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-xs font-semibold text-[#2C332D]">
+                        Specific Products (Optional - Select Multiple)
+                      </label>
+                      <span className="text-[10px] text-[#8C7A72]">
+                        {formData.applicableProductIds.length > 0
+                          ? `${formData.applicableProductIds.length} selected`
+                          : "Active for all"}
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-[#8C7A72] mb-1.5">
+                      When selected, coupon discount applies strictly to these items once the cart reaches the minimum subtotal above.
+                    </p>
+
+                    {/* Filter Search & Quick Actions */}
+                    <div className="flex items-center gap-2 mb-2">
+                      <input
+                        type="text"
+                        placeholder="Search products by name or SKU..."
+                        value={productSearch}
+                        onChange={(e) => setProductSearch(e.target.value)}
+                        className="flex-1 px-3 py-1.5 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-lg text-[#2C332D] focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
+                      />
+                      {formData.applicableProductIds.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setFormData({
+                              ...formData,
+                              applicableProductIds: [],
+                              applicableProductId: "",
+                            })
+                          }
+                          className="px-2 py-1.5 text-[10px] font-semibold text-[#DF4C4C] hover:bg-rose-50 rounded-lg border border-[#F4D0D8]"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Selected Product Chips */}
+                    {formData.applicableProductIds.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mb-2 max-h-20 overflow-y-auto p-1.5 bg-[#FAF8F5] rounded-lg border border-[#E8E0D5]">
+                        {formData.applicableProductIds.map((pid) => {
+                          const prod = products.find((p) => p.id === pid);
+                          return (
+                            <span
+                              key={pid}
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#FFF4E5] text-[#B86200] border border-[#FFE2BA]"
+                            >
+                              <span className="max-w-[120px] truncate">{prod?.name || pid}</span>
+                              <button
+                                type="button"
+                                onClick={() =>
                                   setFormData({
                                     ...formData,
-                                    applicableProductIds: updated,
-                                    applicableProductId: updated[0] || "",
-                                  });
-                                }}
-                                className="rounded border-[#E8E0D5] text-[#D4AF37] focus:ring-[#D4AF37]"
-                              />
-                              <div className="min-w-0">
-                                <p className="font-medium text-[#2C332D] truncate">{prod.name}</p>
-                                <p className="text-[10px] text-[#8C7A72]">
-                                  {prod.sku ? `SKU: ${prod.sku}` : `ID: ${prod.id.slice(-6)}`}
-                                </p>
-                              </div>
-                            </div>
-                            <span className="text-[11px] font-semibold text-[#736C66] whitespace-nowrap">
-                              ₹{Number(prod.salePrice || prod.regularPrice || 0).toFixed(0)}
+                                    applicableProductIds: formData.applicableProductIds.filter(
+                                      (id) => id !== pid
+                                    ),
+                                    applicableProductId:
+                                      formData.applicableProductIds.filter((id) => id !== pid)[0] ||
+                                      "",
+                                  })
+                                }
+                                className="text-[#B86200] hover:text-red-700 ml-0.5 font-bold"
+                              >
+                                ×
+                              </button>
                             </span>
-                          </label>
-                        );
-                      })}
-                  </div>
+                          );
+                        })}
+                      </div>
+                    )}
 
-                  <p className="text-[10px] text-[#8C7A72] mt-1">
-                    Leave all unchecked to keep coupon active across all products.
-                  </p>
+                    {/* Scrollable Products List with Checkboxes */}
+                    <div className="max-h-44 overflow-y-auto border border-[#E8E0D5] rounded-xl divide-y divide-[#F4EBE6] bg-white">
+                      {products
+                        .filter((p: any) =>
+                          productSearch
+                            ? p.name.toLowerCase().includes(productSearch.toLowerCase()) ||
+                            (p.sku && p.sku.toLowerCase().includes(productSearch.toLowerCase()))
+                            : true
+                        )
+                        .map((prod: any) => {
+                          const isSelected = formData.applicableProductIds.includes(prod.id);
+                          return (
+                            <label
+                              key={prod.id}
+                              className={`flex items-center justify-between px-3 py-2 text-xs cursor-pointer transition-colors ${isSelected ? "bg-[#FFF9F2]" : "hover:bg-[#FAF8F5]"
+                                }`}
+                            >
+                              <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                                <input
+                                  type="checkbox"
+                                  checked={isSelected}
+                                  onChange={() => {
+                                    const updated = isSelected
+                                      ? formData.applicableProductIds.filter((id) => id !== prod.id)
+                                      : [...formData.applicableProductIds, prod.id];
+                                    setFormData({
+                                      ...formData,
+                                      applicableProductIds: updated,
+                                      applicableProductId: updated[0] || "",
+                                    });
+                                  }}
+                                  className="rounded border-[#E8E0D5] text-[#D4AF37] focus:ring-[#D4AF37]"
+                                />
+                                <div className="min-w-0">
+                                  <p className="font-medium text-[#2C332D] truncate">{prod.name}</p>
+                                  <p className="text-[10px] text-[#8C7A72]">
+                                    {prod.sku ? `SKU: ${prod.sku}` : `ID: ${prod.id.slice(-6)}`}
+                                  </p>
+                                </div>
+                              </div>
+                              <span className="text-[11px] font-semibold text-[#736C66] whitespace-nowrap">
+                                ₹{Number(prod.salePrice || prod.regularPrice || 0).toFixed(0)}
+                              </span>
+                            </label>
+                          );
+                        })}
+                    </div>
+
+                    <p className="text-[10px] text-[#8C7A72] mt-1">
+                      Leave all unchecked to keep coupon active across all products.
+                    </p>
+                  </div>
                 </div>
               </div>
 
-              <div className="flex justify-end space-x-2 pt-4 border-t border-[#F4EBE6]">
+              {/* Sticky Action Footer */}
+              <div className="flex items-center justify-end space-x-2.5 p-4 sm:px-6 border-t border-[#F4EBE6] bg-[#FAF8F5] shrink-0">
                 <button
                   type="button"
                   onClick={() => setIsOpen(false)}
-                  className="px-4 py-2 border border-[#E8E0D5] text-xs font-semibold rounded-xl text-[#736C66]"
+                  className="px-4 py-2 border border-[#E8E0D5] text-xs font-semibold rounded-xl text-[#736C66] hover:bg-[#F4EBE6] transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-[#2C332D] text-white text-xs font-semibold rounded-xl hover:bg-[#3D473E]"
+                  className="px-5 py-2 bg-[#2C332D] text-white text-xs font-semibold rounded-xl hover:bg-[#3D473E] shadow-sm transition-all active:scale-95"
                 >
                   Save Coupon
                 </button>

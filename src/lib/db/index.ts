@@ -2328,43 +2328,57 @@ export const dbStore = {
     if (coupon.maxRedemptions && coupon.currentRedemptions >= coupon.maxRedemptions) {
       return { valid: false, message: "This coupon has reached its maximum redemptions." };
     }
-    if (cartAmount < Number(coupon.minCartAmount)) {
+
+    const minAmount = Number(coupon.minCartAmount || 0);
+
+    if (minAmount > 0 && cartAmount < minAmount) {
       return {
         valid: false,
         message: `Minimum order amount of ₹${coupon.minCartAmount} required for this coupon.`,
       };
     }
 
-    // Check optional Product or Category restrictions if configured on coupon
-    let eligibleAmount = cartAmount;
-
     // Support single product or multiple products
     const targetProductIds: string[] = Array.isArray(coupon.applicableProductIds) && coupon.applicableProductIds.length > 0
       ? coupon.applicableProductIds.map(String)
       : (coupon.applicableProductId ? [String(coupon.applicableProductId)] : []);
 
-    if (targetProductIds.length > 0) {
+    const hasProductFilter = targetProductIds.length > 0;
+    const hasCategoryFilter = Boolean(coupon.applicableCategoryId);
+
+    let eligibleAmount = cartAmount;
+
+    if (hasProductFilter) {
       if (Array.isArray(items) && items.length > 0) {
         const matchingItems = items.filter((it) => it.productId && targetProductIds.includes(String(it.productId)));
+        const meetsMinCart = minAmount > 0 && cartAmount >= minAmount;
+
         if (matchingItems.length === 0) {
-          if (targetProductIds.length === 1) {
-            const targetProd = await this.getProductById(targetProductIds[0]);
+          // No specified products in cart: if cart reaches minCartAmount, coupon applies!
+          if (meetsMinCart) {
+            eligibleAmount = cartAmount;
+          } else {
+            if (targetProductIds.length === 1) {
+              const targetProd = await this.getProductById(targetProductIds[0]);
+              return {
+                valid: false,
+                message: `This coupon is valid only for the product: "${targetProd?.name || "selected product"}".`,
+              };
+            }
             return {
               valid: false,
-              message: `This coupon is valid only for the product: "${targetProd?.name || "selected product"}".`,
+              message: `This coupon is valid only for selected products in our collection.`,
             };
           }
-          return {
-            valid: false,
-            message: `This coupon is valid only for selected products in our collection.`,
-          };
+        } else {
+          // Matching products are in cart: discount applies strictly to the eligible items
+          eligibleAmount = matchingItems.reduce(
+            (acc, it) => acc + Number(it.price || 0) * Number(it.quantity || 1),
+            0
+          );
         }
-        eligibleAmount = matchingItems.reduce(
-          (acc, it) => acc + Number(it.price || 0) * Number(it.quantity || 1),
-          0
-        );
       }
-    } else if (coupon.applicableCategoryId) {
+    } else if (hasCategoryFilter) {
       if (Array.isArray(items) && items.length > 0) {
         const { products } = await this.getProducts({ limit: 500 });
         const catMap = new Map(products.map((p) => [p.id, p.categoryId]));
@@ -2373,18 +2387,25 @@ export const dbStore = {
             (it.categoryId && it.categoryId === coupon.applicableCategoryId) ||
             (it.productId && catMap.get(it.productId) === coupon.applicableCategoryId)
         );
+        const meetsMinCart = minAmount > 0 && cartAmount >= minAmount;
+
         if (matchingItems.length === 0) {
-          const allCats = await this.getCategories(false);
-          const targetCat = allCats.find((c) => c.id === coupon.applicableCategoryId);
-          return {
-            valid: false,
-            message: `This coupon is valid only for products in the "${targetCat?.name || "selected category"}" category.`,
-          };
+          if (meetsMinCart) {
+            eligibleAmount = cartAmount;
+          } else {
+            const allCats = await this.getCategories(false);
+            const targetCat = allCats.find((c) => c.id === coupon.applicableCategoryId);
+            return {
+              valid: false,
+              message: `This coupon is valid only for products in the "${targetCat?.name || "selected category"}" category.`,
+            };
+          }
+        } else {
+          eligibleAmount = matchingItems.reduce(
+            (acc, it) => acc + Number(it.price || 0) * Number(it.quantity || 1),
+            0
+          );
         }
-        eligibleAmount = matchingItems.reduce(
-          (acc, it) => acc + Number(it.price || 0) * Number(it.quantity || 1),
-          0
-        );
       }
     }
 
@@ -2454,10 +2475,117 @@ export const dbStore = {
     return newCoupon;
   },
 
+  async getCouponById(id: string) {
+    if (sql) {
+      try {
+        const rows = await sql`
+          SELECT 
+            id,
+            code,
+            discount_type as "discountType",
+            discount_value as "discountValue",
+            min_cart_amount as "minCartAmount",
+            max_discount as "maxDiscount",
+            start_date as "startDate",
+            expiry_date as "expiryDate",
+            max_redemptions as "maxRedemptions",
+            current_redemptions as "currentRedemptions",
+            per_customer_limit as "perCustomerLimit",
+            is_active as "isActive",
+            applicable_category_id as "applicableCategoryId",
+            applicable_product_id as "applicableProductId",
+            applicable_product_ids as "applicableProductIds",
+            created_at as "createdAt",
+            updated_at as "updatedAt"
+          FROM coupons
+          WHERE id = ${id}
+          LIMIT 1;
+        `;
+        if (rows && rows.length > 0) {
+          const c = rows[0];
+          return {
+            ...c,
+            discountValue: Number(c.discountValue).toFixed(2),
+            minCartAmount: Number(c.minCartAmount || 0).toFixed(2),
+            maxDiscount: c.maxDiscount ? Number(c.maxDiscount).toFixed(2) : null,
+            applicableProductIds: Array.isArray(c.applicableProductIds)
+              ? c.applicableProductIds
+              : (c.applicableProductId ? [c.applicableProductId] : []),
+          };
+        }
+      } catch (err) {
+        console.error("DB getCouponById err, fallback to memory:", err);
+      }
+    }
+    const c = store.coupons.find((cp) => cp.id === id);
+    if (!c) return null;
+    return {
+      ...c,
+      applicableProductIds: Array.isArray(c.applicableProductIds)
+        ? c.applicableProductIds
+        : (c.applicableProductId ? [c.applicableProductId] : []),
+    };
+  },
+
   async updateCoupon(id: string, data: any) {
     const productIds: string[] | undefined = data.applicableProductIds !== undefined
       ? (Array.isArray(data.applicableProductIds) ? data.applicableProductIds.filter(Boolean).map(String) : [])
       : (data.applicableProductId !== undefined ? (data.applicableProductId ? [String(data.applicableProductId)] : []) : undefined);
+
+    let updatedDbRow: any = null;
+
+    if (sql) {
+      try {
+        const rows = await sql`
+          UPDATE coupons
+          SET
+            code = COALESCE(${data.code ? data.code.toUpperCase().trim() : null}, code),
+            discount_type = COALESCE(${data.discountType || null}, discount_type),
+            discount_value = COALESCE(${data.discountValue !== undefined && data.discountValue !== null ? Number(data.discountValue).toFixed(2) : null}, discount_value),
+            min_cart_amount = COALESCE(${data.minCartAmount !== undefined && data.minCartAmount !== null ? Number(data.minCartAmount).toFixed(2) : null}, min_cart_amount),
+            max_discount = ${data.maxDiscount ? Number(data.maxDiscount).toFixed(2) : null},
+            max_redemptions = COALESCE(${data.maxRedemptions !== undefined && data.maxRedemptions !== null ? Number(data.maxRedemptions) : null}, max_redemptions),
+            is_active = COALESCE(${data.isActive !== undefined ? Boolean(data.isActive) : null}, is_active),
+            applicable_category_id = ${data.applicableCategoryId ? String(data.applicableCategoryId).trim() : null},
+            applicable_product_id = ${productIds !== undefined ? (productIds.length === 1 ? productIds[0] : null) : (data.applicableProductId ? String(data.applicableProductId).trim() : null)},
+            applicable_product_ids = ${productIds !== undefined ? JSON.stringify(productIds) : null}::jsonb,
+            updated_at = NOW()
+          WHERE id = ${id}
+          RETURNING
+            id,
+            code,
+            discount_type as "discountType",
+            discount_value as "discountValue",
+            min_cart_amount as "minCartAmount",
+            max_discount as "maxDiscount",
+            start_date as "startDate",
+            expiry_date as "expiryDate",
+            max_redemptions as "maxRedemptions",
+            current_redemptions as "currentRedemptions",
+            per_customer_limit as "perCustomerLimit",
+            is_active as "isActive",
+            applicable_category_id as "applicableCategoryId",
+            applicable_product_id as "applicableProductId",
+            applicable_product_ids as "applicableProductIds",
+            created_at as "createdAt",
+            updated_at as "updatedAt";
+        `;
+        if (rows && rows.length > 0) {
+          const r = rows[0];
+          updatedDbRow = {
+            ...r,
+            discountValue: Number(r.discountValue).toFixed(2),
+            minCartAmount: Number(r.minCartAmount || 0).toFixed(2),
+            maxDiscount: r.maxDiscount ? Number(r.maxDiscount).toFixed(2) : null,
+            applicableProductIds: Array.isArray(r.applicableProductIds)
+              ? r.applicableProductIds
+              : (r.applicableProductId ? [r.applicableProductId] : []),
+          };
+        }
+      } catch (err) {
+        console.error("DB updateCoupon err:", err);
+      }
+    }
 
     const idx = store.coupons.findIndex((c) => c.id === id);
     if (idx !== -1) {
@@ -2465,6 +2593,7 @@ export const dbStore = {
         ...store.coupons[idx],
         ...data,
         code: data.code ? data.code.toUpperCase().trim() : store.coupons[idx].code,
+        minCartAmount: data.minCartAmount !== undefined ? Number(data.minCartAmount).toFixed(2) : store.coupons[idx].minCartAmount,
         applicableCategoryId:
           data.applicableCategoryId !== undefined
             ? (data.applicableCategoryId ? String(data.applicableCategoryId).trim() : null)
@@ -2479,32 +2608,13 @@ export const dbStore = {
             : (store.coupons[idx].applicableProductIds || []),
         updatedAt: new Date(),
       };
+      return store.coupons[idx];
+    } else if (updatedDbRow) {
+      store.coupons.unshift(updatedDbRow);
+      return updatedDbRow;
     }
 
-    if (sql) {
-      try {
-        await sql`
-          UPDATE coupons
-          SET
-            code = COALESCE(${data.code ? data.code.toUpperCase().trim() : null}, code),
-            discount_type = COALESCE(${data.discountType || null}, discount_type),
-            discount_value = COALESCE(${data.discountValue ? Number(data.discountValue).toFixed(2) : null}, discount_value),
-            min_cart_amount = COALESCE(${data.minCartAmount !== undefined ? Number(data.minCartAmount).toFixed(2) : null}, min_cart_amount),
-            max_discount = ${data.maxDiscount ? Number(data.maxDiscount).toFixed(2) : null},
-            max_redemptions = COALESCE(${data.maxRedemptions !== undefined ? Number(data.maxRedemptions) : null}, max_redemptions),
-            is_active = COALESCE(${data.isActive !== undefined ? Boolean(data.isActive) : null}, is_active),
-            applicable_category_id = ${data.applicableCategoryId ? String(data.applicableCategoryId).trim() : null},
-            applicable_product_id = ${productIds !== undefined ? (productIds.length === 1 ? productIds[0] : null) : (data.applicableProductId ? String(data.applicableProductId).trim() : null)},
-            applicable_product_ids = ${productIds !== undefined ? JSON.stringify(productIds) : null}::jsonb,
-            updated_at = NOW()
-          WHERE id = ${id};
-        `;
-      } catch (err) {
-        console.error("DB updateCoupon err:", err);
-      }
-    }
-
-    return idx !== -1 ? store.coupons[idx] : null;
+    return updatedDbRow || null;
   },
 
   async deleteCoupon(id: string) {

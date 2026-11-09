@@ -8,16 +8,11 @@ import {
   Phone,
   MessageCircle,
   Instagram,
-  ShieldCheck,
-  CheckCircle2,
   Lock,
   Sparkles,
 } from "lucide-react";
 
 export function Footer() {
-  const [newsletterEmail, setNewsletterEmail] = useState("");
-  const [subscribed, setSubscribed] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [settings, setSettings] = useState<any>(null);
   const [categories, setCategories] = useState<any[]>([]);
   const [customer, setCustomer] = useState<any>(null);
@@ -51,27 +46,6 @@ export function Footer() {
       })
       .catch(() => {});
   }, []);
-
-  const handleNewsletter = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newsletterEmail.trim()) return;
-    setLoading(true);
-
-    try {
-      const res = await fetch("/api/newsletter", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: newsletterEmail.trim() }),
-      });
-      if (res.ok) {
-        setSubscribed(true);
-      }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <footer className="bg-[#230E16] text-[#FAF4EE] pt-16 pb-12 border-t border-[#3A1C26]">
@@ -233,41 +207,16 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Newsletter & Direct Contact */}
+          {/* Studio Inquiries */}
           <div className="space-y-4">
             <h3 className="text-xs uppercase tracking-widest font-bold text-[#D4AF37]">
-              Artisan Newsletter
+              Studio Inquiries
             </h3>
             <p className="text-xs text-[#D1BFC6] leading-relaxed">
-              Subscribe to receive new collection drops, preservation guides, and bespoke order slots. Enjoy 10% off with coupon <strong className="text-white">WELCOME10</strong>.
+              Have questions about bespoke custom orders, resin preservation, or bridal keepsakes? Reach out to our studio directly.
             </p>
 
-            {subscribed ? (
-              <div className="flex items-center space-x-2 text-xs text-[#66BB6A] bg-[#341520] p-3 rounded-xl border border-[#522333]">
-                <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
-                <span>You're subscribed! Use code WELCOME10 at checkout.</span>
-              </div>
-            ) : (
-              <form onSubmit={handleNewsletter} className="space-y-2">
-                <input
-                  type="email"
-                  required
-                  placeholder="Your email address"
-                  value={newsletterEmail}
-                  onChange={(e) => setNewsletterEmail(e.target.value)}
-                  className="w-full px-3.5 py-2.5 text-xs bg-[#341520] border border-[#4D2533] rounded-xl text-white placeholder-[#8C6E79] focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
-                />
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full py-2.5 px-4 text-xs font-semibold bg-[#D4AF37] text-[#230E16] rounded-xl hover:bg-[#E5C358] active:scale-98 transition-all shadow-xs"
-                >
-                  {loading ? "Joining..." : "Get 10% Discount"}
-                </button>
-              </form>
-            )}
-
-            <div className="pt-2 text-xs text-[#D1BFC6] space-y-1.5">
+            <div className="pt-1 text-xs text-[#D1BFC6] space-y-2">
               <p className="flex items-center space-x-2">
                 <Mail className="w-3.5 h-3.5 text-[#D4AF37] flex-shrink-0" />
                 <span>{settings?.contactEmail || "hello@devangiresinstudio.com"}</span>
@@ -284,11 +233,6 @@ export function Footer() {
         <div className="pt-8 border-t border-[#4E2230] flex flex-col items-center justify-center text-center text-xs text-[#D1BFC6] space-y-2">
           <p className="flex flex-wrap items-center justify-center gap-1.5 font-medium tracking-wide">
             <span>© 2026 {settings?.storeName || "Devangi Resin Studio"}. Handcrafted with Love in India.</span>
-            <span className="hidden sm:inline text-[#D4AF37]">•</span>
-            <span className="inline-flex items-center space-x-1.5 text-[#E8D08D]">
-              <ShieldCheck className="w-4 h-4 text-[#66BB6A] inline-block" />
-              <span>UPI & QR Verified Payment</span>
-            </span>
           </p>
         </div>
       </div>

@@ -190,16 +190,40 @@ export const couponSchema = z.object({
   code: z.string().min(3, "Coupon code must be at least 3 characters."),
   discountType: z.enum(["percentage", "fixed"]),
   discountValue: z.coerce.number().positive("Discount value must be positive."),
-  minCartAmount: z.coerce.number().nonnegative().default(0),
-  maxDiscount: z.coerce.number().positive().optional().nullable(),
-  startDate: z.string().optional().nullable(),
-  expiryDate: z.string().optional().nullable(),
-  maxRedemptions: z.coerce.number().int().positive().optional().nullable(),
+  minCartAmount: z.preprocess(
+    (val) => (val === "" || val === null || val === undefined ? 0 : val),
+    z.coerce.number().nonnegative().default(0)
+  ),
+  maxDiscount: z.preprocess(
+    (val) => (val === "" || val === null || val === undefined ? null : val),
+    z.coerce.number().positive().optional().nullable()
+  ),
+  startDate: z.preprocess(
+    (val) => (val === "" ? null : val),
+    z.string().optional().nullable()
+  ),
+  expiryDate: z.preprocess(
+    (val) => (val === "" ? null : val),
+    z.string().optional().nullable()
+  ),
+  maxRedemptions: z.preprocess(
+    (val) => (val === "" || val === null || val === undefined ? null : val),
+    z.coerce.number().int().positive().optional().nullable()
+  ),
   perCustomerLimit: z.coerce.number().int().positive().default(1),
   isActive: z.boolean().default(true),
-  applicableCategoryId: z.string().optional().nullable(),
-  applicableProductId: z.string().optional().nullable(),
-  applicableProductIds: z.array(z.string()).optional().nullable(),
+  applicableCategoryId: z.preprocess(
+    (val) => (val === "" ? null : val),
+    z.string().optional().nullable()
+  ),
+  applicableProductId: z.preprocess(
+    (val) => (val === "" ? null : val),
+    z.string().optional().nullable()
+  ),
+  applicableProductIds: z.preprocess(
+    (val) => (Array.isArray(val) ? val.filter(Boolean).map(String) : []),
+    z.array(z.string()).optional().nullable()
+  ),
 });
 
 // Stock Adjustment

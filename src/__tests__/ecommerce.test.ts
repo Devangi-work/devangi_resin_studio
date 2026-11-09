@@ -395,6 +395,59 @@ test("E-Commerce Test Suite", async (t) => {
     assert.ok(ineligibleValidation.message?.includes("selected products"));
   });
 
+  // Test updating coupon and combining specific products with minCartAmount
+  await t.test("Coupon update persists and evaluates both specific products and minimum cart amount", async () => {
+    // 1. Create a coupon
+    const created = await dbStore.createCoupon({
+      code: "EDITTEST25",
+      discountType: "percentage",
+      discountValue: "25.00",
+      minCartAmount: "300.00",
+      applicableProductIds: ["prod_item_a"],
+    });
+    assert.ok(created.id);
+
+    // 2. Update coupon: change minCartAmount to 600 and add prod_item_b
+    const updated = await dbStore.updateCoupon(created.id, {
+      code: "EDITTEST25",
+      discountType: "percentage",
+      discountValue: "25.00",
+      minCartAmount: "600.00",
+      maxDiscount: null,
+      applicableProductIds: ["prod_item_a", "prod_item_b"],
+    });
+    assert.ok(updated, "updateCoupon must not return null/coupon not found");
+    assert.equal(Number(updated.minCartAmount), 600);
+    assert.deepEqual(updated.applicableProductIds, ["prod_item_a", "prod_item_b"]);
+
+    // 3. Cart has eligible product (prod_item_a: ₹400), but total cart is below ₹600 (e.g. ₹400)
+    const cartBelowMin = [
+      { productId: "prod_item_a", price: 400, quantity: 1 },
+    ];
+    const resBelowMin = await dbStore.validateCoupon("EDITTEST25", 400, undefined, cartBelowMin);
+    assert.equal(resBelowMin.valid, false, "Coupon must fail when cart is below minimum amount");
+    assert.ok(resBelowMin.message?.includes("Minimum order amount of ₹600"));
+
+    // 4. Cart has items that are NOT in the coupon's selected products (prod_item_x: ₹400 + prod_item_y: ₹300 = ₹700 total),
+    // but total cart exceeds minCartAmount (₹600).
+    // The coupon MUST apply here!
+    const cartOnlyUnselectedItemsAboveMin = [
+      { productId: "prod_item_x", price: 400, quantity: 1 },
+      { productId: "prod_item_y", price: 300, quantity: 1 },
+    ];
+    const resUnselectedAboveMin = await dbStore.validateCoupon("EDITTEST25", 700, undefined, cartOnlyUnselectedItemsAboveMin);
+    assert.equal(resUnselectedAboveMin.valid, true, "Coupon must apply when cart reaches minCartAmount even if items are not specifically selected");
+    assert.equal(resUnselectedAboveMin.discountAmount, 175, "25% discount on ₹700 cart = ₹175");
+
+    // 5. Cart has items that are NOT selected in coupon and cart is BELOW minCartAmount (₹400 < ₹600)
+    const cartOnlyUnselectedItemsBelowMin = [
+      { productId: "prod_item_x", price: 400, quantity: 1 },
+    ];
+    const resUnselectedBelowMin = await dbStore.validateCoupon("EDITTEST25", 400, undefined, cartOnlyUnselectedItemsBelowMin);
+    assert.equal(resUnselectedBelowMin.valid, false, "Coupon must fail when cart is below minCartAmount and has no selected products");
+    assert.ok(resUnselectedBelowMin.message?.includes("600"));
+  });
+
   // resolveShippingCharge test for Mumbai 50, Maharashtra 35, Rajasthan 79, and 0.00 default
   await t.test("resolveShippingCharge correctly resolves Mumbai, Maharashtra, Rajasthan and handles 0.00 default charge", async () => {
     const cityRates = [
