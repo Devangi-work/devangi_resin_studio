@@ -275,7 +275,19 @@ function CustomerRegisterForm() {
           </button>
         </form>
 
-        <div className="text-center pt-2 border-t border-[#F4EBE6]">
+        <p className="text-[11px] text-[#8C7A72] text-center leading-relaxed">
+          By creating an account, you agree to our{" "}
+          <Link href="/policies/terms" className="text-[#800020] hover:underline font-medium">
+            Terms of Service
+          </Link>{" "}
+          and{" "}
+          <Link href="/policies/privacy" className="text-[#800020] hover:underline font-medium">
+            Privacy Policy
+          </Link>
+          .
+        </p>
+
+        <div className="text-center pt-2 border-t border-[#F4EBE6] space-y-2">
           <p className="text-xs text-[#736C66]">
             Already have an account?{" "}
             <Link
@@ -285,6 +297,14 @@ function CustomerRegisterForm() {
               Sign In
             </Link>
           </p>
+          <div>
+            <Link
+              href="/policies/privacy"
+              className="text-[11px] text-[#8C7A72] hover:text-[#2C332D] underline transition-colors"
+            >
+              Privacy &amp; Data Protection Policy
+            </Link>
+          </div>
         </div>
       </div>
     </div>

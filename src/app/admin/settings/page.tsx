@@ -1668,12 +1668,11 @@ export default function AdminSettingsPage() {
                     ✕
                   </div>
                   {settings.popupBannerImageUrl ? (
-                    <div className="relative w-full h-36 bg-gradient-to-br from-[#260B14] to-[#4A1525]">
-                      <Image
+                    <div className="relative w-full bg-gradient-to-br from-[#1F0712] via-[#2D0B1B] to-[#15040C] flex items-center justify-center overflow-hidden">
+                      <img
                         src={settings.popupBannerImageUrl}
                         alt="Preview"
-                        fill
-                        className="object-cover"
+                        className="w-full h-auto max-h-52 object-contain block mx-auto"
                       />
                     </div>
                   ) : null}

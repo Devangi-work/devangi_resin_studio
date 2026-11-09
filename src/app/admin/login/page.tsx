@@ -140,9 +140,13 @@ export default function AdminLoginPage() {
           </button>
         </form>
 
-        <div className="text-center pt-2">
-          <Link href="/" className="text-xs text-[#8C7A72] hover:text-[#2C332D]">
-            &larr; Return to Customer Storefront
+        <div className="text-center pt-2 flex items-center justify-center space-x-3 text-xs text-[#8C7A72]">
+          <Link href="/" className="hover:text-[#2C332D] transition-colors">
+            &larr; Return to Storefront
+          </Link>
+          <span>&bull;</span>
+          <Link href="/policies/privacy" className="hover:text-[#2C332D] underline transition-colors">
+            Privacy Policy
           </Link>
         </div>
       </div>

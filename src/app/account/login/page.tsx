@@ -159,7 +159,7 @@ function CustomerLoginForm() {
           </button>
         </form>
 
-        <div className="text-center pt-2 border-t border-[#F4EBE6]">
+        <div className="text-center pt-2 border-t border-[#F4EBE6] space-y-2.5">
           <p className="text-xs text-[#736C66]">
             Don't have an account yet?{" "}
             <Link
@@ -167,6 +167,15 @@ function CustomerLoginForm() {
               className="font-semibold text-[#B8972E] hover:underline"
             >
               Create an account
+            </Link>
+          </p>
+          <p className="text-[11px] text-[#8C7A72]">
+            Protected by studio data encryption. Read our{" "}
+            <Link
+              href="/policies/privacy"
+              className="text-[#800020] font-medium underline hover:text-[#B84A67] transition-colors"
+            >
+              Privacy Policy
             </Link>
           </p>
         </div>

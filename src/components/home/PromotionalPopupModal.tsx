@@ -145,23 +145,20 @@ export function PromotionalPopupModal({ initialSettings }: PromotionalPopupModal
           <X className="w-5 h-5" />
         </button>
 
-        {/* Banner Image (If Uploaded) */}
+        {/* Banner Image (Dynamically resized based on image dimensions - never cropped) */}
         {imageUrl && (
-          <div className="relative w-full aspect-[16/9] sm:aspect-[2/1] bg-gradient-to-br from-[#260B14] to-[#4A1525] overflow-hidden flex-shrink-0">
-            <Image
+          <div className="relative w-full bg-gradient-to-br from-[#1F0712] via-[#2D0B1B] to-[#15040C] flex items-center justify-center overflow-hidden flex-shrink-0">
+            <img
               src={imageUrl}
               alt="Announcement Banner"
-              fill
-              className="object-cover"
-              sizes="(max-width: 640px) 92vw, 512px"
-              priority
+              className="w-full h-auto max-h-[55vh] sm:max-h-[60vh] object-contain block mx-auto"
             />
             {/* Subtle Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+            <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
 
             {/* Expiry Pill over image if present */}
             {expiryCountdown && (
-              <div className="absolute bottom-3 left-3 z-10 inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-black/70 backdrop-blur-md border border-[#D4AF37]/40 text-[#FFDF78] text-[11px] font-mono font-semibold">
+              <div className="absolute bottom-3 left-3 z-10 inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-black/75 backdrop-blur-md border border-[#D4AF37]/40 text-[#FFDF78] text-[11px] font-mono font-semibold shadow-md">
                 <Clock className="w-3 h-3 text-[#D4AF37]" />
                 <span>{expiryCountdown}</span>
               </div>
