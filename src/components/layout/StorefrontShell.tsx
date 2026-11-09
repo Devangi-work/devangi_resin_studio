@@ -9,7 +9,6 @@ import { UnpaidOrderModal } from "@/components/customer/UnpaidOrderModal";
 import { DeliveredOrderModal } from "@/components/orders/DeliveredOrderModal";
 import { ProfileCompletionModal } from "@/components/customer/ProfileCompletionModal";
 import { PromotionalPopupModal } from "@/components/home/PromotionalPopupModal";
-import { WebsiteLoadingScreen } from "@/components/common/WebsiteLoadingScreen";
 
 export function StorefrontShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -21,7 +20,6 @@ export function StorefrontShell({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      <WebsiteLoadingScreen />
       <Navbar />
       <main className="flex-1">{children}</main>
       <CartDrawer />

@@ -72,26 +72,10 @@ export function PromotionalPopupModal({ initialSettings }: PromotionalPopupModal
       }, 3000);
     };
 
-    // If website loading screen is currently playing, wait until it completes
-    const isIntroPending =
-      typeof window !== "undefined" &&
-      sessionStorage.getItem("resin_website_intro_shown") !== "true";
-
-    if (isIntroPending) {
-      const onIntroComplete = () => {
-        startTimer();
-      };
-      window.addEventListener("resin_loading_screen_completed", onIntroComplete, { once: true });
-      return () => {
-        window.removeEventListener("resin_loading_screen_completed", onIntroComplete);
-        if (timer) clearTimeout(timer);
-      };
-    } else {
-      startTimer();
-      return () => {
-        if (timer) clearTimeout(timer);
-      };
-    }
+    startTimer();
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
   }, [settings, hasDismissed]);
 
   const handleClose = () => {
