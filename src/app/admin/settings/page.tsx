@@ -180,6 +180,9 @@ export default function AdminSettingsPage() {
   const [activeKeepsakeSlot, setActiveKeepsakeSlot] = useState<number | null>(null);
   const [uploadingKeepsakeSlot, setUploadingKeepsakeSlot] = useState<number | null>(null);
 
+  // Promotional Announcement Banner Media Picker state
+  const [isBannerMediaPickerOpen, setIsBannerMediaPickerOpen] = useState(false);
+
   useEffect(() => {
     fetch("/api/admin/settings")
       .then((res) => res.json())
@@ -404,6 +407,13 @@ export default function AdminSettingsPage() {
         keepsakeStudioImages: ["", "", "", ""],
       }));
     }
+  };
+
+  const handleSelectBannerFromLibrary = (selected: { url: string }[]) => {
+    if (selected && selected.length > 0) {
+      setSettings((prev: any) => ({ ...prev, popupBannerImageUrl: selected[0].url }));
+    }
+    setIsBannerMediaPickerOpen(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -1639,8 +1649,19 @@ export default function AdminSettingsPage() {
                     className="px-4 py-2 bg-[#2C332D] text-white text-xs font-semibold rounded-xl hover:bg-[#3D473E] transition shadow-xs flex items-center space-x-1.5 cursor-pointer"
                   >
                     <Upload className="w-3.5 h-3.5" />
-                    <span>{settings.popupBannerImageUrl ? "Replace Banner Image" : "Upload Banner Image"}</span>
+                    <span>{settings.popupBannerImageUrl ? "Upload New File" : "Upload Banner Image"}</span>
                   </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsBannerMediaPickerOpen(true)}
+                    className="px-3.5 py-2 bg-[#FAF4EC] border border-[#D4AF37] text-[#7A6117] hover:bg-[#F3EAD9] text-xs font-semibold rounded-xl flex items-center space-x-1.5 transition-colors cursor-pointer shadow-xs"
+                    title="Select an image from existing media library"
+                  >
+                    <ImageIcon className="w-3.5 h-3.5 text-[#B8972E]" />
+                    <span>Select from Media Gallery</span>
+                  </button>
+
                   {settings.popupBannerImageUrl && (
                     <button
                       type="button"
@@ -2419,6 +2440,15 @@ export default function AdminSettingsPage() {
             : "Select Keepsake Showcase Image"
         }
         onSelect={handleKeepsakeMediaSelect}
+      />
+
+      {/* Media Picker Modal for Promotional Announcement Banner */}
+      <MediaPickerModal
+        isOpen={isBannerMediaPickerOpen}
+        onClose={() => setIsBannerMediaPickerOpen(false)}
+        multiple={false}
+        title="Select Promotional Banner from Media Gallery"
+        onSelect={handleSelectBannerFromLibrary}
       />
     </div>
   );
