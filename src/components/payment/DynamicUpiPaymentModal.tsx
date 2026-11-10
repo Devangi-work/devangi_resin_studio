@@ -44,6 +44,8 @@ export interface DynamicUpiPaymentModalProps {
   onWillOrderLater: () => void;
 }
 
+const PAYMENT_SESSION_DURATION_SECONDS = 300; // 5 minutes
+
 export default function DynamicUpiPaymentModal({
   isOpen,
   onClose,
@@ -60,7 +62,7 @@ export default function DynamicUpiPaymentModal({
   onPaidSubmit,
   onWillOrderLater,
 }: DynamicUpiPaymentModalProps) {
-  const [timeLeft, setTimeLeft] = useState<number>(60);
+  const [timeLeft, setTimeLeft] = useState<number>(PAYMENT_SESSION_DURATION_SECONDS);
   const [paymentReference, setPaymentReference] = useState<string>("");
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>("");
   const [isQrLoading, setIsQrLoading] = useState<boolean>(true);
@@ -87,7 +89,7 @@ export default function DynamicUpiPaymentModal({
   const initializeSession = async () => {
     const newRef = generatePaymentReference();
     setPaymentReference(newRef);
-    setTimeLeft(60);
+    setTimeLeft(PAYMENT_SESSION_DURATION_SECONDS);
     setSelectedOption(null);
     setScreenshotFile(null);
     setScreenshotPreview(null);
@@ -281,18 +283,42 @@ export default function DynamicUpiPaymentModal({
           </div>
 
           <div className="flex items-center space-x-2.5">
-            {/* Countdown Badge */}
+            {/* Header Countdown Badge with Animated Theme Ring */}
             <div
-              className={`flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold tracking-wider transition-colors ${
+              className={`flex items-center space-x-2 px-3 py-1.5 rounded-full text-xs font-mono font-bold tracking-wider transition-colors ${
                 isExpired
                   ? "bg-red-500/20 text-red-300 border border-red-500/40"
-                  : timeLeft <= 15
+                  : timeLeft <= 30
                   ? "bg-amber-500/20 text-amber-300 border border-amber-500/40 animate-pulse"
                   : "bg-white/10 text-[#FFDF78] border border-[#FFDF78]/30"
               }`}
             >
-              <Clock className="w-3.5 h-3.5" />
-              <span>{formatTimer(timeLeft)}</span>
+              <div className="relative w-4 h-4 shrink-0 flex items-center justify-center">
+                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 24 24">
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="9"
+                    fill="none"
+                    stroke="rgba(255, 255, 255, 0.2)"
+                    strokeWidth="2.5"
+                  />
+                  {!isExpired && (
+                    <circle
+                      cx="12"
+                      cy="12"
+                      r="9"
+                      fill="none"
+                      stroke="#FFDF78"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeDasharray="56.5"
+                      className="animate-circle-loop-small"
+                    />
+                  )}
+                </svg>
+              </div>
+              <span className="text-xs font-black">{formatTimer(timeLeft)}</span>
             </div>
 
             {/* Close Button */}
@@ -310,19 +336,118 @@ export default function DynamicUpiPaymentModal({
 
         {/* Scrollable Modal Body */}
         <div className="p-4 sm:p-6 space-y-4 max-h-[82vh] overflow-y-auto">
-          {/* Timeout Alert Banner */}
-          {isExpired && (
-            <div className="p-3.5 bg-red-50 border border-red-200 rounded-2xl flex items-start space-x-3 text-red-800 animate-in fade-in">
+          {/* Keyframe Styles for Circular Loading Theme Animation */}
+          <style dangerouslySetInnerHTML={{ __html: `
+            @keyframes circleThemeLoop {
+              0% {
+                stroke-dashoffset: 188.5;
+              }
+              80% {
+                stroke-dashoffset: 0;
+              }
+              100% {
+                stroke-dashoffset: 0;
+              }
+            }
+
+            @keyframes circleThemeLoopSmall {
+              0% {
+                stroke-dashoffset: 56.5;
+              }
+              80% {
+                stroke-dashoffset: 0;
+              }
+              100% {
+                stroke-dashoffset: 0;
+              }
+            }
+
+            .animate-circle-loop {
+              animation: circleThemeLoop 2.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+            }
+
+            .animate-circle-loop-small {
+              animation: circleThemeLoopSmall 2.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+            }
+          `}} />
+
+          {/* PROMINENT CIRCULAR TIMER HERO CARD */}
+          {!isExpired ? (
+            <div className="bg-gradient-to-r from-[#2C332D] via-[#384239] to-[#2C332D] text-white p-4 rounded-2xl border border-[#D4AF37]/40 shadow-md flex items-center space-x-4">
+              {/* Circular Animation Loading Ring */}
+              <div className="relative w-16 h-16 sm:w-18 sm:h-18 shrink-0 flex items-center justify-center">
+                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 76 76">
+                  <defs>
+                    <linearGradient id="goldThemeLoaderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#FFDF78" />
+                      <stop offset="50%" stopColor="#D4AF37" />
+                      <stop offset="100%" stopColor="#B8972E" />
+                    </linearGradient>
+                  </defs>
+                  {/* Background Track */}
+                  <circle
+                    cx="38"
+                    cy="38"
+                    r="30"
+                    fill="none"
+                    stroke="rgba(255, 255, 255, 0.15)"
+                    strokeWidth="4"
+                  />
+                  {/* Completing Circular Animated Stroke */}
+                  <circle
+                    cx="38"
+                    cy="38"
+                    r="30"
+                    fill="none"
+                    stroke="url(#goldThemeLoaderGrad)"
+                    strokeWidth="4"
+                    strokeLinecap="round"
+                    strokeDasharray="188.5"
+                    className="animate-circle-loop"
+                  />
+                </svg>
+                {/* Center Icon */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-[#FFDF78]" />
+                </div>
+              </div>
+
+              {/* Clear Countdown Digits & Guidance */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center space-x-2">
+                  <span className="text-[10px] uppercase font-bold tracking-widest text-[#FFDF78] bg-white/10 px-2 py-0.5 rounded-full border border-[#FFDF78]/30">
+                    Active Payment Session
+                  </span>
+                  <span className="w-2 h-2 rounded-full bg-[#22C55E] animate-ping" />
+                </div>
+
+                <div className="flex items-baseline space-x-2 mt-1">
+                  <span className="font-mono text-2xl sm:text-3xl font-black tracking-tight text-[#FFDF78] drop-shadow-sm">
+                    {formatTimer(timeLeft)}
+                  </span>
+                  <span className="text-xs text-[#E8E0D5]/80 font-semibold">
+                    minutes left
+                  </span>
+                </div>
+
+                <p className="text-[11px] text-[#E8E0D5]/70 mt-0.5">
+                  Complete your transfer before this 5-minute window expires.
+                </p>
+              </div>
+            </div>
+          ) : (
+            /* Timeout Alert Banner */
+            <div className="p-4 bg-red-50 border border-red-200 rounded-2xl flex items-start space-x-3 text-red-800 animate-in fade-in">
               <AlertTriangle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
               <div className="text-xs flex-1">
-                <p className="font-bold">Payment Session Expired</p>
-                <p className="mt-0.5 text-red-700">
-                  Your payment session has expired. Please try again to generate a new payment QR code.
+                <p className="font-bold">Payment Session Expired (00:00)</p>
+                <p className="mt-0.5 text-red-700 leading-relaxed">
+                  Your 5-minute payment session has expired. Please tap below to generate a fresh QR code and restart your 5-minute window.
                 </p>
                 <button
                   type="button"
                   onClick={initializeSession}
-                  className="mt-2.5 inline-flex items-center space-x-1.5 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg text-xs transition cursor-pointer"
+                  className="mt-2.5 inline-flex items-center space-x-1.5 px-3.5 py-1.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg text-xs transition cursor-pointer shadow-xs"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
                   <span>Generate New Payment QR</span>
