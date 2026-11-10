@@ -508,9 +508,11 @@ export function ProductDetailView({ product, relatedProducts, settings: initialS
       finalTotal: finalAmount,
     });
 
-    setIsPaymentModalOpen(false);
     const url = getWhatsAppUrl(adminPhone, message);
-    window.location.href = url;
+    return {
+      orderNumber: createdOrderNumber,
+      whatsappUrl: url,
+    };
   };
 
   const handleWillOrderLater = () => {

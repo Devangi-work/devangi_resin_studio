@@ -15,6 +15,9 @@ import {
   UploadCloud,
   CheckCircle2,
   Image as ImageIcon,
+  MessageCircle,
+  Package,
+  ExternalLink,
 } from "lucide-react";
 import { buildUpiPaymentUri, generateUpiQrCodeDataUrl, generatePaymentReference } from "@/lib/upi";
 
@@ -40,7 +43,10 @@ export interface DynamicUpiPaymentModalProps {
     phone?: string;
     email?: string;
   } | null;
-  onPaidSubmit: (paymentReference: string, screenshotUrl?: string | null) => Promise<void>;
+  onPaidSubmit: (
+    paymentReference: string,
+    screenshotUrl?: string | null
+  ) => Promise<{ orderNumber?: string | null; whatsappUrl?: string } | void>;
   onWillOrderLater: () => void;
 }
 
@@ -70,6 +76,17 @@ export default function DynamicUpiPaymentModal({
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [copiedUpi, setCopiedUpi] = useState<boolean>(false);
   const [copiedAmount, setCopiedAmount] = useState<boolean>(false);
+  const [copiedOrderNum, setCopiedOrderNum] = useState<boolean>(false);
+
+  // Cancel Confirmation Popup State
+  const [showCancelConfirm, setShowCancelConfirm] = useState<boolean>(false);
+
+  // Success Popup State (after Paid submission + screenshot)
+  const [successData, setSuccessData] = useState<{
+    orderNumber?: string | null;
+    whatsappUrl?: string;
+    paymentReference: string;
+  } | null>(null);
 
   // Screenshot upload states
   const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
@@ -95,6 +112,8 @@ export default function DynamicUpiPaymentModal({
     setScreenshotPreview(null);
     setScreenshotUrl(null);
     setScreenshotError("");
+    setShowCancelConfirm(false);
+    setSuccessData(null);
     setIsQrLoading(true);
 
     try {
@@ -231,6 +250,32 @@ export default function DynamicUpiPaymentModal({
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+  // Handle request to close modal (prompt confirmation if payment in progress)
+  const handleRequestClose = () => {
+    if (successData) {
+      onClose();
+      return;
+    }
+    setShowCancelConfirm(true);
+  };
+
+  // Handle Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isOpen) {
+        if (showCancelConfirm) {
+          setShowCancelConfirm(false);
+        } else if (successData) {
+          onClose();
+        } else {
+          setShowCancelConfirm(true);
+        }
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, showCancelConfirm, successData]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isExpired || isSubmitting || !selectedOption) return;
@@ -250,81 +295,144 @@ export default function DynamicUpiPaymentModal({
     setIsSubmitting(true);
     try {
       if (selectedOption === "paid") {
-        await onPaidSubmit(paymentReference, screenshotUrl);
+        const result = await onPaidSubmit(paymentReference, screenshotUrl);
+        if (result && typeof result === "object" && result.whatsappUrl) {
+          if (timerRef.current) clearInterval(timerRef.current);
+          setSuccessData({
+            orderNumber: result.orderNumber || null,
+            whatsappUrl: result.whatsappUrl,
+            paymentReference,
+          });
+        }
       } else if (selectedOption === "later") {
         onWillOrderLater();
       }
     } catch (err) {
       console.error("Error submitting payment option:", err);
+    } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/70 backdrop-blur-xs overflow-y-auto animate-in fade-in duration-200">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/70 backdrop-blur-xs overflow-y-auto animate-in fade-in duration-200"
+      onClick={handleRequestClose}
+    >
       <div
         className="relative w-full max-w-lg bg-[#FAF8F5] border border-[#E8E0D5] rounded-3xl shadow-2xl overflow-hidden my-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header with clean branding & countdown */}
+        {/* Cancel Confirmation Popup */}
+        {showCancelConfirm && (
+          <div className="absolute inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
+            <div
+              className="w-full max-w-sm bg-[#FAF8F5] border border-[#E8E0D5] rounded-2xl p-6 shadow-2xl text-center space-y-4 animate-in zoom-in-95 duration-150"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="w-12 h-12 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center mx-auto border border-amber-300">
+                <AlertTriangle className="w-6 h-6" />
+              </div>
+
+              <div className="space-y-1">
+                <h4 className="font-serif text-base sm:text-lg font-bold text-[#2C332D]">
+                  Are you sure you want to cancel?
+                </h4>
+                <p className="text-xs text-[#736C66] leading-relaxed">
+                  Your payment session is still active ({formatTimer(timeLeft)} remaining). If you cancel now, this payment session will be closed.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowCancelConfirm(false)}
+                  className="w-full py-2.5 px-3 rounded-xl bg-[#2C332D] text-[#FFDF78] hover:bg-[#3D473E] text-xs font-bold transition shadow-xs cursor-pointer"
+                >
+                  No, Keep Paying
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowCancelConfirm(false);
+                    onClose();
+                  }}
+                  className="w-full py-2.5 px-3 rounded-xl bg-red-50 text-red-700 hover:bg-red-100 border border-red-200 text-xs font-bold transition cursor-pointer"
+                >
+                  Yes, Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Header with clean branding & countdown or success mode */}
         <div className="bg-[#2C332D] text-white px-5 py-4 flex items-center justify-between border-b border-[#3D473E]">
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-[#FFDF78]">
-              <QrCode className="w-4 h-4" />
+            <div
+              className={`w-8 h-8 rounded-xl flex items-center justify-center border ${
+                successData
+                  ? "bg-[#25D366]/20 border-[#25D366]/40 text-[#25D366]"
+                  : "bg-white/10 border-white/20 text-[#FFDF78]"
+              }`}
+            >
+              {successData ? <CheckCircle2 className="w-4 h-4" /> : <QrCode className="w-4 h-4" />}
             </div>
             <div>
               <h3 className="font-serif text-sm sm:text-base font-bold tracking-wide">
-                {storeName}
+                {successData ? "Order Received" : storeName}
               </h3>
               <p className="text-[10.5px] text-[#E8E0D5]/70">
-                Direct UPI QR Payment
+                {successData ? "Devangi Resin Studio" : "Direct UPI QR Payment"}
               </p>
             </div>
           </div>
 
           <div className="flex items-center space-x-2.5">
-            {/* Header Countdown Badge with Animated Theme Ring */}
-            <div
-              className={`flex items-center space-x-2 px-3 py-1.5 rounded-full text-xs font-mono font-bold tracking-wider transition-colors ${
-                isExpired
-                  ? "bg-red-500/20 text-red-300 border border-red-500/40"
-                  : timeLeft <= 30
-                  ? "bg-amber-500/20 text-amber-300 border border-amber-500/40 animate-pulse"
-                  : "bg-white/10 text-[#FFDF78] border border-[#FFDF78]/30"
-              }`}
-            >
-              <div className="relative w-4 h-4 shrink-0 flex items-center justify-center">
-                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 24 24">
-                  <circle
-                    cx="12"
-                    cy="12"
-                    r="9"
-                    fill="none"
-                    stroke="rgba(255, 255, 255, 0.2)"
-                    strokeWidth="2.5"
-                  />
-                  {!isExpired && (
+            {/* Header Countdown Badge with Animated Theme Ring (Only when payment active) */}
+            {!successData && (
+              <div
+                className={`flex items-center space-x-2 px-3 py-1.5 rounded-full text-xs font-mono font-bold tracking-wider transition-colors ${
+                  isExpired
+                    ? "bg-red-500/20 text-red-300 border border-red-500/40"
+                    : timeLeft <= 30
+                    ? "bg-amber-500/20 text-amber-300 border border-amber-500/40 animate-pulse"
+                    : "bg-white/10 text-[#FFDF78] border border-[#FFDF78]/30"
+                }`}
+              >
+                <div className="relative w-4 h-4 shrink-0 flex items-center justify-center">
+                  <svg className="w-full h-full transform -rotate-90" viewBox="0 0 24 24">
                     <circle
                       cx="12"
                       cy="12"
                       r="9"
                       fill="none"
-                      stroke="#FFDF78"
+                      stroke="rgba(255, 255, 255, 0.2)"
                       strokeWidth="2.5"
-                      strokeLinecap="round"
-                      strokeDasharray="56.5"
-                      className="animate-circle-loop-small"
                     />
-                  )}
-                </svg>
+                    {!isExpired && (
+                      <circle
+                        cx="12"
+                        cy="12"
+                        r="9"
+                        fill="none"
+                        stroke="#FFDF78"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeDasharray="56.5"
+                        className="animate-circle-loop-small"
+                      />
+                    )}
+                  </svg>
+                </div>
+                <span className="text-xs font-black">{formatTimer(timeLeft)}</span>
               </div>
-              <span className="text-xs font-black">{formatTimer(timeLeft)}</span>
-            </div>
+            )}
 
             {/* Close Button */}
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleRequestClose}
               disabled={isSubmitting}
               className="p-1 rounded-lg hover:bg-white/10 text-white/70 hover:text-white transition disabled:opacity-50 cursor-pointer"
               aria-label="Close"
@@ -334,8 +442,142 @@ export default function DynamicUpiPaymentModal({
           </div>
         </div>
 
-        {/* Scrollable Modal Body */}
-        <div className="p-4 sm:p-6 space-y-4 max-h-[82vh] overflow-y-auto">
+        {/* Modal Body: Success Screen OR Payment Flow */}
+        {successData ? (
+          <div className="p-6 sm:p-8 space-y-6 text-center max-h-[85vh] overflow-y-auto">
+            {/* Celebration Icon */}
+            <div className="relative mx-auto w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center">
+              <div className="absolute inset-0 rounded-full bg-[#25D366]/20 animate-ping opacity-75" />
+              <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-tr from-[#166534] to-[#22c55e] text-white flex items-center justify-center shadow-lg border-2 border-[#D4AF37]">
+                <Check className="w-8 h-8 sm:w-10 sm:h-10 stroke-[3]" />
+              </div>
+            </div>
+
+            {/* Headline requested by user */}
+            <div className="space-y-1.5">
+              <h2 className="font-serif text-2xl sm:text-3xl font-bold text-[#2C332D]">
+                Thank you for Shopping with us!
+              </h2>
+              <p className="text-xs sm:text-sm text-[#736C66] max-w-md mx-auto leading-relaxed">
+                Your order and payment screenshot have been submitted successfully. Our studio artisan team will verify your transaction and begin handcrafting your resin piece.
+              </p>
+            </div>
+
+            {/* Order & Payment Summary Card */}
+            <div className="bg-white rounded-2xl border border-[#E8E0D5] p-4 text-left shadow-xs space-y-2.5">
+              {successData.orderNumber && (
+                <div className="flex items-center justify-between pb-2 border-b border-[#F4EBE6]">
+                  <span className="text-xs text-[#8C827A] font-medium">Order Number:</span>
+                  <div className="flex items-center space-x-1.5">
+                    <span className="text-xs font-mono font-bold text-[#2C332D]">
+                      #{successData.orderNumber}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(successData.orderNumber || "");
+                        setCopiedOrderNum(true);
+                        setTimeout(() => setCopiedOrderNum(false), 2000);
+                      }}
+                      className="p-1 hover:bg-[#F2ECE4] rounded text-[#8C827A] hover:text-[#2C332D] transition cursor-pointer"
+                      title="Copy Order Number"
+                    >
+                      {copiedOrderNum ? (
+                        <Check className="w-3.5 h-3.5 text-[#166534]" />
+                      ) : (
+                        <Copy className="w-3.5 h-3.5" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between pb-2 border-b border-[#F4EBE6]">
+                <span className="text-xs text-[#8C827A] font-medium">Payment Reference:</span>
+                <span className="text-xs font-mono font-semibold text-[#800020]">
+                  {successData.paymentReference}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between pb-2 border-b border-[#F4EBE6]">
+                <span className="text-xs text-[#8C827A] font-medium">Amount Paid:</span>
+                <span className="text-sm font-bold text-[#166534]">
+                  ₹{payableAmount.toFixed(2)}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-[#8C827A] font-medium">Payment Status:</span>
+                <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-[11px] font-bold">
+                  <Clock className="w-3 h-3" />
+                  <span>Pending Verification</span>
+                </span>
+              </div>
+            </div>
+
+            {/* Order Tracking Section: "track your order here" */}
+            <div className="bg-[#FFFDF9] rounded-2xl border border-[#D4AF37]/40 p-4 text-center space-y-2.5">
+              <div className="flex items-center justify-center space-x-1.5 text-[11px] font-bold uppercase tracking-wider text-[#B8972E]">
+                <Package className="w-3.5 h-3.5 text-[#D4AF37]" />
+                <span>Track Your Order Here</span>
+              </div>
+              <p className="text-xs text-[#736C66]">
+                Follow crafting progress, curing stages, and live courier tracking anytime:
+              </p>
+              <a
+                href={successData.orderNumber ? `/orders/${encodeURIComponent(successData.orderNumber)}` : "/track-order"}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center justify-center space-x-2 py-2.5 px-5 rounded-xl bg-white border border-[#D4AF37] hover:bg-[#FAF6F0] text-[#2C332D] text-xs font-bold transition shadow-xs cursor-pointer group w-full sm:w-auto"
+              >
+                <Package className="w-4 h-4 text-[#D4AF37] group-hover:scale-110 transition-transform" />
+                <span>View Live Order Tracking</span>
+                <ExternalLink className="w-3.5 h-3.5 text-[#8C827A]" />
+              </a>
+            </div>
+
+            {/* WhatsApp Notification Section: "notify us in whatsapp and show button notify" */}
+            <div className="bg-gradient-to-br from-[#F0FDF4] to-[#DCFCE7] rounded-2xl border border-[#86EFAC] p-5 text-center space-y-3 shadow-xs">
+              <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-[#166534] text-white text-[11px] font-bold">
+                <MessageCircle className="w-3.5 h-3.5" />
+                <span>Notify Us on WhatsApp</span>
+              </div>
+
+              {/* Exact instructional text requested by user */}
+              <p className="text-xs sm:text-sm text-[#14532D] leading-relaxed font-semibold">
+                Message will be auto filled, you can read it and just click on send.
+              </p>
+
+              {/* Button Notify requested by user */}
+              {successData.whatsappUrl && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    window.location.href = successData.whatsappUrl!;
+                  }}
+                  className="w-full py-3.5 px-5 rounded-xl bg-[#25D366] hover:bg-[#20ba59] active:scale-[0.99] text-white font-bold text-sm shadow-md transition-all flex items-center justify-center space-x-2 cursor-pointer"
+                >
+                  <MessageCircle className="w-4 h-4 fill-white" />
+                  <span>Notify on WhatsApp</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+
+            {/* Secondary Action: Continue Browsing */}
+            <div className="pt-1">
+              <button
+                type="button"
+                onClick={onClose}
+                className="text-xs font-semibold text-[#8C827A] hover:text-[#2C332D] underline underline-offset-4 transition cursor-pointer"
+              >
+                Continue Browsing Store
+              </button>
+            </div>
+          </div>
+        ) : (
+          /* Scrollable Payment Body */
+          <div className="p-4 sm:p-6 space-y-4 max-h-[82vh] overflow-y-auto">
           {/* Keyframe Styles for Circular Loading Theme Animation */}
           <style dangerouslySetInnerHTML={{ __html: `
             @keyframes circleThemeLoop {
@@ -819,6 +1061,7 @@ export default function DynamicUpiPaymentModal({
             </div>
           </form>
         </div>
+        )}
       </div>
     </div>
   );

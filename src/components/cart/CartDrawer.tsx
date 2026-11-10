@@ -209,11 +209,12 @@ export function CartDrawer() {
       paymentScreenshotUrl: screenshotUrl || null,
     });
 
-    setIsPaymentModalOpen(false);
     clearCart();
-    setIsCartOpen(false);
     const url = getWhatsAppUrl(adminPhone, message);
-    window.location.href = url;
+    return {
+      orderNumber: createdOrderNumber,
+      whatsappUrl: url,
+    };
   };
 
   const handleWillOrderLater = () => {

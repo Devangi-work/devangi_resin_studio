@@ -207,12 +207,14 @@ function CartContent() {
       paymentScreenshotUrl: screenshotUrl || null,
     });
 
-    setIsPaymentModalOpen(false);
     // Cart management for Cart Checkout + Paid:
     // Remove the purchased cart items after successful submission of the Paid option.
     clearCart();
     const url = getWhatsAppUrl(adminPhone, message);
-    window.location.href = url;
+    return {
+      orderNumber: createdOrderNumber,
+      whatsappUrl: url,
+    };
   };
 
   const handleWillOrderLater = () => {
