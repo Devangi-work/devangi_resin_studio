@@ -80,6 +80,7 @@ function CartContent() {
     subtotal,
     cityName: userCity || null,
     stateName: customer?.state || null,
+    postalCode: customer?.postalCode || null,
     cityRates: configuredCityRates,
     defaultShippingCharge: siteSettings?.defaultShippingCharge,
     freeShippingThreshold: siteSettings?.freeShippingThreshold,

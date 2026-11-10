@@ -580,6 +580,30 @@ test("E-Commerce Test Suite", async (t) => {
       defaultShippingCharge: "79.00",
     });
     assert.equal(mhOrder.charge, 40, "MH state code should inherit Mumbai/Maharashtra rate");
+
+    // 12. Salumbar (Rajasthan) newly bifurcated district resolves properly
+    const salumbarOrder = resolveShippingCharge({
+      subtotal: 300,
+      cityName: "Salumbar",
+      cityRates: [
+        { name: "Rajasthan", charge: "65.00" },
+      ],
+      defaultShippingCharge: "79.00",
+    });
+    assert.equal(salumbarOrder.charge, 65, "Salumbar should resolve to Rajasthan and inherit Rajasthan state rate");
+    assert.equal(salumbarOrder.matchedCityName, "Rajasthan");
+
+    // 13. Pincode resolution: Remote village or town without city name matches state rate via 6-digit Pincode (e.g. 313027 for Salumbar)
+    const pinOrder = resolveShippingCharge({
+      subtotal: 300,
+      cityName: "Unknown Remote Village",
+      postalCode: "313027",
+      cityRates: [
+        { name: "Rajasthan", charge: "65.00" },
+      ],
+      defaultShippingCharge: "79.00",
+    });
+    assert.equal(pinOrder.charge, 65, "Pincode 313027 should resolve to Rajasthan and match Rajasthan shipping rate");
   });
 
   // 11. Order Shipping Update & Total Recalculation (Edit Order)

@@ -346,6 +346,7 @@ export function ProductDetailView({ product, relatedProducts, settings: initialS
     subtotal: currentUnitPrice,
     cityName: userCity || null,
     stateName: customer?.state || null,
+    postalCode: customer?.postalCode || null,
     cityRates: configuredCityRates,
     defaultShippingCharge: siteSettings?.defaultShippingCharge,
     freeShippingThreshold: siteSettings?.freeShippingThreshold,

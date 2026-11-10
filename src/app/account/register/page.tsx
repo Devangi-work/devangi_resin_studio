@@ -16,6 +16,7 @@ function CustomerRegisterForm() {
     phone: "",
     password: "",
     addressLine1: "",
+    secBlock: "",
     addressLine2: "",
     city: "",
     state: "",
@@ -31,10 +32,16 @@ function CustomerRegisterForm() {
     setLoading(true);
 
     try {
+      const payload = {
+        ...formData,
+        addressLine1: formData.secBlock.trim()
+          ? `${formData.addressLine1.trim()}, ${formData.secBlock.trim()}`
+          : formData.addressLine1.trim(),
+      };
       const res = await fetch("/api/customer/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
@@ -195,29 +202,44 @@ function CustomerRegisterForm() {
 
             <div>
               <label className="text-xs font-semibold text-[#2C332D] block mb-1">
-                Flat / House No. / Street Address *
+                Flat / House / Building No. *
               </label>
               <input
                 type="text"
                 required
                 value={formData.addressLine1}
                 onChange={(e) => setFormData({ ...formData, addressLine1: e.target.value })}
-                placeholder="e.g. Flat 402, Lotus Residency, MG Road"
+                placeholder="e.g. Flat 402, Lotus Residency"
                 className="w-full px-3.5 py-2.5 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
               />
             </div>
 
-            <div>
-              <label className="text-xs font-semibold text-[#2C332D] block mb-1">
-                Apartment / Landmark / Locality (Optional)
-              </label>
-              <input
-                type="text"
-                value={formData.addressLine2}
-                onChange={(e) => setFormData({ ...formData, addressLine2: e.target.value })}
-                placeholder="e.g. Near City Mall"
-                className="w-full px-3.5 py-2.5 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
-              />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <div>
+                <label className="text-xs font-semibold text-[#2C332D] block mb-1">
+                  Sec / Block No. (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={formData.secBlock}
+                  onChange={(e) => setFormData({ ...formData, secBlock: e.target.value })}
+                  placeholder="e.g. Sector 14, Block B / Phase 2"
+                  className="w-full px-3.5 py-2.5 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-[#2C332D] block mb-1">
+                  Street / Landmark / Locality (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={formData.addressLine2}
+                  onChange={(e) => setFormData({ ...formData, addressLine2: e.target.value })}
+                  placeholder="e.g. Near City Mall / MG Road"
+                  className="w-full px-3.5 py-2.5 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
+                />
+              </div>
             </div>
 
             <div className="grid grid-cols-3 gap-2.5">

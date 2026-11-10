@@ -34,6 +34,7 @@ function CustomerProfilePageContent() {
     name: "",
     phone: "",
     addressLine1: "",
+    secBlock: "",
     addressLine2: "",
     city: "",
     state: "",
@@ -60,6 +61,7 @@ function CustomerProfilePageContent() {
         name: data.customer.name || "",
         phone: data.customer.phone || "",
         addressLine1: data.customer.addressLine1 || "",
+        secBlock: "",
         addressLine2: data.customer.addressLine2 || "",
         city: data.customer.city || "",
         state: data.customer.state || "",
@@ -116,11 +118,16 @@ function CustomerProfilePageContent() {
     setIsSaving(true);
 
     try {
+      const fullAddress1 = formData.secBlock.trim()
+        ? `${formData.addressLine1.trim()}, ${formData.secBlock.trim()}`
+        : formData.addressLine1.trim();
+
       const res = await fetch("/api/customer/profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
+          addressLine1: fullAddress1,
           phone: cleanPhone,
           postalCode: formData.postalCode.trim(),
         }),
@@ -343,7 +350,7 @@ function CustomerProfilePageContent() {
               {/* Street Address Line 1 */}
               <div>
                 <label className="text-xs font-bold text-[#2C332D] block mb-1.5">
-                  Flat / House No. / Street Address *
+                  Flat / House / Building No. *
                 </label>
                 <div className="relative">
                   <Building className="w-4 h-4 text-[#8C7A72] absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -352,26 +359,44 @@ function CustomerProfilePageContent() {
                     required
                     value={formData.addressLine1}
                     onChange={(e) => setFormData({ ...formData, addressLine1: e.target.value })}
-                    placeholder="e.g. Flat 402, Rosewood Heights, 14th Cross"
+                    placeholder="e.g. Flat 402, Rosewood Heights"
                     className="w-full pl-10 pr-4 py-2.5 bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl text-xs sm:text-sm font-medium text-[#2C332D] focus:outline-none focus:ring-2 focus:ring-[#D4AF37] focus:bg-white transition-all"
                   />
                 </div>
               </div>
 
-              {/* Street Address Line 2 */}
-              <div>
-                <label className="text-xs font-bold text-[#2C332D] block mb-1.5">
-                  Apartment / Landmark / Locality (Optional)
-                </label>
-                <div className="relative">
-                  <Navigation className="w-4 h-4 text-[#8C7A72] absolute left-3.5 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="text"
-                    value={formData.addressLine2}
-                    onChange={(e) => setFormData({ ...formData, addressLine2: e.target.value })}
-                    placeholder="e.g. Near HDFC Bank, Bandra West"
-                    className="w-full pl-10 pr-4 py-2.5 bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl text-xs sm:text-sm font-medium text-[#2C332D] focus:outline-none focus:ring-2 focus:ring-[#D4AF37] focus:bg-white transition-all"
-                  />
+              {/* Sector / Block No. & Landmark Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-bold text-[#2C332D] block mb-1.5">
+                    Sec / Block No. (Optional)
+                  </label>
+                  <div className="relative">
+                    <MapPin className="w-4 h-4 text-[#8C7A72] absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      value={formData.secBlock}
+                      onChange={(e) => setFormData({ ...formData, secBlock: e.target.value })}
+                      placeholder="e.g. Sector 14, Block B / Phase 2"
+                      className="w-full pl-10 pr-4 py-2.5 bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl text-xs sm:text-sm font-medium text-[#2C332D] focus:outline-none focus:ring-2 focus:ring-[#D4AF37] focus:bg-white transition-all"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-[#2C332D] block mb-1.5">
+                    Street / Landmark / Locality (Optional)
+                  </label>
+                  <div className="relative">
+                    <Navigation className="w-4 h-4 text-[#8C7A72] absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      value={formData.addressLine2}
+                      onChange={(e) => setFormData({ ...formData, addressLine2: e.target.value })}
+                      placeholder="e.g. Near HDFC Bank, Bandra West"
+                      className="w-full pl-10 pr-4 py-2.5 bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl text-xs sm:text-sm font-medium text-[#2C332D] focus:outline-none focus:ring-2 focus:ring-[#D4AF37] focus:bg-white transition-all"
+                    />
+                  </div>
                 </div>
               </div>
 

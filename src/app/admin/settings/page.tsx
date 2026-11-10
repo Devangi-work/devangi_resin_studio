@@ -1045,39 +1045,26 @@ export default function AdminSettingsPage() {
               </button>
             </div>
 
-            {/* Indian State & City Suggestions Datalist */}
+            {/* Comprehensive Indian States & Cities Suggestions Datalist */}
             <datalist id="indian-region-suggestions">
               {Object.keys(INDIAN_STATES_DATA).map((state) => (
-                <option key={state} value={state}>
+                <option key={`state_${state}`} value={state}>
                   {state} (Entire State)
                 </option>
               ))}
-              <option value="Mumbai">Mumbai (Maharashtra)</option>
-              <option value="Pune">Pune (Maharashtra)</option>
-              <option value="Nagpur">Nagpur (Maharashtra)</option>
-              <option value="Nashik">Nashik (Maharashtra)</option>
-              <option value="Thane">Thane (Maharashtra)</option>
-              <option value="Bengaluru">Bengaluru (Karnataka)</option>
-              <option value="Mysuru">Mysuru (Karnataka)</option>
-              <option value="Mangaluru">Mangaluru (Karnataka)</option>
-              <option value="Ahmedabad">Ahmedabad (Gujarat)</option>
-              <option value="Surat">Surat (Gujarat)</option>
-              <option value="Vadodara">Vadodara (Gujarat)</option>
-              <option value="Rajkot">Rajkot (Gujarat)</option>
-              <option value="Jaipur">Jaipur (Rajasthan)</option>
-              <option value="Jodhpur">Jodhpur (Rajasthan)</option>
-              <option value="Udaipur">Udaipur (Rajasthan)</option>
-              <option value="Delhi">Delhi NCR</option>
-              <option value="Noida">Noida (Uttar Pradesh)</option>
-              <option value="Lucknow">Lucknow (Uttar Pradesh)</option>
-              <option value="Kanpur">Kanpur (Uttar Pradesh)</option>
-              <option value="Kolkata">Kolkata (West Bengal)</option>
-              <option value="Chennai">Chennai (Tamil Nadu)</option>
-              <option value="Coimbatore">Coimbatore (Tamil Nadu)</option>
-              <option value="Hyderabad">Hyderabad (Telangana)</option>
-              <option value="Kochi">Kochi (Kerala)</option>
-              <option value="Chandigarh">Chandigarh</option>
-              <option value="Panaji">Panaji (Goa)</option>
+              {Object.entries(INDIAN_STATES_DATA).flatMap(([state, data]) =>
+                data.cities.map((city) => {
+                  const formattedCity = city
+                    .split(" ")
+                    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+                    .join(" ");
+                  return (
+                    <option key={`city_${state}_${city}`} value={formattedCity}>
+                      {formattedCity} ({state})
+                    </option>
+                  );
+                })
+              )}
             </datalist>
 
             {Array.isArray(settings.cityShippingRates) && settings.cityShippingRates.length > 0 ? (

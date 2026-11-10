@@ -61,6 +61,7 @@ export function ProfileCompletionModal() {
     email: "",
     phone: "",
     addressLine1: "",
+    secBlock: "",
     addressLine2: "",
     city: "",
     state: "",
@@ -106,6 +107,7 @@ export function ProfileCompletionModal() {
           email: data.customer.email || "",
           phone: data.customer.phone || "",
           addressLine1: data.customer.addressLine1 || "",
+          secBlock: "",
           addressLine2: data.customer.addressLine2 || "",
           city: data.customer.city || "",
           state: data.customer.state || "",
@@ -181,11 +183,16 @@ export function ProfileCompletionModal() {
     setIsSaving(true);
 
     try {
+      const fullAddress1 = formData.secBlock.trim()
+        ? `${formData.addressLine1.trim()}, ${formData.secBlock.trim()}`
+        : formData.addressLine1.trim();
+
       const res = await fetch("/api/customer/profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
+          addressLine1: fullAddress1,
           phone: cleanPhone,
           postalCode: formData.postalCode.trim(),
         }),
@@ -317,9 +324,10 @@ export function ProfileCompletionModal() {
             </div>
 
             {/* Flat / House No. / Street Address */}
+            {/* Flat / House / Building */}
             <div className="sm:col-span-2">
               <label className="text-[11px] font-bold text-[#2C332D] uppercase tracking-wider block mb-1">
-                Flat / House No. / Street Address *
+                Flat / House / Building No. *
               </label>
               <div className="relative">
                 <Building className="w-4 h-4 text-[#8C7A72] absolute left-3 top-1/2 -translate-y-1/2" />
@@ -328,16 +336,33 @@ export function ProfileCompletionModal() {
                   required
                   value={formData.addressLine1}
                   onChange={(e) => setFormData({ ...formData, addressLine1: e.target.value })}
-                  placeholder="e.g. Flat 302, Rosewood Apartments, 5th Cross Road"
+                  placeholder="e.g. Flat 302, Rosewood Apartments"
                   className="w-full pl-9 pr-3 py-2 bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl text-xs text-[#2C332D] focus:outline-none focus:ring-1 focus:ring-[#D4AF37] focus:bg-white"
                 />
               </div>
             </div>
 
-            {/* Apartment / Landmark / Locality (Optional) */}
-            <div className="sm:col-span-2">
+            {/* Sector / Block No. (Optional) */}
+            <div>
               <label className="text-[11px] font-bold text-[#2C332D] uppercase tracking-wider block mb-1">
-                Apartment / Landmark / Locality (Optional)
+                Sec / Block No. (Optional)
+              </label>
+              <div className="relative">
+                <MapPin className="w-4 h-4 text-[#8C7A72] absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={formData.secBlock}
+                  onChange={(e) => setFormData({ ...formData, secBlock: e.target.value })}
+                  placeholder="e.g. Sector 14, Block B"
+                  className="w-full pl-9 pr-3 py-2 bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl text-xs text-[#2C332D] focus:outline-none focus:ring-1 focus:ring-[#D4AF37] focus:bg-white"
+                />
+              </div>
+            </div>
+
+            {/* Street / Landmark / Locality (Optional) */}
+            <div>
+              <label className="text-[11px] font-bold text-[#2C332D] uppercase tracking-wider block mb-1">
+                Street / Landmark (Optional)
               </label>
               <div className="relative">
                 <Navigation className="w-4 h-4 text-[#8C7A72] absolute left-3 top-1/2 -translate-y-1/2" />

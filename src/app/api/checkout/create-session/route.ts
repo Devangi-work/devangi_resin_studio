@@ -23,6 +23,7 @@ export async function POST(request: Request) {
       customerEmail,
       customerPhone,
       shippingAddressLine1,
+      shippingSecBlock,
       shippingAddressLine2,
       shippingCity,
       shippingState,
@@ -34,6 +35,10 @@ export async function POST(request: Request) {
       paymentScreenshotUrl,
       items,
     } = result.data;
+
+    const finalShippingAddress1 = (shippingSecBlock && shippingSecBlock.trim() && !shippingAddressLine1.includes(shippingSecBlock.trim()))
+      ? `${shippingAddressLine1.trim()}, ${shippingSecBlock.trim()}`
+      : shippingAddressLine1.trim();
 
     // 1. Fetch site settings for shipping, thresholds & festival rules
     const settings = await dbStore.getSiteSettings();
@@ -143,6 +148,7 @@ export async function POST(request: Request) {
       subtotal,
       cityName: shippingCity,
       stateName: shippingState,
+      postalCode: shippingPostalCode,
       cityRates: settings.cityShippingRates,
       defaultShippingCharge: settings.defaultShippingCharge,
       freeShippingThreshold: settings.freeShippingThreshold,
@@ -172,7 +178,7 @@ export async function POST(request: Request) {
       customerName,
       customerEmail,
       customerPhone,
-      shippingAddressLine1,
+      shippingAddressLine1: finalShippingAddress1,
       shippingAddressLine2,
       shippingCity,
       shippingState,

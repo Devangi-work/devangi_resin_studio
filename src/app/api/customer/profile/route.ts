@@ -9,6 +9,7 @@ const updateProfileSchema = z.object({
   phone: z.string().min(10, "10-digit phone number is required").optional(),
   avatarUrl: z.string().url().nullable().optional(),
   addressLine1: z.string().min(3, "Address is required").optional(),
+  secBlock: z.string().nullable().optional(),
   addressLine2: z.string().nullable().optional(),
   city: z.string().min(2, "City is required").optional(),
   state: z.string().min(2, "State is required").optional(),
@@ -33,7 +34,15 @@ export async function PUT(request: Request) {
       );
     }
 
-    const updated = await dbStore.updateCustomerProfile(session.customerId, result.data);
+    const updateData = { ...result.data };
+    if (updateData.secBlock && updateData.secBlock.trim() && updateData.addressLine1) {
+      if (!updateData.addressLine1.includes(updateData.secBlock.trim())) {
+        updateData.addressLine1 = `${updateData.addressLine1.trim()}, ${updateData.secBlock.trim()}`;
+      }
+    }
+    delete updateData.secBlock;
+
+    const updated = await dbStore.updateCustomerProfile(session.customerId, updateData);
 
     return NextResponse.json({
       success: true,

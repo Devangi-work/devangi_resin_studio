@@ -9,6 +9,7 @@ const registerSchema = z.object({
   phone: z.string().min(10, "Phone number must be at least 10 digits."),
   password: z.string().min(6, "Password must be at least 6 characters."),
   addressLine1: z.string().min(3, "Address is required."),
+  secBlock: z.string().optional().default(""),
   addressLine2: z.string().optional().default(""),
   city: z.string().min(2, "City is required."),
   state: z.string().min(2, "State is required."),
@@ -28,7 +29,11 @@ export async function POST(request: Request) {
       );
     }
 
-    const { name, email, phone, password, addressLine1, addressLine2, city, state, postalCode, country } = result.data;
+    const { name, email, phone, password, addressLine1, secBlock, addressLine2, city, state, postalCode, country } = result.data;
+
+    const finalAddressLine1 = secBlock && secBlock.trim() && !addressLine1.includes(secBlock.trim())
+      ? `${addressLine1.trim()}, ${secBlock.trim()}`
+      : addressLine1.trim();
 
     // Check if customer email already exists
     const existing = await dbStore.getCustomerByEmail(email);
@@ -45,7 +50,7 @@ export async function POST(request: Request) {
       email,
       phone,
       passwordHash,
-      addressLine1,
+      addressLine1: finalAddressLine1,
       addressLine2,
       city,
       state,

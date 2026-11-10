@@ -307,6 +307,7 @@ export const INDIAN_STATES_DATA: Record<
   Rajasthan: {
     aliases: ["rajasthan", "raj", "rj"],
     cities: [
+      "salumbar",
       "jaipur",
       "jodhpur",
       "kota",
@@ -319,6 +320,7 @@ export const INDIAN_STATES_DATA: Record<
       "sikar",
       "pali",
       "sri ganganagar",
+      "ganganagar",
       "hanumangarh",
       "beawar",
       "kishangarh",
@@ -327,6 +329,7 @@ export const INDIAN_STATES_DATA: Record<
       "baran",
       "bundi",
       "chittorgarh",
+      "chittor",
       "churu",
       "dholpur",
       "jaisalmer",
@@ -341,6 +344,40 @@ export const INDIAN_STATES_DATA: Record<
       "pushkar",
       "makrana",
       "sujangarh",
+      "anupgarh",
+      "balotra",
+      "banswara",
+      "barmer",
+      "dausa",
+      "deeg",
+      "didwana",
+      "kuchaman",
+      "didwana kuchaman",
+      "dudu",
+      "dungarpur",
+      "gangapur",
+      "gangapur city",
+      "jaipur rural",
+      "jodhpur rural",
+      "karauli",
+      "kekri",
+      "khairthal",
+      "tijara",
+      "khairthal tijara",
+      "kotputli",
+      "behror",
+      "kotputli behror",
+      "neem ka thana",
+      "phalodi",
+      "sanchore",
+      "shahpura",
+      "nathdwara",
+      "hindaun",
+      "suratgarh",
+      "nokha",
+      "sardarshahar",
+      "fatehpur",
+      "abu road",
     ],
   },
   "Uttar Pradesh": {
@@ -825,6 +862,65 @@ export function findStateForLocation(location?: string | null): string | null {
 }
 
 /**
+ * Resolves Indian State / UT based on India Post 6-digit PIN code prefixes.
+ * Covers all postal circles across India, ensuring newly formed districts,
+ * sub-districts, talukas, and remote villages resolve accurately.
+ */
+export function findStateByPincode(postalCode?: string | null): string | null {
+  if (!postalCode) return null;
+  const pin = String(postalCode).replace(/\D/g, "").trim();
+  if (pin.length < 2) return null;
+
+  const p2 = parseInt(pin.slice(0, 2), 10);
+  const p3 = parseInt(pin.slice(0, 3), 10);
+
+  // 3-digit specific regions & Union Territories
+  if (p3 === 160) return "Chandigarh";
+  if (p3 === 403) return "Goa";
+  if (p3 === 605 || p3 === 607) return "Puducherry";
+  if (p3 === 682) return "Lakshadweep";
+  if (p3 === 744) return "Andaman and Nicobar Islands";
+  if (p3 === 737) return "Sikkim";
+  if (p3 >= 790 && p3 <= 792) return "Arunachal Pradesh";
+  if (p3 >= 793 && p3 <= 794) return "Meghalaya";
+  if (p3 === 795) return "Manipur";
+  if (p3 === 796) return "Mizoram";
+  if (p3 === 797) return "Nagaland";
+  if (p3 === 799) return "Tripura";
+  if (p3 === 194) return "Ladakh";
+  if ((p3 >= 246 && p3 <= 249) || p3 === 263) return "Uttarakhand";
+  if (p3 === 396) return "Dadra and Nagar Haveli and Daman and Diu";
+
+  // 2-digit regional postal circles
+  if (p2 === 11) return "Delhi";
+  if (p2 === 12 || p2 === 13) return "Haryana";
+  if (p2 === 14 || p2 === 15) return "Punjab";
+  if (p2 === 16) return "Chandigarh";
+  if (p2 === 17) return "Himachal Pradesh";
+  if (p2 === 18 || p2 === 19) return "Jammu and Kashmir";
+  if (p2 >= 20 && p2 <= 28) return "Uttar Pradesh";
+  if (p2 >= 30 && p2 <= 34) return "Rajasthan"; // 30-34: All Rajasthan (Salumbar is 313027)
+  if (p2 >= 36 && p2 <= 39) return "Gujarat";
+  if (p2 >= 40 && p2 <= 44) return "Maharashtra";
+  if (p2 === 49) return "Chhattisgarh";
+  if (p2 >= 45 && p2 <= 48) return "Madhya Pradesh";
+  if (p2 === 50) return "Telangana";
+  if (p2 >= 51 && p2 <= 53) return "Andhra Pradesh";
+  if (p2 >= 56 && p2 <= 59) return "Karnataka";
+  if (p2 >= 60 && p2 <= 64) return "Tamil Nadu";
+  if (p2 >= 67 && p2 <= 69) return "Kerala";
+  if (p2 >= 70 && p2 <= 74) return "West Bengal";
+  if (p2 >= 75 && p2 <= 77) return "Odisha";
+  if (p2 === 78) return "Assam";
+  if (p2 >= 80 && p2 <= 85) {
+    if ((p3 >= 814 && p3 <= 816) || (p3 >= 825 && p3 <= 835)) return "Jharkhand";
+    return "Bihar";
+  }
+
+  return null;
+}
+
+/**
  * Matches a user's delivery city or state against admin configured regional rates.
  * If user hasn't specified city/state, falls back to the default shipping charge.
  *
@@ -842,6 +938,7 @@ export function resolveShippingCharge(options: {
   subtotal: number;
   cityName?: string | null;
   stateName?: string | null;
+  postalCode?: string | null;
   cityRates?: CityShippingRate[] | null;
   defaultShippingCharge?: number | string | null;
   freeShippingThreshold?: number | string | null;
@@ -874,9 +971,10 @@ export function resolveShippingCharge(options: {
 
   const cleanCity = cleanLocation(options.cityName);
   const cleanState = cleanLocation(options.stateName);
+  const pinState = findStateByPincode(options.postalCode);
 
-  // If customer has not provided city or state, do not infer - use default shipping charge
-  if (rates.length === 0 || (!cleanCity && !cleanState)) {
+  // If customer has not provided city, state, or postal code, do not infer - use default shipping charge
+  if (rates.length === 0 || (!cleanCity && !cleanState && !pinState)) {
     return {
       charge: defaultCharge,
       isFree: defaultCharge === 0,
@@ -886,10 +984,13 @@ export function resolveShippingCharge(options: {
     };
   }
 
-  // Derive resolved state from customer city and customer state
+  // Derive resolved state from:
+  // 1. Explicit state name
+  // 2. PIN code (most precise for towns/villages like Salumbar)
+  // 3. City dictionary lookup
   const customerCityParentState = cleanCity ? findStateForLocation(cleanCity) : null;
   const customerStateCanonical = cleanState ? findStateForLocation(cleanState) : null;
-  const customerEffectiveState = customerStateCanonical || customerCityParentState;
+  const customerEffectiveState = customerStateCanonical || pinState || customerCityParentState;
 
   let bestRate: CityShippingRate | null = null;
   let bestScore = 0;

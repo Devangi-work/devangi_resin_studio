@@ -2610,7 +2610,7 @@ export default function AdminOrdersPage() {
                       </label>
                       <input
                         type="text"
-                        placeholder="House / Flat No, Building, Street Address"
+                        placeholder="House / Flat No, Building, Sector / Block, Street Address"
                         value={
                           offlineForm.shippingAddressLine1 === "Studio Pick-up / Walk-in"
                             ? ""
@@ -3406,7 +3406,7 @@ export default function AdminOrdersPage() {
                       </label>
                       <input
                         type="text"
-                        placeholder="House / Flat No, Building, Street Address"
+                        placeholder="House / Flat No, Building, Sector / Block, Street Address"
                         value={
                           editAddressLine1.toLowerCase().includes("pick-up") || editAddressLine1.toLowerCase().includes("pickup")
                             ? ""
@@ -3962,7 +3962,7 @@ export default function AdminOrdersPage() {
                           type="text"
                           value={editForm.shippingAddressLine1}
                           onChange={(e) => setEditForm({ ...editForm, shippingAddressLine1: e.target.value })}
-                          placeholder="Building, street, flat no."
+                          placeholder="Building, flat no., sector/block no."
                           className="w-full px-3 py-1.5 bg-white border border-[#E8E0D5] rounded-xl text-xs"
                         />
                       </div>

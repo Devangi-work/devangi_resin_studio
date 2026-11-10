@@ -51,6 +51,7 @@ export default function CheckoutPage() {
     phone: "",
     password: "",
     addressLine1: "",
+    secBlock: "",
     addressLine2: "",
     city: "",
     state: "",
@@ -81,6 +82,7 @@ export default function CheckoutPage() {
     customerEmail: "",
     customerPhone: "",
     shippingAddressLine1: "",
+    shippingSecBlock: "",
     shippingAddressLine2: "",
     shippingCity: "",
     shippingState: "",
@@ -137,6 +139,7 @@ export default function CheckoutPage() {
             customerEmail: data.customer.email || "",
             customerPhone: data.customer.phone || "",
             shippingAddressLine1: data.customer.addressLine1 || "",
+            shippingSecBlock: "",
             shippingAddressLine2: data.customer.addressLine2 || "",
             shippingCity: data.customer.city || "",
             shippingState: data.customer.state || "",
@@ -166,6 +169,7 @@ export default function CheckoutPage() {
     subtotal,
     cityName: formData.shippingCity,
     stateName: formData.shippingState,
+    postalCode: formData.shippingPostalCode,
     cityRates,
     defaultShippingCharge: settings.defaultShippingCharge,
     freeShippingThreshold: settings.freeShippingThreshold,
@@ -279,12 +283,16 @@ export default function CheckoutPage() {
   const handleSaveProfile = async () => {
     setIsSavingProfile(true);
     try {
+      const fullAddress1 = formData.shippingSecBlock.trim()
+        ? `${formData.shippingAddressLine1.trim()}, ${formData.shippingSecBlock.trim()}`
+        : formData.shippingAddressLine1.trim();
+
       const res = await fetch("/api/customer/profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           phone: formData.customerPhone,
-          addressLine1: formData.shippingAddressLine1,
+          addressLine1: fullAddress1,
           addressLine2: formData.shippingAddressLine2,
           city: formData.shippingCity,
           state: formData.shippingState,
@@ -354,10 +362,16 @@ export default function CheckoutPage() {
     setAuthLoading(true);
 
     try {
+      const payload = {
+        ...registerData,
+        addressLine1: registerData.secBlock.trim()
+          ? `${registerData.addressLine1.trim()}, ${registerData.secBlock.trim()}`
+          : registerData.addressLine1.trim(),
+      };
       const res = await fetch("/api/customer/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(registerData),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -372,6 +386,7 @@ export default function CheckoutPage() {
         customerEmail: data.customer.email || "",
         customerPhone: data.customer.phone || "",
         shippingAddressLine1: data.customer.addressLine1 || "",
+        shippingSecBlock: "",
         shippingAddressLine2: data.customer.addressLine2 || "",
         shippingCity: data.customer.city || "",
         shippingState: data.customer.state || "",
@@ -445,8 +460,13 @@ export default function CheckoutPage() {
     setIsSubmitting(true);
 
     try {
+      const fullShippingAddress1 = formData.shippingSecBlock.trim()
+        ? `${formData.shippingAddressLine1.trim()}, ${formData.shippingSecBlock.trim()}`
+        : formData.shippingAddressLine1.trim();
+
       const payload = {
         ...formData,
+        shippingAddressLine1: fullShippingAddress1,
         customerId: customer.id,
         couponCode: appliedCoupon?.code || undefined,
         upiTransactionId: upiTransactionId.trim(),
@@ -705,16 +725,43 @@ export default function CheckoutPage() {
 
               <div>
                 <label className="text-xs font-semibold text-[#2C332D] block mb-1">
-                  Delivery Address *
+                  Flat / House / Building No. *
                 </label>
                 <input
                   type="text"
                   required
                   value={registerData.addressLine1}
                   onChange={(e) => setRegisterData({ ...registerData, addressLine1: e.target.value })}
-                  placeholder="Flat / House No., Apartment, Street"
+                  placeholder="e.g. Flat 402, Green Meadows"
                   className="w-full px-3 py-2 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
                 />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div>
+                  <label className="text-xs font-semibold text-[#2C332D] block mb-1">
+                    Sec / Block No. (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={registerData.secBlock}
+                    onChange={(e) => setRegisterData({ ...registerData, secBlock: e.target.value })}
+                    placeholder="e.g. Sector 14, Block B"
+                    className="w-full px-3 py-2 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-[#2C332D] block mb-1">
+                    Street / Landmark (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={registerData.addressLine2}
+                    onChange={(e) => setRegisterData({ ...registerData, addressLine2: e.target.value })}
+                    placeholder="e.g. Near Metro Station"
+                    className="w-full px-3 py-2 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-3 gap-2">
@@ -941,31 +988,47 @@ export default function CheckoutPage() {
 
             <div>
               <label className="text-xs font-semibold text-[#2C332D] block mb-1">
-                House / Flat / Building & Street Address *
+                House / Flat / Building No. *
               </label>
               <input
                 type="text"
                 required
                 name="shippingAddressLine1"
-                placeholder="e.g. Flat 402, Green Meadows, 5th Main Road"
+                placeholder="e.g. Flat 402, Green Meadows"
                 value={formData.shippingAddressLine1}
                 onChange={handleInputChange}
                 className="w-full px-3.5 py-2.5 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
               />
             </div>
 
-            <div>
-              <label className="text-xs font-semibold text-[#2C332D] block mb-1">
-                Apartment, Suite, Landmark (Optional)
-              </label>
-              <input
-                type="text"
-                name="shippingAddressLine2"
-                placeholder="e.g. Near Metro Station, Indiranagar"
-                value={formData.shippingAddressLine2}
-                onChange={handleInputChange}
-                className="w-full px-3.5 py-2.5 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
-              />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-semibold text-[#2C332D] block mb-1">
+                  Sec / Block No. (Optional)
+                </label>
+                <input
+                  type="text"
+                  name="shippingSecBlock"
+                  placeholder="e.g. Sector 14, Block B / Phase 2"
+                  value={formData.shippingSecBlock}
+                  onChange={handleInputChange}
+                  className="w-full px-3.5 py-2.5 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-[#2C332D] block mb-1">
+                  Street / Landmark / Locality (Optional)
+                </label>
+                <input
+                  type="text"
+                  name="shippingAddressLine2"
+                  placeholder="e.g. Near Metro Station, Indiranagar"
+                  value={formData.shippingAddressLine2}
+                  onChange={handleInputChange}
+                  className="w-full px-3.5 py-2.5 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
+                />
+              </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
