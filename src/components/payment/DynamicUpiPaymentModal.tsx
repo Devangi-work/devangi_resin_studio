@@ -803,6 +803,20 @@ export default function DynamicUpiPaymentModal({
                 )}
               </button>
             </div>
+
+            {/* Reassurance Safety Link */}
+            <div className="pt-1 pb-1 flex items-center justify-center space-x-1.5 text-[11px] text-[#7A5E68]">
+              <ShieldCheck className="w-3.5 h-3.5 text-[#166534]" />
+              <span>Direct Verified Payee • Pre-filled Amount • </span>
+              <a
+                href="/policies/payment"
+                target="_blank"
+                rel="noreferrer"
+                className="underline hover:text-[#3A1823] font-semibold text-[#800020] transition-colors"
+              >
+                Payment Safety Policy
+              </a>
+            </div>
           </form>
         </div>
       </div>

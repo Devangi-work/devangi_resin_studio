@@ -23,6 +23,7 @@ import {
   ChevronRight,
   ArrowRight,
   Calendar,
+  QrCode,
 } from "lucide-react";
 
 interface PolicyPageProps {
@@ -40,6 +41,7 @@ export async function generateMetadata({ params }: PolicyPageProps) {
     care: "Resin Care Guide & Longevity Tips | Devangi Resin Studio",
     privacy: "Privacy & Data Protection Policy | Devangi Resin Studio",
     terms: "Terms & Conditions of Sale | Devangi Resin Studio",
+    payment: "Dynamic UPI QR Payment & Safety Policy | Devangi Resin Studio",
   };
   return {
     title: titles[type] || "Policies | Devangi Resin Studio",
@@ -51,7 +53,7 @@ export default async function PolicyPage({ params }: PolicyPageProps) {
   const { type } = await params;
   const settings = await dbStore.getSiteSettings();
 
-  const validTypes = ["shipping", "returns", "care", "privacy", "terms"];
+  const validTypes = ["shipping", "returns", "care", "privacy", "terms", "payment"];
   if (!validTypes.includes(type)) {
     notFound();
   }
@@ -357,6 +359,82 @@ export default async function PolicyPage({ params }: PolicyPageProps) {
         },
       ],
     },
+
+    payment: {
+      title: "Dynamic UPI QR Payment & Safety Policy",
+      badge: "100% SECURE DYNAMIC UPI PAYMENTS",
+      subtitle:
+        "Bank-grade UPI QR code technology engineered for effortless, error-free checkout with pre-filled exact payable amounts, verified artisan payee, 5-minute timed sessions, and zero third-party wallet risk.",
+      icon: QrCode,
+      dynamicContent:
+        settings.upiPolicy ||
+        `We process payments via dynamic, tamper-proof UPI QR codes generated specifically for each checkout attempt. The exact payable amount is pre-filled, routing directly to verified artisan account holder ${settings.accountHolderName || "Devangi Banshilal Barai"} (${settings.upiId || "devangi0403@okaxis"}). Devangi Resin Studio never accesses, collects, or stores your UPI PIN or banking credentials.`,
+      highlights: [
+        {
+          icon: QrCode,
+          title: "Exact Pre-Filled Payable Amount",
+          desc: "Each dynamic QR code automatically encodes your exact checkout total including shipping and discounts. Zero manual typing errors.",
+        },
+        {
+          icon: ShieldCheck,
+          title: "Direct Verified Artisan Payee",
+          desc: `Funds transfer directly to verified account holder ${settings.accountHolderName || "Devangi Banshilal Barai"} without intermediary wallet delays.`,
+        },
+        {
+          icon: HeartHandshake,
+          title: "Universal UPI Compatibility",
+          desc: "Scan and pay using any UPI app: Google Pay, PhonePe, Paytm, BHIM, CRED, or any Indian mobile banking application.",
+        },
+        {
+          icon: Clock,
+          title: "5-Min Timed Session & Screenshot Audit",
+          desc: "Each payment window is protected by a 5-minute safety countdown and audited with instant screenshot receipt verification.",
+        },
+      ],
+      detailedSections: [
+        {
+          title: "1. Why Dynamic UPI QR Codes Are 100% Safe",
+          desc: "Traditional static QR codes require customers to manually key in the payment amount, which often leads to typographical errors, underpayments, or delayed order confirmations. Our studio checkout programmatically generates a unique, one-time upi://pay URI encoded into a high-density QR code. When you scan with any UPI app, the payable amount is fixed and cannot be tampered with or altered.",
+          tips: [
+            "Pre-calculated total includes product price, shipping charges, and applicable coupons",
+            "Contains a unique studio transaction reference (DRS-...) for immediate payment tracing",
+            "Operates natively inside your bank's authenticated security framework",
+          ],
+        },
+        {
+          title: "2. Verifying the Studio Payee Details",
+          desc: "Before entering your UPI PIN inside your banking app, always verify the recipient details displayed on your screen:",
+          tips: [
+            `Verified Payee Name: ${settings.accountHolderName || "Devangi Banshilal Barai"}`,
+            `Studio UPI ID: ${settings.upiId || "devangi0403@okaxis"}`,
+            "Transaction Note: Devangi Resin Studio - Order Reference",
+          ],
+        },
+        {
+          title: "3. The 5-Minute Safety Window & Animated Timer",
+          desc: "For your financial safety and inventory synchronization, every generated payment QR code is active for exactly 5 minutes (300 seconds), accompanied by a luxury circular gold progress indicator. If you are interrupted or your app times out, simply generate a fresh QR session — no stale transactions or duplicate debits are permitted.",
+        },
+        {
+          title: "4. Payment Proof & Instant WhatsApp Concierge Verification",
+          desc: "Once your payment completes, upload a screenshot displaying the 12-digit UPI Reference Number (UTR). Our studio instantly acknowledges your order on WhatsApp and cross-references the transaction in our merchant ledger before mold preparation and resin pouring begin.",
+          tips: [
+            "Ensure the UTR / UPI Reference ID and timestamp are visible in your screenshot",
+            "Orders remain marked 'Pending Verification' until our artisan team confirms bank settlement",
+            "Selecting 'Will Order Later' instantly preserves your cart without creating an order",
+          ],
+        },
+        {
+          title: "5. Zero PIN or Banking Data Storage Guarantee",
+          desc: "Devangi Resin Studio strictly complies with RBI digital payment privacy mandates. We NEVER ask for, receive, or store your UPI PIN, ATM PIN, bank account credentials, or card details. All financial authorization occurs exclusively inside your official bank or UPI app on your own personal device.",
+        },
+      ],
+      alertBox: {
+        title: "Artisan Studio Anti-Fraud Guarantee",
+        message:
+          "Devangi Resin Studio will NEVER call, SMS, or email you requesting your UPI PIN, OTP, or asking you to scan a 'Refund' or 'Collect Request' QR code. Payments are made ONLY through our official website checkout scanner or directly verified studio WhatsApp number.",
+        type: "note" as const,
+      },
+    },
   };
 
   const basePolicy = policyConfigs[type] || policyConfigs.shipping;
@@ -370,7 +448,7 @@ export default async function PolicyPage({ params }: PolicyPageProps) {
     highlights:
       Array.isArray(customConfig.highlights) && customConfig.highlights.length > 0
         ? customConfig.highlights.map((h: any, idx: number) => ({
-            icon: basePolicy.highlights[idx]?.icon || [Clock, Package, Truck, MessageCircle, ShieldCheck, Calendar, Sparkles, HeartHandshake, Sun, Droplets, ShieldAlert, Lock, FileText][idx % 13] || Sparkles,
+            icon: basePolicy.highlights[idx]?.icon || [Clock, Package, Truck, MessageCircle, ShieldCheck, Calendar, Sparkles, HeartHandshake, Sun, Droplets, ShieldAlert, Lock, FileText, QrCode][idx % 14] || Sparkles,
             title: h.title,
             desc: h.desc,
           }))
@@ -407,6 +485,7 @@ export default async function PolicyPage({ params }: PolicyPageProps) {
     { key: "care", label: "Resin Care Guide", icon: Sparkles },
     { key: "privacy", label: "Privacy Policy", icon: Lock },
     { key: "terms", label: "Terms of Sale", icon: FileText },
+    { key: "payment", label: "UPI & Payment Safety", icon: QrCode },
   ];
 
   return (

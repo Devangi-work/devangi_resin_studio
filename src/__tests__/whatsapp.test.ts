@@ -11,6 +11,7 @@ import {
   generateUpiQrCodeDataUrl,
   generatePaymentReference,
 } from "../lib/upi";
+import { defaultPolicyTemplates } from "../lib/policies-default";
 import { dbStore } from "../lib/db";
 
 test("WhatsApp Integration Test Suite", async (t) => {
@@ -457,5 +458,17 @@ test("WhatsApp Integration Test Suite", async (t) => {
     assert.ok(msg.includes("Payment Reference: DRS982109AK"));
     assert.ok(msg.includes("Payment Status: Pending Verification"));
     assert.ok(msg.includes("I have completed the payment. Please verify the transaction and confirm my order."));
+  });
+
+  await t.test("defaultPolicyTemplates includes comprehensive dynamic UPI QR payment policy", () => {
+    const paymentPolicy = defaultPolicyTemplates.payment;
+    assert.ok(paymentPolicy, "Payment policy template must exist");
+    assert.equal(paymentPolicy.key, "payment");
+    assert.ok(paymentPolicy.name.includes("Dynamic UPI QR Payment"));
+    assert.ok(paymentPolicy.statement.includes("Devangi Banshilal Barai"));
+    assert.ok(paymentPolicy.statement.includes("UPI PIN"));
+    assert.ok(paymentPolicy.highlights.length >= 4);
+    assert.ok(paymentPolicy.detailedSections.length >= 5);
+    assert.ok(paymentPolicy.alertBox.title.includes("Anti-Fraud"));
   });
 });

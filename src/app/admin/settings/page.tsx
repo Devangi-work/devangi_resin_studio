@@ -38,6 +38,7 @@ import {
   Video,
   BarChart3,
   Megaphone,
+  QrCode,
 } from "lucide-react";
 import { MediaPickerModal } from "@/components/admin/MediaPickerModal";
 import { getStoredAdminTheme, applyAdminTheme, AdminTheme } from "@/lib/admin-theme";
@@ -101,7 +102,7 @@ export default function AdminSettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
-  const [selectedPolicyType, setSelectedPolicyType] = useState<"shipping" | "returns" | "care" | "privacy" | "terms">("shipping");
+  const [selectedPolicyType, setSelectedPolicyType] = useState<"shipping" | "returns" | "care" | "privacy" | "terms" | "payment">("shipping");
 
   const getActivePolicyConfig = (type: string) => {
     const existing = settings.policyPagesConfig?.[type];
@@ -119,6 +120,7 @@ export default function AdminSettingsPage() {
     if (type === "care") legacyStatement = settings.careInstructionsDefault || "";
     if (type === "privacy") legacyStatement = settings.privacyPolicy || "";
     if (type === "terms") legacyStatement = settings.termsPolicy || "";
+    if (type === "payment") legacyStatement = settings.upiPolicy || "";
 
     const defaultTmpl = defaultPolicyTemplates[type];
     return {
@@ -142,6 +144,7 @@ export default function AdminSettingsPage() {
       if (selectedPolicyType === "care" && updated.statement !== undefined) legacyUpdates.careInstructionsDefault = updated.statement;
       if (selectedPolicyType === "privacy" && updated.statement !== undefined) legacyUpdates.privacyPolicy = updated.statement;
       if (selectedPolicyType === "terms" && updated.statement !== undefined) legacyUpdates.termsPolicy = updated.statement;
+      if (selectedPolicyType === "payment" && updated.statement !== undefined) legacyUpdates.upiPolicy = updated.statement;
 
       return {
         ...prev,
@@ -1998,17 +2001,27 @@ export default function AdminSettingsPage() {
                 <span>Terms</span>
                 <ExternalLink className="w-2.5 h-2.5" />
               </Link>
+              <span>•</span>
+              <Link
+                href="/policies/payment"
+                target="_blank"
+                className="inline-flex items-center space-x-1 text-[#8C6E79] hover:text-[#2C332D] underline font-medium"
+              >
+                <span>UPI Payment & Safety</span>
+                <ExternalLink className="w-2.5 h-2.5" />
+              </Link>
             </div>
           </div>
 
-          {/* 5 Policy Selection Tabs */}
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 bg-[#FAF8F5] p-2 rounded-xl border border-[#E8E0D5]">
+          {/* 6 Policy Selection Tabs */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 bg-[#FAF8F5] p-2 rounded-xl border border-[#E8E0D5]">
             {([
               { key: "shipping", label: "Shipping Policy", icon: Truck },
               { key: "returns", label: "Returns & Exchange", icon: RotateCcw },
               { key: "care", label: "Resin Care Guide", icon: Sparkles },
               { key: "privacy", label: "Privacy Policy", icon: Lock },
-              { key: "terms", label: "Terms & Conditions", icon: FileText },
+              { key: "terms", label: "Terms of Sale", icon: FileText },
+              { key: "payment", label: "UPI & Safety", icon: QrCode },
             ] as const).map((tab) => {
               const TabIcon = tab.icon;
               const isSelected = selectedPolicyType === tab.key;

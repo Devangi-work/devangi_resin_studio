@@ -10,6 +10,10 @@ import {
   Instagram,
   Lock,
   Sparkles,
+  QrCode,
+  ShieldCheck,
+  CheckCircle2,
+  ArrowRight,
 } from "lucide-react";
 
 export function Footer() {
@@ -204,6 +208,17 @@ export function Footer() {
                   Privacy Policy
                 </Link>
               </li>
+              <li>
+                <Link href="/policies/payment" className="hover:text-white transition-colors flex items-center space-x-1.5 text-[#FFDF78]">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#25D366] animate-pulse" />
+                  <span>UPI Payment & Safety</span>
+                </Link>
+              </li>
+              <li>
+                <Link href="/policies/terms" className="hover:text-white transition-colors">
+                  Terms & Conditions
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -229,11 +244,97 @@ export function Footer() {
           </div>
         </div>
 
+        {/* Dynamic UPI QR Payment & Security Banner */}
+        <div className="my-10 p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-[#2C121D] via-[#381624] to-[#2C121D] border border-[#D4AF37]/40 shadow-xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-72 h-72 bg-gradient-to-bl from-[#D4AF37]/10 to-transparent pointer-events-none rounded-bl-full" />
+          
+          <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+            <div className="space-y-3 max-w-2xl">
+              <div className="inline-flex items-center space-x-2 px-3.5 py-1 rounded-full bg-[#D4AF37]/15 border border-[#D4AF37]/40 text-[#FFDF78] text-[11px] font-bold tracking-wider uppercase">
+                <QrCode className="w-3.5 h-3.5 text-[#FFDF78]" />
+                <span>100% Safe Dynamic UPI QR Payments</span>
+              </div>
+              <h3 className="font-serif text-lg sm:text-xl font-bold text-[#FAF4EE] flex items-center gap-2">
+                <span>Direct, Instant &amp; Zero-Error Checkout</span>
+              </h3>
+              <p className="text-xs sm:text-sm text-[#D1BFC6] leading-relaxed">
+                Every purchase generates a unique, tamper-proof UPI QR code pre-filled with your exact payable amount. No manual typing, zero calculation errors, and zero third-party wallet delays. Direct bank-to-bank settlement to verified artisan payee <strong className="text-[#FAF4EE] font-medium">{settings?.accountHolderName || "Devangi Banshilal Barai"}</strong> ({settings?.upiId || "devangi0403@okaxis"}).
+              </p>
+              
+              {/* Trust Badges */}
+              <div className="pt-1 flex flex-wrap items-center gap-2 text-[11px] text-[#FFDF78]">
+                <span className="inline-flex items-center space-x-1.5 bg-[#230E16]/90 px-3 py-1 rounded-lg border border-[#4E2230]">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-[#25D366]" />
+                  <span>Pre-Filled Exact Amount</span>
+                </span>
+                <span className="inline-flex items-center space-x-1.5 bg-[#230E16]/90 px-3 py-1 rounded-lg border border-[#4E2230]">
+                  <ShieldCheck className="w-3.5 h-3.5 text-[#D4AF37]" />
+                  <span>5-Minute Protected Session</span>
+                </span>
+                <span className="inline-flex items-center space-x-1.5 bg-[#230E16]/90 px-3 py-1 rounded-lg border border-[#4E2230]">
+                  <Lock className="w-3.5 h-3.5 text-[#FFDF78]" />
+                  <span>Zero PIN or Banking Data Stored</span>
+                </span>
+              </div>
+            </div>
+
+            {/* Right Side: Supported UPI Apps & Policy Link */}
+            <div className="flex flex-col sm:flex-row lg:flex-col items-start lg:items-end justify-between gap-4 flex-shrink-0">
+              <div className="space-y-1.5 lg:text-right">
+                <span className="text-[10px] uppercase font-bold tracking-widest text-[#D4AF37] block">
+                  Accepted On All UPI Applications
+                </span>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="px-2.5 py-1 rounded-md bg-[#FAF4EE] text-[#230E16] text-[11px] font-bold shadow-xs">
+                    GPay
+                  </span>
+                  <span className="px-2.5 py-1 rounded-md bg-[#5f259f] text-white text-[11px] font-bold shadow-xs">
+                    PhonePe
+                  </span>
+                  <span className="px-2.5 py-1 rounded-md bg-[#002e6e] text-white text-[11px] font-bold shadow-xs">
+                    Paytm
+                  </span>
+                  <span className="px-2.5 py-1 rounded-md bg-[#00796b] text-white text-[11px] font-bold shadow-xs">
+                    BHIM
+                  </span>
+                  <span className="px-2.5 py-1 rounded-md bg-[#3A1823] text-[#FFDF78] border border-[#D4AF37]/50 text-[11px] font-bold shadow-xs">
+                    Any Bank UPI
+                  </span>
+                </div>
+              </div>
+
+              <Link
+                href="/policies/payment"
+                className="inline-flex items-center space-x-1.5 text-xs font-semibold text-[#FFDF78] hover:text-white underline underline-offset-4 decoration-[#D4AF37] transition-colors"
+              >
+                <span>Read Full UPI Payment &amp; Safety Policy</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+          </div>
+        </div>
+
         {/* Bottom Trust & Copyright */}
-        <div className="pt-8 border-t border-[#4E2230] flex flex-col items-center justify-center text-center text-xs text-[#D1BFC6] space-y-2">
+        <div className="pt-8 border-t border-[#4E2230] flex flex-col md:flex-row items-center justify-between text-xs text-[#D1BFC6] gap-4">
           <p className="flex flex-wrap items-center justify-center gap-1.5 font-medium tracking-wide">
             <span>© 2026 {settings?.storeName || "Devangi Resin Studio"}. Handcrafted with Love in India.</span>
           </p>
+          <div className="flex flex-wrap items-center justify-center gap-3 text-[11px]">
+            <span className="flex items-center space-x-1 text-[#25D366]">
+              <ShieldCheck className="w-3.5 h-3.5" />
+              <span>Direct Verified Payee</span>
+            </span>
+            <span className="text-[#4E2230]">•</span>
+            <span className="flex items-center space-x-1 text-[#FFDF78]">
+              <Lock className="w-3.5 h-3.5" />
+              <span>256-Bit SSL Encrypted</span>
+            </span>
+            <span className="text-[#4E2230]">•</span>
+            <span className="flex items-center space-x-1 text-[#FAF4EE]">
+              <QrCode className="w-3.5 h-3.5 text-[#D4AF37]" />
+              <span>Dynamic UPI Scanner</span>
+            </span>
+          </div>
         </div>
       </div>
     </footer>
