@@ -86,6 +86,7 @@ export default function DynamicUpiPaymentModal({
     orderNumber?: string | null;
     whatsappUrl?: string;
     paymentReference: string;
+    amountPaid: number;
   } | null>(null);
 
   // Screenshot upload states
@@ -97,6 +98,7 @@ export default function DynamicUpiPaymentModal({
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const hasInitializedRef = useRef<boolean>(false);
 
   const activeUpiId = (upiId || "").trim();
   const activePayeeName = (accountHolderName || "").trim();
@@ -104,6 +106,9 @@ export default function DynamicUpiPaymentModal({
 
   // Initialize or regenerate a new payment session
   const initializeSession = async () => {
+    // If order has already succeeded, do not overwrite or reset success screen
+    if (successData) return;
+
     const newRef = generatePaymentReference();
     setPaymentReference(newRef);
     setTimeLeft(PAYMENT_SESSION_DURATION_SECONDS);
@@ -133,19 +138,23 @@ export default function DynamicUpiPaymentModal({
     }
   };
 
-  // Reset and start countdown timer on modal open
+  // Reset and start countdown timer on modal open (transition from false to true only)
   useEffect(() => {
     if (!isOpen) {
       if (timerRef.current) clearInterval(timerRef.current);
+      hasInitializedRef.current = false;
       return;
     }
 
-    initializeSession();
+    if (!hasInitializedRef.current) {
+      hasInitializedRef.current = true;
+      initializeSession();
+    }
 
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [isOpen, payableAmount, activeUpiId, activePayeeName]);
+  }, [isOpen]);
 
   // Countdown timer interval (60s -> 0s)
   useEffect(() => {
@@ -302,6 +311,7 @@ export default function DynamicUpiPaymentModal({
             orderNumber: result.orderNumber || null,
             whatsappUrl: result.whatsappUrl,
             paymentReference,
+            amountPaid: payableAmount,
           });
         }
       } else if (selectedOption === "later") {
@@ -502,7 +512,7 @@ export default function DynamicUpiPaymentModal({
               <div className="flex items-center justify-between pb-2 border-b border-[#F4EBE6]">
                 <span className="text-xs text-[#8C827A] font-medium">Amount Paid:</span>
                 <span className="text-sm font-bold text-[#166534]">
-                  ₹{payableAmount.toFixed(2)}
+                  ₹{successData.amountPaid.toFixed(2)}
                 </span>
               </div>
 

@@ -47,6 +47,15 @@ export function CartDrawer() {
   const [siteSettings, setSiteSettings] = useState<any>(null);
   const [redirectingWhatsApp, setRedirectingWhatsApp] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [checkoutModalData, setCheckoutModalData] = useState<{
+    items: typeof items;
+    subtotal: number;
+    shippingCharge: number;
+    discount: number;
+    finalTotal: number;
+    appliedCouponCode: string | null;
+    customer: any;
+  } | null>(null);
   const [orderLaterNotice, setOrderLaterNotice] = useState<string | null>(null);
 
   useEffect(() => {
@@ -60,7 +69,7 @@ export function CartDrawer() {
           setCustomer(null);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
 
     // Fetch site settings
     fetch("/api/settings")
@@ -73,7 +82,7 @@ export function CartDrawer() {
           }
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   }, [isCartOpen]);
 
   // Automatically determine city and shipping rate from the customer's completed profile
@@ -144,18 +153,38 @@ export function CartDrawer() {
 
   const triggerWhatsAppCheckout = async (cust?: any) => {
     if (items.length === 0) return;
+    const currentCustomer = cust || customer;
     if (cust) setCustomer(cust);
+    setCheckoutModalData({
+      items: [...items],
+      subtotal,
+      shippingCharge,
+      discount,
+      finalTotal,
+      appliedCouponCode: appliedCoupon?.code || null,
+      customer: currentCustomer,
+    });
     setIsPaymentModalOpen(true);
   };
 
   const handlePaidSubmit = async (paymentReference: string, screenshotUrl?: string | null) => {
+    const dataToSubmit = checkoutModalData || {
+      items,
+      subtotal,
+      shippingCharge,
+      discount,
+      finalTotal,
+      appliedCouponCode: appliedCoupon?.code || null,
+      customer,
+    };
+
     let createdOrderNumber: string | null = null;
     try {
       const res = await fetch("/api/orders/whatsapp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          items: items.map((i) => ({
+          items: dataToSubmit.items.map((i) => ({
             productId: i.productId || null,
             name: i.name,
             price: i.price,
@@ -168,11 +197,11 @@ export function CartDrawer() {
             giftWrapped: Boolean(i.giftWrapped),
             giftWrapCharge: i.giftWrapped ? Number(i.giftWrapCharge || 0) : 0,
           })),
-          subtotal,
-          discountAmount: discount,
-          couponCode: appliedCoupon?.code || null,
-          shippingCharge,
-          finalTotal,
+          subtotal: dataToSubmit.subtotal,
+          discountAmount: dataToSubmit.discount,
+          couponCode: dataToSubmit.appliedCouponCode,
+          shippingCharge: dataToSubmit.shippingCharge,
+          finalTotal: dataToSubmit.finalTotal,
           paymentReference,
           paymentScreenshotUrl: screenshotUrl || null,
           orderNotes: "Cart Drawer Checkout via Dynamic UPI QR",
@@ -187,7 +216,7 @@ export function CartDrawer() {
     }
 
     const message = buildCartWhatsAppMessage({
-      items: items.map((i) => ({
+      items: dataToSubmit.items.map((i) => ({
         name: i.name,
         quantity: i.quantity,
         price: i.price,
@@ -197,18 +226,20 @@ export function CartDrawer() {
         giftWrapCharge: i.giftWrapCharge,
         referenceImageUrl: i.referenceImageUrl,
       })),
-      subtotal,
-      discountAmount: discount,
-      couponCode: appliedCoupon?.code || null,
-      shippingCharge,
-      finalTotal,
-      customer,
+      subtotal: dataToSubmit.subtotal,
+      discountAmount: dataToSubmit.discount,
+      couponCode: dataToSubmit.appliedCouponCode,
+      shippingCharge: dataToSubmit.shippingCharge,
+      finalTotal: dataToSubmit.finalTotal,
+      customer: dataToSubmit.customer,
       orderNumber: createdOrderNumber,
       paymentReference,
       paymentStatus: "Pending Verification",
       paymentScreenshotUrl: screenshotUrl || null,
     });
 
+    // Cart management for Cart Checkout + Paid:
+    // Remove the purchased cart items after successful submission of the Paid option.
     clearCart();
     const url = getWhatsAppUrl(adminPhone, message);
     return {
@@ -219,7 +250,9 @@ export function CartDrawer() {
 
   const handleWillOrderLater = () => {
     // Cart Checkout: Keep all existing cart products and quantities.
+    // Do not remove any products. Do not clear the cart.
     setIsPaymentModalOpen(false);
+    setCheckoutModalData(null);
     setOrderLaterNotice("Your items have been saved in your cart! You can continue shopping and place your order whenever you're ready.");
     setTimeout(() => setOrderLaterNotice(null), 6000);
   };
@@ -236,7 +269,7 @@ export function CartDrawer() {
         triggerWhatsAppCheckout(data.customer);
         return;
       }
-    } catch {}
+    } catch { }
 
     // 2. Not logged in -> close cart and redirect to login
     setIsCartOpen(false);
@@ -256,7 +289,7 @@ export function CartDrawer() {
 
       <div className="fixed inset-y-0 right-0 max-w-full flex pl-10">
         <div className="w-screen max-w-md bg-[#FCFAF8] shadow-2xl flex flex-col border-l border-[#EFE3E7]">
-          
+
           {/* Drawer Header */}
           <div className="px-6 py-5 bg-white border-b border-[#EFE3E7] flex items-center justify-between">
             <div className="flex items-center space-x-2">
@@ -489,10 +522,10 @@ export function CartDrawer() {
                             {item.festivalDiscountType === "fixed" && item.festivalDiscountAmount
                               ? `₹${Number(item.festivalDiscountAmount)} Festive Deal`
                               : item.festivalDiscountPercentage
-                              ? `${String(item.festivalDiscountPercentage).replace(/%/g, "")}% Festive Deal`
-                              : item.festivalDiscountAmount
-                              ? `₹${Number(item.festivalDiscountAmount)} Festive Deal`
-                              : "Festive Deal"}
+                                ? `${String(item.festivalDiscountPercentage).replace(/%/g, "")}% Festive Deal`
+                                : item.festivalDiscountAmount
+                                  ? `₹${Number(item.festivalDiscountAmount)} Festive Deal`
+                                  : "Festive Deal"}
                           </span>
                         </span>
                       )}
@@ -539,7 +572,7 @@ export function CartDrawer() {
           {/* Drawer Footer with Coupon & Checkout */}
           {items.length > 0 && (
             <div className="p-6 bg-white border-t border-[#E8E0D5] space-y-4">
-              
+
               {/* Coupon Code Section */}
               {appliedCoupon ? (
                 <div className="flex items-center justify-between bg-[#E8EFE8] text-[#2E7D32] text-xs px-3 py-2 rounded-lg font-medium border border-[#C5D8C5]">
@@ -688,20 +721,24 @@ export function CartDrawer() {
       )}
 
       {/* Dynamic UPI Payment Popup */}
-      {isPaymentModalOpen && (
+      {isPaymentModalOpen && checkoutModalData && (
         <DynamicUpiPaymentModal
           isOpen={isPaymentModalOpen}
-          onClose={() => setIsPaymentModalOpen(false)}
-          payableAmount={finalTotal}
-          subtotal={subtotal}
-          shippingCharge={shippingCharge}
-          discountAmount={discount}
-          couponCode={appliedCoupon?.code || null}
+          onClose={() => {
+            setIsPaymentModalOpen(false);
+            setCheckoutModalData(null);
+            setIsCartOpen(false);
+          }}
+          payableAmount={checkoutModalData.finalTotal}
+          subtotal={checkoutModalData.subtotal}
+          shippingCharge={checkoutModalData.shippingCharge}
+          discountAmount={checkoutModalData.discount}
+          couponCode={checkoutModalData.appliedCouponCode}
           upiId={siteSettings?.upiId}
           accountHolderName={siteSettings?.accountHolderName}
           storeName={siteSettings?.storeName || "Devangi Resin Studio"}
-          customer={customer}
-          itemsSummary={items.map((i) => ({
+          customer={checkoutModalData.customer}
+          itemsSummary={checkoutModalData.items.map((i) => ({
             name: i.name,
             quantity: i.quantity,
             price: i.price,

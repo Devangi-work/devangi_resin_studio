@@ -1287,7 +1287,10 @@ export function ProductDetailView({ product, relatedProducts, settings: initialS
       {isPaymentModalOpen && paymentModalData && (
         <DynamicUpiPaymentModal
           isOpen={isPaymentModalOpen}
-          onClose={() => setIsPaymentModalOpen(false)}
+          onClose={() => {
+            setIsPaymentModalOpen(false);
+            setPaymentModalData(null);
+          }}
           payableAmount={paymentModalData.finalAmount}
           subtotal={paymentModalData.productSubtotal}
           shippingCharge={paymentModalData.shippingFee}

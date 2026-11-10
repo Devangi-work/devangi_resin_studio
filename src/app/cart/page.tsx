@@ -48,6 +48,15 @@ function CartContent() {
   const [adminPhone, setAdminPhone] = useState("+91 9967313355");
   const [redirectingWhatsApp, setRedirectingWhatsApp] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [checkoutModalData, setCheckoutModalData] = useState<{
+    items: typeof items;
+    subtotal: number;
+    shippingCharge: number;
+    discount: number;
+    finalTotal: number;
+    appliedCouponCode: string | null;
+    customer: any;
+  } | null>(null);
   const [orderLaterNotice, setOrderLaterNotice] = useState<string | null>(null);
 
   const configuredCityRates: Array<{ id: string; name: string; charge: number | string }> =
@@ -142,18 +151,38 @@ function CartContent() {
 
   const triggerWhatsAppCheckout = async (cust?: any) => {
     if (items.length === 0) return;
+    const currentCustomer = cust || customer;
     if (cust) setCustomer(cust);
+    setCheckoutModalData({
+      items: [...items],
+      subtotal,
+      shippingCharge,
+      discount,
+      finalTotal,
+      appliedCouponCode: appliedCoupon?.code || null,
+      customer: currentCustomer,
+    });
     setIsPaymentModalOpen(true);
   };
 
   const handlePaidSubmit = async (paymentReference: string, screenshotUrl?: string | null) => {
+    const dataToSubmit = checkoutModalData || {
+      items,
+      subtotal,
+      shippingCharge,
+      discount,
+      finalTotal,
+      appliedCouponCode: appliedCoupon?.code || null,
+      customer,
+    };
+
     let createdOrderNumber: string | null = null;
     try {
       const res = await fetch("/api/orders/whatsapp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          items: items.map((i) => ({
+          items: dataToSubmit.items.map((i) => ({
             productId: i.productId || null,
             name: i.name,
             price: i.price,
@@ -166,11 +195,11 @@ function CartContent() {
             giftWrapped: Boolean(i.giftWrapped),
             giftWrapCharge: i.giftWrapped ? Number(i.giftWrapCharge || 0) : 0,
           })),
-          subtotal,
-          discountAmount: discount,
-          couponCode: appliedCoupon?.code || null,
-          shippingCharge,
-          finalTotal,
+          subtotal: dataToSubmit.subtotal,
+          discountAmount: dataToSubmit.discount,
+          couponCode: dataToSubmit.appliedCouponCode,
+          shippingCharge: dataToSubmit.shippingCharge,
+          finalTotal: dataToSubmit.finalTotal,
           paymentReference,
           paymentScreenshotUrl: screenshotUrl || null,
           orderNotes: "Cart Checkout via Dynamic UPI QR",
@@ -185,7 +214,7 @@ function CartContent() {
     }
 
     const message = buildCartWhatsAppMessage({
-      items: items.map((i) => ({
+      items: dataToSubmit.items.map((i) => ({
         name: i.name,
         quantity: i.quantity,
         price: i.price,
@@ -195,12 +224,12 @@ function CartContent() {
         giftWrapCharge: i.giftWrapCharge,
         referenceImageUrl: i.referenceImageUrl,
       })),
-      subtotal,
-      discountAmount: discount,
-      couponCode: appliedCoupon?.code || null,
-      shippingCharge,
-      finalTotal,
-      customer,
+      subtotal: dataToSubmit.subtotal,
+      discountAmount: dataToSubmit.discount,
+      couponCode: dataToSubmit.appliedCouponCode,
+      shippingCharge: dataToSubmit.shippingCharge,
+      finalTotal: dataToSubmit.finalTotal,
+      customer: dataToSubmit.customer,
       orderNumber: createdOrderNumber,
       paymentReference,
       paymentStatus: "Pending Verification",
@@ -221,6 +250,7 @@ function CartContent() {
     // Cart Checkout: Keep all existing cart products. Preserve their quantities.
     // Do not remove any products. Do not clear the cart. Do not modify the cart contents.
     setIsPaymentModalOpen(false);
+    setCheckoutModalData(null);
     setOrderLaterNotice("Your items have been saved in your cart! You can continue shopping and place your order whenever you're ready.");
     setTimeout(() => setOrderLaterNotice(null), 6000);
   };
@@ -638,20 +668,23 @@ function CartContent() {
       )}
 
       {/* Dynamic UPI Payment Popup */}
-      {isPaymentModalOpen && (
+      {isPaymentModalOpen && checkoutModalData && (
         <DynamicUpiPaymentModal
           isOpen={isPaymentModalOpen}
-          onClose={() => setIsPaymentModalOpen(false)}
-          payableAmount={finalTotal}
-          subtotal={subtotal}
-          shippingCharge={shippingCharge}
-          discountAmount={discount}
-          couponCode={appliedCoupon?.code || null}
+          onClose={() => {
+            setIsPaymentModalOpen(false);
+            setCheckoutModalData(null);
+          }}
+          payableAmount={checkoutModalData.finalTotal}
+          subtotal={checkoutModalData.subtotal}
+          shippingCharge={checkoutModalData.shippingCharge}
+          discountAmount={checkoutModalData.discount}
+          couponCode={checkoutModalData.appliedCouponCode}
           upiId={siteSettings?.upiId}
           accountHolderName={siteSettings?.accountHolderName}
           storeName={siteSettings?.storeName || "Devangi Resin Studio"}
-          customer={customer}
-          itemsSummary={items.map((i) => ({
+          customer={checkoutModalData.customer}
+          itemsSummary={checkoutModalData.items.map((i) => ({
             name: i.name,
             quantity: i.quantity,
             price: i.price,
