@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useCart } from "@/lib/store/cart";
 import { resolveShippingCharge } from "@/lib/shipping";
 import { clarityEvent, claritySet, clarityIdentify } from "@/lib/analytics/clarity";
+import { buildUpiPaymentUri, generateUpiQrCodeDataUrl } from "@/lib/upi";
 import {
   Lock,
   ArrowRight,
@@ -191,19 +192,29 @@ export default function CheckoutPage() {
   const activePayeeName = settings.accountHolderName || "Devangi Banshilal Barai";
   const activePhone = (settings.contactPhone || settings.whatsappNumber || "9967313355").replace(/[^0-9]/g, "").slice(-10);
 
-  // Standard UPI URI for QR Code scanning
-  const upiIntentUri = `upi://pay?pa=${encodeURIComponent(
-    activeUpiId
-  )}&pn=${encodeURIComponent(
-    activePayeeName
-  )}&am=${finalTotal.toFixed(2)}&cu=INR&tn=Order%20Payment`;
+  // Dynamic UPI payment URI and Programmatic QR code generation with exact pre-filled amount
+  const [dynamicQrUrl, setDynamicQrUrl] = useState<string>("");
 
-  // Dynamic QR Code generation if admin has not uploaded a static image
-  const dynamicQrUrl = settings.upiQrCodeUrl
-    ? settings.upiQrCodeUrl
-    : `https://api.qrserver.com/v1/create-qr-code/?size=250x250&margin=8&data=${encodeURIComponent(
-        upiIntentUri
-      )}`;
+  useEffect(() => {
+    let cancelled = false;
+    const uri = buildUpiPaymentUri({
+      upiId: activeUpiId,
+      accountHolderName: activePayeeName,
+      amount: finalTotal,
+      orderReference: "Web Checkout Payment",
+    });
+    generateUpiQrCodeDataUrl(uri)
+      .then((url) => {
+        if (!cancelled) setDynamicQrUrl(url);
+      })
+      .catch((err) => {
+        console.error("Failed to generate checkout dynamic QR:", err);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeUpiId, activePayeeName, finalTotal]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -1395,17 +1406,24 @@ export default function CheckoutPage() {
               {/* QR Code Scan Option */}
               <div className="flex flex-col items-center justify-center p-3 bg-white rounded-xl border border-[#E8E0D5] shadow-xs">
                 <div className="w-40 h-40 bg-white p-2 rounded-lg border border-[#F0E6DF] flex items-center justify-center">
-                  <img
-                    src={dynamicQrUrl}
-                    alt="Scan UPI QR Code to Pay"
-                    className="w-full h-full object-contain"
-                  />
+                  {dynamicQrUrl ? (
+                    <img
+                      src={dynamicQrUrl}
+                      alt="Scan Dynamic UPI QR Code to Pay"
+                      className="w-full h-full object-contain"
+                    />
+                  ) : (
+                    <div className="flex flex-col items-center justify-center space-y-1">
+                      <div className="w-6 h-6 border-2 border-[#D4AF37] border-t-transparent rounded-full animate-spin" />
+                      <span className="text-[10px] text-[#8C7A72]">Generating QR...</span>
+                    </div>
+                  )}
                 </div>
                 <p className="text-[11px] font-semibold text-[#2C332D] mt-2 text-center">
                   Pay to: <span className="text-[#B8972E]">{activePayeeName}</span>
                 </p>
                 <p className="text-[10px] text-[#8C7A72] text-center">
-                  Scan and enter amount: <strong className="text-[#2C332D]">₹{finalTotal.toFixed(2)}</strong>
+                  Pre-filled amount: <strong className="text-[#2C332D]">₹{finalTotal.toFixed(2)}</strong> (Automatic on scan)
                 </p>
               </div>
 

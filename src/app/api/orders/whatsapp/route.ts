@@ -26,6 +26,9 @@ const createWhatsAppOrderSchema = z.object({
   subtotal: z.number().optional(),
   finalTotal: z.number().optional(),
   orderNotes: z.string().optional().default("WhatsApp 1-Click Buy / Checkout"),
+  paymentReference: z.string().optional().nullable(),
+  upiTransactionId: z.string().optional().nullable(),
+  paymentScreenshotUrl: z.string().optional().nullable(),
 });
 
 export async function POST(request: NextRequest) {
@@ -55,7 +58,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { items, couponCode, discountAmount, shippingCharge, subtotal: reqSubtotal, finalTotal: reqFinalTotal, orderNotes } = result.data;
+    const {
+      items,
+      couponCode,
+      discountAmount,
+      shippingCharge,
+      subtotal: reqSubtotal,
+      finalTotal: reqFinalTotal,
+      orderNotes,
+      paymentReference,
+      upiTransactionId,
+      paymentScreenshotUrl,
+    } = result.data;
 
     let calculatedSubtotal = 0;
     const formattedItems = items.map((item) => {
@@ -107,6 +121,8 @@ export async function POST(request: NextRequest) {
       shippingCountry: customer.addressLine1 ? (customer.country || "India") : null,
       orderSource: "whatsapp",
       paymentMethod: "upi",
+      upiTransactionId: paymentReference || upiTransactionId || null,
+      paymentScreenshotUrl: paymentScreenshotUrl || null,
       paymentStatus: "unpaid",
       orderStatus: "waiting",
       subtotal,

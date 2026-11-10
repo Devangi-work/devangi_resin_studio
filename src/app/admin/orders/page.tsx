@@ -3169,34 +3169,56 @@ export default function AdminOrdersPage() {
                   )}
 
                   {selectedOrder.paymentScreenshotUrl ? (
-                    <div className="flex items-center space-x-3 bg-white p-2.5 rounded-xl border border-[#E8E0D5]">
-                      <button
-                        type="button"
-                        onClick={() => setViewingScreenshotModal(selectedOrder.paymentScreenshotUrl)}
-                        className="group relative block w-14 h-14 rounded-lg overflow-hidden border border-[#E8E0D5] shrink-0 cursor-pointer"
-                        title="Click to view full image"
-                      >
+                    <div className="bg-white p-3.5 rounded-2xl border border-[#E8E0D5] space-y-3 shadow-xs">
+                      <div className="flex items-center justify-between border-b border-[#F0EAE1] pb-2">
+                        <span className="text-[11px] font-bold text-[#166534] bg-[#E8EFE8] px-2.5 py-0.5 rounded-full border border-[#C5D8C5] flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3 text-[#2E7D32]" />
+                          <span>Customer Payment Screenshot</span>
+                        </span>
+                        {selectedOrder.upiTransactionId && (
+                          <span className="text-[10px] font-mono font-semibold text-[#8C7A72]">
+                            Ref: {selectedOrder.upiTransactionId}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Large Screenshot Preview Card */}
+                      <div className="relative w-full h-56 rounded-xl overflow-hidden border border-[#E8E0D5] bg-[#FAF8F5] flex items-center justify-center group">
                         <img
                           src={selectedOrder.paymentScreenshotUrl}
-                          alt="Payment Receipt"
-                          className="w-full h-full object-cover group-hover:scale-105 transition"
+                          alt="Customer Payment Receipt"
+                          className="w-full h-full object-contain group-hover:scale-102 transition duration-300"
                         />
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition">
-                          <Eye className="w-4 h-4 text-white" />
-                        </div>
-                      </button>
-                      <div className="flex-1 min-w-0">
+                        <button
+                          type="button"
+                          onClick={() => setViewingScreenshotModal(selectedOrder.paymentScreenshotUrl)}
+                          className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition cursor-pointer"
+                        >
+                          <span className="px-3.5 py-1.5 bg-white text-[#2C332D] text-xs font-bold rounded-xl shadow-lg flex items-center gap-1.5">
+                            <Eye className="w-4 h-4 text-[#2E7D32]" />
+                            <span>Click to Zoom / Inspect Proof</span>
+                          </span>
+                        </button>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-1">
                         <button
                           type="button"
                           onClick={() => setViewingScreenshotModal(selectedOrder.paymentScreenshotUrl)}
                           className="text-xs font-bold text-[#2E7D32] hover:underline flex items-center gap-1 cursor-pointer"
                         >
                           <Eye className="w-3.5 h-3.5" />
-                          <span>View Receipt Screenshot</span>
+                          <span>View Full Lightbox</span>
                         </button>
-                        <p className="text-[10px] text-[#8C7A72] mt-0.5">
-                          Tap thumbnail to inspect payment proof in full resolution
-                        </p>
+                        <a
+                          href={selectedOrder.paymentScreenshotUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[11px] font-semibold text-[#800020] hover:underline flex items-center gap-1"
+                        >
+                          <ExternalLink className="w-3 h-3" />
+                          <span>Open in New Tab</span>
+                        </a>
                       </div>
                     </div>
                   ) : (

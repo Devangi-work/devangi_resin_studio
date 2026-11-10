@@ -37,6 +37,13 @@ export function buildSingleProductWhatsAppMessage(params: {
     phone?: string;
   } | null;
   orderNumber?: string | null;
+  shippingCharge?: number;
+  discountAmount?: number;
+  couponCode?: string | null;
+  paymentReference?: string | null;
+  paymentStatus?: string | null;
+  paymentScreenshotUrl?: string | null;
+  finalTotal?: number;
 }): string {
   const {
     product,
@@ -49,10 +56,88 @@ export function buildSingleProductWhatsAppMessage(params: {
     referenceImageUrl,
     customer,
     orderNumber,
+    shippingCharge,
+    discountAmount = 0,
+    couponCode,
+    paymentReference,
+    paymentStatus,
+    paymentScreenshotUrl,
+    finalTotal,
   } = params;
 
   const giftTotal = giftWrapped ? giftWrapCharge * quantity : 0;
   const totalAmount = unitPrice * quantity + giftTotal;
+
+  // Dedicated format for Dynamic UPI Payment Confirmation flow
+  if (paymentReference || paymentStatus) {
+    let msg = `*ORDER CONFIRMATION - DEVANGI RESIN STUDIO*\n\n`;
+    msg += `Hello Devangi Resin Studio,\n\n`;
+    msg += `I would like to confirm my order.\n\n`;
+    msg += `*Order Details:*\n`;
+    msg += `Product: ${product.name}\n`;
+    if (Array.isArray(personalizationDetails?.selectedVariants) && personalizationDetails.selectedVariants.length > 0) {
+      personalizationDetails.selectedVariants.forEach((v: any) => {
+        const adj = Number(v.priceAdjustment) > 0 ? ` (+₹${Number(v.priceAdjustment).toFixed(2)})` : "";
+        msg += `• ${v.groupTitle || "Option"}: ${v.name}${adj}\n`;
+      });
+    } else if (variantName) {
+      msg += `Variant: ${variantName}\n`;
+    }
+    msg += `Quantity: ${quantity}\n`;
+    msg += `Unit Price: ₹${unitPrice.toFixed(2)}\n`;
+    if (giftWrapped) {
+      msg += `Boutique Gift Packaging: Yes (+₹${giftTotal.toFixed(2)})\n`;
+    }
+    if (personalizationDetails?.customName) {
+      msg += `Custom Name: "${personalizationDetails.customName}"\n`;
+    }
+    if (personalizationDetails?.initials) {
+      msg += `Initials: ${personalizationDetails.initials}\n`;
+    }
+    if (personalizationDetails?.color) {
+      msg += `Color: ${personalizationDetails.color}\n`;
+    }
+    if (personalizationDetails?.design) {
+      msg += `Design: ${personalizationDetails.design}\n`;
+    }
+    if (personalizationDetails?.notes) {
+      msg += `Notes: ${personalizationDetails.notes}\n`;
+    }
+    if (referenceImageUrl) {
+      msg += `Reference Photo: ${referenceImageUrl}\n`;
+    }
+    if (product.sku) {
+      msg += `SKU: ${product.sku}\n`;
+    }
+    msg += `Product Total: ₹${totalAmount.toFixed(2)}\n`;
+    if (shippingCharge !== undefined) {
+      msg += `Shipping: ${shippingCharge === 0 ? "FREE" : `₹${shippingCharge.toFixed(2)}`}\n`;
+    }
+    if (discountAmount > 0) {
+      msg += `Discount: ₹${discountAmount.toFixed(2)}${couponCode ? ` (${couponCode})` : ""}\n`;
+    }
+    const resolvedFinal = finalTotal !== undefined ? finalTotal : Math.max(0, totalAmount + (shippingCharge || 0) - discountAmount);
+    msg += `Final Payable Amount: ₹${resolvedFinal.toFixed(2)}\n\n`;
+
+    msg += `Payment Reference: ${paymentReference || orderNumber || "PENDING"}\n`;
+    msg += `Payment Status: ${paymentStatus || "Pending Verification"}\n`;
+    if (paymentScreenshotUrl) {
+      msg += `Payment Screenshot Proof: ${paymentScreenshotUrl}\n`;
+    }
+    msg += `\n`;
+
+    msg += `*Customer Details:*\n`;
+    msg += `• Name: ${customer?.name || "Customer"}\n`;
+    if (customer?.phone) {
+      msg += `• Phone: ${customer.phone}\n`;
+    }
+    if (customer?.email) {
+      msg += `• Email: ${customer.email}\n`;
+    }
+
+    msg += `\nI have completed the payment. Please verify the transaction and confirm my order.`;
+    return msg;
+  }
 
   let msg = `*ORDER INQUIRY - DEVANGI RESIN STUDIO*\n\n`;
   msg += `Hello Devangi! I would like to place an order for this handcrafted piece:\n\n`;
@@ -145,6 +230,9 @@ export function buildCartWhatsAppMessage(params: {
     state?: string;
   } | null;
   orderNumber?: string | null;
+  paymentReference?: string | null;
+  paymentStatus?: string | null;
+  paymentScreenshotUrl?: string | null;
 }): string {
   const {
     items,
@@ -155,7 +243,91 @@ export function buildCartWhatsAppMessage(params: {
     finalTotal,
     customer,
     orderNumber,
+    paymentReference,
+    paymentStatus,
+    paymentScreenshotUrl,
   } = params;
+
+  // Dedicated format for Dynamic UPI Payment Confirmation flow
+  if (paymentReference || paymentStatus) {
+    let msg = `*ORDER CONFIRMATION - DEVANGI RESIN STUDIO*\n\n`;
+    msg += `Hello Devangi Resin Studio,\n\n`;
+    msg += `I would like to confirm my order.\n\n`;
+    if (paymentReference || orderNumber) {
+      msg += `*Order Reference:* ${paymentReference || orderNumber}\n\n`;
+    }
+    msg += `*ITEMS ORDERED (${items.length}):*\n`;
+    msg += `---------------------------------\n`;
+
+    items.forEach((item, idx) => {
+      const itemTotal = (item.price + (item.giftWrapped ? item.giftWrapCharge || 0 : 0)) * item.quantity;
+      msg += `${idx + 1}. *${item.name}*\n`;
+      if (Array.isArray(item.personalizationDetails?.selectedVariants) && item.personalizationDetails.selectedVariants.length > 0) {
+        msg += `   • Selected Variants:\n`;
+        item.personalizationDetails.selectedVariants.forEach((v: any) => {
+          const adj = Number(v.priceAdjustment) > 0 ? ` (+₹${Number(v.priceAdjustment).toFixed(2)})` : "";
+          msg += `     - ${v.groupTitle || "Option"}: ${v.name}${adj}\n`;
+        });
+      } else if (item.variantName) {
+        msg += `   • Variant: ${item.variantName}\n`;
+      }
+      msg += `   • Qty: ${item.quantity} × ₹${item.price.toFixed(2)} = ₹${(item.price * item.quantity).toFixed(2)}\n`;
+      if (item.giftWrapped) {
+        msg += `   • Gift Packaging: Yes (+₹${((item.giftWrapCharge || 0) * item.quantity).toFixed(2)})\n`;
+      }
+      if (item.personalizationDetails?.color) {
+        msg += `   • Color Theme: ${item.personalizationDetails.color}\n`;
+      }
+      if (item.personalizationDetails?.customName) {
+        msg += `   • Custom Name: "${item.personalizationDetails.customName}"\n`;
+      }
+      if (item.personalizationDetails?.initials) {
+        msg += `   • Monogram Initials: ${item.personalizationDetails.initials}\n`;
+      }
+      if (item.personalizationDetails?.design) {
+        msg += `   • Design: ${item.personalizationDetails.design}\n`;
+      }
+      if (item.personalizationDetails?.notes) {
+        msg += `   • Notes: ${item.personalizationDetails.notes}\n`;
+      }
+      if (item.referenceImageUrl) {
+        msg += `   • Reference Photo (Blob URL): ${item.referenceImageUrl}\n`;
+      }
+      msg += `   • Item Total: ₹${itemTotal.toFixed(2)}\n\n`;
+    });
+
+    msg += `---------------------------------\n`;
+    msg += `*ORDER SUMMARY:*\n`;
+    msg += `• Items Subtotal: ₹${subtotal.toFixed(2)}\n`;
+    if (discountAmount > 0) {
+      msg += `• Coupon Savings (${couponCode || "DISCOUNT"}): -₹${discountAmount.toFixed(2)}\n`;
+    }
+    msg += `• Shipping: ${shippingCharge === 0 ? "FREE (Complimentary Insured Shipping)" : `₹${shippingCharge.toFixed(2)}`}\n`;
+    msg += `• *Final Payable Amount: ₹${finalTotal.toFixed(2)}*\n\n`;
+
+    msg += `Payment Reference: ${paymentReference || orderNumber || "PENDING"}\n`;
+    msg += `Payment Status: ${paymentStatus || "Pending Verification"}\n`;
+    if (paymentScreenshotUrl) {
+      msg += `Payment Screenshot Proof: ${paymentScreenshotUrl}\n`;
+    }
+    msg += `\n`;
+
+    msg += `*CUSTOMER DETAILS:*\n`;
+    msg += `• Name: ${customer?.name || "Customer"}\n`;
+    if (customer?.phone) {
+      msg += `• Phone: ${customer.phone}\n`;
+    }
+    if (customer?.email) {
+      msg += `• Email: ${customer.email}\n`;
+    }
+    if (customer?.city || customer?.state) {
+      msg += `• Location: ${[customer.city, customer.state].filter(Boolean).join(", ")}\n`;
+    }
+
+    msg += `\nI have completed the payment. Please verify the transaction and confirm my order.`;
+
+    return msg;
+  }
 
   let msg = `*CHECKOUT ORDER - DEVANGI RESIN STUDIO*\n\n`;
   msg += `Hello Devangi! I would like to place an order for the items in my cart:\n\n`;

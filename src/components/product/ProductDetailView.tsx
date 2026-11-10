@@ -23,10 +23,12 @@ import {
   Star,
   MessageCircle,
   MapPin,
+  X,
 } from "lucide-react";
 import { ProductReviewsSection } from "@/components/product/ProductReviewsSection";
 import { buildSingleProductWhatsAppMessage, getWhatsAppUrl } from "@/lib/whatsapp";
 import { resolveShippingCharge } from "@/lib/shipping";
+import DynamicUpiPaymentModal from "@/components/payment/DynamicUpiPaymentModal";
 
 export interface ProductDetailProps {
   product: any;
@@ -36,7 +38,10 @@ export interface ProductDetailProps {
 
 export function ProductDetailView({ product, relatedProducts, settings: initialSettings }: ProductDetailProps) {
   const router = useRouter();
-  const { addItem, setIsCartOpen } = useCart();
+  const { addItem, removeItem, items, setIsCartOpen } = useCart();
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [paymentModalData, setPaymentModalData] = useState<any>(null);
+  const [orderLaterNotice, setOrderLaterNotice] = useState<string | null>(null);
 
   // Gallery state - ensure primary image is selected first
   const images = product.images && product.images.length > 0
@@ -391,7 +396,50 @@ export function ProductDetailView({ product, relatedProducts, settings: initialS
             }
           : undefined);
 
-    setRedirectingWhatsApp(true);
+    const productSubtotal = (currentUnitPrice + (isGift ? giftWrapCharge : 0)) * qty;
+    const targetCity = (cust?.city || cust?.state || customer?.city || customer?.state || userCity || "").trim();
+    const shipRes = resolveShippingCharge({
+      subtotal: productSubtotal,
+      cityName: targetCity || null,
+      stateName: cust?.state || customer?.state || null,
+      postalCode: cust?.postalCode || customer?.postalCode || null,
+      cityRates: configuredCityRates,
+      defaultShippingCharge: siteSettings?.defaultShippingCharge,
+      freeShippingThreshold: siteSettings?.freeShippingThreshold,
+      isProductFreeShipping: Boolean(product.isFreeShipping),
+    });
+    const shippingFee = shipRes.isFree ? 0 : shipRes.charge;
+    const finalAmount = productSubtotal + shippingFee;
+
+    setPaymentModalData({
+      cust: cust || customer,
+      qty,
+      vName,
+      refImg,
+      isGift,
+      pers,
+      activeSelectedVariants,
+      productSubtotal,
+      shippingFee,
+      finalAmount,
+    });
+    setIsPaymentModalOpen(true);
+  };
+
+  const handlePaidSubmit = async (paymentReference: string, screenshotUrl?: string | null) => {
+    if (!paymentModalData) return;
+    const {
+      cust,
+      qty,
+      vName,
+      refImg,
+      isGift,
+      pers,
+      activeSelectedVariants,
+      productSubtotal,
+      shippingFee,
+      finalAmount,
+    } = paymentModalData;
 
     let createdOrderNumber: string | null = null;
     try {
@@ -405,7 +453,7 @@ export function ProductDetailView({ product, relatedProducts, settings: initialS
               name: product.name,
               price: currentUnitPrice,
               quantity: qty,
-              variantId: activeSelectedVariants.length > 0
+              variantId: activeSelectedVariants?.length > 0
                 ? activeSelectedVariants.map((v: any) => v.id).join("_")
                 : selectedVariant?.id || null,
               variantName: vName,
@@ -417,10 +465,12 @@ export function ProductDetailView({ product, relatedProducts, settings: initialS
               giftWrapCharge: isGift ? giftWrapCharge : 0,
             },
           ],
-          subtotal: (currentUnitPrice + (isGift ? giftWrapCharge : 0)) * qty,
-          shippingCharge: 0,
-          finalTotal: (currentUnitPrice + (isGift ? giftWrapCharge : 0)) * qty,
-          orderNotes: "1-Click Buy via WhatsApp",
+          subtotal: productSubtotal,
+          shippingCharge: shippingFee,
+          finalTotal: finalAmount,
+          paymentReference,
+          paymentScreenshotUrl: screenshotUrl || null,
+          orderNotes: "1-Click Buy via Dynamic UPI QR",
         }),
       });
       const orderData = await orderRes.json();
@@ -430,6 +480,10 @@ export function ProductDetailView({ product, relatedProducts, settings: initialS
     } catch (e) {
       console.error("Failed to record WhatsApp order:", e);
     }
+
+    // Cart management for Buy with 1 Click: Remove ONLY the purchased product if present in cart
+    const matchingCartItems = items.filter((i) => i.productId === product.id);
+    matchingCartItems.forEach((it) => removeItem(it.id));
 
     const message = buildSingleProductWhatsAppMessage({
       product: {
@@ -447,10 +501,43 @@ export function ProductDetailView({ product, relatedProducts, settings: initialS
       referenceImageUrl: refImg,
       customer: cust || customer,
       orderNumber: createdOrderNumber,
+      paymentReference,
+      paymentStatus: "Pending Verification",
+      paymentScreenshotUrl: screenshotUrl || null,
+      shippingCharge: shippingFee,
+      finalTotal: finalAmount,
     });
 
+    setIsPaymentModalOpen(false);
     const url = getWhatsAppUrl(adminPhone, message);
     window.location.href = url;
+  };
+
+  const handleWillOrderLater = () => {
+    // Buy with 1 Click: Add the selected product to the cart.
+    // If the product already exists in the cart, do not create a duplicate entry.
+    // Retain the existing product quantity. Do not modify other cart items.
+    const alreadyInCart = items.some((i) => i.productId === product.id);
+    if (!alreadyInCart) {
+      addItem({
+        id: `${product.id}_${paymentModalData?.vName || "default"}_${Date.now()}`,
+        productId: product.id,
+        name: product.name,
+        slug: product.slug,
+        price: currentUnitPrice,
+        originalPrice: product.originalPrice ? Number(product.originalPrice) : undefined,
+        image: activeImage,
+        quantity: paymentModalData?.qty || quantity,
+        variantName: paymentModalData?.vName || getSelectedVariantsSummary(),
+        personalizationDetails: paymentModalData?.pers,
+        referenceImageUrl: paymentModalData?.refImg || referenceImageUrl,
+        giftWrapped: paymentModalData?.isGift !== undefined ? paymentModalData.isGift : giftWrapped,
+        giftWrapCharge: giftWrapCharge,
+      });
+    }
+    setIsPaymentModalOpen(false);
+    setOrderLaterNotice("Your items have been saved in your cart! You can continue shopping and place your order whenever you're ready.");
+    setTimeout(() => setOrderLaterNotice(null), 6000);
   };
 
   // If redirected back from login with ?buy1click=true
@@ -1172,6 +1259,51 @@ export function ProductDetailView({ product, relatedProducts, settings: initialS
             ))}
           </div>
         </div>
+      )}
+
+      {/* Confirmation Toast for Will Order Later */}
+      {orderLaterNotice && (
+        <div className="fixed bottom-6 right-6 z-50 max-w-md bg-[#2C332D] text-white p-4 rounded-2xl shadow-2xl border border-[#D4AF37]/50 flex items-start space-x-3 animate-in slide-in-from-bottom duration-300">
+          <div className="w-6 h-6 rounded-full bg-[#2E7D32] flex items-center justify-center shrink-0 mt-0.5">
+            <Check className="w-3.5 h-3.5 text-white" />
+          </div>
+          <div className="flex-1 text-xs">
+            <p className="font-bold text-[#FFDF78]">Item Saved in Cart</p>
+            <p className="mt-0.5 text-white/90 leading-relaxed">{orderLaterNotice}</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setOrderLaterNotice(null)}
+            className="p-1 text-white/60 hover:text-white"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {/* Dynamic UPI Payment Popup */}
+      {isPaymentModalOpen && paymentModalData && (
+        <DynamicUpiPaymentModal
+          isOpen={isPaymentModalOpen}
+          onClose={() => setIsPaymentModalOpen(false)}
+          payableAmount={paymentModalData.finalAmount}
+          subtotal={paymentModalData.productSubtotal}
+          shippingCharge={paymentModalData.shippingFee}
+          upiId={siteSettings?.upiId}
+          accountHolderName={siteSettings?.accountHolderName}
+          storeName={siteSettings?.storeName || "Devangi Resin Studio"}
+          customer={paymentModalData.cust || customer}
+          itemsSummary={[
+            {
+              name: product.name,
+              quantity: paymentModalData.qty,
+              price: currentUnitPrice,
+              variantName: paymentModalData.vName,
+            },
+          ]}
+          onPaidSubmit={handlePaidSubmit}
+          onWillOrderLater={handleWillOrderLater}
+        />
       )}
     </div>
   );

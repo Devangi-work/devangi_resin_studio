@@ -17,9 +17,12 @@ import {
   Lock,
   MessageCircle,
   MapPin,
+  Check,
+  X,
 } from "lucide-react";
 import { buildCartWhatsAppMessage, getWhatsAppUrl } from "@/lib/whatsapp";
 import { resolveShippingCharge } from "@/lib/shipping";
+import DynamicUpiPaymentModal from "@/components/payment/DynamicUpiPaymentModal";
 
 function CartContent() {
   const router = useRouter();
@@ -44,6 +47,8 @@ function CartContent() {
   const [siteSettings, setSiteSettings] = useState<any>(null);
   const [adminPhone, setAdminPhone] = useState("+91 9967313355");
   const [redirectingWhatsApp, setRedirectingWhatsApp] = useState(false);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [orderLaterNotice, setOrderLaterNotice] = useState<string | null>(null);
 
   const configuredCityRates: Array<{ id: string; name: string; charge: number | string }> =
     Array.isArray(siteSettings?.cityShippingRates) ? siteSettings.cityShippingRates : [];
@@ -137,8 +142,11 @@ function CartContent() {
 
   const triggerWhatsAppCheckout = async (cust?: any) => {
     if (items.length === 0) return;
-    setRedirectingWhatsApp(true);
+    if (cust) setCustomer(cust);
+    setIsPaymentModalOpen(true);
+  };
 
+  const handlePaidSubmit = async (paymentReference: string, screenshotUrl?: string | null) => {
     let createdOrderNumber: string | null = null;
     try {
       const res = await fetch("/api/orders/whatsapp", {
@@ -163,7 +171,9 @@ function CartContent() {
           couponCode: appliedCoupon?.code || null,
           shippingCharge,
           finalTotal,
-          orderNotes: "Cart Checkout via WhatsApp",
+          paymentReference,
+          paymentScreenshotUrl: screenshotUrl || null,
+          orderNotes: "Cart Checkout via Dynamic UPI QR",
         }),
       });
       const data = await res.json();
@@ -190,13 +200,27 @@ function CartContent() {
       couponCode: appliedCoupon?.code || null,
       shippingCharge,
       finalTotal,
-      customer: cust || customer,
+      customer,
       orderNumber: createdOrderNumber,
+      paymentReference,
+      paymentStatus: "Pending Verification",
+      paymentScreenshotUrl: screenshotUrl || null,
     });
 
-    const url = getWhatsAppUrl(adminPhone, message);
+    setIsPaymentModalOpen(false);
+    // Cart management for Cart Checkout + Paid:
+    // Remove the purchased cart items after successful submission of the Paid option.
     clearCart();
+    const url = getWhatsAppUrl(adminPhone, message);
     window.location.href = url;
+  };
+
+  const handleWillOrderLater = () => {
+    // Cart Checkout: Keep all existing cart products. Preserve their quantities.
+    // Do not remove any products. Do not clear the cart. Do not modify the cart contents.
+    setIsPaymentModalOpen(false);
+    setOrderLaterNotice("Your items have been saved in your cart! You can continue shopping and place your order whenever you're ready.");
+    setTimeout(() => setOrderLaterNotice(null), 6000);
   };
 
   // If redirected back from login with ?checkout=whatsapp
@@ -590,6 +614,51 @@ function CartContent() {
           </div>
         </div>
       </div>
+
+      {/* Confirmation Toast for Will Order Later */}
+      {orderLaterNotice && (
+        <div className="fixed bottom-6 right-6 z-50 max-w-md bg-[#2C332D] text-white p-4 rounded-2xl shadow-2xl border border-[#D4AF37]/50 flex items-start space-x-3 animate-in slide-in-from-bottom duration-300">
+          <div className="w-6 h-6 rounded-full bg-[#2E7D32] flex items-center justify-center shrink-0 mt-0.5">
+            <Check className="w-3.5 h-3.5 text-white" />
+          </div>
+          <div className="flex-1 text-xs">
+            <p className="font-bold text-[#FFDF78]">Items Saved in Cart</p>
+            <p className="mt-0.5 text-white/90 leading-relaxed">{orderLaterNotice}</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setOrderLaterNotice(null)}
+            className="p-1 text-white/60 hover:text-white"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {/* Dynamic UPI Payment Popup */}
+      {isPaymentModalOpen && (
+        <DynamicUpiPaymentModal
+          isOpen={isPaymentModalOpen}
+          onClose={() => setIsPaymentModalOpen(false)}
+          payableAmount={finalTotal}
+          subtotal={subtotal}
+          shippingCharge={shippingCharge}
+          discountAmount={discount}
+          couponCode={appliedCoupon?.code || null}
+          upiId={siteSettings?.upiId}
+          accountHolderName={siteSettings?.accountHolderName}
+          storeName={siteSettings?.storeName || "Devangi Resin Studio"}
+          customer={customer}
+          itemsSummary={items.map((i) => ({
+            name: i.name,
+            quantity: i.quantity,
+            price: i.price,
+            variantName: i.variantName,
+          }))}
+          onPaidSubmit={handlePaidSubmit}
+          onWillOrderLater={handleWillOrderLater}
+        />
+      )}
     </div>
   );
 }

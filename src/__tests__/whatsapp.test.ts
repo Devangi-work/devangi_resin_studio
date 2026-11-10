@@ -6,6 +6,11 @@ import {
   buildCartWhatsAppMessage,
   getWhatsAppUrl,
 } from "../lib/whatsapp";
+import {
+  buildUpiPaymentUri,
+  generateUpiQrCodeDataUrl,
+  generatePaymentReference,
+} from "../lib/upi";
 import { dbStore } from "../lib/db";
 
 test("WhatsApp Integration Test Suite", async (t) => {
@@ -340,5 +345,117 @@ test("WhatsApp Integration Test Suite", async (t) => {
 
     // Clean up test product
     await dbStore.deleteProduct(testProdId);
+  });
+
+  await t.test("buildUpiPaymentUri correctly formats standard UPI URI with exact amount, payee, and transaction ID", () => {
+    const upiUri = buildUpiPaymentUri({
+      upiId: "devangibarai0403@okhdfcbank",
+      accountHolderName: "Devangi Banshilal Barai",
+      amount: 230,
+      orderReference: "DRS-ORDER12345",
+      transactionId: "DRS-TXN9988",
+    });
+
+    assert.ok(upiUri.startsWith("upi://pay?"));
+    assert.ok(upiUri.includes("pa=devangibarai0403%40okhdfcbank"));
+    assert.ok(upiUri.includes("pn=Devangi%20Banshilal%20Barai"));
+    assert.ok(upiUri.includes("am=230.00"));
+    assert.ok(upiUri.includes("cu=INR"));
+    assert.ok(upiUri.includes("tr=DRS-TXN9988"));
+    assert.ok(upiUri.includes("tn=Order%20DRS-ORDER12345"));
+  });
+
+  await t.test("generateUpiQrCodeDataUrl produces valid Base64 PNG QR code from UPI payment URI", async () => {
+    const upiUri = buildUpiPaymentUri({
+      upiId: "devangibarai0403@okhdfcbank",
+      accountHolderName: "Devangi Banshilal Barai",
+      amount: 150.5,
+      transactionId: "DRS-TEST-REF",
+    });
+    const qrDataUrl = await generateUpiQrCodeDataUrl(upiUri);
+    assert.ok(qrDataUrl.startsWith("data:image/png;base64,"));
+    assert.ok(qrDataUrl.length > 100);
+  });
+
+  await t.test("generatePaymentReference produces unique reference strings with DRS prefix", () => {
+    const ref1 = generatePaymentReference();
+    const ref2 = generatePaymentReference();
+    assert.ok(ref1.startsWith("DRS"));
+    assert.ok(ref2.startsWith("DRS"));
+    assert.notEqual(ref1, ref2);
+  });
+
+  await t.test("buildSingleProductWhatsAppMessage generates exact confirmation format with Payment Reference and Pending Verification", () => {
+    const msg = buildSingleProductWhatsAppMessage({
+      product: {
+        id: "p_keychain",
+        name: "Resin Keychain",
+      },
+      unitPrice: 89,
+      quantity: 2,
+      shippingCharge: 50,
+      discountAmount: 20,
+      paymentReference: "ORDER12345",
+      paymentStatus: "Pending Verification",
+      customer: {
+        name: "Priya Sharma",
+        phone: "+91 9820011223",
+      },
+    });
+
+    assert.ok(msg.includes("Hello Devangi Resin Studio,"));
+    assert.ok(msg.includes("I would like to confirm my order."));
+    assert.ok(msg.includes("Product: Resin Keychain"));
+    assert.ok(msg.includes("Quantity: 2"));
+    assert.ok(msg.includes("Product Total: ₹178.00"));
+    assert.ok(msg.includes("Shipping: ₹50.00"));
+    assert.ok(msg.includes("Discount: ₹20.00"));
+    assert.ok(msg.includes("Final Payable Amount: ₹208.00"));
+    assert.ok(msg.includes("Payment Reference: ORDER12345"));
+    assert.ok(msg.includes("Payment Status: Pending Verification"));
+    assert.ok(msg.includes("I have completed the payment. Please verify the transaction and confirm my order."));
+  });
+
+  await t.test("buildCartWhatsAppMessage generates exact confirmation format with Payment Reference, Pending Verification, and items", () => {
+    const msg = buildCartWhatsAppMessage({
+      items: [
+        {
+          name: "Resin Bookmark",
+          quantity: 2,
+          price: 150,
+        },
+        {
+          name: "Geode Coaster",
+          quantity: 1,
+          price: 300,
+        },
+      ],
+      subtotal: 600,
+      shippingCharge: 60,
+      discountAmount: 50,
+      finalTotal: 610,
+      couponCode: "STUDIO50",
+      paymentReference: "DRS982109AK",
+      paymentStatus: "Pending Verification",
+      customer: {
+        name: "Aarav Gupta",
+        phone: "+91 9876543210",
+        city: "Jaipur",
+        state: "Rajasthan",
+      },
+    });
+
+    assert.ok(msg.includes("Hello Devangi Resin Studio,"));
+    assert.ok(msg.includes("I would like to confirm my order."));
+    assert.ok(msg.includes("ITEMS ORDERED (2):"));
+    assert.ok(msg.includes("1. *Resin Bookmark*"));
+    assert.ok(msg.includes("2. *Geode Coaster*"));
+    assert.ok(msg.includes("Items Subtotal: ₹600.00"));
+    assert.ok(msg.includes("Coupon Savings (STUDIO50): -₹50.00"));
+    assert.ok(msg.includes("Shipping: ₹60.00"));
+    assert.ok(msg.includes("Final Payable Amount: ₹610.00"));
+    assert.ok(msg.includes("Payment Reference: DRS982109AK"));
+    assert.ok(msg.includes("Payment Status: Pending Verification"));
+    assert.ok(msg.includes("I have completed the payment. Please verify the transaction and confirm my order."));
   });
 });

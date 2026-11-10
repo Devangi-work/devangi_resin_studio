@@ -1284,27 +1284,23 @@ export const dbStore = {
                 oi.reference_image_url as "referenceImageUrl",
                 COALESCE(
                   pi.image_url,
+                  pi2.image_url,
                   oi.reference_image_url
                 ) as "productImage"
               FROM order_items oi
               LEFT JOIN LATERAL (
-                SELECT pimg.image_url 
-                FROM products p
-                JOIN product_images pimg ON pimg.product_id = p.id
-                WHERE (oi.product_id IS NOT NULL AND p.id = oi.product_id)
-                   OR (oi.product_name IS NOT NULL AND LOWER(p.name) = LOWER(oi.product_name))
-                   OR (oi.sku IS NOT NULL AND LOWER(p.sku) = LOWER(oi.sku))
-                ORDER BY pimg.is_primary DESC, pimg.display_order ASC, p.created_at DESC
-                LIMIT 1
+                SELECT image_url FROM product_images WHERE product_id = oi.product_id ORDER BY is_primary DESC, display_order ASC LIMIT 1
               ) pi ON true
+              LEFT JOIN products p ON LOWER(p.name) = LOWER(oi.product_name) OR LOWER(p.sku) = LOWER(oi.sku)
+              LEFT JOIN LATERAL (
+                SELECT image_url FROM product_images WHERE product_id = p.id ORDER BY is_primary DESC, display_order ASC LIMIT 1
+              ) pi2 ON true
               WHERE oi.order_id = ANY(${orderIds});
             `;
             const itemsByOrderId: Record<string, any[]> = {};
             for (const it of (allItems as any[] || [])) {
               if (!itemsByOrderId[it.orderId]) itemsByOrderId[it.orderId] = [];
-              if (!itemsByOrderId[it.orderId].some((existing: any) => existing.id === it.id)) {
-                itemsByOrderId[it.orderId].push(it);
-              }
+              itemsByOrderId[it.orderId].push(it);
             }
             for (const ord of rows as any[]) {
               ord.items = itemsByOrderId[ord.id] || [];
@@ -1425,29 +1421,20 @@ export const dbStore = {
               oi.reference_image_url as "referenceImageUrl",
               COALESCE(
                 pi.image_url,
+                pi2.image_url,
                 oi.reference_image_url
               ) as "productImage"
             FROM order_items oi
             LEFT JOIN LATERAL (
-              SELECT pimg.image_url 
-              FROM products p
-              JOIN product_images pimg ON pimg.product_id = p.id
-              WHERE (oi.product_id IS NOT NULL AND p.id = oi.product_id)
-                 OR (oi.product_name IS NOT NULL AND LOWER(p.name) = LOWER(oi.product_name))
-                 OR (oi.sku IS NOT NULL AND LOWER(p.sku) = LOWER(oi.sku))
-              ORDER BY pimg.is_primary DESC, pimg.display_order ASC, p.created_at DESC
-              LIMIT 1
+              SELECT image_url FROM product_images WHERE product_id = oi.product_id ORDER BY is_primary DESC, display_order ASC LIMIT 1
             ) pi ON true
+            LEFT JOIN products p ON LOWER(p.name) = LOWER(oi.product_name) OR LOWER(p.sku) = LOWER(oi.sku)
+            LEFT JOIN LATERAL (
+              SELECT image_url FROM product_images WHERE product_id = p.id ORDER BY is_primary DESC, display_order ASC LIMIT 1
+            ) pi2 ON true
             WHERE oi.order_id = ${ord.id};
           `;
-          // Deduplicate by item ID just in case
-          const dedupedItems: any[] = [];
-          for (const it of (items as any[] || [])) {
-            if (!dedupedItems.some((e: any) => e.id === it.id)) {
-              dedupedItems.push(it);
-            }
-          }
-          ord.items = dedupedItems;
+          ord.items = items || [];
           return ord;
         }
       } catch (err) {
@@ -1516,28 +1503,20 @@ export const dbStore = {
               oi.reference_image_url as "referenceImageUrl",
               COALESCE(
                 pi.image_url,
+                pi2.image_url,
                 oi.reference_image_url
               ) as "productImage"
             FROM order_items oi
             LEFT JOIN LATERAL (
-              SELECT pimg.image_url 
-              FROM products p
-              JOIN product_images pimg ON pimg.product_id = p.id
-              WHERE (oi.product_id IS NOT NULL AND p.id = oi.product_id)
-                 OR (oi.product_name IS NOT NULL AND LOWER(p.name) = LOWER(oi.product_name))
-                 OR (oi.sku IS NOT NULL AND LOWER(p.sku) = LOWER(oi.sku))
-              ORDER BY pimg.is_primary DESC, pimg.display_order ASC, p.created_at DESC
-              LIMIT 1
+              SELECT image_url FROM product_images WHERE product_id = oi.product_id ORDER BY is_primary DESC, display_order ASC LIMIT 1
             ) pi ON true
+            LEFT JOIN products p ON LOWER(p.name) = LOWER(oi.product_name) OR LOWER(p.sku) = LOWER(oi.sku)
+            LEFT JOIN LATERAL (
+              SELECT image_url FROM product_images WHERE product_id = p.id ORDER BY is_primary DESC, display_order ASC LIMIT 1
+            ) pi2 ON true
             WHERE oi.order_id = ${ord.id};
           `;
-          const dedupedItems: any[] = [];
-          for (const it of (items as any[] || [])) {
-            if (!dedupedItems.some((e: any) => e.id === it.id)) {
-              dedupedItems.push(it);
-            }
-          }
-          ord.items = dedupedItems;
+          ord.items = items || [];
         }
       } catch (err) {
         console.error("DB getOrderByNumber err:", err);
@@ -3188,35 +3167,27 @@ export const dbStore = {
                 oi.reference_image_url as "referenceImageUrl",
                 COALESCE(
                   pi.image_url,
+                  pi2.image_url,
                   oi.reference_image_url
                 ) as "productImage"
               FROM order_items oi
               LEFT JOIN LATERAL (
-                SELECT pimg.image_url 
-                FROM products p
-                JOIN product_images pimg ON pimg.product_id = p.id
-                WHERE (oi.product_id IS NOT NULL AND p.id = oi.product_id)
-                   OR (oi.product_name IS NOT NULL AND LOWER(p.name) = LOWER(oi.product_name))
-                   OR (oi.sku IS NOT NULL AND LOWER(p.sku) = LOWER(oi.sku))
-                ORDER BY pimg.is_primary DESC, pimg.display_order ASC, p.created_at DESC
-                LIMIT 1
+                SELECT image_url FROM product_images WHERE product_id = oi.product_id ORDER BY is_primary DESC, display_order ASC LIMIT 1
               ) pi ON true
+              LEFT JOIN products p ON LOWER(p.name) = LOWER(oi.product_name) OR LOWER(p.sku) = LOWER(oi.sku)
+              LEFT JOIN LATERAL (
+                SELECT image_url FROM product_images WHERE product_id = p.id ORDER BY is_primary DESC, display_order ASC LIMIT 1
+              ) pi2 ON true
               WHERE oi.order_id = ${ord.id};
             `;
-            const dedupedItems: any[] = [];
-            for (const it of (items as any[] || [])) {
-              if (!dedupedItems.some((e: any) => e.id === it.id)) {
-                dedupedItems.push(it);
-              }
-            }
-            if (Array.isArray(dedupedItems)) {
-              for (const it of dedupedItems) {
+            if (Array.isArray(items)) {
+              for (const it of items) {
                 if (!it.productImage && Array.isArray(ord.productImages) && ord.productImages.length > 0) {
                   it.productImage = ord.productImages[0];
                 }
               }
             }
-            ord.items = dedupedItems || [];
+            ord.items = items || [];
           }
           return rows;
         }
