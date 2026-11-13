@@ -335,7 +335,7 @@ export default async function HomePage() {
         <section className="bg-gradient-to-r from-[#FAF0F3] via-[#FCFAF8] to-[#FAF0F3] py-16 sm:py-24 border-y border-[#EFE3E7]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
-              
+
               {/* Left Column: Bespoke Atelier Copy */}
               <div className="lg:col-span-6 space-y-6">
                 <div className="inline-flex items-center space-x-2 bg-white border border-[#EFE3E7] px-3.5 py-1 rounded-full text-xs font-semibold text-[#B84A67]">

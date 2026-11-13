@@ -33,10 +33,6 @@ import {
   AlertTriangle,
   Layers,
   Copy,
-  Activity,
-  Eye,
-  Video,
-  BarChart3,
   Megaphone,
   QrCode,
 } from "lucide-react";
@@ -608,114 +604,6 @@ export default function AdminSettingsPage() {
                 </button>
               </div>
             </div>
-          </div>
-        </div>
-
-        {/* Microsoft Clarity Analytics, Recordings & Heatmaps */}
-        <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#E8E0D5] shadow-sm space-y-5">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#F4EBE6] pb-4">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-xl bg-[#FAF4EC] text-[#B8972E] border border-[#E8E0D5] flex items-center justify-center flex-shrink-0">
-                <Activity className="w-5 h-5 text-[#B8972E]" />
-              </div>
-              <div>
-                <div className="flex items-center space-x-2">
-                  <h2 className="font-serif text-base font-bold text-[#2C332D]">
-                    Microsoft Clarity Analytics & Visitor Recordings
-                  </h2>
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#E8EFE8] text-[#2E7D32] border border-[#C5D8C5]">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#2E7D32] animate-pulse mr-1" />
-                    Tracking Active
-                  </span>
-                </div>
-                <p className="text-xs text-[#736C66] mt-0.5">
-                  Full behavior analytics: daily visitor counts, session recordings playback, heatmaps, and funnel insights.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <a
-                href="https://clarity.microsoft.com/projects/view/z9u8cerkjx/dashboard"
-                target="_blank"
-                rel="noreferrer"
-                className="px-4 py-2 bg-[#2C332D] text-white hover:bg-[#3D473E] text-xs font-semibold rounded-xl flex items-center space-x-1.5 shadow-sm transition-all"
-              >
-                <BarChart3 className="w-3.5 h-3.5 text-[#D4AF37]" />
-                <span>Open Clarity Dashboard</span>
-                <ExternalLink className="w-3 h-3 ml-0.5" />
-              </a>
-            </div>
-          </div>
-
-          {/* Quick Metrics & Links Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <a
-              href="https://clarity.microsoft.com/projects/view/z9u8cerkjx/dashboard"
-              target="_blank"
-              rel="noreferrer"
-              className="p-4 rounded-xl border border-[#E8E0D5] bg-[#FAF8F5]/70 hover:bg-white hover:border-[#D4AF37] hover:shadow-xs transition-all group"
-            >
-              <div className="flex items-center justify-between mb-2">
-                <div className="w-8 h-8 rounded-lg bg-white border border-[#E8E0D5] flex items-center justify-center text-[#B8972E]">
-                  <Eye className="w-4 h-4" />
-                </div>
-                <ExternalLink className="w-3.5 h-3.5 text-[#8C827A] group-hover:text-[#2C332D]" />
-              </div>
-              <h3 className="text-xs font-bold text-[#2C332D]">Daily Traffic & Visitors</h3>
-              <p className="text-[11px] text-[#736C66] mt-1 leading-relaxed">
-                See exact daily traffic, distinct visitors, pages viewed per session, active live users, and top geographic cities across India.
-              </p>
-            </a>
-
-            <a
-              href="https://clarity.microsoft.com/projects/view/z9u8cerkjx/recordings"
-              target="_blank"
-              rel="noreferrer"
-              className="p-4 rounded-xl border border-[#E8E0D5] bg-[#FAF8F5]/70 hover:bg-white hover:border-[#D4AF37] hover:shadow-xs transition-all group"
-            >
-              <div className="flex items-center justify-between mb-2">
-                <div className="w-8 h-8 rounded-lg bg-white border border-[#E8E0D5] flex items-center justify-center text-[#B8972E]">
-                  <Video className="w-4 h-4" />
-                </div>
-                <ExternalLink className="w-3.5 h-3.5 text-[#8C827A] group-hover:text-[#2C332D]" />
-              </div>
-              <h3 className="text-xs font-bold text-[#2C332D]">Visitor Session Recordings</h3>
-              <p className="text-[11px] text-[#736C66] mt-1 leading-relaxed">
-                Watch full video recordings of customers browsing your shop, selecting resin colors, adding to cart, and checking out.
-              </p>
-            </a>
-
-            <a
-              href="https://clarity.microsoft.com/projects/view/z9u8cerkjx/heatmaps"
-              target="_blank"
-              rel="noreferrer"
-              className="p-4 rounded-xl border border-[#E8E0D5] bg-[#FAF8F5]/70 hover:bg-white hover:border-[#D4AF37] hover:shadow-xs transition-all group"
-            >
-              <div className="flex items-center justify-between mb-2">
-                <div className="w-8 h-8 rounded-lg bg-white border border-[#E8E0D5] flex items-center justify-center text-[#B8972E]">
-                  <Activity className="w-4 h-4" />
-                </div>
-                <ExternalLink className="w-3.5 h-3.5 text-[#8C827A] group-hover:text-[#2C332D]" />
-              </div>
-              <h3 className="text-xs font-bold text-[#2C332D]">Click & Scroll Heatmaps</h3>
-              <p className="text-[11px] text-[#736C66] mt-1 leading-relaxed">
-                Visual heatmaps on desktop and mobile revealing where visitors click the most and how deep down pages they scroll.
-              </p>
-            </a>
-          </div>
-
-          {/* Project Details Footer */}
-          <div className="p-3 bg-[#FAF8F5] rounded-xl border border-[#E8E0D5] flex flex-col sm:flex-row sm:items-center justify-between text-xs gap-2">
-            <div className="flex items-center space-x-2">
-              <span className="text-[#736C66]">Clarity Project ID:</span>
-              <code className="font-mono font-bold text-[#2C332D] bg-white px-2 py-0.5 rounded border border-[#E8E0D5]">
-                z9u8cerkjx
-              </code>
-            </div>
-            <span className="text-[11px] text-[#736C66]">
-              Configured globally across storefront, cart, product catalogs, and checkout.
-            </span>
           </div>
         </div>
 
