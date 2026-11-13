@@ -18,8 +18,23 @@ import {
   MessageCircle,
   Package,
   ExternalLink,
+  MapPin,
+  Loader2,
 } from "lucide-react";
 import { buildUpiPaymentUri, generateUpiQrCodeDataUrl, generatePaymentReference } from "@/lib/upi";
+import { formatCombinedAddress } from "@/lib/whatsapp";
+
+export interface ShippingCustomerDetails {
+  name: string;
+  phone: string;
+  email?: string;
+  addressLine1: string;
+  addressLine2?: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  country?: string;
+}
 
 export interface DynamicUpiPaymentModalProps {
   isOpen: boolean;
@@ -39,15 +54,24 @@ export interface DynamicUpiPaymentModalProps {
     variantName?: string | null;
   }>;
   customer?: {
+    id?: string;
     name?: string;
     phone?: string;
     email?: string;
+    addressLine1?: string;
+    addressLine2?: string;
+    city?: string;
+    state?: string;
+    postalCode?: string;
+    country?: string;
   } | null;
   onPaidSubmit: (
     paymentReference: string,
-    screenshotUrl?: string | null
+    screenshotUrl?: string | null,
+    shippingDetails?: ShippingCustomerDetails | null
   ) => Promise<{ orderNumber?: string | null; whatsappUrl?: string } | void>;
   onWillOrderLater: () => void;
+  onCustomerUpdate?: (updated: ShippingCustomerDetails) => void;
 }
 
 const PAYMENT_SESSION_DURATION_SECONDS = 300; // 5 minutes
@@ -67,6 +91,7 @@ export default function DynamicUpiPaymentModal({
   customer,
   onPaidSubmit,
   onWillOrderLater,
+  onCustomerUpdate,
 }: DynamicUpiPaymentModalProps) {
   const [timeLeft, setTimeLeft] = useState<number>(PAYMENT_SESSION_DURATION_SECONDS);
   const [paymentReference, setPaymentReference] = useState<string>("");
@@ -88,6 +113,61 @@ export default function DynamicUpiPaymentModal({
     paymentReference: string;
     amountPaid: number;
   } | null>(null);
+
+  // Shipping details state initialized from customer prop
+  const [shippingDetails, setShippingDetails] = useState<ShippingCustomerDetails>({
+    name: customer?.name || "",
+    phone: customer?.phone || "",
+    email: customer?.email || "",
+    addressLine1: customer?.addressLine1 || "",
+    addressLine2: customer?.addressLine2 || "",
+    city: customer?.city || "",
+    state: customer?.state || "",
+    postalCode: customer?.postalCode || "",
+    country: customer?.country || "India",
+  });
+
+  const [isEditingAddress, setIsEditingAddress] = useState<boolean>(false);
+  const [addressForm, setAddressForm] = useState<{
+    name: string;
+    phone: string;
+    addressLine1: string;
+    addressLine2: string;
+    city: string;
+    state: string;
+    postalCode: string;
+  }>({
+    name: customer?.name || "",
+    phone: customer?.phone || "",
+    addressLine1: customer?.addressLine1 || "",
+    addressLine2: customer?.addressLine2 || "",
+    city: customer?.city || "",
+    state: customer?.state || "",
+    postalCode: customer?.postalCode || "",
+  });
+  const [addressFormError, setAddressFormError] = useState<string>("");
+  const [isSavingAddress, setIsSavingAddress] = useState<boolean>(false);
+
+  // Sync with incoming customer prop when provided
+  useEffect(() => {
+    if (customer) {
+      setShippingDetails((prev) => ({
+        name: prev.name || customer.name || "",
+        phone: prev.phone || customer.phone || "",
+        email: customer.email || prev.email || "",
+        addressLine1: prev.addressLine1 || customer.addressLine1 || "",
+        addressLine2: prev.addressLine2 || customer.addressLine2 || "",
+        city: prev.city || customer.city || "",
+        state: prev.state || customer.state || "",
+        postalCode: prev.postalCode || customer.postalCode || "",
+        country: customer.country || prev.country || "India",
+      }));
+    }
+  }, [customer]);
+
+  const hasAddress = Boolean(
+    shippingDetails.addressLine1?.trim() && shippingDetails.city?.trim()
+  );
 
   // Screenshot upload states
   const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
@@ -259,6 +339,94 @@ export default function DynamicUpiPaymentModal({
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+  // Address removal and edit handlers
+  const handleRemoveAddress = () => {
+    setAddressForm({
+      name: shippingDetails.name,
+      phone: shippingDetails.phone,
+      addressLine1: "",
+      addressLine2: "",
+      city: "",
+      state: "",
+      postalCode: "",
+    });
+    setAddressFormError("");
+    setIsEditingAddress(true);
+  };
+
+  const handleSaveAddress = async () => {
+    setAddressFormError("");
+    const cleanName = addressForm.name.trim();
+    const cleanPhone = addressForm.phone.replace(/[^0-9]/g, "");
+    const cleanAddr1 = addressForm.addressLine1.trim();
+    const cleanAddr2 = addressForm.addressLine2.trim();
+    const cleanCity = addressForm.city.trim();
+    const cleanState = addressForm.state.trim();
+    const cleanPin = addressForm.postalCode.trim();
+
+    if (!cleanName || cleanName.length < 2) {
+      setAddressFormError("Please enter a valid receiver name (at least 2 letters).");
+      return;
+    }
+    if (cleanPhone.length < 10) {
+      setAddressFormError("Please enter a valid 10-digit contact phone number.");
+      return;
+    }
+    if (!cleanAddr1 || cleanAddr1.length < 3) {
+      setAddressFormError("Please enter flat, house no, building or street address.");
+      return;
+    }
+    if (!cleanCity || cleanCity.length < 2) {
+      setAddressFormError("Please enter a city.");
+      return;
+    }
+    if (!cleanState || cleanState.length < 2) {
+      setAddressFormError("Please enter a state.");
+      return;
+    }
+    if (!/^\d{6}$/.test(cleanPin)) {
+      setAddressFormError("Please enter a valid 6-digit PIN code.");
+      return;
+    }
+
+    setIsSavingAddress(true);
+    const updated: ShippingCustomerDetails = {
+      name: cleanName,
+      phone: addressForm.phone.trim(),
+      email: shippingDetails.email,
+      addressLine1: cleanAddr1,
+      addressLine2: cleanAddr2,
+      city: cleanCity,
+      state: cleanState,
+      postalCode: cleanPin,
+      country: shippingDetails.country || "India",
+    };
+
+    try {
+      await fetch("/api/customer/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: cleanName,
+          phone: addressForm.phone.trim(),
+          addressLine1: cleanAddr1,
+          addressLine2: cleanAddr2 || undefined,
+          city: cleanCity,
+          state: cleanState,
+          postalCode: cleanPin,
+        }),
+      });
+    } catch (e) {
+      console.warn("Could not save profile remotely:", e);
+    } finally {
+      setIsSavingAddress(false);
+    }
+
+    setShippingDetails(updated);
+    setIsEditingAddress(false);
+    onCustomerUpdate?.(updated);
+  };
+
   // Handle request to close modal (prompt confirmation if payment in progress)
   const handleRequestClose = () => {
     if (successData) {
@@ -289,7 +457,7 @@ export default function DynamicUpiPaymentModal({
     e.preventDefault();
     if (isExpired || isSubmitting || !selectedOption) return;
 
-    // If Paid is selected, require payment screenshot proof
+    // If Paid is selected, require payment screenshot proof & valid address
     if (selectedOption === "paid") {
       if (isUploadingScreenshot) {
         setScreenshotError("Please wait for your screenshot to finish uploading.");
@@ -299,12 +467,17 @@ export default function DynamicUpiPaymentModal({
         setScreenshotError("Please upload your payment screenshot before proceeding.");
         return;
       }
+      if (!shippingDetails.addressLine1?.trim() || !shippingDetails.city?.trim()) {
+        setScreenshotError("Please provide and save your delivery address and contact number before proceeding.");
+        setIsEditingAddress(true);
+        return;
+      }
     }
 
     setIsSubmitting(true);
     try {
       if (selectedOption === "paid") {
-        const result = await onPaidSubmit(paymentReference, screenshotUrl);
+        const result = await onPaidSubmit(paymentReference, screenshotUrl, shippingDetails);
         if (result && typeof result === "object" && result.whatsappUrl) {
           if (timerRef.current) clearInterval(timerRef.current);
           setSuccessData({
@@ -516,13 +689,31 @@ export default function DynamicUpiPaymentModal({
                 </span>
               </div>
 
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between pb-2 border-b border-[#F4EBE6]">
                 <span className="text-xs text-[#8C827A] font-medium">Payment Status:</span>
-                <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-[11px] font-bold">
-                  <Clock className="w-3 h-3" />
-                  <span>Pending Verification</span>
+                <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold">
+                  <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                  <span>Paid</span>
                 </span>
               </div>
+
+              {/* Confirmed Delivery Destination */}
+              {formatCombinedAddress(shippingDetails) && (
+                <div className="pt-1 text-left space-y-1">
+                  <span className="text-[11px] text-[#8C827A] font-bold uppercase tracking-wider block">
+                    Confirmed Delivery Destination:
+                  </span>
+                  <div className="bg-[#FAF8F5] p-3 rounded-xl border border-[#E8E0D5] text-xs text-[#2C332D] space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-[#2C332D]">Receiver: {shippingDetails.name || "Customer"}</span>
+                      {shippingDetails.phone && (
+                        <span className="text-[#736C66] font-medium">📞 {shippingDetails.phone}</span>
+                      )}
+                    </div>
+                    <p className="text-[#5C554E] leading-relaxed pt-0.5">{formatCombinedAddress(shippingDetails)}</p>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Order Tracking Section: "track your order here" */}
@@ -704,6 +895,209 @@ export default function DynamicUpiPaymentModal({
                   <RotateCcw className="w-3.5 h-3.5" />
                   <span>Generate New Payment QR</span>
                 </button>
+              </div>
+            </div>
+          )}
+
+          {/* SHIPPING & DELIVERY DETAILS SECTION */}
+          {hasAddress && !isEditingAddress ? (
+            /* Combined Deduplicated Address Card */
+            <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#E8E0D5] shadow-xs space-y-3">
+              <div className="flex items-center justify-between border-b border-[#F0EAE1] pb-2.5">
+                <div className="flex items-center space-x-2">
+                  <div className="w-6 h-6 rounded-full bg-[#800020]/10 flex items-center justify-center text-[#800020]">
+                    <MapPin className="w-3.5 h-3.5" />
+                  </div>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#2C332D]">
+                    Shipping Details &amp; Receiver
+                  </span>
+                </div>
+
+                {/* Cross Icon (X) button to remove address and enter a new one */}
+                <button
+                  type="button"
+                  onClick={handleRemoveAddress}
+                  title="Remove address and enter a new one"
+                  aria-label="Remove address"
+                  className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-neutral-500 hover:text-red-700 hover:bg-red-50 border border-neutral-200 hover:border-red-200 transition cursor-pointer group"
+                >
+                  <X className="w-3.5 h-3.5 text-neutral-400 group-hover:text-red-600" />
+                  <span className="text-[11px]">Remove / Change</span>
+                </button>
+              </div>
+
+              <div className="space-y-2 text-xs">
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                  <div>
+                    <span className="text-[#8C827A] font-medium">Receiver Name: </span>
+                    <strong className="text-[#2C332D] font-bold">{shippingDetails.name || "Customer"}</strong>
+                  </div>
+                  <div>
+                    <span className="text-[#8C827A] font-medium">Contact No: </span>
+                    <strong className="text-[#2C332D] font-bold">{shippingDetails.phone || "Not Provided"}</strong>
+                  </div>
+                </div>
+
+                <div className="pt-0.5">
+                  <span className="text-[#8C827A] font-medium block text-[11px] mb-1">Combined Delivery Address:</span>
+                  <p className="text-[#3E3833] font-medium leading-relaxed bg-[#FAF8F5] p-3 rounded-xl border border-[#F0EAE1]">
+                    {formatCombinedAddress(shippingDetails)}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* Add / Edit Address Form */
+            <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#D4AF37]/50 shadow-xs space-y-3">
+              <div className="flex items-center justify-between border-b border-[#F0EAE1] pb-2.5">
+                <div className="flex items-center space-x-2">
+                  <div className="w-6 h-6 rounded-full bg-[#800020]/10 flex items-center justify-center text-[#800020]">
+                    <MapPin className="w-3.5 h-3.5" />
+                  </div>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#800020]">
+                    {hasAddress ? "Change Delivery Address" : "Add Delivery Address & Contact"}
+                  </span>
+                </div>
+
+                {hasAddress && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsEditingAddress(false);
+                      setAddressFormError("");
+                    }}
+                    className="text-xs text-neutral-500 hover:text-neutral-800 underline transition cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                )}
+              </div>
+
+              <div className="space-y-2.5 text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <div>
+                    <label className="block text-[11px] font-bold text-[#2C332D] mb-1">
+                      Receiver Name <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={addressForm.name}
+                      onChange={(e) => setAddressForm((prev) => ({ ...prev, name: e.target.value }))}
+                      placeholder="e.g., Priya Sharma"
+                      className="w-full px-3 py-2 rounded-xl border border-[#E8E0D5] bg-[#FAF8F5] text-xs focus:ring-1 focus:ring-[#800020] focus:border-[#800020] outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-[#2C332D] mb-1">
+                      Contact Number <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="tel"
+                      value={addressForm.phone}
+                      onChange={(e) => setAddressForm((prev) => ({ ...prev, phone: e.target.value }))}
+                      placeholder="10-digit mobile number"
+                      maxLength={15}
+                      className="w-full px-3 py-2 rounded-xl border border-[#E8E0D5] bg-[#FAF8F5] text-xs focus:ring-1 focus:ring-[#800020] focus:border-[#800020] outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-[#2C332D] mb-1">
+                    Flat, House No., Building, Street <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={addressForm.addressLine1}
+                    onChange={(e) => setAddressForm((prev) => ({ ...prev, addressLine1: e.target.value }))}
+                    placeholder="e.g., Flat 402, Lotus Towers, 5th Main"
+                    className="w-full px-3 py-2 rounded-xl border border-[#E8E0D5] bg-[#FAF8F5] text-xs focus:ring-1 focus:ring-[#800020] focus:border-[#800020] outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-[#2C332D] mb-1">
+                    Area / Landmark / Locality <span className="text-neutral-400 font-normal">(Optional)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={addressForm.addressLine2}
+                    onChange={(e) => setAddressForm((prev) => ({ ...prev, addressLine2: e.target.value }))}
+                    placeholder="e.g., Near Metro Station, Indiranagar"
+                    className="w-full px-3 py-2 rounded-xl border border-[#E8E0D5] bg-[#FAF8F5] text-xs focus:ring-1 focus:ring-[#800020] focus:border-[#800020] outline-none"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                  <div>
+                    <label className="block text-[11px] font-bold text-[#2C332D] mb-1">
+                      City <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={addressForm.city}
+                      onChange={(e) => setAddressForm((prev) => ({ ...prev, city: e.target.value }))}
+                      placeholder="e.g., Mumbai"
+                      className="w-full px-3 py-2 rounded-xl border border-[#E8E0D5] bg-[#FAF8F5] text-xs focus:ring-1 focus:ring-[#800020] focus:border-[#800020] outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-[#2C332D] mb-1">
+                      State <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={addressForm.state}
+                      onChange={(e) => setAddressForm((prev) => ({ ...prev, state: e.target.value }))}
+                      placeholder="e.g., Maharashtra"
+                      className="w-full px-3 py-2 rounded-xl border border-[#E8E0D5] bg-[#FAF8F5] text-xs focus:ring-1 focus:ring-[#800020] focus:border-[#800020] outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-[#2C332D] mb-1">
+                      PIN Code <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={addressForm.postalCode}
+                      onChange={(e) => setAddressForm((prev) => ({ ...prev, postalCode: e.target.value.replace(/\D/g, "").slice(0, 6) }))}
+                      placeholder="6 digits"
+                      maxLength={6}
+                      className="w-full px-3 py-2 rounded-xl border border-[#E8E0D5] bg-[#FAF8F5] text-xs focus:ring-1 focus:ring-[#800020] focus:border-[#800020] outline-none"
+                    />
+                  </div>
+                </div>
+
+                {addressFormError && (
+                  <div className="p-2.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-center space-x-2">
+                    <AlertTriangle className="w-4 h-4 shrink-0" />
+                    <span>{addressFormError}</span>
+                  </div>
+                )}
+
+                <div className="pt-1">
+                  <button
+                    type="button"
+                    onClick={handleSaveAddress}
+                    disabled={isSavingAddress}
+                    className="w-full py-2.5 px-4 rounded-xl bg-[#800020] hover:bg-[#600018] text-white font-bold text-xs shadow-xs transition flex items-center justify-center space-x-1.5 cursor-pointer disabled:opacity-50"
+                  >
+                    {isSavingAddress ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        <span>Saving Address...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Check className="w-3.5 h-3.5" />
+                        <span>Save &amp; Deliver to this Address</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
           )}

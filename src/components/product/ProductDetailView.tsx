@@ -426,7 +426,11 @@ export function ProductDetailView({ product, relatedProducts, settings: initialS
     setIsPaymentModalOpen(true);
   };
 
-  const handlePaidSubmit = async (paymentReference: string, screenshotUrl?: string | null) => {
+  const handlePaidSubmit = async (
+    paymentReference: string,
+    screenshotUrl?: string | null,
+    shippingDetails?: any
+  ) => {
     if (!paymentModalData) return;
     const {
       cust,
@@ -440,6 +444,11 @@ export function ProductDetailView({ product, relatedProducts, settings: initialS
       shippingFee,
       finalAmount,
     } = paymentModalData;
+
+    const activeCustomer = shippingDetails || cust || customer;
+    if (shippingDetails) {
+      setCustomer((prev: any) => ({ ...prev, ...shippingDetails }));
+    }
 
     let createdOrderNumber: string | null = null;
     try {
@@ -470,6 +479,14 @@ export function ProductDetailView({ product, relatedProducts, settings: initialS
           finalTotal: finalAmount,
           paymentReference,
           paymentScreenshotUrl: screenshotUrl || null,
+          customerName: activeCustomer?.name || null,
+          customerPhone: activeCustomer?.phone || null,
+          shippingAddressLine1: activeCustomer?.addressLine1 || null,
+          shippingAddressLine2: activeCustomer?.addressLine2 || null,
+          shippingCity: activeCustomer?.city || null,
+          shippingState: activeCustomer?.state || null,
+          shippingPostalCode: activeCustomer?.postalCode || null,
+          shippingCountry: activeCustomer?.country || "India",
           orderNotes: "1-Click Buy via Dynamic UPI QR",
         }),
       });
@@ -499,10 +516,10 @@ export function ProductDetailView({ product, relatedProducts, settings: initialS
       giftWrapCharge,
       personalizationDetails: pers,
       referenceImageUrl: refImg,
-      customer: cust || customer,
+      customer: activeCustomer,
       orderNumber: createdOrderNumber,
       paymentReference,
-      paymentStatus: "Pending Verification",
+      paymentStatus: "Paid",
       paymentScreenshotUrl: screenshotUrl || null,
       shippingCharge: shippingFee,
       finalTotal: finalAmount,
@@ -1308,6 +1325,7 @@ export function ProductDetailView({ product, relatedProducts, settings: initialS
           ]}
           onPaidSubmit={handlePaidSubmit}
           onWillOrderLater={handleWillOrderLater}
+          onCustomerUpdate={(updated) => setCustomer((prev: any) => ({ ...prev, ...updated }))}
         />
       )}
     </div>

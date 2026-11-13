@@ -6,6 +6,53 @@ export function formatWhatsAppNumber(phone?: string): string {
   return digits;
 }
 
+/**
+ * Combines address components (addressLine1, addressLine2, city, state, postalCode)
+ * and eliminates duplicate phrases/segments case-insensitively.
+ * Formats a clean, readable shipping destination line.
+ */
+export function formatCombinedAddress(addr?: {
+  addressLine1?: string | null;
+  addressLine2?: string | null;
+  city?: string | null;
+  state?: string | null;
+  postalCode?: string | null;
+  country?: string | null;
+} | null): string {
+  if (!addr) return "";
+  const rawParts = [
+    addr.addressLine1,
+    addr.addressLine2,
+    addr.city,
+    addr.state,
+    addr.postalCode,
+  ].filter((p): p is string => Boolean(p && String(p).trim().length > 0));
+
+  if (rawParts.length === 0) return "";
+
+  const segments: string[] = [];
+  for (const part of rawParts) {
+    const subParts = String(part).split(/,\s*/);
+    for (const sub of subParts) {
+      const clean = sub.trim().replace(/^,+|,+$/g, "");
+      if (clean) segments.push(clean);
+    }
+  }
+
+  const seen = new Set<string>();
+  const uniqueSegments: string[] = [];
+
+  for (const seg of segments) {
+    const normalized = seg.toLowerCase().trim();
+    if (!seen.has(normalized)) {
+      seen.add(normalized);
+      uniqueSegments.push(seg);
+    }
+  }
+
+  return uniqueSegments.join(", ");
+}
+
 export function buildSingleProductWhatsAppMessage(params: {
   product: {
     id: string;
@@ -35,6 +82,12 @@ export function buildSingleProductWhatsAppMessage(params: {
     name?: string;
     email?: string;
     phone?: string;
+    addressLine1?: string | null;
+    addressLine2?: string | null;
+    city?: string | null;
+    state?: string | null;
+    postalCode?: string | null;
+    country?: string | null;
   } | null;
   orderNumber?: string | null;
   shippingCharge?: number;
@@ -120,19 +173,23 @@ export function buildSingleProductWhatsAppMessage(params: {
     msg += `Final Payable Amount: ₹${resolvedFinal.toFixed(2)}\n\n`;
 
     msg += `Payment Reference: ${paymentReference || orderNumber || "PENDING"}\n`;
-    msg += `Payment Status: ${paymentStatus || "Pending Verification"}\n`;
+    msg += `Payment Status: ${paymentStatus || "Paid"}\n`;
     if (paymentScreenshotUrl) {
       msg += `Payment Screenshot Proof: ${paymentScreenshotUrl}\n`;
     }
     msg += `\n`;
 
     msg += `*Customer Details:*\n`;
-    msg += `• Name: ${customer?.name || "Customer"}\n`;
+    msg += `• Receiver Name: ${customer?.name || "Customer"}\n`;
     if (customer?.phone) {
-      msg += `• Phone: ${customer.phone}\n`;
+      msg += `• Contact No: ${customer.phone}\n`;
     }
     if (customer?.email) {
       msg += `• Email: ${customer.email}\n`;
+    }
+    const combinedAddr = formatCombinedAddress(customer);
+    if (combinedAddr) {
+      msg += `• Delivery Address: ${combinedAddr}\n`;
     }
 
     msg += `\nI have completed the payment. Please verify the transaction and confirm my order.`;
@@ -226,8 +283,12 @@ export function buildCartWhatsAppMessage(params: {
     name?: string;
     email?: string;
     phone?: string;
-    city?: string;
-    state?: string;
+    addressLine1?: string | null;
+    addressLine2?: string | null;
+    city?: string | null;
+    state?: string | null;
+    postalCode?: string | null;
+    country?: string | null;
   } | null;
   orderNumber?: string | null;
   paymentReference?: string | null;
@@ -306,21 +367,24 @@ export function buildCartWhatsAppMessage(params: {
     msg += `• *Final Payable Amount: ₹${finalTotal.toFixed(2)}*\n\n`;
 
     msg += `Payment Reference: ${paymentReference || orderNumber || "PENDING"}\n`;
-    msg += `Payment Status: ${paymentStatus || "Pending Verification"}\n`;
+    msg += `Payment Status: ${paymentStatus || "Paid"}\n`;
     if (paymentScreenshotUrl) {
       msg += `Payment Screenshot Proof: ${paymentScreenshotUrl}\n`;
     }
     msg += `\n`;
 
     msg += `*CUSTOMER DETAILS:*\n`;
-    msg += `• Name: ${customer?.name || "Customer"}\n`;
+    msg += `• Receiver Name: ${customer?.name || "Customer"}\n`;
     if (customer?.phone) {
-      msg += `• Phone: ${customer.phone}\n`;
+      msg += `• Contact No: ${customer.phone}\n`;
     }
     if (customer?.email) {
       msg += `• Email: ${customer.email}\n`;
     }
-    if (customer?.city || customer?.state) {
+    const combinedAddr = formatCombinedAddress(customer);
+    if (combinedAddr) {
+      msg += `• Delivery Address: ${combinedAddr}\n`;
+    } else if (customer?.city || customer?.state) {
       msg += `• Location: ${[customer.city, customer.state].filter(Boolean).join(", ")}\n`;
     }
 

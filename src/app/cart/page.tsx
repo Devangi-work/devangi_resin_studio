@@ -165,7 +165,11 @@ function CartContent() {
     setIsPaymentModalOpen(true);
   };
 
-  const handlePaidSubmit = async (paymentReference: string, screenshotUrl?: string | null) => {
+  const handlePaidSubmit = async (
+    paymentReference: string,
+    screenshotUrl?: string | null,
+    shippingDetails?: any
+  ) => {
     const dataToSubmit = checkoutModalData || {
       items,
       subtotal,
@@ -175,6 +179,11 @@ function CartContent() {
       appliedCouponCode: appliedCoupon?.code || null,
       customer,
     };
+
+    const activeCustomer = shippingDetails || dataToSubmit.customer || customer;
+    if (shippingDetails) {
+      setCustomer((prev: any) => ({ ...prev, ...shippingDetails }));
+    }
 
     let createdOrderNumber: string | null = null;
     try {
@@ -202,6 +211,14 @@ function CartContent() {
           finalTotal: dataToSubmit.finalTotal,
           paymentReference,
           paymentScreenshotUrl: screenshotUrl || null,
+          customerName: activeCustomer?.name || null,
+          customerPhone: activeCustomer?.phone || null,
+          shippingAddressLine1: activeCustomer?.addressLine1 || null,
+          shippingAddressLine2: activeCustomer?.addressLine2 || null,
+          shippingCity: activeCustomer?.city || null,
+          shippingState: activeCustomer?.state || null,
+          shippingPostalCode: activeCustomer?.postalCode || null,
+          shippingCountry: activeCustomer?.country || "India",
           orderNotes: "Cart Checkout via Dynamic UPI QR",
         }),
       });
@@ -229,10 +246,10 @@ function CartContent() {
       couponCode: dataToSubmit.appliedCouponCode,
       shippingCharge: dataToSubmit.shippingCharge,
       finalTotal: dataToSubmit.finalTotal,
-      customer: dataToSubmit.customer,
+      customer: activeCustomer,
       orderNumber: createdOrderNumber,
       paymentReference,
-      paymentStatus: "Pending Verification",
+      paymentStatus: "Paid",
       paymentScreenshotUrl: screenshotUrl || null,
     });
 
@@ -692,6 +709,7 @@ function CartContent() {
           }))}
           onPaidSubmit={handlePaidSubmit}
           onWillOrderLater={handleWillOrderLater}
+          onCustomerUpdate={(updated) => setCustomer((prev: any) => ({ ...prev, ...updated }))}
         />
       )}
     </div>

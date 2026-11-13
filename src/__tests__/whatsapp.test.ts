@@ -5,7 +5,9 @@ import {
   buildSingleProductWhatsAppMessage,
   buildCartWhatsAppMessage,
   getWhatsAppUrl,
+  formatCombinedAddress,
 } from "../lib/whatsapp";
+import { getProductionSiteUrl } from "../lib/email/brevo";
 import {
   buildUpiPaymentUri,
   generateUpiQrCodeDataUrl,
@@ -470,5 +472,86 @@ test("WhatsApp Integration Test Suite", async (t) => {
     assert.ok(paymentPolicy.highlights.length >= 4);
     assert.ok(paymentPolicy.detailedSections.length >= 5);
     assert.ok(paymentPolicy.alertBox.title.includes("Anti-Fraud"));
+  });
+
+  await t.test("formatCombinedAddress deduplicates repeated locality, city and state names cleanly", () => {
+    const combined1 = formatCombinedAddress({
+      addressLine1: "Flat 402, Lotus Heights, Indiranagar, Bangalore",
+      addressLine2: "Near Metro, Indiranagar",
+      city: "Bangalore",
+      state: "Karnataka",
+      postalCode: "560038",
+    });
+    // Indiranagar and Bangalore should not be repeated
+    assert.equal(combined1, "Flat 402, Lotus Heights, Indiranagar, Bangalore, Near Metro, Karnataka, 560038");
+
+    const combined2 = formatCombinedAddress({
+      addressLine1: "Shop 12, MG Road, Mumbai",
+      addressLine2: null,
+      city: "Mumbai",
+      state: "Maharashtra",
+      postalCode: "400001",
+    });
+    assert.equal(combined2, "Shop 12, MG Road, Mumbai, Maharashtra, 400001");
+
+    const empty = formatCombinedAddress(null);
+    assert.equal(empty, "");
+  });
+
+  await t.test("WhatsApp messages default payment status to Paid and include Receiver Name, Contact No, and combined address", () => {
+    const singleMsg = buildSingleProductWhatsAppMessage({
+      product: { id: "p100", name: "Custom Geode Clock" },
+      unitPrice: 2499,
+      quantity: 1,
+      paymentReference: "DRS-PAID-99",
+      customer: {
+        name: "Rohit Malhotra",
+        phone: "+91 9811223344",
+        email: "rohit@example.com",
+        addressLine1: "Villa 5, Palm Meadows, Whitefield",
+        addressLine2: "Whitefield, Bangalore",
+        city: "Bangalore",
+        state: "Karnataka",
+        postalCode: "560066",
+      },
+    });
+
+    assert.ok(singleMsg.includes("Payment Status: Paid"), "Default payment status must be Paid");
+    assert.ok(singleMsg.includes("• Receiver Name: Rohit Malhotra"));
+    assert.ok(singleMsg.includes("• Contact No: +91 9811223344"));
+    assert.ok(singleMsg.includes("• Delivery Address: Villa 5, Palm Meadows, Whitefield, Bangalore, Karnataka, 560066"));
+
+    const cartMsg = buildCartWhatsAppMessage({
+      items: [{ name: "Mini Resin Tray", price: 650, quantity: 2 }],
+      subtotal: 1300,
+      finalTotal: 1300,
+      paymentReference: "DRS-CART-PAID",
+      customer: {
+        name: "Neha Joshi",
+        phone: "+91 9988776655",
+        addressLine1: "Flat 101, Galaxy Apts, Andheri West",
+        city: "Mumbai",
+        state: "Maharashtra",
+        postalCode: "400053",
+      },
+    });
+
+    assert.ok(cartMsg.includes("Payment Status: Paid"), "Cart message default payment status must be Paid");
+    assert.ok(cartMsg.includes("• Receiver Name: Neha Joshi"));
+    assert.ok(cartMsg.includes("• Contact No: +91 9988776655"));
+    assert.ok(cartMsg.includes("• Delivery Address: Flat 101, Galaxy Apts, Andheri West, Mumbai, Maharashtra, 400053"));
+  });
+
+  await t.test("getProductionSiteUrl strictly rejects localhost and returns live domain", () => {
+    const originalEnv = process.env.NEXT_PUBLIC_SITE_URL;
+    try {
+      process.env.NEXT_PUBLIC_SITE_URL = "http://localhost:3000";
+      const siteUrl = getProductionSiteUrl();
+      assert.ok(!siteUrl.includes("localhost"), "Must never return localhost");
+      assert.ok(!siteUrl.includes("127.0.0.1"), "Must never return 127.0.0.1");
+      assert.equal(siteUrl, "https://devangiresinstudio.com");
+    } finally {
+      process.env.NEXT_PUBLIC_SITE_URL = originalEnv;
+    }
   });
 });

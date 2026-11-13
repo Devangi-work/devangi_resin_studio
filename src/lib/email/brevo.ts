@@ -301,6 +301,24 @@ function getStatusEmailDetails(status: string, orderNumber: string, customerName
 }
 
 /**
+ * Returns the public live canonical site URL for customer-facing transactional emails.
+ * Strictly guarantees that localhost / 127.0.0.1 is NEVER dispatched to real customer inboxes.
+ */
+export function getProductionSiteUrl(): string {
+  const envUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (envUrl && !envUrl.includes("localhost") && !envUrl.includes("127.0.0.1")) {
+    return envUrl.replace(/\/$/, "");
+  }
+  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
+    return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL.replace(/\/$/, "")}`;
+  }
+  if (process.env.VERCEL_URL && !process.env.VERCEL_URL.includes("localhost")) {
+    return `https://${process.env.VERCEL_URL.replace(/\/$/, "")}`;
+  }
+  return "https://devangiresinstudio.com";
+}
+
+/**
  * Sends a professionally styled transactional email whenever an order's
  * fulfillment status changes (or upon manual admin dispatch).
  */
@@ -309,7 +327,7 @@ export async function sendOrderStatusEmail(order: any, fulfillmentStatus: string
     return { success: true, mocked: true, note: "No valid customer email on order" };
   }
 
-  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://devangiresinstudio.com").replace(/\/$/, "");
+  const siteUrl = getProductionSiteUrl();
   // High-availability CDN hosted logo for email clients (Gmail, Apple Mail, Outlook)
   const logoUrl = "https://rus9f71hta9djnrh.public.blob.vercel-storage.com/admin-media/1794226282779-resin_logo-wbFFqYrGKb9XuvQrNYoXdXnqHrTOqz.png";
   const trackUrl = `${siteUrl}/orders/${order.orderNumber}${order.secureLookupToken ? `?token=${order.secureLookupToken}` : ""}`;
