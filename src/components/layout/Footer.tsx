@@ -317,7 +317,7 @@ export function Footer() {
         {/* Bottom Trust & Copyright */}
         <div className="pt-8 border-t border-[#4E2230] flex flex-col md:flex-row items-center justify-between text-xs text-[#D1BFC6] gap-4">
           <p className="flex flex-wrap items-center justify-center gap-1.5 font-medium tracking-wide">
-            <span>© 2026 {settings?.storeName || "Devangi Resin Studio"}. Handcrafted with Love in India.</span>
+            <span>© 2026 {settings?.storeName || "Devangi Resin Studio"}. All Rights Reserved.</span>
           </p>
           <div className="flex flex-wrap items-center justify-center gap-3 text-[11px]">
             <span className="flex items-center space-x-1 text-[#25D366]">

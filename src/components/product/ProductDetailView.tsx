@@ -361,7 +361,6 @@ export function ProductDetailView({ product, relatedProducts, settings: initialS
   const isFreeShipping = shippingInfo.isFree;
   const currentShippingFee = shippingInfo.charge;
   const freeThreshold = shippingInfo.freeShippingThreshold;
-  const defaultShipFee = shippingInfo.defaultShippingCharge;
   const matchedRate = shippingInfo.matchedCityName
     ? configuredCityRates.find(
         (r) => r.name.toLowerCase() === shippingInfo.matchedCityName?.toLowerCase()
@@ -1084,12 +1083,10 @@ export function ProductDetailView({ product, relatedProducts, settings: initialS
                 </span>
                 <div>
                   <h4 className="text-xs font-bold text-[#2C332D]">
-                    Shipping &amp; Delivery to Your City
+                    Shipping &amp; Delivery to Your Location
                   </h4>
                   <p className="text-[10px] text-[#736C66]">
-                    {matchedRate
-                      ? `Special city rate applied for ${matchedRate.name}`
-                      : "Direct insured transit with door delivery"}
+                    Direct insured transit with door delivery
                   </p>
                 </div>
               </div>
@@ -1112,18 +1109,18 @@ export function ProductDetailView({ product, relatedProducts, settings: initialS
               <span className="flex items-center space-x-1.5 text-[#736C66]">
                 <MapPin className="w-3.5 h-3.5 text-[#B8972E] flex-shrink-0" />
                 <span>
-                  {customer?.city ? (
+                  {customer?.city || customer?.state ? (
                     <>
-                      Deliver to: <strong className="text-[#2C332D]">{customer.city}</strong>
+                      Deliver to: <strong className="text-[#2C332D]">{customer.city || customer.state}</strong>
                     </>
                   ) : customer ? (
                     <span>No delivery address saved in profile</span>
                   ) : (
-                    <span>Delivering across India</span>
+                    <span>Insured Doorstep Delivery</span>
                   )}
                 </span>
               </span>
-              {customer?.city && shippingInfo.matchedCityName ? (
+              {(customer?.city || customer?.state) && shippingInfo.matchedCityName ? (
                 <span className="text-[10px] bg-[#FAF0F3] text-[#B84A67] px-2 py-0.5 rounded font-semibold border border-[#EFE3E7]">
                   {shippingInfo.matchedCityName} Rate (₹{currentShippingFee.toFixed(0)})
                 </span>
@@ -1134,7 +1131,7 @@ export function ProductDetailView({ product, relatedProducts, settings: initialS
                 >
                   Sign In
                 </Link>
-              ) : !customer.city ? (
+              ) : !customer.city && !customer.state ? (
                 <Link
                   href="/account/profile"
                   className="text-[10px] text-[#B8972E] hover:underline font-semibold"
@@ -1169,36 +1166,6 @@ export function ProductDetailView({ product, relatedProducts, settings: initialS
                 <p className="text-[#736C66]">
                   <strong>Dimensions:</strong> {product.dimensions}
                 </p>
-              )}
-            </div>
-
-            <div className="bg-white p-4 rounded-xl border border-[#E8E0D5] space-y-2">
-              <h4 className="font-bold text-[#2C332D] flex items-center justify-between">
-                <span className="flex items-center space-x-1.5">
-                  <Truck className="w-4 h-4 text-[#B8972E]" />
-                  <span>Shipping & Delivery Policy</span>
-                </span>
-                <span className="text-[11px] font-black text-[#8C1D38]">
-                  {isFreeShipping
-                    ? "FREE Delivery"
-                    : `₹${currentShippingFee.toFixed(2)}${userCity ? ` to ${userCity}` : ""}`}
-                </span>
-              </h4>
-              <p className="text-[#736C66] leading-relaxed">
-                {product.isFreeShipping
-                  ? "Eligible for Complimentary Insured Express Shipping across India."
-                  : `Shipping charge for ${userCity ? userCity : "your location"} is ₹${currentShippingFee.toFixed(2)}.${freeThreshold > 0 ? ` Complimentary free delivery applies automatically on all orders over ₹${freeThreshold}.` : ""}`}
-              </p>
-              {configuredCityRates.length > 0 && (
-                <div className="pt-1 text-[11px] text-[#736C66]">
-                  <strong>Configured City Rates: </strong>
-                  {configuredCityRates.map((r, i) => (
-                    <span key={r.id || r.name}>
-                      {r.name} (₹{Number(r.charge).toFixed(0)}){i < configuredCityRates.length - 1 ? ", " : ""}
-                    </span>
-                  ))}
-                  <span> (Rest of India: ₹{defaultShipFee.toFixed(0)})</span>
-                </div>
               )}
             </div>
 

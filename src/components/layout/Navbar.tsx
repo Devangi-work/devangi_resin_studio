@@ -318,13 +318,6 @@ export function Navbar() {
             </Link>
 
             <Link
-              href="/devangiresinstudio/orderscatalogue"
-              className="text-[11px] xl:text-xs font-semibold uppercase tracking-wider text-[#3A1823] hover:text-[#B84A67] transition-colors py-1 border-b-2 border-transparent hover:border-[#D4AF37] whitespace-nowrap"
-            >
-              Showcase
-            </Link>
-
-            <Link
               href="/track-order"
               className="text-[11px] xl:text-xs font-semibold uppercase tracking-wider text-[#3A1823] hover:text-[#B84A67] transition-colors py-1 border-b-2 border-transparent hover:border-[#D4AF37] whitespace-nowrap"
             >
@@ -796,22 +789,6 @@ export function Navbar() {
                       </p>
                     </div>
                     <Sparkles className="w-4 h-4 text-[#D4AF37] group-hover:scale-110 transition-transform flex-shrink-0 ml-2" />
-                  </Link>
-
-                  <Link
-                    href="/devangiresinstudio/orderscatalogue"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="p-3 bg-gradient-to-r from-[#FAF4EC] to-white border border-[#E8E0D5] rounded-xl flex items-center justify-between group hover:border-[#D4AF37] transition-all shadow-xs active:scale-98"
-                  >
-                    <div>
-                      <p className="font-serif font-bold text-sm text-[#2C332D] group-hover:text-[#B8972E] transition-colors">
-                        Orders Showcase &amp; Catalogue
-                      </p>
-                      <p className="text-[10px] text-[#736C66]">
-                        Browse real custom orders &amp; tap to order same piece
-                      </p>
-                    </div>
-                    <ArrowRight className="w-4 h-4 text-[#B8972E] group-hover:translate-x-1 transition-transform flex-shrink-0 ml-2" />
                   </Link>
 
                   {/* 6. Account & Order Options */}

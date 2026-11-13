@@ -358,7 +358,7 @@ export default async function HomePage() {
                       1
                     </div>
                     <span>
-                      Choose custom color palettes, floral petals, 24K gold/silver leafing, or upload high-resolution photos.
+                      Choose your preferred colours, decorative elements, and personalised designs to make your resin piece unique.
                     </span>
                   </div>
 
@@ -367,7 +367,7 @@ export default async function HomePage() {
                       2
                     </div>
                     <span>
-                      Our studio artists hand-pour, de-gas in vacuum chambers, and UV-cure your piece over 3–5 days.
+                      Each piece is carefully handcrafted by our artists, with attention to every detail and a smooth, beautiful finish.
                     </span>
                   </div>
 
@@ -376,7 +376,7 @@ export default async function HomePage() {
                       3
                     </div>
                     <span>
-                      Carefully packed in luxury velvet or matte gift packaging with a handwritten artisan note.
+                      Your finished creation is carefully packed in our premium Display &amp; Window Boxes, ready to be gifted or cherished.
                     </span>
                   </div>
                 </div>
@@ -388,13 +388,6 @@ export default async function HomePage() {
                   >
                     <span>Start Bespoke Request</span>
                     <ArrowRight className="w-4 h-4" />
-                  </Link>
-
-                  <Link
-                    href="/devangiresinstudio/orderscatalogue"
-                    className="inline-flex items-center space-x-2 px-6 py-3.5 bg-white border border-[#EFE3E7] text-[#3A1823] text-xs font-semibold uppercase tracking-wider rounded-full hover:bg-[#FAF0F3] hover:border-[#D4AF37] shadow-xs transition-all active:scale-98"
-                  >
-                    <span>View Showcase Catalogue</span>
                   </Link>
                 </div>
               </div>
@@ -529,7 +522,7 @@ export default async function HomePage() {
               <span>•</span>
               <span className="flex items-center space-x-1.5">
                 <Gift className="w-3.5 h-3.5 text-[#B84A67]" />
-                <span>Luxury Velvet Gifting</span>
+                <span>Premium Display &amp; Window Boxes</span>
               </span>
             </div>
           </div>
