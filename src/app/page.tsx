@@ -139,11 +139,11 @@ export default async function HomePage() {
           {/* Hero Visual Display */}
           <div className="lg:col-span-5 relative">
             <div className="relative mx-auto max-w-sm sm:max-w-md lg:max-w-none">
-              <div className="rounded-3xl overflow-hidden shadow-2xl border-4 border-white aspect-square bg-white group">
+              <div className="rounded-3xl overflow-hidden shadow-2xl border-4 border-white aspect-[4/5] bg-gradient-to-b from-[#FAF0F3] via-white to-[#FDF5F7] group flex items-end justify-center">
                 <img
-                  src="/images/home/Devangi_Resin_Studio_Handmade_Keepsakes.png"
+                  src="/images/home/devangi_artist_hero.png"
                   alt="Devangi Resin Studio - Handmade Keepsakes & Resin Art"
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  className="w-full h-full object-contain object-bottom transition-transform duration-700 group-hover:scale-105"
                 />
               </div>
             </div>
