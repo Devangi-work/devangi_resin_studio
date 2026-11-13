@@ -366,12 +366,19 @@ test("E-Commerce Test Suite", async (t) => {
     assert.equal(settings.cityShippingRates[2].charge, "80.00");
   });
 
-  // India Post State-based Shipping Rates Coverage Test
-  await t.test("India Post State Delivery Rates covers all 36 Indian States and Union Territories with Rajasthan at ₹79", async () => {
-    // 1. Rajasthan delivery rate is exactly 79 (India Post base + extra packaging)
+  // India Post State-based Shipping Rates Coverage Test (Panvel, Maharashtra origin)
+  await t.test("India Post State Delivery Rates covers all 36 Indian States with Maharashtra at ₹59 and Rajasthan at ₹79", async () => {
+    // 1. Home state Maharashtra (dispatched from Panvel) is ₹59
+    assert.equal(INDIA_POST_STATE_SHIPPING_RATES["Maharashtra"], 59);
+
+    // 2. Inter-state Rajasthan is exactly ₹79 (India Post base + extra packaging)
     assert.equal(INDIA_POST_STATE_SHIPPING_RATES["Rajasthan"], 79);
 
-    // 2. All 36 Indian states and Union Territories are defined
+    // 3. Neighboring Western states (Gujarat, Goa, MP) are ₹69
+    assert.equal(INDIA_POST_STATE_SHIPPING_RATES["Gujarat"], 69);
+    assert.equal(INDIA_POST_STATE_SHIPPING_RATES["Goa"], 69);
+
+    // 4. All 36 Indian states and Union Territories are defined
     const allStates = Object.keys(INDIA_POST_STATE_SHIPPING_RATES);
     assert.equal(allStates.length, 36);
     assert.ok(allStates.includes("Rajasthan"));
@@ -383,9 +390,12 @@ test("E-Commerce Test Suite", async (t) => {
     assert.ok(allStates.includes("Assam"));
     assert.ok(allStates.includes("Lakshadweep"));
 
-    // 3. Default India Post shipping rates array generates 36 valid rate objects
+    // 5. Default India Post shipping rates array generates 36 valid rate objects
     const defaultRates = getDefaultIndiaPostShippingRates();
     assert.equal(defaultRates.length, 36);
+    const mhRate = defaultRates.find((r) => r.name === "Maharashtra");
+    assert.ok(mhRate);
+    assert.equal(mhRate?.charge, "59.00");
     const rajRate = defaultRates.find((r) => r.name === "Rajasthan");
     assert.ok(rajRate);
     assert.equal(rajRate?.charge, "79.00");
@@ -653,40 +663,40 @@ test("E-Commerce Test Suite", async (t) => {
     });
     assert.equal(salumbarAuto.charge, 79, "Salumbar should resolve to Rajasthan ₹79");
 
-    // Maharashtra cities (Pune, Mumbai, Nagpur) auto-resolve to Maharashtra ₹89
+    // Maharashtra cities (Pune, Mumbai, Nagpur) auto-resolve to Maharashtra ₹59 (dispatched from Panvel, MH)
     const mhAuto = resolveShippingCharge({
       subtotal: 300,
       cityName: "Pune",
       cityRates: [],
     });
-    assert.equal(mhAuto.charge, 89, "Pune should resolve to Maharashtra India Post rate ₹89");
+    assert.equal(mhAuto.charge, 59, "Pune should resolve to Maharashtra India Post rate ₹59");
     assert.equal(mhAuto.matchedCityName, "Maharashtra");
 
-    // Gujarat cities (Ahmedabad, Surat) auto-resolve to Gujarat ₹85
+    // Gujarat cities (Ahmedabad, Surat) auto-resolve to Gujarat ₹69 (neighboring state)
     const gjAuto = resolveShippingCharge({
       subtotal: 300,
       cityName: "Ahmedabad",
       cityRates: [],
     });
-    assert.equal(gjAuto.charge, 85, "Ahmedabad should resolve to Gujarat India Post rate ₹85");
+    assert.equal(gjAuto.charge, 69, "Ahmedabad should resolve to Gujarat India Post rate ₹69");
     assert.equal(gjAuto.matchedCityName, "Gujarat");
 
-    // Karnataka cities (Bengaluru) auto-resolve to Karnataka ₹94
+    // Karnataka cities (Bengaluru) auto-resolve to Karnataka ₹79
     const kaAuto = resolveShippingCharge({
       subtotal: 300,
       cityName: "Bengaluru",
       cityRates: [],
     });
-    assert.equal(kaAuto.charge, 94, "Bengaluru should resolve to Karnataka India Post rate ₹94");
+    assert.equal(kaAuto.charge, 79, "Bengaluru should resolve to Karnataka India Post rate ₹79");
     assert.equal(kaAuto.matchedCityName, "Karnataka");
 
-    // Tamil Nadu (Chennai) auto-resolve to Tamil Nadu ₹99
+    // Tamil Nadu (Chennai) auto-resolve to Tamil Nadu ₹89
     const tnAuto = resolveShippingCharge({
       subtotal: 300,
       cityName: "Chennai",
       cityRates: [],
     });
-    assert.equal(tnAuto.charge, 99, "Chennai should resolve to Tamil Nadu India Post rate ₹99");
+    assert.equal(tnAuto.charge, 89, "Chennai should resolve to Tamil Nadu India Post rate ₹89");
     assert.equal(tnAuto.matchedCityName, "Tamil Nadu");
 
     // Assam (Guwahati) auto-resolve to Assam ₹109
@@ -698,13 +708,21 @@ test("E-Commerce Test Suite", async (t) => {
     assert.equal(asAuto.charge, 109, "Guwahati should resolve to Assam India Post rate ₹109");
     assert.equal(asAuto.matchedCityName, "Assam");
 
-    // PIN code auto-resolution to state rate: PIN 400001 (Mumbai) -> Maharashtra ₹89
+    // PIN code auto-resolution to state rate: PIN 400001 (Mumbai) -> Maharashtra ₹59
     const pinAutoMh = resolveShippingCharge({
       subtotal: 300,
       postalCode: "400001",
       cityRates: [],
     });
-    assert.equal(pinAutoMh.charge, 89, "PIN 400001 should resolve to Maharashtra ₹89");
+    assert.equal(pinAutoMh.charge, 59, "PIN 400001 should resolve to Maharashtra ₹59");
+
+    // PIN 410206 (Panvel, Maharashtra) -> Maharashtra ₹59
+    const pinAutoPanvel = resolveShippingCharge({
+      subtotal: 300,
+      postalCode: "410206",
+      cityRates: [],
+    });
+    assert.equal(pinAutoPanvel.charge, 59, "PIN 410206 (Panvel) should resolve to Maharashtra ₹59");
   });
 
   // 11. Order Shipping Update & Total Recalculation (Edit Order)

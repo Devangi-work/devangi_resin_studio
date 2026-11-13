@@ -926,46 +926,52 @@ export function findStateByPincode(postalCode?: string | null): string | null {
 
 /**
  * Standard India Post Speed Post / Parcel Delivery Rates by State & Union Territory.
+ * Dispatch Origin: Panvel, Raigad / Navi Mumbai, Maharashtra (India Post).
  * Includes ₹15 packaging allowance built into the total delivery rate.
- * Base Intra-State (Rajasthan): India Post base ~₹64 + ₹15 packaging = ₹79.00
+ * - Home State (Maharashtra): Intra-state India Post base ~₹44 + ₹15 = ₹59.00
+ * - Neighboring Western States (Goa, Gujarat, MP): India Post base ~₹54 + ₹15 = ₹69.00
+ * - Inter-State (Rajasthan, Karnataka, Telangana, AP, CG): India Post base ~₹64 + ₹15 = ₹79.00
+ * - Northern & Southern States (Delhi, UP, Punjab, Haryana, TN, Kerala, etc.): India Post base ~₹74 + ₹15 = ₹89.00
+ * - Far Eastern & Hilly States (West Bengal, Uttarakhand, HP, J&K): India Post base ~₹79 + ₹15 = ₹94.00
+ * - North-East & Islands (Assam, Meghalaya, Ladakh, Andaman, etc.): India Post base ~₹94 + ₹15 = ₹109.00
  */
 export const INDIA_POST_STATE_SHIPPING_RATES: Record<string, number> = {
-  // Rajasthan (Intra-State Origin Circle)
+  // Home State — Intra-State from Panvel, Maharashtra
+  Maharashtra: 59,
+
+  // Neighboring Western & Central States (borders Maharashtra)
+  Goa: 69,
+  Gujarat: 69,
+  "Madhya Pradesh": 69,
+  "Dadra and Nagar Haveli and Daman and Diu": 69,
+
+  // Inter-State Slabs (Near-South & North-West) - Rajasthan is ₹79
   Rajasthan: 79,
+  Karnataka: 79,
+  Telangana: 79,
+  "Andhra Pradesh": 79,
+  Chhattisgarh: 79,
 
-  // Neighboring & Northern States (Zone 1) - India Post ~₹70 + ₹15
-  Gujarat: 85,
-  Delhi: 85,
-  Haryana: 85,
-  Punjab: 85,
-  Chandigarh: 85,
-  "Madhya Pradesh": 85,
-  "Uttar Pradesh": 85,
+  // Northern, Eastern & Southern States
+  Delhi: 89,
+  Haryana: 89,
+  Punjab: 89,
+  Chandigarh: 89,
+  "Uttar Pradesh": 89,
+  Bihar: 89,
+  Jharkhand: 89,
+  Odisha: 89,
+  "Tamil Nadu": 89,
+  Kerala: 89,
+  Puducherry: 89,
 
-  // Central, Western & Northern Hilly (Zone 2) - India Post ~₹74 + ₹15
-  Maharashtra: 89,
-  Uttarakhand: 89,
-  "Himachal Pradesh": 89,
-  "Jammu and Kashmir": 89,
-  "Dadra and Nagar Haveli and Daman and Diu": 89,
-
-  // Mid-Southern & Eastern States (Zone 3) - India Post ~₹79 + ₹15
-  Karnataka: 94,
-  Telangana: 94,
-  "Andhra Pradesh": 94,
-  Goa: 94,
-  Bihar: 94,
-  Jharkhand: 94,
-  Chhattisgarh: 94,
+  // Far Eastern & Northern Mountain States
   "West Bengal": 94,
-  Odisha: 94,
+  Uttarakhand: 94,
+  "Himachal Pradesh": 94,
+  "Jammu and Kashmir": 94,
 
-  // Deep South States (Zone 4) - India Post ~₹84 + ₹15
-  "Tamil Nadu": 99,
-  Kerala: 99,
-  Puducherry: 99,
-
-  // North-East, Far Himalayan & Island Territories (Zone 5) - India Post ~₹94 + ₹15
+  // North-East, Far Himalayan & Island Territories
   Assam: 109,
   Sikkim: 109,
   Meghalaya: 109,

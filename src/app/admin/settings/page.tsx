@@ -925,7 +925,7 @@ export default function AdminSettingsPage() {
                   <span>India Post Delivery & Regional Shipping Rates</span>
                 </h3>
                 <p className="text-[11px] text-[#736C66] mt-0.5">
-                  Orders are dispatched via India Post. Shipping prices are set by State — all cities, towns, and 6-digit PIN codes within a state automatically inherit their state&apos;s delivery rate. You do not need to enter individual cities. You can adjust state rates or add city overrides below.
+                  Orders are dispatched from Panvel, Maharashtra via India Post. Shipping prices are set by State — all cities, towns, and 6-digit PIN codes within a state automatically inherit their state&apos;s delivery rate (e.g. Maharashtra home state: ₹59.00, Rajasthan: ₹79.00). You do not need to enter individual cities. You can adjust state rates or add city overrides below.
                 </p>
               </div>
 
@@ -979,7 +979,7 @@ export default function AdminSettingsPage() {
                   />
                 </div>
                 <div className="text-[11px] text-[#736C66] font-medium">
-                  {settings.cityShippingRates.length} regional rates configured (Rajasthan base: ₹79.00)
+                  {settings.cityShippingRates.length} regional rates configured (Dispatched from Panvel, MH | Maharashtra: ₹59.00 | Rajasthan: ₹79.00)
                 </div>
               </div>
             )}
