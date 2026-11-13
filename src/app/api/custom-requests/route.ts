@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { dbStore } from "@/lib/db";
+import { notifyAdminOnCustomRequest } from "@/lib/notifications/admin-dispatcher";
 
 export const dynamic = "force-dynamic";
 
@@ -49,6 +50,13 @@ export async function POST(request: Request) {
       description: data.description,
       referenceImageUrl: data.referenceImageUrl || null,
     });
+
+    // Dispatch Admin Notification (Push + Email)
+    try {
+      await notifyAdminOnCustomRequest(createdRequest);
+    } catch (notifErr) {
+      console.warn("[Custom Request Admin Notification Error]:", notifErr);
+    }
 
     return NextResponse.json({
       success: true,

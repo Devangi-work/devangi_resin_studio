@@ -3,6 +3,7 @@ import { dbStore } from "@/lib/db";
 import { checkoutSchema } from "@/lib/validations";
 import { getCustomerSession } from "@/lib/auth/customer";
 import { sendBrevoEmail } from "@/lib/email/brevo";
+import { notifyAdminOnNewOrder } from "@/lib/notifications/admin-dispatcher";
 import { resolveShippingCharge } from "@/lib/shipping";
 import { computeFestivePrice, computeGlobalFestiveDiscount } from "@/lib/festival";
 
@@ -266,6 +267,13 @@ export async function POST(request: Request) {
       });
     } catch (emailErr) {
       console.error("[Checkout Email Notification Error]", emailErr);
+    }
+
+    // 9. Dispatch Admin Notification (Mobile/Web Push + Comprehensive Admin Email)
+    try {
+      await notifyAdminOnNewOrder(order);
+    } catch (adminNotifErr) {
+      console.error("[Admin Notification Error]", adminNotifErr);
     }
 
     return NextResponse.json({

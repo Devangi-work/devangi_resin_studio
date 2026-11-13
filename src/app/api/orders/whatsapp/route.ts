@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCustomerSession } from "@/lib/auth/customer";
 import { dbStore } from "@/lib/db";
+import { notifyAdminOnNewOrder } from "@/lib/notifications/admin-dispatcher";
 import { z } from "zod";
 
 const whatsappOrderItemSchema = z.object({
@@ -170,6 +171,13 @@ export async function POST(request: NextRequest) {
       productImages,
       items: formattedItems,
     });
+
+    // Dispatch Admin Notification (Push + Email)
+    try {
+      await notifyAdminOnNewOrder(newOrder);
+    } catch (notifErr) {
+      console.warn("[WhatsApp Order Admin Notification Error]:", notifErr);
+    }
 
     return NextResponse.json({
       success: true,

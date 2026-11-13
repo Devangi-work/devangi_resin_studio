@@ -597,8 +597,58 @@ export const siteSettings = pgTable("site_settings", {
   // Custom Structured Policy Pages Configuration (Cards, Detailed Clauses, Notes)
   policyPagesConfig: jsonb("policy_pages_config").default({}),
 
+  // Admin Notification Settings (Email & Mobile Push)
+  adminNotificationEmail: text("admin_notification_email").default("devangiresinstudioofficial@gmail.com"),
+  notifyOnOrder: boolean("notify_on_order").default(true).notNull(),
+  notifyOnCustomRequest: boolean("notify_on_custom_request").default(true).notNull(),
+  notifyOnReview: boolean("notify_on_review").default(true).notNull(),
+  notificationCheckIntervalHours: integer("notification_check_interval_hours").default(2).notNull(),
+
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
+
+// -------------------------------------------------------------
+// 12. ADMIN PUSH NOTIFICATIONS & DEVICE SUBSCRIPTIONS
+// -------------------------------------------------------------
+export const adminPushSubscriptions = pgTable(
+  "admin_push_subscriptions",
+  {
+    id: text("id").primaryKey(),
+    endpoint: text("endpoint").notNull().unique(),
+    p256dh: text("p256dh").notNull(),
+    auth: text("auth").notNull(),
+    userId: text("user_id").default("admin"),
+    userAgent: text("user_agent"),
+    isActive: boolean("is_active").default(true).notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("admin_push_endpoint_idx").on(table.endpoint),
+    index("admin_push_active_idx").on(table.isActive),
+  ]
+);
+
+export const adminNotifications = pgTable(
+  "admin_notifications",
+  {
+    id: text("id").primaryKey(),
+    type: text("type").notNull(), // 'order' | 'custom_request' | 'review'
+    title: text("title").notNull(),
+    message: text("message").notNull(),
+    link: text("link").notNull(),
+    referenceId: text("reference_id"),
+    metadata: jsonb("metadata").default({}),
+    isRead: boolean("is_read").default(false).notNull(),
+    pushedAt: timestamp("pushed_at"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("admin_notifications_is_read_idx").on(table.isRead),
+    index("admin_notifications_created_at_idx").on(table.createdAt),
+    index("admin_notifications_type_idx").on(table.type),
+  ]
+);
 
 // -------------------------------------------------------------
 // 12. MEDIA LIBRARY

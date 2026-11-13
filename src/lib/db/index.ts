@@ -53,6 +53,34 @@ if (sql) {
   sql`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS popup_banner_link_url TEXT DEFAULT '/shop';`.catch(() => { });
   sql`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS popup_banner_button_text TEXT DEFAULT 'Explore Now';`.catch(() => { });
   sql`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS popup_banner_expires_at TIMESTAMP;`.catch(() => { });
+  sql`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS admin_notification_email TEXT DEFAULT 'devangiresinstudioofficial@gmail.com';`.catch(() => { });
+  sql`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS notify_on_order BOOLEAN DEFAULT TRUE;`.catch(() => { });
+  sql`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS notify_on_custom_request BOOLEAN DEFAULT TRUE;`.catch(() => { });
+  sql`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS notify_on_review BOOLEAN DEFAULT TRUE;`.catch(() => { });
+  sql`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS notification_check_interval_hours INTEGER DEFAULT 2;`.catch(() => { });
+  sql`CREATE TABLE IF NOT EXISTS admin_push_subscriptions (
+    id TEXT PRIMARY KEY,
+    endpoint TEXT NOT NULL UNIQUE,
+    p256dh TEXT NOT NULL,
+    auth TEXT NOT NULL,
+    user_id TEXT DEFAULT 'admin',
+    user_agent TEXT,
+    is_active BOOLEAN DEFAULT TRUE NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMP DEFAULT NOW() NOT NULL
+  );`.catch(() => { });
+  sql`CREATE TABLE IF NOT EXISTS admin_notifications (
+    id TEXT PRIMARY KEY,
+    type TEXT NOT NULL,
+    title TEXT NOT NULL,
+    message TEXT NOT NULL,
+    link TEXT NOT NULL,
+    reference_id TEXT,
+    metadata JSONB DEFAULT '{}'::jsonb,
+    is_read BOOLEAN DEFAULT FALSE NOT NULL,
+    pushed_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT NOW() NOT NULL
+  );`.catch(() => { });
   sql`CREATE TABLE IF NOT EXISTS media_items (
     id TEXT PRIMARY KEY,
     file_name TEXT NOT NULL,
@@ -133,6 +161,8 @@ interface StoreState {
   reviews: any[];
   reviewLikes: any[];
   productReviewPermissions: any[];
+  adminPushSubscriptions: any[];
+  adminNotifications: any[];
 }
 
 const globalForStore = globalThis as unknown as {
@@ -219,9 +249,16 @@ function getInitialStoreState(): StoreState {
       keepsakeStudioImages: [],
       cityShippingRates: getDefaultIndiaPostShippingRates(),
       policyPagesConfig: {},
+      adminNotificationEmail: "devangiresinstudioofficial@gmail.com",
+      notifyOnOrder: true,
+      notifyOnCustomRequest: true,
+      notifyOnReview: true,
+      notificationCheckIntervalHours: 2,
       updatedAt: new Date(),
     },
     customRequests: [],
+    adminPushSubscriptions: [],
+    adminNotifications: [],
   };
 }
 
@@ -2698,6 +2735,11 @@ export const dbStore = {
             COALESCE(keepsake_studio_images, '[]'::jsonb) as "keepsakeStudioImages",
             COALESCE(city_shipping_rates, '[]'::jsonb) as "cityShippingRates",
             COALESCE(policy_pages_config, '{}'::jsonb) as "policyPagesConfig",
+            COALESCE(admin_notification_email, 'devangiresinstudioofficial@gmail.com') as "adminNotificationEmail",
+            COALESCE(notify_on_order, true) as "notifyOnOrder",
+            COALESCE(notify_on_custom_request, true) as "notifyOnCustomRequest",
+            COALESCE(notify_on_review, true) as "notifyOnReview",
+            COALESCE(notification_check_interval_hours, 2) as "notificationCheckIntervalHours",
             updated_at as "updatedAt"
           FROM site_settings
           WHERE id = 'default'
@@ -2740,7 +2782,8 @@ export const dbStore = {
             festival_discount_active, festival_name, festival_tagline, festival_discount_type, festival_discount_percentage, festival_discount_amount,
             festival_coupon_code, festival_expires_at, festival_banner_bg, festival_cta_text, festival_cta_url,
             popup_banner_active, popup_banner_tagline, popup_banner_image_url, popup_banner_link_url, popup_banner_button_text, popup_banner_expires_at,
-            upi_id, upi_qr_code_url, account_holder_name, keepsake_studio_images, city_shipping_rates, policy_pages_config, updated_at
+            upi_id, upi_qr_code_url, account_holder_name, keepsake_studio_images, city_shipping_rates, policy_pages_config,
+            admin_notification_email, notify_on_order, notify_on_custom_request, notify_on_review, notification_check_interval_hours, updated_at
           ) VALUES (
             'default',
             ${data.storeName ?? store.siteSettings.storeName},
@@ -2785,6 +2828,11 @@ export const dbStore = {
             ${JSON.stringify(data.keepsakeStudioImages ?? store.siteSettings.keepsakeStudioImages ?? [])}::jsonb,
             ${JSON.stringify(data.cityShippingRates ?? store.siteSettings.cityShippingRates ?? [])}::jsonb,
             ${JSON.stringify(data.policyPagesConfig ?? store.siteSettings.policyPagesConfig ?? {})}::jsonb,
+            ${data.adminNotificationEmail ?? store.siteSettings.adminNotificationEmail ?? 'devangiresinstudioofficial@gmail.com'},
+            ${data.notifyOnOrder !== undefined ? Boolean(data.notifyOnOrder) : Boolean(store.siteSettings.notifyOnOrder ?? true)},
+            ${data.notifyOnCustomRequest !== undefined ? Boolean(data.notifyOnCustomRequest) : Boolean(store.siteSettings.notifyOnCustomRequest ?? true)},
+            ${data.notifyOnReview !== undefined ? Boolean(data.notifyOnReview) : Boolean(store.siteSettings.notifyOnReview ?? true)},
+            ${data.notificationCheckIntervalHours !== undefined ? Number(data.notificationCheckIntervalHours) : Number(store.siteSettings.notificationCheckIntervalHours ?? 2)},
             NOW()
           )
           ON CONFLICT (id) DO UPDATE SET
@@ -2830,6 +2878,11 @@ export const dbStore = {
             keepsake_studio_images = EXCLUDED.keepsake_studio_images,
             city_shipping_rates = EXCLUDED.city_shipping_rates,
             policy_pages_config = EXCLUDED.policy_pages_config,
+            admin_notification_email = EXCLUDED.admin_notification_email,
+            notify_on_order = EXCLUDED.notify_on_order,
+            notify_on_custom_request = EXCLUDED.notify_on_custom_request,
+            notify_on_review = EXCLUDED.notify_on_review,
+            notification_check_interval_hours = EXCLUDED.notification_check_interval_hours,
             updated_at = NOW();
         `;
       } catch (err) {
@@ -4428,6 +4481,250 @@ export const dbStore = {
         await sql`DELETE FROM product_review_permissions WHERE id = ${id};`;
       } catch (err) {
         console.error("DB revokeReviewPermission err:", err);
+      }
+    }
+    return { success: true };
+  },
+
+  // ---------------- ADMIN PUSH & SYSTEM NOTIFICATIONS ----------------
+  async savePushSubscription(data: {
+    endpoint: string;
+    p256dh: string;
+    auth: string;
+    userId?: string;
+    userAgent?: string;
+  }) {
+    const id = `sub_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    const subRecord = {
+      id,
+      endpoint: data.endpoint,
+      p256dh: data.p256dh,
+      auth: data.auth,
+      userId: data.userId || "admin",
+      userAgent: data.userAgent || "",
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    if (!store.adminPushSubscriptions) store.adminPushSubscriptions = [];
+    const idx = store.adminPushSubscriptions.findIndex((s) => s.endpoint === data.endpoint);
+    if (idx >= 0) {
+      store.adminPushSubscriptions[idx] = {
+        ...store.adminPushSubscriptions[idx],
+        ...subRecord,
+        updatedAt: new Date(),
+      };
+    } else {
+      store.adminPushSubscriptions.push(subRecord);
+    }
+
+    if (sql) {
+      try {
+        await sql`
+          INSERT INTO admin_push_subscriptions (
+            id, endpoint, p256dh, auth, user_id, user_agent, is_active, created_at, updated_at
+          ) VALUES (
+            ${id}, ${data.endpoint}, ${data.p256dh}, ${data.auth}, ${data.userId || 'admin'}, ${data.userAgent || ''}, TRUE, NOW(), NOW()
+          )
+          ON CONFLICT (endpoint) DO UPDATE SET
+            p256dh = EXCLUDED.p256dh,
+            auth = EXCLUDED.auth,
+            user_id = EXCLUDED.user_id,
+            user_agent = EXCLUDED.user_agent,
+            is_active = TRUE,
+            updated_at = NOW();
+        `;
+      } catch (err) {
+        console.error("DB savePushSubscription err:", err);
+      }
+    }
+
+    return subRecord;
+  },
+
+  async getActivePushSubscriptions() {
+    if (sql) {
+      try {
+        const rows = await sql`
+          SELECT 
+            id,
+            endpoint,
+            p256dh,
+            auth,
+            user_id as "userId",
+            user_agent as "userAgent",
+            is_active as "isActive",
+            created_at as "createdAt",
+            updated_at as "updatedAt"
+          FROM admin_push_subscriptions
+          WHERE is_active = TRUE
+          ORDER BY updated_at DESC;
+        `;
+        if (rows && rows.length > 0) return rows;
+      } catch (err) {
+        console.error("DB getActivePushSubscriptions err:", err);
+      }
+    }
+    return (store.adminPushSubscriptions || []).filter((s) => s.isActive);
+  },
+
+  async deactivatePushSubscription(endpoint: string) {
+    if (!store.adminPushSubscriptions) store.adminPushSubscriptions = [];
+    const sub = store.adminPushSubscriptions.find((s) => s.endpoint === endpoint);
+    if (sub) sub.isActive = false;
+
+    if (sql) {
+      try {
+        await sql`UPDATE admin_push_subscriptions SET is_active = FALSE, updated_at = NOW() WHERE endpoint = ${endpoint};`;
+      } catch (err) {
+        console.error("DB deactivatePushSubscription err:", err);
+      }
+    }
+    return { success: true };
+  },
+
+  async createAdminNotification(data: {
+    type: "order" | "custom_request" | "review" | string;
+    title: string;
+    message: string;
+    link: string;
+    referenceId?: string | null;
+    metadata?: any;
+  }) {
+    const id = `notif_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    const record = {
+      id,
+      type: data.type,
+      title: data.title,
+      message: data.message,
+      link: data.link,
+      referenceId: data.referenceId || null,
+      metadata: data.metadata || {},
+      isRead: false,
+      pushedAt: new Date(),
+      createdAt: new Date(),
+    };
+
+    if (!store.adminNotifications) store.adminNotifications = [];
+    store.adminNotifications.unshift(record);
+
+    if (sql) {
+      try {
+        await sql`
+          INSERT INTO admin_notifications (
+            id, type, title, message, link, reference_id, metadata, is_read, pushed_at, created_at
+          ) VALUES (
+            ${id}, ${data.type}, ${data.title}, ${data.message}, ${data.link},
+            ${data.referenceId || null}, ${JSON.stringify(data.metadata || {})}::jsonb,
+            FALSE, NOW(), NOW()
+          );
+        `;
+      } catch (err) {
+        console.error("DB createAdminNotification err:", err);
+      }
+    }
+
+    return record;
+  },
+
+  async getAdminNotifications(limit = 30) {
+    if (sql) {
+      try {
+        const rows = await sql`
+          SELECT 
+            id,
+            type,
+            title,
+            message,
+            link,
+            reference_id as "referenceId",
+            metadata,
+            is_read as "isRead",
+            pushed_at as "pushedAt",
+            created_at as "createdAt"
+          FROM admin_notifications
+          ORDER BY created_at DESC
+          LIMIT ${limit};
+        `;
+        if (rows) return rows;
+      } catch (err) {
+        console.error("DB getAdminNotifications err:", err);
+      }
+    }
+    return (store.adminNotifications || []).slice(0, limit);
+  },
+
+  async getUnreadAdminNotificationsCount() {
+    if (sql) {
+      try {
+        const rows = await sql`
+          SELECT COUNT(*)::int as count
+          FROM admin_notifications
+          WHERE is_read = FALSE;
+        `;
+        if (rows && rows[0]) return Number(rows[0].count) || 0;
+      } catch (err) {
+        console.error("DB getUnreadAdminNotificationsCount err:", err);
+      }
+    }
+    return (store.adminNotifications || []).filter((n) => !n.isRead).length;
+  },
+
+  async getUnreadAdminNotificationsSince(since: Date | string) {
+    const sinceDate = new Date(since);
+    if (sql) {
+      try {
+        const rows = await sql`
+          SELECT 
+            id,
+            type,
+            title,
+            message,
+            link,
+            reference_id as "referenceId",
+            metadata,
+            is_read as "isRead",
+            pushed_at as "pushedAt",
+            created_at as "createdAt"
+          FROM admin_notifications
+          WHERE is_read = FALSE AND created_at > ${sinceDate}
+          ORDER BY created_at DESC;
+        `;
+        if (rows) return rows;
+      } catch (err) {
+        console.error("DB getUnreadAdminNotificationsSince err:", err);
+      }
+    }
+    return (store.adminNotifications || []).filter(
+      (n) => !n.isRead && new Date(n.createdAt) > sinceDate
+    );
+  },
+
+  async markAdminNotificationAsRead(id: string) {
+    if (!store.adminNotifications) store.adminNotifications = [];
+    const notif = store.adminNotifications.find((n) => n.id === id);
+    if (notif) notif.isRead = true;
+
+    if (sql) {
+      try {
+        await sql`UPDATE admin_notifications SET is_read = TRUE WHERE id = ${id};`;
+      } catch (err) {
+        console.error("DB markAdminNotificationAsRead err:", err);
+      }
+    }
+    return { success: true };
+  },
+
+  async markAllAdminNotificationsAsRead() {
+    if (!store.adminNotifications) store.adminNotifications = [];
+    store.adminNotifications.forEach((n) => { n.isRead = true; });
+
+    if (sql) {
+      try {
+        await sql`UPDATE admin_notifications SET is_read = TRUE WHERE is_read = FALSE;`;
+      } catch (err) {
+        console.error("DB markAllAdminNotificationsAsRead err:", err);
       }
     }
     return { success: true };

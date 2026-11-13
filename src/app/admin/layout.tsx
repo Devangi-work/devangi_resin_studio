@@ -28,6 +28,7 @@ import {
   Star,
 } from "lucide-react";
 import { MediaPickerModal } from "@/components/admin/MediaPickerModal";
+import { AdminNotificationCenter } from "@/components/admin/AdminNotificationCenter";
 import { getStoredAdminTheme, applyAdminTheme, AdminTheme } from "@/lib/admin-theme";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -222,6 +223,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
 
         <div className="flex items-center space-x-2">
+          {/* Mobile Notification Center */}
+          <AdminNotificationCenter />
+
           {/* Mobile Theme Toggle */}
           <button
             onClick={toggleTheme}
@@ -380,6 +384,30 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Main Content Area */}
       <main className="flex-1 min-w-0 p-4 sm:p-6 lg:p-8 admin-main-wrapper">
         <div className="max-w-7xl mx-auto space-y-6">
+          {/* Desktop Top Header Bar with Notification Center & Quick Controls */}
+          <div className="hidden lg:flex items-center justify-between pb-3.5 border-b border-[#E8E0D5] dark:border-[#333A35]">
+            <div className="flex items-center space-x-2.5">
+              <span className="text-[11px] font-bold uppercase tracking-widest text-[#B84A67] dark:text-[#D4AF37]">
+                Studio Admin Workspace
+              </span>
+              <span className="text-xs text-[#D4AF37]">&bull;</span>
+              <span className="text-xs text-[#5C4A51] dark:text-[#C4BCB3] font-medium capitalize">
+                {pathname.replace("/admin/", "").replace(/-/g, " ") || "Dashboard"}
+              </span>
+            </div>
+
+            <div className="flex items-center space-x-3">
+              <AdminNotificationCenter />
+              <button
+                onClick={toggleTheme}
+                className="p-2 rounded-xl text-[#3A1823] dark:text-[#D4AF37] hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+                title={`Switch to ${theme === "light" ? "Dark" : "Light"} Mode`}
+              >
+                {theme === "light" ? <Moon className="w-4 h-4 text-[#3A1823]" /> : <Sun className="w-4 h-4 text-amber-300" />}
+              </button>
+            </div>
+          </div>
+
           {children}
         </div>
       </main>

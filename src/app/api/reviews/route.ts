@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCustomerSession } from "@/lib/auth/customer";
 import { dbStore } from "@/lib/db";
+import { notifyAdminOnNewReview } from "@/lib/notifications/admin-dispatcher";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
@@ -127,6 +128,14 @@ export async function POST(request: Request) {
       isVerifiedPurchase: eligibility.isVerifiedPurchase,
       adminGranted: eligibility.adminGranted,
     });
+
+    // Dispatch Admin Notification (Push + Email)
+    try {
+      const product = await dbStore.getProductById(productId);
+      await notifyAdminOnNewReview(review, product);
+    } catch (notifErr) {
+      console.warn("[Review Admin Notification Error]:", notifErr);
+    }
 
     return NextResponse.json({
       success: true,

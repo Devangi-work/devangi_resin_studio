@@ -37,6 +37,9 @@ import {
   QrCode,
   Search,
   RefreshCw,
+  Bell,
+  Smartphone,
+  Volume2,
 } from "lucide-react";
 import { MediaPickerModal } from "@/components/admin/MediaPickerModal";
 import { getStoredAdminTheme, applyAdminTheme, AdminTheme } from "@/lib/admin-theme";
@@ -100,6 +103,11 @@ export default function AdminSettingsPage() {
     popupBannerExpiresAt: "",
     cityShippingRates: getDefaultIndiaPostShippingRates(),
     policyPagesConfig: {} as Record<string, any>,
+    adminNotificationEmail: "devangiresinstudioofficial@gmail.com",
+    notifyOnOrder: true,
+    notifyOnCustomRequest: true,
+    notifyOnReview: true,
+    notificationCheckIntervalHours: 2,
   });
 
   const [loading, setLoading] = useState(true);
@@ -750,6 +758,108 @@ export default function AdminSettingsPage() {
                   Rendered prominently on the website header and printed on official customer payment receipts.
                 </p>
               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Admin Notification & Mobile Alert Preferences */}
+        <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#E8E0D5] shadow-sm space-y-5">
+          <div className="border-b border-[#F4EBE6] pb-3 flex items-center justify-between">
+            <div className="flex items-center space-x-2.5">
+              <div className="w-9 h-9 rounded-xl bg-[#FAF0F3] text-[#B84A67] flex items-center justify-center border border-[#E8C568]/40">
+                <Bell className="w-4 h-4 text-[#B84A67]" />
+              </div>
+              <div>
+                <h2 className="font-serif text-base font-bold text-[#2C332D]">
+                  Admin Notification & Mobile Alert Preferences
+                </h2>
+                <p className="text-xs text-[#736C66] mt-0.5">
+                  Receive instant mobile notifications in your notification bar (even when the browser is closed) and detailed emails for all key studio events.
+                </p>
+              </div>
+            </div>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-[#B84A67] bg-[#FAF0F3] px-2.5 py-0.5 rounded-full border border-[#EFE3E7]">
+              2-Hour Interval Safe
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs font-semibold text-[#2C332D] block mb-1">
+                Admin Notification Recipient Email
+              </label>
+              <input
+                type="email"
+                value={settings.adminNotificationEmail || ""}
+                onChange={(e) => setSettings({ ...settings, adminNotificationEmail: e.target.value })}
+                placeholder="devangiresinstudioofficial@gmail.com"
+                className="w-full px-3.5 py-2 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#B84A67]"
+              />
+              <p className="text-[10.5px] text-[#736C66] mt-1">
+                All order confirmations, custom studio inquiries, and review submissions will be dispatched to this email address.
+              </p>
+            </div>
+
+            <div className="bg-[#FAF8F5] p-3.5 rounded-xl border border-[#E8E0D5] space-y-2">
+              <div className="flex items-center space-x-1.5 text-xs font-bold text-[#3A1823]">
+                <Smartphone className="w-4 h-4 text-[#B84A67]" />
+                <span>Mobile Notification Bar & Background Sync</span>
+              </div>
+              <p className="text-[11px] text-[#736C66] leading-relaxed">
+                Uses the Web Push standard (RFC 8292) and Service Worker. It checks every 2 hours without continuous server polling, keeping battery and network usage minimal.
+              </p>
+            </div>
+          </div>
+
+          <div className="pt-2 border-t border-[#F4EBE6]">
+            <label className="text-xs font-semibold text-[#2C332D] block mb-2">
+              Instant Event Notification Triggers
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <label className="flex items-start space-x-2.5 p-3 rounded-xl border border-[#E8E0D5] bg-[#FAF8F5] hover:bg-[#FAF0F3] cursor-pointer transition-colors">
+                <input
+                  type="checkbox"
+                  checked={settings.notifyOnOrder !== false}
+                  onChange={(e) => setSettings({ ...settings, notifyOnOrder: e.target.checked })}
+                  className="mt-0.5 rounded text-[#B84A67] focus:ring-[#B84A67]"
+                />
+                <div className="text-xs">
+                  <span className="font-bold text-[#3A1823] block">New Customer Orders</span>
+                  <span className="text-[10.5px] text-[#7A5E68] block mt-0.5">
+                    Online UPI and WhatsApp 1-click orders with customer address & items
+                  </span>
+                </div>
+              </label>
+
+              <label className="flex items-start space-x-2.5 p-3 rounded-xl border border-[#E8E0D5] bg-[#FAF8F5] hover:bg-[#FAF0F3] cursor-pointer transition-colors">
+                <input
+                  type="checkbox"
+                  checked={settings.notifyOnCustomRequest !== false}
+                  onChange={(e) => setSettings({ ...settings, notifyOnCustomRequest: e.target.checked })}
+                  className="mt-0.5 rounded text-[#B84A67] focus:ring-[#B84A67]"
+                />
+                <div className="text-xs">
+                  <span className="font-bold text-[#3A1823] block">Custom Studio Inquiries</span>
+                  <span className="text-[10.5px] text-[#7A5E68] block mt-0.5">
+                    Bespoke keepsake forms with client description, budget & reference photo
+                  </span>
+                </div>
+              </label>
+
+              <label className="flex items-start space-x-2.5 p-3 rounded-xl border border-[#E8E0D5] bg-[#FAF8F5] hover:bg-[#FAF0F3] cursor-pointer transition-colors">
+                <input
+                  type="checkbox"
+                  checked={settings.notifyOnReview !== false}
+                  onChange={(e) => setSettings({ ...settings, notifyOnReview: e.target.checked })}
+                  className="mt-0.5 rounded text-[#B84A67] focus:ring-[#B84A67]"
+                />
+                <div className="text-xs">
+                  <span className="font-bold text-[#3A1823] block">Customer Reviews</span>
+                  <span className="text-[10.5px] text-[#7A5E68] block mt-0.5">
+                    Star ratings, customer review text, and uploaded photos
+                  </span>
+                </div>
+              </label>
             </div>
           </div>
         </div>
