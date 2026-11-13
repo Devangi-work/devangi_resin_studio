@@ -84,65 +84,68 @@ export default async function HomePage() {
         <div className="absolute top-10 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-[#FDE8EC]/70 rounded-full blur-3xl pointer-events-none -z-0" />
         <div className="absolute -bottom-10 right-10 w-[400px] h-[400px] bg-[#FAF0F3]/80 rounded-full blur-2xl pointer-events-none -z-0" />
 
-        <div className="max-w-7xl mx-auto grid grid-cols-12 gap-3 sm:gap-8 lg:gap-12 items-center relative z-10">
-          {/* Hero Copy (Left Side on both Mobile & Desktop) */}
-          <div className="col-span-7 space-y-3 sm:space-y-6 text-left">
+        <div className="max-w-7xl mx-auto grid grid-cols-12 gap-x-3 sm:gap-x-8 lg:gap-x-12 gap-y-3.5 sm:gap-y-6 lg:gap-y-6 items-center relative z-10">
+          {/* Hero Header: Badge + Headline (Full Width on Mobile, Left Column Row 1 on Desktop) */}
+          <div className="col-span-12 lg:col-span-7 lg:col-start-1 lg:row-start-1 space-y-2 sm:space-y-4 text-left">
             <div className="inline-flex items-center space-x-1.5 sm:space-x-2 bg-white/95 border border-[#EFE3E7] px-2.5 sm:px-4 py-1 sm:py-1.5 rounded-full text-[10px] sm:text-xs font-semibold text-[#3A1823] shadow-xs">
               <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#D4AF37] shrink-0" />
               <span>Bespoke Handmade Resin Artistry</span>
             </div>
 
-            <h1 className="font-serif text-xl sm:text-3xl md:text-5xl lg:text-6xl font-bold text-[#3A1823] leading-[1.16] sm:leading-[1.15] tracking-tight">
+            <h1 className="font-serif text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-[#3A1823] leading-[1.18] sm:leading-[1.15] tracking-tight">
               Preserving Life&apos;s Moments in{" "}
               <span className="italic font-normal text-[#B84A67]">Glass-like</span> Perfection.
             </h1>
+          </div>
 
+          {/* Hero Details: Description, CTAs, Highlights (Left Column Row 2 on Mobile & Desktop) */}
+          <div className="col-span-7 col-start-1 row-start-2 lg:col-span-7 lg:col-start-1 lg:row-start-2 space-y-3 sm:space-y-6 text-left">
             <p className="text-[11px] sm:text-sm md:text-base lg:text-lg text-[#7A5E68] max-w-xl leading-snug sm:leading-relaxed font-light">
               From shimmering geode coasters and real botanical pendants to bespoke illuminated photo frames, each piece is hand-poured with non-yellowing archival resin in India.
             </p>
 
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4 pt-1 sm:pt-2">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4 pt-0.5 sm:pt-2">
               <Link
                 href="/shop"
-                className="w-full sm:w-auto px-4 sm:px-8 py-2.5 sm:py-3.5 bg-[#3A1823] text-white rounded-full font-semibold text-[11px] sm:text-xs tracking-wider uppercase hover:bg-[#4E2230] active:scale-98 shadow-md transition-all flex items-center justify-center space-x-1.5 sm:space-x-2 group text-center"
+                className="w-full sm:w-auto px-3 sm:px-8 py-2 sm:py-3.5 bg-[#3A1823] text-white rounded-full font-semibold text-[10px] sm:text-xs tracking-wider uppercase hover:bg-[#4E2230] active:scale-98 shadow-md transition-all flex items-center justify-center space-x-1.5 sm:space-x-2 group text-center"
               >
                 <span>Explore Boutique</span>
                 <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover:translate-x-1 transition-transform" />
               </Link>
               <Link
                 href="/custom-orders"
-                className="w-full sm:w-auto px-4 sm:px-8 py-2.5 sm:py-3.5 bg-white border border-[#EFE3E7] text-[#3A1823] rounded-full font-semibold text-[11px] sm:text-xs tracking-wider uppercase hover:bg-[#FAF0F3] active:scale-98 shadow-sm transition-all text-center hover:border-[#D4AF37]"
+                className="w-full sm:w-auto px-3 sm:px-8 py-2 sm:py-3.5 bg-white border border-[#EFE3E7] text-[#3A1823] rounded-full font-semibold text-[10px] sm:text-xs tracking-wider uppercase hover:bg-[#FAF0F3] active:scale-98 shadow-sm transition-all text-center hover:border-[#D4AF37]"
               >
                 Order Custom Piece
               </Link>
             </div>
 
             {/* Micro Highlights */}
-            <div className="pt-2.5 sm:pt-6 grid grid-cols-3 gap-1.5 sm:gap-4 border-t border-[#EFE3E7] text-left">
+            <div className="pt-2 sm:pt-6 grid grid-cols-3 gap-1.5 sm:gap-4 border-t border-[#EFE3E7] text-left">
               <div>
-                <p className="font-serif text-xs sm:text-xl lg:text-2xl font-bold text-[#3A1823]">100%</p>
-                <p className="text-[8px] sm:text-[11px] text-[#7A5E68] uppercase tracking-wider font-medium">Hand-Poured</p>
+                <p className="font-serif text-[11px] sm:text-xl lg:text-2xl font-bold text-[#3A1823]">100%</p>
+                <p className="text-[7.5px] sm:text-[11px] text-[#7A5E68] uppercase tracking-wider font-medium">Hand-Poured</p>
               </div>
               <div>
-                <p className="font-serif text-xs sm:text-xl lg:text-2xl font-bold text-[#3A1823]">UV-Stable</p>
-                <p className="text-[8px] sm:text-[11px] text-[#7A5E68] uppercase tracking-wider font-medium">Non-Yellowing</p>
+                <p className="font-serif text-[11px] sm:text-xl lg:text-2xl font-bold text-[#3A1823]">UV-Stable</p>
+                <p className="text-[7.5px] sm:text-[11px] text-[#7A5E68] uppercase tracking-wider font-medium">Non-Yellowing</p>
               </div>
               <div>
-                <p className="font-serif text-xs sm:text-xl lg:text-2xl font-bold text-[#3A1823] flex items-center">
+                <p className="font-serif text-[11px] sm:text-xl lg:text-2xl font-bold text-[#3A1823] flex items-center">
                   4.9 <Star className="w-2.5 h-2.5 sm:w-4 sm:h-4 fill-[#D4AF37] text-[#D4AF37] ml-0.5 sm:ml-1 inline" />
                 </p>
-                <p className="text-[8px] sm:text-[11px] text-[#7A5E68] uppercase tracking-wider font-medium">Artisan Rating</p>
+                <p className="text-[7.5px] sm:text-[11px] text-[#7A5E68] uppercase tracking-wider font-medium">Artisan Rating</p>
               </div>
             </div>
           </div>
 
-          {/* Hero Visual Display (Right Side on both Mobile & Desktop) */}
-          <div className="col-span-5 relative flex items-center justify-center">
+          {/* Hero Visual Display (Right Column Row 2 on Mobile, Right Column Rows 1-2 on Desktop) */}
+          <div className="col-span-5 col-start-8 row-start-2 lg:col-span-5 lg:col-start-8 lg:row-start-1 lg:row-span-2 relative flex items-center justify-center self-center">
             <div className="relative mx-auto max-w-sm sm:max-w-md lg:max-w-lg w-full flex items-center justify-center">
               <img
                 src="/images/home/devangi_artist_hero.png"
                 alt="Devangi Resin Studio - Handmade Keepsakes & Resin Art"
-                className="w-full h-auto max-h-[290px] sm:max-h-[440px] lg:max-h-[560px] object-contain drop-shadow-xl transition-transform duration-700 hover:scale-[1.02]"
+                className="w-full h-auto max-h-[300px] sm:max-h-[440px] lg:max-h-[560px] object-contain drop-shadow-xl transition-transform duration-700 hover:scale-[1.02]"
               />
             </div>
           </div>
