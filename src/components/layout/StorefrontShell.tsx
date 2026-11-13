@@ -14,7 +14,7 @@ import { EyeOff } from "lucide-react";
 
 // Set this to `true` to re-enable the Early Access Launch Gate for all public visitors.
 // Set to `false` to open the website normally for all users.
-const ENABLE_EARLY_ACCESS_GATE = false;
+const ENABLE_EARLY_ACCESS_GATE = true;
 
 export function StorefrontShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
