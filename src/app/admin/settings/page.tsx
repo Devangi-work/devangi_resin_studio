@@ -35,11 +35,18 @@ import {
   Copy,
   Megaphone,
   QrCode,
+  Search,
+  RefreshCw,
 } from "lucide-react";
 import { MediaPickerModal } from "@/components/admin/MediaPickerModal";
 import { getStoredAdminTheme, applyAdminTheme, AdminTheme } from "@/lib/admin-theme";
 import { defaultPolicyTemplates } from "@/lib/policies-default";
-import { findStateForLocation, INDIAN_STATES_DATA } from "@/lib/shipping";
+import {
+  findStateForLocation,
+  INDIAN_STATES_DATA,
+  getDefaultIndiaPostShippingRates,
+  INDIA_POST_STATE_SHIPPING_RATES,
+} from "@/lib/shipping";
 
 function toDateTimeLocal(dateVal: any): string {
   if (!dateVal) return "";
@@ -91,13 +98,14 @@ export default function AdminSettingsPage() {
     popupBannerLinkUrl: "/shop",
     popupBannerButtonText: "Explore Now",
     popupBannerExpiresAt: "",
-    cityShippingRates: [] as Array<{ id: string; name: string; charge: string | number }>,
+    cityShippingRates: getDefaultIndiaPostShippingRates(),
     policyPagesConfig: {} as Record<string, any>,
   });
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
+  const [rateSearch, setRateSearch] = useState("");
   const [selectedPolicyType, setSelectedPolicyType] = useState<"shipping" | "returns" | "care" | "privacy" | "terms" | "payment">("shipping");
 
   const getActivePolicyConfig = (type: string) => {
@@ -190,7 +198,10 @@ export default function AdminSettingsPage() {
         if (data) {
           setSettings({
             ...data,
-            cityShippingRates: Array.isArray(data.cityShippingRates) ? data.cityShippingRates : [],
+            cityShippingRates:
+              Array.isArray(data.cityShippingRates) && data.cityShippingRates.length > 0
+                ? data.cityShippingRates
+                : getDefaultIndiaPostShippingRates(),
           });
         }
       })
@@ -905,36 +916,73 @@ export default function AdminSettingsPage() {
             </div>
           </div>
 
-          {/* City / State Specific Shipping Charges */}
+          {/* India Post Delivery & Regional Shipping Rates */}
           <div className="pt-4 border-t border-[#F4EBE6] space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
                 <h3 className="text-xs font-bold text-[#2C332D] flex items-center gap-1.5 uppercase tracking-wider">
                   <MapPin className="w-3.5 h-3.5 text-[#B8972E]" />
-                  <span>City & State Specific Shipping Charges</span>
+                  <span>India Post Delivery & Regional Shipping Rates</span>
                 </h3>
                 <p className="text-[11px] text-[#736C66] mt-0.5">
-                  Set custom delivery fees for specific cities or states. Rates set for any city (e.g. Mumbai) or state (e.g. Maharashtra) automatically apply to the entire state and all cities within it, unless a specific city rate is defined.
+                  Orders are dispatched via India Post. Shipping prices are set by State — all cities, towns, and 6-digit PIN codes within a state automatically inherit their state&apos;s delivery rate. You do not need to enter individual cities. You can adjust state rates or add city overrides below.
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => {
-                  const currentRates = Array.isArray(settings.cityShippingRates) ? settings.cityShippingRates : [];
-                  setSettings({
-                    ...settings,
-                    cityShippingRates: [
-                      ...currentRates,
-                      { id: `city_${Date.now()}`, name: "", charge: "40.00" },
-                    ],
-                  });
-                }}
-                className="inline-flex items-center gap-1 px-3 py-1.5 bg-[#FAF8F5] hover:bg-[#F3EEE6] text-[#2C332D] border border-[#E8E0D5] rounded-xl text-xs font-semibold transition-colors"
-              >
-                <Plus className="w-3.5 h-3.5 text-[#B8972E]" />
-                <span>Add City / State</span>
-              </button>
+
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSettings({
+                      ...settings,
+                      cityShippingRates: getDefaultIndiaPostShippingRates(),
+                    });
+                  }}
+                  className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-[#FAF8F5] hover:bg-[#F3EEE6] text-[#2C332D] border border-[#E8E0D5] rounded-xl text-xs font-semibold transition-colors"
+                  title="Reload default India Post rates for all 36 Indian States & UTs"
+                >
+                  <RefreshCw className="w-3.5 h-3.5 text-[#B8972E]" />
+                  <span>Reset to India Post Rates</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const currentRates = Array.isArray(settings.cityShippingRates) ? settings.cityShippingRates : [];
+                    setSettings({
+                      ...settings,
+                      cityShippingRates: [
+                        ...currentRates,
+                        { id: `city_${Date.now()}`, name: "", charge: "79.00" },
+                      ],
+                    });
+                  }}
+                  className="inline-flex items-center gap-1 px-3 py-1.5 bg-[#FAF8F5] hover:bg-[#F3EEE6] text-[#2C332D] border border-[#E8E0D5] rounded-xl text-xs font-semibold transition-colors"
+                >
+                  <Plus className="w-3.5 h-3.5 text-[#B8972E]" />
+                  <span>Add Override / City</span>
+                </button>
+              </div>
             </div>
+
+            {/* Filter Search & Count */}
+            {Array.isArray(settings.cityShippingRates) && settings.cityShippingRates.length > 0 && (
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1">
+                <div className="relative w-full sm:w-72">
+                  <Search className="w-3.5 h-3.5 text-[#8C827A] absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    placeholder="Filter state or city (e.g. Rajasthan, Maharashtra)..."
+                    value={rateSearch}
+                    onChange={(e) => setRateSearch(e.target.value)}
+                    className="w-full pl-8 pr-3 py-1.5 text-xs bg-white border border-[#E8E0D5] rounded-xl text-[#2C332D] focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
+                  />
+                </div>
+                <div className="text-[11px] text-[#736C66] font-medium">
+                  {settings.cityShippingRates.length} regional rates configured (Rajasthan base: ₹79.00)
+                </div>
+              </div>
+            )}
 
             {/* Comprehensive Indian States & Cities Suggestions Datalist */}
             <datalist id="indian-region-suggestions">
@@ -959,96 +1007,105 @@ export default function AdminSettingsPage() {
             </datalist>
 
             {Array.isArray(settings.cityShippingRates) && settings.cityShippingRates.length > 0 ? (
-              <div className="border border-[#E8E0D5] rounded-xl overflow-hidden divide-y divide-[#F4EBE6] bg-[#FAF8F5]">
-                <div className="grid grid-cols-12 px-3.5 py-2 text-[10px] font-bold text-[#8C7A72] uppercase tracking-wider bg-[#F4EBE6]/60">
-                  <div className="col-span-6 sm:col-span-7">City or State Name</div>
+              <div className="border border-[#E8E0D5] rounded-xl overflow-hidden divide-y divide-[#F4EBE6] bg-[#FAF8F5] max-h-[500px] overflow-y-auto">
+                <div className="grid grid-cols-12 px-3.5 py-2 text-[10px] font-bold text-[#8C7A72] uppercase tracking-wider bg-[#F4EBE6]/60 sticky top-0 z-10 backdrop-blur-xs">
+                  <div className="col-span-6 sm:col-span-7">State / City Destination</div>
                   <div className="col-span-4 sm:col-span-4">Shipping Price (₹)</div>
                   <div className="col-span-2 sm:col-span-1 text-right">Action</div>
                 </div>
-                {settings.cityShippingRates.map((rate: any, index: number) => {
-                  const resolvedState = rate.name ? findStateForLocation(rate.name) : null;
-                  const isDirectState =
-                    resolvedState &&
-                    rate.name.trim().toLowerCase() === resolvedState.toLowerCase();
+                {settings.cityShippingRates
+                  .map((rate: any, originalIndex: number) => ({ rate, originalIndex }))
+                  .filter(({ rate }: any) => {
+                    if (!rateSearch.trim()) return true;
+                    const q = rateSearch.trim().toLowerCase();
+                    return (rate.name || "").toLowerCase().includes(q);
+                  })
+                  .map(({ rate, originalIndex }: any) => {
+                    const resolvedState = rate.name ? findStateForLocation(rate.name) : null;
+                    const isDirectState =
+                      resolvedState &&
+                      rate.name.trim().toLowerCase() === resolvedState.toLowerCase();
 
-                  return (
-                    <div key={rate.id || index} className="grid grid-cols-12 items-center px-3 py-2.5 gap-2 bg-white hover:bg-[#FAF8F5] transition-colors">
-                      <div className="col-span-6 sm:col-span-7">
-                        <input
-                          type="text"
-                          list="indian-region-suggestions"
-                          placeholder="e.g. Mumbai, Maharashtra, Rajasthan, Delhi..."
-                          value={rate.name || ""}
-                          onChange={(e) => {
-                            const updated = [...settings.cityShippingRates];
-                            updated[index] = { ...updated[index], name: e.target.value };
-                            setSettings({ ...settings, cityShippingRates: updated });
-                          }}
-                          className="w-full px-2.5 py-1.5 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-lg text-[#2C332D] focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
-                        />
-                        {resolvedState && (
-                          <div className="mt-1 flex items-center gap-1 text-[10px] text-[#2F5233]">
-                            <CheckCircle2 className="w-3 h-3 text-[#2F5233] shrink-0" />
-                            <span>
-                              {isDirectState
-                                ? `State: ${resolvedState} (Applies to all cities in ${resolvedState})`
-                                : `Belongs to ${resolvedState} (Applies to all cities in ${resolvedState})`}
-                            </span>
-                          </div>
-                        )}
+                    return (
+                      <div
+                        key={rate.id || originalIndex}
+                        className="grid grid-cols-12 items-center px-3 py-2.5 gap-2 bg-white hover:bg-[#FAF8F5] transition-colors"
+                      >
+                        <div className="col-span-6 sm:col-span-7">
+                          <input
+                            type="text"
+                            list="indian-region-suggestions"
+                            placeholder="e.g. Rajasthan, Maharashtra, Gujarat..."
+                            value={rate.name || ""}
+                            onChange={(e) => {
+                              const updated = [...settings.cityShippingRates];
+                              updated[originalIndex] = { ...updated[originalIndex], name: e.target.value };
+                              setSettings({ ...settings, cityShippingRates: updated });
+                            }}
+                            className="w-full px-2.5 py-1.5 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-lg text-[#2C332D] focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
+                          />
+                          {resolvedState && (
+                            <div className="mt-1 flex items-center gap-1 text-[10px] text-[#2F5233]">
+                              <CheckCircle2 className="w-3 h-3 text-[#2F5233] shrink-0" />
+                              <span>
+                                {isDirectState
+                                  ? `State Rate: Applies to all cities & PIN codes in ${resolvedState}`
+                                  : `City Override: Applies specifically to ${rate.name} (Parent: ${resolvedState})`}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="col-span-4 sm:col-span-4 flex items-center gap-1">
+                          <span className="text-xs text-[#736C66] font-semibold">₹</span>
+                          <input
+                            type="number"
+                            step="0.01"
+                            placeholder="79.00"
+                            value={rate.charge ?? ""}
+                            onChange={(e) => {
+                              const updated = [...settings.cityShippingRates];
+                              updated[originalIndex] = { ...updated[originalIndex], charge: e.target.value };
+                              setSettings({ ...settings, cityShippingRates: updated });
+                            }}
+                            className="w-full px-2.5 py-1.5 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-lg text-[#2C332D] focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
+                          />
+                        </div>
+                        <div className="col-span-2 sm:col-span-1 text-right">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const updated = settings.cityShippingRates.filter(
+                                (_: any, i: number) => i !== originalIndex
+                              );
+                              setSettings({ ...settings, cityShippingRates: updated });
+                            }}
+                            className="p-1.5 text-[#DF4C4C] hover:bg-rose-50 rounded-lg transition-colors"
+                            title="Remove rate"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
-                      <div className="col-span-4 sm:col-span-4 flex items-center gap-1">
-                        <span className="text-xs text-[#736C66] font-semibold">₹</span>
-                        <input
-                          type="number"
-                          step="0.01"
-                          placeholder="40.00"
-                          value={rate.charge ?? ""}
-                          onChange={(e) => {
-                            const updated = [...settings.cityShippingRates];
-                            updated[index] = { ...updated[index], charge: e.target.value };
-                            setSettings({ ...settings, cityShippingRates: updated });
-                          }}
-                          className="w-full px-2.5 py-1.5 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-lg text-[#2C332D] focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
-                        />
-                      </div>
-                      <div className="col-span-2 sm:col-span-1 text-right">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const updated = settings.cityShippingRates.filter((_: any, i: number) => i !== index);
-                            setSettings({ ...settings, cityShippingRates: updated });
-                          }}
-                          className="p-1.5 text-[#DF4C4C] hover:bg-rose-50 rounded-lg transition-colors"
-                          title="Remove city rate"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
               </div>
             ) : (
-              <div className="p-4 rounded-xl border border-dashed border-[#E8E0D5] bg-[#FAF8F5] text-center">
+              <div className="p-4 rounded-xl border border-dashed border-[#E8E0D5] bg-[#FAF8F5] text-center space-y-2">
                 <p className="text-xs text-[#736C66]">
-                  No custom city rates added yet. The default domestic shipping fee of ₹{settings.defaultShippingCharge || "79.00"} will apply to all cities.
+                  No regional rates loaded. The default domestic delivery fee of ₹{settings.defaultShippingCharge || "79.00"} will apply to all destinations.
                 </p>
                 <button
                   type="button"
                   onClick={() => {
                     setSettings({
                       ...settings,
-                      cityShippingRates: [
-                        { id: `city_${Date.now()}_1`, name: "Mumbai", charge: "40.00" },
-                        { id: `city_${Date.now()}_2`, name: "Maharashtra", charge: "60.00" },
-                        { id: `city_${Date.now()}_3`, name: "Rajasthan", charge: "80.00" },
-                      ],
+                      cityShippingRates: getDefaultIndiaPostShippingRates(),
                     });
                   }}
-                  className="mt-2 text-[11px] font-bold text-[#B8972E] hover:underline"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#2C332D] hover:bg-[#3D473E] text-white rounded-xl text-xs font-semibold shadow-xs transition-colors"
                 >
-                  + Add Sample Rates (Mumbai ₹40, Maharashtra ₹60, Rajasthan ₹80)
+                  <RefreshCw className="w-3.5 h-3.5 text-[#D4AF37]" />
+                  <span>Load All India Post State Delivery Rates (All 36 States & UTs)</span>
                 </button>
               </div>
             )}

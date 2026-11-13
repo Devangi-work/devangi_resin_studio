@@ -4,7 +4,11 @@ import { dbStore } from "../lib/db/index";
 import { hashPassword, verifyPassword, signAdminSession, verifyAdminSession } from "../lib/auth/index";
 import { ALLOWED_IMAGE_TYPES, MAX_FILE_SIZE_BYTES } from "../lib/blob/index";
 import { formatReceiptFileName } from "../lib/receipt/index";
-import { resolveShippingCharge } from "../lib/shipping";
+import {
+  resolveShippingCharge,
+  INDIA_POST_STATE_SHIPPING_RATES,
+  getDefaultIndiaPostShippingRates,
+} from "../lib/shipping";
 
 test("E-Commerce Test Suite", async (t) => {
   // 1. Admin Authentication & Hashing
@@ -362,6 +366,31 @@ test("E-Commerce Test Suite", async (t) => {
     assert.equal(settings.cityShippingRates[2].charge, "80.00");
   });
 
+  // India Post State-based Shipping Rates Coverage Test
+  await t.test("India Post State Delivery Rates covers all 36 Indian States and Union Territories with Rajasthan at ₹79", async () => {
+    // 1. Rajasthan delivery rate is exactly 79 (India Post base + extra packaging)
+    assert.equal(INDIA_POST_STATE_SHIPPING_RATES["Rajasthan"], 79);
+
+    // 2. All 36 Indian states and Union Territories are defined
+    const allStates = Object.keys(INDIA_POST_STATE_SHIPPING_RATES);
+    assert.equal(allStates.length, 36);
+    assert.ok(allStates.includes("Rajasthan"));
+    assert.ok(allStates.includes("Gujarat"));
+    assert.ok(allStates.includes("Maharashtra"));
+    assert.ok(allStates.includes("Karnataka"));
+    assert.ok(allStates.includes("Tamil Nadu"));
+    assert.ok(allStates.includes("Delhi"));
+    assert.ok(allStates.includes("Assam"));
+    assert.ok(allStates.includes("Lakshadweep"));
+
+    // 3. Default India Post shipping rates array generates 36 valid rate objects
+    const defaultRates = getDefaultIndiaPostShippingRates();
+    assert.equal(defaultRates.length, 36);
+    const rajRate = defaultRates.find((r) => r.name === "Rajasthan");
+    assert.ok(rajRate);
+    assert.equal(rajRate?.charge, "79.00");
+  });
+
   // Multi-product coupon assignment and calculation test
   await t.test("Multi-product coupon applies discount only to assigned products", async () => {
     const multiCoupon = await dbStore.createCoupon({
@@ -604,6 +633,78 @@ test("E-Commerce Test Suite", async (t) => {
       defaultShippingCharge: "79.00",
     });
     assert.equal(pinOrder.charge, 65, "Pincode 313027 should resolve to Rajasthan and match Rajasthan shipping rate");
+
+    // 14. India Post State Delivery Rates automatic fallback when cityRates is empty or not configured:
+    // All cities under Rajasthan resolve to ₹79 (India Post base + packaging)
+    const rajAutoOrder = resolveShippingCharge({
+      subtotal: 300,
+      cityName: "Jaipur",
+      cityRates: [],
+      defaultShippingCharge: "79.00",
+    });
+    assert.equal(rajAutoOrder.charge, 79, "Jaipur should automatically resolve to Rajasthan India Post delivery rate ₹79");
+    assert.equal(rajAutoOrder.matchedCityName, "Rajasthan");
+
+    // Salumbar without state specified should auto-resolve to Rajasthan ₹79
+    const salumbarAuto = resolveShippingCharge({
+      subtotal: 300,
+      cityName: "Salumbar",
+      cityRates: [],
+    });
+    assert.equal(salumbarAuto.charge, 79, "Salumbar should resolve to Rajasthan ₹79");
+
+    // Maharashtra cities (Pune, Mumbai, Nagpur) auto-resolve to Maharashtra ₹89
+    const mhAuto = resolveShippingCharge({
+      subtotal: 300,
+      cityName: "Pune",
+      cityRates: [],
+    });
+    assert.equal(mhAuto.charge, 89, "Pune should resolve to Maharashtra India Post rate ₹89");
+    assert.equal(mhAuto.matchedCityName, "Maharashtra");
+
+    // Gujarat cities (Ahmedabad, Surat) auto-resolve to Gujarat ₹85
+    const gjAuto = resolveShippingCharge({
+      subtotal: 300,
+      cityName: "Ahmedabad",
+      cityRates: [],
+    });
+    assert.equal(gjAuto.charge, 85, "Ahmedabad should resolve to Gujarat India Post rate ₹85");
+    assert.equal(gjAuto.matchedCityName, "Gujarat");
+
+    // Karnataka cities (Bengaluru) auto-resolve to Karnataka ₹94
+    const kaAuto = resolveShippingCharge({
+      subtotal: 300,
+      cityName: "Bengaluru",
+      cityRates: [],
+    });
+    assert.equal(kaAuto.charge, 94, "Bengaluru should resolve to Karnataka India Post rate ₹94");
+    assert.equal(kaAuto.matchedCityName, "Karnataka");
+
+    // Tamil Nadu (Chennai) auto-resolve to Tamil Nadu ₹99
+    const tnAuto = resolveShippingCharge({
+      subtotal: 300,
+      cityName: "Chennai",
+      cityRates: [],
+    });
+    assert.equal(tnAuto.charge, 99, "Chennai should resolve to Tamil Nadu India Post rate ₹99");
+    assert.equal(tnAuto.matchedCityName, "Tamil Nadu");
+
+    // Assam (Guwahati) auto-resolve to Assam ₹109
+    const asAuto = resolveShippingCharge({
+      subtotal: 300,
+      cityName: "Guwahati",
+      cityRates: [],
+    });
+    assert.equal(asAuto.charge, 109, "Guwahati should resolve to Assam India Post rate ₹109");
+    assert.equal(asAuto.matchedCityName, "Assam");
+
+    // PIN code auto-resolution to state rate: PIN 400001 (Mumbai) -> Maharashtra ₹89
+    const pinAutoMh = resolveShippingCharge({
+      subtotal: 300,
+      postalCode: "400001",
+      cityRates: [],
+    });
+    assert.equal(pinAutoMh.charge, 89, "PIN 400001 should resolve to Maharashtra ₹89");
   });
 
   // 11. Order Shipping Update & Total Recalculation (Edit Order)

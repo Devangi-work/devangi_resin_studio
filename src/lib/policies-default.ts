@@ -68,7 +68,7 @@ export const defaultPolicyTemplates: Record<string, PolicyPageTemplate> = {
       },
       {
         title: "2. Domestic Courier Partners & Transit Timelines",
-        desc: "We partner exclusively with tier-1 express courier services including BlueDart, Delhivery, and DTDC. Delivery to metro cities (Mumbai, Delhi NCR, Bengaluru, Chennai, Hyderabad, Pune, Ahmedabad) typically takes 2 to 4 business days post-dispatch. Other regional destinations take 4 to 6 business days.",
+        desc: "We partner with India Post Speed Post & Insured Express delivery services along with trusted domestic logistics networks. Delivery to intra-state destinations and metro cities typically takes 2 to 4 business days post-dispatch. Other regional and remote destinations take 4 to 6 business days.",
         tips: [
           "Metro Cities: 2 - 4 business days post-dispatch",
           "Tier-2 & Tier-3 Cities: 4 - 6 business days post-dispatch",

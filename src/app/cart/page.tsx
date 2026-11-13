@@ -601,15 +601,15 @@ function CartContent() {
                     </p>
                     {shippingInfo.matchedCityName && (
                       <div className="text-[10px] text-[#B84A67] font-semibold bg-[#FAF0F3] px-2 py-0.5 rounded border border-[#EFE3E7] inline-block">
-                        📍 {shippingInfo.matchedCityName} City Rate ({shippingInfo.isFree ? "FREE" : `₹${shippingInfo.charge.toFixed(2)}`}) Applied Automatically
+                        📍 {shippingInfo.matchedCityName} Delivery Rate ({shippingInfo.isFree ? "FREE" : `₹${shippingInfo.charge.toFixed(2)}`}) Applied Automatically
                       </div>
                     )}
                   </>
                 ) : (
                   <p className="text-[11px] text-[#A69E96]">
                     {customer
-                      ? "Add your address in your profile to auto-apply your city delivery charges."
-                      : "Sign in to apply your saved delivery address and city shipping price."}
+                      ? "Add your address in your profile to auto-apply your delivery charges."
+                      : "Sign in to apply your saved delivery address and shipping price."}
                   </p>
                 )}
               </div>

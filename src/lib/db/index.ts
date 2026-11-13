@@ -2,6 +2,7 @@ import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import * as schema from "./schema";
 import { initialCategories, initialProducts, initialCoupons, initialOrders } from "./seed-data";
+import { getDefaultIndiaPostShippingRates } from "../shipping";
 
 // Determine if a real live Neon DATABASE_URL is configured
 const isLiveNeonConfigured = Boolean(
@@ -216,7 +217,7 @@ function getInitialStoreState(): StoreState {
       popupBannerButtonText: "Explore Now",
       popupBannerExpiresAt: null,
       keepsakeStudioImages: [],
-      cityShippingRates: [],
+      cityShippingRates: getDefaultIndiaPostShippingRates(),
       policyPagesConfig: {},
       updatedAt: new Date(),
     },
@@ -2707,7 +2708,9 @@ export const dbStore = {
           store.siteSettings = {
             ...store.siteSettings,
             ...row,
-            cityShippingRates: Array.isArray(row.cityShippingRates) ? row.cityShippingRates : [],
+            cityShippingRates: Array.isArray(row.cityShippingRates) && row.cityShippingRates.length > 0
+              ? row.cityShippingRates
+              : getDefaultIndiaPostShippingRates(),
             policyPagesConfig: (row.policyPagesConfig && typeof row.policyPagesConfig === 'object') ? row.policyPagesConfig : {},
           };
           return store.siteSettings;
