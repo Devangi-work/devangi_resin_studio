@@ -1,15 +1,5 @@
+import * as webpush from "web-push";
 import { dbStore } from "@/lib/db";
-
-function getWebPush() {
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const wp = require("web-push");
-    return wp.default || wp;
-  } catch (err) {
-    console.warn("[WebPush Load Warning]:", err);
-    return null;
-  }
-}
 
 export const VAPID_PUBLIC_KEY =
   process.env.VAPID_PUBLIC_KEY ||
@@ -23,15 +13,18 @@ export const VAPID_SUBJECT =
   process.env.VAPID_SUBJECT || "mailto:devangiresinstudioofficial@gmail.com";
 
 let vapidConfigured = false;
-export function ensureWebPushConfigured() {
+
+/**
+ * Initializes web-push with VAPID credentials for Web Push RFC 8292.
+ */
+export function ensureWebPushConfigured(): void {
   if (!vapidConfigured) {
     try {
-      const wp = getWebPush();
-      if (wp && typeof wp.setVapidDetails === "function") {
-        wp.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
+      if (typeof webpush.setVapidDetails === "function") {
+        webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
         vapidConfigured = true;
       }
-    } catch (err) {
+    } catch (err: unknown) {
       console.error("[WebPush Setup Error]:", err);
     }
   }
@@ -43,7 +36,7 @@ export interface AdminPushPayload {
   url: string;
   type: "order" | "custom_request" | "review";
   tag?: string;
-  metadata?: any;
+  metadata?: Record<string, unknown>;
 }
 
 /**
@@ -56,11 +49,6 @@ export async function sendAdminWebPush(payload: AdminPushPayload): Promise<{
   failed: number;
 }> {
   ensureWebPushConfigured();
-
-  const wp = getWebPush();
-  if (!wp) {
-    return { attempted: 0, successful: 0, failed: 0 };
-  }
 
   const subscriptions = await dbStore.getActivePushSubscriptions();
   if (!subscriptions || subscriptions.length === 0) {
@@ -91,16 +79,23 @@ export async function sendAdminWebPush(payload: AdminPushPayload): Promise<{
         },
       };
 
-      await wp.sendNotification(pushSubscription, pushData, {
-        TTL: 86400, // 24 hours
+      await webpush.sendNotification(pushSubscription, pushData, {
+        TTL: 86400, // 24 hours delivery window
         urgency: "high",
       });
       successful++;
-    } catch (err: any) {
+    } catch (err: unknown) {
       failed++;
-      console.warn(`[WebPush Send Error for ${sub.endpoint.slice(0, 30)}...]:`, err?.statusCode || err?.message);
-      // If subscription has expired or unsubscribed, mark it inactive
-      if (err?.statusCode === 404 || err?.statusCode === 410) {
+      const pushError = err as { statusCode?: number; message?: string };
+      console.warn(
+        `[WebPush Send Error for ${sub.endpoint.slice(0, 30)}...]:`,
+        pushError.statusCode || pushError.message
+      );
+
+      // If the push service (Google FCM, Apple APNs, Mozilla) responds with 404 (Not Found)
+      // or 410 (Gone), the user has revoked permission or the subscription expired.
+      // We automatically mark it inactive so we don't send to a dead endpoint again.
+      if (pushError.statusCode === 404 || pushError.statusCode === 410) {
         await dbStore.deactivatePushSubscription(sub.endpoint);
       }
     }
