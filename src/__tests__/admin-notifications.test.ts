@@ -13,6 +13,7 @@ import {
   notifyAdminOnNewReview,
 } from "../lib/notifications/admin-dispatcher";
 import { sendAdminWebPush } from "../lib/notifications/vapid";
+import { buildCustomerWhatsAppReplyUrl, cleanCustomerPhoneForWhatsApp } from "../lib/whatsapp";
 
 test("Admin Notifications & Push Alert Suite", async (t) => {
   await t.test("getAdminNotificationRecipients resolves valid admin recipient email", async () => {
@@ -183,6 +184,28 @@ test("Admin Notifications & Push Alert Suite", async (t) => {
     const res = await sendAdminReviewReceivedEmail(mockReview, { name: "Ocean Breeze Geode Wall Clock" });
     assert.equal(res.success, true);
     assert.ok(res.messageId);
+  });
+
+  await t.test("Admin alert emails include WhatsApp Reply Them button with action-specific prefilled messages", async () => {
+    // 1. Phone number sanitation for WhatsApp chat link
+    assert.equal(cleanCustomerPhoneForWhatsApp("+91 98200 12345"), "919820012345");
+    assert.equal(cleanCustomerPhoneForWhatsApp("09820012345"), "919820012345");
+    assert.equal(cleanCustomerPhoneForWhatsApp("9820012345"), "919820012345");
+
+    // 2. Order URL & Prefill
+    const orderReplyUrl = buildCustomerWhatsAppReplyUrl("+91 98200 12345", "Hi Sneha! Regarding order #DRS-ADM-9999 (₹1558.00)");
+    assert.ok(orderReplyUrl.startsWith("https://wa.me/919820012345?text="));
+    assert.ok(orderReplyUrl.includes(encodeURIComponent("DRS-ADM-9999")));
+
+    // 3. Custom Request URL & Prefill
+    const customReplyUrl = buildCustomerWhatsAppReplyUrl("9988776655", "Hi Vikram! Regarding custom inquiry for Illuminated Floral Memory Frame");
+    assert.ok(customReplyUrl.startsWith("https://wa.me/919988776655?text="));
+    assert.ok(customReplyUrl.includes(encodeURIComponent("Illuminated Floral Memory Frame")));
+
+    // 4. Review URL & Prefill
+    const reviewReplyUrl = buildCustomerWhatsAppReplyUrl("09765432100", "Hi Ananya! Thank you for leaving a 5/5 ⭐ review for Ocean Breeze Geode Wall Clock");
+    assert.ok(reviewReplyUrl.startsWith("https://wa.me/919765432100?text="));
+    assert.ok(reviewReplyUrl.includes(encodeURIComponent("Ocean Breeze Geode Wall Clock")));
   });
 
   await t.test("Master notification dispatchers coordinate DB, Web Push, and Email together", async () => {

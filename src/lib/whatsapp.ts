@@ -469,3 +469,32 @@ export function getWhatsAppUrl(phone: string | undefined, message: string): stri
   return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
 }
 
+/**
+ * Sanitizes a customer phone number specifically for WhatsApp chat links.
+ * Formats 10-digit Indian numbers with country code 91, strips leading 0,
+ * and leaves numbers starting with 91 or international codes intact.
+ * Returns empty string if no valid phone digits are present.
+ */
+export function cleanCustomerPhoneForWhatsApp(phone?: string | null): string {
+  if (!phone) return "";
+  const digits = String(phone).replace(/[^0-9]/g, "");
+  if (!digits) return "";
+  if (digits.length === 10) return `91${digits}`;
+  if (digits.length === 11 && digits.startsWith("0")) return `91${digits.slice(1)}`;
+  if (digits.length === 12 && digits.startsWith("91")) return digits;
+  return digits;
+}
+
+/**
+ * Builds a direct wa.me URL for the studio admin to reply to a customer on WhatsApp,
+ * redirecting to WhatsApp chat with the customer and a prefilled message.
+ */
+export function buildCustomerWhatsAppReplyUrl(phone: string | null | undefined, prefilledMessage: string): string {
+  const cleanPhone = cleanCustomerPhoneForWhatsApp(phone);
+  const encodedText = encodeURIComponent(prefilledMessage);
+  if (cleanPhone) {
+    return `https://wa.me/${cleanPhone}?text=${encodedText}`;
+  }
+  return `https://wa.me/?text=${encodedText}`;
+}
+

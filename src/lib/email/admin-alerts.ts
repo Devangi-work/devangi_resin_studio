@@ -1,5 +1,6 @@
 import { sendBrevoEmail, EmailResult, getProductionSiteUrl } from "@/lib/email/brevo";
 import { dbStore } from "@/lib/db";
+import { buildCustomerWhatsAppReplyUrl } from "@/lib/whatsapp";
 
 /**
  * Resolves the primary email address configured to receive administrative alerts.
@@ -76,6 +77,23 @@ export async function sendAdminOrderReceivedEmail(order: any): Promise<EmailResu
   const subtotal = Number(order.subtotal || order.totalAmount || 0).toFixed(2);
   const shippingCharge = Number(order.shippingCharge || 0).toFixed(2);
   const discountAmount = Number(order.discountAmount || 0).toFixed(2);
+
+  const customerGreeting = order.customerName ? `Hi ${String(order.customerName).trim()}!` : "Hello!";
+  const firstItemName = Array.isArray(order.items) && order.items[0]?.productName ? order.items[0].productName : "";
+  const itemsSummary = firstItemName
+    ? (order.items.length > 1 ? `${firstItemName} and ${order.items.length - 1} more item(s)` : firstItemName)
+    : "your resin art order";
+
+  const orderReplyMessage = 
+`${customerGreeting} ✨
+
+This is Devangi from Devangi Resin Studio regarding your order #${order.orderNumber} (₹${totalAmount}).
+
+Thank you so much for choosing our handcrafted studio creations! We have received your order details for ${itemsSummary} and are preparing everything for you.
+
+If you have any questions, customization details, or need any assistance, feel free to reply right here. We're happy to help! 🌸`;
+
+  const whatsappReplyUrl = buildCustomerWhatsAppReplyUrl(order.customerPhone, orderReplyMessage);
 
   const subject = `🛍️ New Order Received: #${order.orderNumber} (₹${totalAmount}) - Devangi Resin Studio`;
 
@@ -186,11 +204,18 @@ export async function sendAdminOrderReceivedEmail(order: any): Promise<EmailResu
                   </div>
                   ` : ""}
 
-                  <!-- CTA Button -->
+                  <!-- Action Buttons -->
                   <div style="text-align: center; margin: 30px 0 10px;">
-                    <a href="${orderUrl}" target="_blank" style="display: inline-block; background-color: #3A1823; color: #FFFFFF; text-decoration: none; padding: 14px 36px; border-radius: 50px; font-weight: 700; font-size: 13px; letter-spacing: 1px; text-transform: uppercase; box-shadow: 0 4px 12px rgba(58,24,35,0.25);">
-                      Manage Order in Admin Dashboard &rarr;
-                    </a>
+                    <div style="margin-bottom: 12px;">
+                      <a href="${whatsappReplyUrl}" target="_blank" style="display: inline-block; background-color: #25D366; color: #FFFFFF; text-decoration: none; padding: 14px 34px; border-radius: 50px; font-weight: 700; font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase; box-shadow: 0 4px 14px rgba(37,211,102,0.35);">
+                        💬 Reply Them on WhatsApp &rarr;
+                      </a>
+                    </div>
+                    <div>
+                      <a href="${orderUrl}" target="_blank" style="display: inline-block; background-color: #3A1823; color: #FFFFFF; text-decoration: none; padding: 11px 28px; border-radius: 50px; font-weight: 600; font-size: 12px; letter-spacing: 0.5px; text-transform: uppercase; box-shadow: 0 4px 12px rgba(58,24,35,0.18);">
+                        Manage Order in Admin Dashboard &rarr;
+                      </a>
+                    </div>
                   </div>
 
                 </td>
@@ -237,6 +262,20 @@ export async function sendAdminCustomRequestReceivedEmail(request: any): Promise
   });
 
   const subject = `🎨 New Custom Studio Inquiry: ${request.customerName} (${request.productType}) - Devangi Resin Studio`;
+
+  const clientGreeting = request.customerName ? `Hi ${String(request.customerName).trim()}!` : "Hello!";
+  const productType = request.productType || "bespoke resin piece";
+
+  const customReplyMessage = 
+`${clientGreeting} 🎨
+
+This is Devangi from Devangi Resin Studio. We received your custom studio inquiry for "${productType}"!
+
+Thank you for sharing your creative vision with us. We would love to discuss the details, colors, dimensions, and timeline to handcraft your piece.
+
+Could you let us know your preferred timeline and any specific elements you'd like included? Looking forward to bringing your vision to life! ✨`;
+
+  const whatsappReplyUrl = buildCustomerWhatsAppReplyUrl(request.customerPhone, customReplyMessage);
 
   const htmlContent = `
     <!DOCTYPE html>
@@ -289,11 +328,18 @@ export async function sendAdminCustomRequestReceivedEmail(request: any): Promise
                   </div>
                   ` : ""}
 
-                  <!-- CTA Button -->
+                  <!-- Action Buttons -->
                   <div style="text-align: center; margin: 30px 0 10px;">
-                    <a href="${customUrl}" target="_blank" style="display: inline-block; background-color: #3A1823; color: #FFFFFF; text-decoration: none; padding: 14px 36px; border-radius: 50px; font-weight: 700; font-size: 13px; letter-spacing: 1px; text-transform: uppercase; box-shadow: 0 4px 12px rgba(58,24,35,0.25);">
-                      Review Inquiry & Quote in Studio &rarr;
-                    </a>
+                    <div style="margin-bottom: 12px;">
+                      <a href="${whatsappReplyUrl}" target="_blank" style="display: inline-block; background-color: #25D366; color: #FFFFFF; text-decoration: none; padding: 14px 34px; border-radius: 50px; font-weight: 700; font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase; box-shadow: 0 4px 14px rgba(37,211,102,0.35);">
+                        💬 Reply Them on WhatsApp &rarr;
+                      </a>
+                    </div>
+                    <div>
+                      <a href="${customUrl}" target="_blank" style="display: inline-block; background-color: #3A1823; color: #FFFFFF; text-decoration: none; padding: 11px 28px; border-radius: 50px; font-weight: 600; font-size: 12px; letter-spacing: 0.5px; text-transform: uppercase; box-shadow: 0 4px 12px rgba(58,24,35,0.18);">
+                        Review Inquiry & Quote in Studio &rarr;
+                      </a>
+                    </div>
                   </div>
 
                 </td>
@@ -332,6 +378,40 @@ export async function sendAdminReviewReceivedEmail(review: any, product?: any): 
   const productName = product?.name || review.productName || "Handmade Resin Creation";
   const ratingStars = "★".repeat(Math.max(1, Math.min(5, Number(review.rating) || 5))) +
                       "☆".repeat(Math.max(0, 5 - Math.min(5, Number(review.rating) || 5)));
+
+  let customerPhone = review.customerPhone || review.phone;
+  if (!customerPhone && review.customerId) {
+    try {
+      const customer = await dbStore.getCustomerById(review.customerId);
+      if (customer?.phone) customerPhone = customer.phone;
+    } catch {}
+  }
+  if (!customerPhone && review.orderId) {
+    try {
+      const order = await dbStore.getOrderById(review.orderId);
+      if (order?.customerPhone) customerPhone = order.customerPhone;
+    } catch {}
+  }
+  if (!customerPhone && review.customerEmail) {
+    try {
+      const customer = await dbStore.getCustomerByEmail(review.customerEmail);
+      if (customer?.phone) customerPhone = customer.phone;
+    } catch {}
+  }
+
+  const reviewerGreeting = review.customerName ? `Hi ${String(review.customerName).trim()}!` : "Hello!";
+  const ratingSummary = `${review.rating || 5}/5 ⭐`;
+
+  const reviewReplyMessage = 
+`${reviewerGreeting} 🌸
+
+This is Devangi from Devangi Resin Studio. Thank you so much for leaving a ${ratingSummary} review for "${productName}"!
+
+Your feedback and kind support mean the world to our small studio. We are so happy you loved your piece!
+
+If you ever need any care tips or want another custom piece in the future, please feel free to reach out anytime. ✨`;
+
+  const whatsappReplyUrl = buildCustomerWhatsAppReplyUrl(customerPhone, reviewReplyMessage);
 
   const subject = `⭐ New Review: ${review.rating}/5 Stars for "${productName}" - Devangi Resin Studio`;
 
@@ -384,7 +464,8 @@ export async function sendAdminReviewReceivedEmail(review: any, product?: any): 
                       <span style="font-weight: 700; font-size: 14px; color: #3A1823;">${review.customerName || "Customer"}</span>
                       ${review.isVerifiedPurchase ? `<span style="font-size: 11px; background-color: #E8F5E9; color: #2E7D32; font-weight: 600; padding: 3px 8px; border-radius: 12px;">Verified Purchase</span>` : ""}
                     </div>
-                    <div style="font-size: 12px; color: #8A6E78; margin-bottom: 12px;">Email: ${review.customerEmail || "Not provided"}</div>
+                    <div style="font-size: 12px; color: #8A6E78; margin-bottom: 4px;">Email: ${review.customerEmail || "Not provided"}</div>
+                    ${customerPhone ? `<div style="font-size: 12px; color: #8A6E78; margin-bottom: 12px;">Phone / WhatsApp: ${customerPhone}</div>` : `<div style="margin-bottom: 8px;"></div>`}
                     
                     <div style="font-size: 14px; color: #3A1823; line-height: 1.6; font-style: italic; background-color: #FAF5F7; padding: 12px 14px; border-radius: 8px;">
                       &ldquo;${review.reviewText || "(No written text)"}&rdquo;
@@ -393,11 +474,18 @@ export async function sendAdminReviewReceivedEmail(review: any, product?: any): 
                     ${imagesHtml}
                   </div>
 
-                  <!-- CTA Button -->
+                  <!-- Action Buttons -->
                   <div style="text-align: center; margin: 30px 0 10px;">
-                    <a href="${reviewsUrl}" target="_blank" style="display: inline-block; background-color: #3A1823; color: #FFFFFF; text-decoration: none; padding: 14px 36px; border-radius: 50px; font-weight: 700; font-size: 13px; letter-spacing: 1px; text-transform: uppercase; box-shadow: 0 4px 12px rgba(58,24,35,0.25);">
-                      Open Reviews Manager &rarr;
-                    </a>
+                    <div style="margin-bottom: 12px;">
+                      <a href="${whatsappReplyUrl}" target="_blank" style="display: inline-block; background-color: #25D366; color: #FFFFFF; text-decoration: none; padding: 14px 34px; border-radius: 50px; font-weight: 700; font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase; box-shadow: 0 4px 14px rgba(37,211,102,0.35);">
+                        💬 Reply Them on WhatsApp &rarr;
+                      </a>
+                    </div>
+                    <div>
+                      <a href="${reviewsUrl}" target="_blank" style="display: inline-block; background-color: #3A1823; color: #FFFFFF; text-decoration: none; padding: 11px 28px; border-radius: 50px; font-weight: 600; font-size: 12px; letter-spacing: 0.5px; text-transform: uppercase; box-shadow: 0 4px 12px rgba(58,24,35,0.18);">
+                        Open Reviews Manager &rarr;
+                      </a>
+                    </div>
                   </div>
 
                 </td>

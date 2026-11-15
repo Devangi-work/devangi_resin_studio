@@ -132,7 +132,12 @@ export async function POST(request: Request) {
     // Dispatch Admin Notification (Push + Email)
     try {
       const product = await dbStore.getProductById(productId);
-      await notifyAdminOnNewReview(review, product);
+      let customerPhone = customer?.phone;
+      if (!customerPhone && (orderId || eligibility.orderId)) {
+        const ord = await dbStore.getOrderById(orderId || eligibility.orderId);
+        if (ord?.customerPhone) customerPhone = ord.customerPhone;
+      }
+      await notifyAdminOnNewReview({ ...review, customerPhone }, product);
     } catch (notifErr) {
       console.warn("[Review Admin Notification Error]:", notifErr);
     }
