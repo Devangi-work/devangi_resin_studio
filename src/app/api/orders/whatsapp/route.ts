@@ -172,6 +172,25 @@ export async function POST(request: NextRequest) {
       items: formattedItems,
     });
 
+    // Record Coupon Redemption for customer if coupon was applied
+    const orderCustomerEmail = customer.email || session.email;
+    if (couponCode && discountAmount > 0 && orderCustomerEmail) {
+      try {
+        const foundCoupon = await dbStore.getCouponByCode(couponCode);
+        if (foundCoupon) {
+          await dbStore.recordCouponRedemption({
+            couponId: foundCoupon.id,
+            couponCode: foundCoupon.code,
+            orderId: newOrder.id,
+            customerEmail: orderCustomerEmail,
+            discountApplied: discountAmount,
+          });
+        }
+      } catch (couponRedemptionErr) {
+        console.error("Failed to record coupon redemption for WhatsApp order:", couponRedemptionErr);
+      }
+    }
+
     // Dispatch Admin Notification (Push + Email)
     try {
       await notifyAdminOnNewOrder(newOrder);

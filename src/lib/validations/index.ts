@@ -211,7 +211,10 @@ export const couponSchema = z.object({
     (val) => (val === "" || val === null || val === undefined ? null : val),
     z.coerce.number().int().positive().optional().nullable()
   ),
-  perCustomerLimit: z.coerce.number().int().positive().default(1),
+  perCustomerLimit: z.preprocess(
+    (val) => (val === "" || val === null || val === undefined ? 1 : val),
+    z.coerce.number().int().positive("Per-user limit must be at least 1.").default(1)
+  ),
   isActive: z.boolean().default(true),
   applicableCategoryId: z.preprocess(
     (val) => (val === "" ? null : val),

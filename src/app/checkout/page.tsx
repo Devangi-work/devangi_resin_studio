@@ -424,7 +424,7 @@ export default function CheckoutPage() {
         body: JSON.stringify({
           code: couponInput.trim(),
           cartAmount: subtotal,
-          customerEmail: formData.customerEmail || undefined,
+          customerEmail: (formData.customerEmail || customer?.email || "").trim() || undefined,
           items: items.map((it) => ({
             productId: it.productId,
             price: it.price,
@@ -447,6 +447,31 @@ export default function CheckoutPage() {
     } finally {
       setCouponLoading(false);
     }
+  };
+
+  const validateAppliedCouponForEmail = async (email: string) => {
+    if (!appliedCoupon?.code || !email || !email.includes("@")) return;
+    try {
+      const res = await fetch("/api/coupons/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: appliedCoupon.code,
+          cartAmount: subtotal,
+          customerEmail: email.trim(),
+          items: items.map((it) => ({
+            productId: it.productId,
+            price: it.price,
+            quantity: it.quantity,
+          })),
+        }),
+      });
+      const data = await res.json();
+      if (!data.valid) {
+        setAppliedCoupon(null);
+        setCouponError(data.message || "Coupon usage limit reached for this email address.");
+      }
+    } catch { }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -920,6 +945,7 @@ export default function CheckoutPage() {
                 placeholder="e.g. priya@example.com"
                 value={formData.customerEmail}
                 onChange={handleInputChange}
+                onBlur={() => validateAppliedCouponForEmail(formData.customerEmail)}
                 className="w-full px-3.5 py-2.5 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
               />
             </div>

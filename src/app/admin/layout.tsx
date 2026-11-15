@@ -210,35 +210,35 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className={`min-h-screen ${theme === "dark" ? "bg-[#0E120F] text-[#EDE8E1]" : "bg-[#F7F5F0] text-[#2C332D]"} flex flex-col lg:flex-row transition-colors duration-200 ${theme === "dark" ? "admin-dark" : ""}`}>
-      
+
       {/* Mobile Top Bar */}
-      <div className="lg:hidden admin-mobile-header bg-[#1F2421] text-white px-4 py-3 flex items-center justify-between sticky top-0 z-40 border-b border-[#333A35]">
-        <div className="flex items-center space-x-2.5">
+      <div className="lg:hidden admin-mobile-header bg-[#1F2421] text-white px-3 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between sticky top-0 z-40 border-b border-[#333A35]">
+        <div className="flex items-center space-x-2 min-w-0 pr-1">
           <img
             src="/images/logo/resin_logo.png"
             alt="Devangi Resin Studio Logo"
-            className="w-8 h-8 object-contain drop-shadow"
+            className="w-7 h-7 sm:w-8 sm:h-8 object-contain drop-shadow shrink-0"
           />
-          <span className="font-serif font-bold text-base sm:text-lg text-[#D4AF37]">Devangi Resin Studio</span>
+          <span className="font-serif font-bold text-sm sm:text-base text-[#D4AF37] truncate">Devangi Resin Studio</span>
         </div>
 
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-1 sm:space-x-2 shrink-0">
           {/* Mobile Notification Center */}
           <AdminNotificationCenter />
 
           {/* Mobile Theme Toggle */}
           <button
             onClick={toggleTheme}
-            className="p-2 rounded-xl text-[#D4AF37] hover:bg-white/10 transition-colors"
+            className="p-1.5 sm:p-2 rounded-xl text-[#D4AF37] hover:bg-white/10 transition-colors"
             title={`Switch to ${theme === "light" ? "Dark" : "Light"} Mode`}
           >
-            {theme === "light" ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5 text-amber-300" />}
+            {theme === "light" ? <Moon className="w-4 h-4 sm:w-5 sm:h-5" /> : <Sun className="w-4 h-4 sm:w-5 sm:h-5 text-amber-300" />}
           </button>
 
           {/* Mobile Avatar Click */}
           <button
             onClick={() => setIsProfileModalOpen(true)}
-            className="w-8 h-8 rounded-full overflow-hidden border border-[#D4AF37] relative flex items-center justify-center bg-[#2C332D] text-[#D4AF37] font-bold text-xs"
+            className="w-7 h-7 sm:w-8 sm:h-8 rounded-full overflow-hidden border border-[#D4AF37] relative flex items-center justify-center bg-[#2C332D] text-[#D4AF37] font-bold text-xs"
           >
             {adminUser?.avatarUrl ? (
               <img src={adminUser.avatarUrl} alt="Admin" className="w-full h-full object-cover" />
@@ -259,9 +259,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       {/* Sidebar */}
       <aside
-        className={`w-64 bg-[#1F2421] text-white flex-shrink-0 flex flex-col justify-between border-r border-[#333A35] fixed lg:sticky top-0 h-screen z-30 transition-transform lg:translate-x-0 ${
-          mobileOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        className={`w-64 bg-[#1F2421] text-white flex-shrink-0 flex flex-col justify-between border-r border-[#333A35] fixed lg:sticky top-0 h-screen z-30 transition-transform lg:translate-x-0 ${mobileOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
       >
         <div className="overflow-y-auto">
           {/* Logo & Store Link */}
@@ -297,11 +296,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   key={item.name}
                   href={item.href}
                   onClick={() => setMobileOpen(false)}
-                  className={`flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-medium transition-all ${
-                    isActive
+                  className={`flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-medium transition-all ${isActive
                       ? "bg-[#D4AF37] text-[#1F2421] font-bold shadow-sm"
                       : "text-[#A69E96] hover:text-white hover:bg-[#2C332D]"
-                  }`}
+                    }`}
                 >
                   <Icon className="w-4 h-4 flex-shrink-0" />
                   <span>{item.name}</span>
@@ -313,7 +311,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         {/* Footer Area: Theme Toggle + User Profile + Logout */}
         <div className="p-4 border-t border-[#333A35] space-y-3 bg-[#191D1A]/60 backdrop-blur-sm">
-          
+
           {/* Theme Toggle Button */}
           <button
             onClick={toggleTheme}
@@ -416,7 +414,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {isProfileModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
           <div className="bg-white rounded-3xl max-w-md w-full p-6 border border-[#E8E0D5] shadow-2xl space-y-6 admin-modal-box">
-            
+
             <div className="flex items-center justify-between pb-3 border-b border-[#E8E0D5]">
               <div className="flex items-center space-x-2">
                 <ShieldCheck className="w-5 h-5 text-[#D4AF37]" />
@@ -482,7 +480,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             {/* Avatar Actions */}
             <div className="space-y-2 pt-2 border-t border-[#E8E0D5]">
               <p className="text-xs font-semibold text-[#2C332D]">Profile Photo Options</p>
-              
+
               <div className="grid grid-cols-2 gap-2">
                 {/* Upload from device */}
                 <button

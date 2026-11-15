@@ -247,6 +247,37 @@ export function ProductCard({ product, aspectRatio = "square" }: ProductCardProp
             </span>
           )}
         </div>
+
+        {/* Add to Cart Button */}
+        <button
+          type="button"
+          onClick={handleQuickAdd}
+          disabled={isOutOfStock}
+          className={`w-full mt-2 py-2 sm:py-2.5 px-3 rounded-xl font-bold text-[11px] sm:text-xs uppercase tracking-wider transition-all flex items-center justify-center space-x-1.5 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-xs ${
+            isOutOfStock
+              ? "bg-[#FAF8F5] text-[#AFA0A6] border border-[#E8E0D5]"
+              : added
+              ? "bg-[#E8EFE8] text-[#2E7D32] border border-[#C5D8C5]"
+              : isFestive
+              ? "bg-gradient-to-r from-[#6A162B] to-[#8F223D] hover:from-[#541222] hover:to-[#731B31] text-[#FFDF78] border border-[#FFDF78]/40 hover:shadow-md"
+              : "bg-[#2C332D] hover:bg-[#3D473E] text-white hover:shadow-md"
+          }`}
+          aria-label={isOutOfStock ? "Out of Stock" : added ? "Added to Cart" : `Add ${product.name} to Cart`}
+        >
+          {added ? (
+            <>
+              <Check className="w-3.5 h-3.5 text-[#2E7D32]" />
+              <span>Added to Cart!</span>
+            </>
+          ) : isOutOfStock ? (
+            <span>Out of Stock</span>
+          ) : (
+            <>
+              <ShoppingBag className="w-3.5 h-3.5" />
+              <span>Add to Cart</span>
+            </>
+          )}
+        </button>
       </div>
     </div>
   );

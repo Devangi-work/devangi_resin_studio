@@ -13,6 +13,7 @@ import {
   Smartphone,
   ShieldAlert,
   Volume2,
+  X,
 } from "lucide-react";
 
 function urlBase64ToUint8Array(base64String: string) {
@@ -221,72 +222,94 @@ export function AdminNotificationCenter() {
     <div className="relative" ref={dropdownRef}>
       {/* Bell Icon Trigger */}
       <button
+        type="button"
         onClick={() => {
           const next = !isOpen;
           setIsOpen(next);
           if (next) fetchNotifications(true);
         }}
-        className="relative p-2 rounded-xl text-white hover:bg-white/10 transition-colors flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-[#D4AF37]"
+        className="relative p-2 rounded-xl text-[#EFE5DC] lg:text-[#3A1823] lg:dark:text-[#EFE5DC] hover:bg-white/10 lg:hover:bg-black/5 lg:dark:hover:bg-white/10 active:scale-95 transition-all flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-[#D4AF37]"
         title="Admin Notifications (Orders, Custom Inquiries, Reviews)"
         aria-label="Admin Notifications"
       >
-        <Bell className="w-5 h-5 text-[#EFE5DC] hover:text-white transition-colors" />
+        <Bell className="w-5 h-5 text-current transition-colors" />
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 bg-[#DF4C4C] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 border-[#1F2421] animate-pulse">
+          <span className="absolute -top-1 -right-1 bg-[#DF4C4C] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 border-[#1F2421] lg:border-white lg:dark:border-[#1F2421] animate-pulse">
             {unreadCount > 99 ? "99+" : unreadCount}
           </span>
         )}
       </button>
 
+      {/* Mobile Backdrop Overlay */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-xs z-40 sm:hidden"
+          onClick={() => setIsOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
       {/* Notification Dropdown Drawer */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white dark:bg-[#191D1A] rounded-2xl shadow-2xl border border-[#E8E0D5] dark:border-[#333A35] z-50 overflow-hidden text-left animate-fadeIn">
+        <div className="fixed inset-x-2.5 top-14 sm:top-auto sm:absolute sm:inset-auto sm:right-0 sm:mt-2 w-auto sm:w-96 max-h-[85vh] sm:max-h-none flex flex-col bg-white dark:bg-[#191D1A] rounded-2xl shadow-2xl border border-[#E8E0D5] dark:border-[#333A35] z-50 overflow-hidden text-left animate-fadeIn">
           {/* Header */}
-          <div className="p-3.5 bg-[#FAF0F3] dark:bg-[#252C27] border-b border-[#E8E0D5] dark:border-[#333A35] flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Bell className="w-4 h-4 text-[#B84A67] dark:text-[#D4AF37]" />
-              <h3 className="font-serif font-bold text-sm text-[#3A1823] dark:text-white">
+          <div className="p-3 sm:p-3.5 bg-[#FAF0F3] dark:bg-[#252C27] border-b border-[#E8E0D5] dark:border-[#333A35] flex items-center justify-between shrink-0">
+            <div className="flex items-center space-x-2 min-w-0">
+              <Bell className="w-4 h-4 text-[#B84A67] dark:text-[#D4AF37] shrink-0" />
+              <h3 className="font-serif font-bold text-sm text-[#3A1823] dark:text-white truncate">
                 Studio Notifications
               </h3>
               {unreadCount > 0 && (
-                <span className="text-[10px] bg-[#B84A67] text-white font-semibold px-2 py-0.5 rounded-full">
+                <span className="text-[10px] bg-[#B84A67] text-white font-semibold px-2 py-0.5 rounded-full shrink-0">
                   {unreadCount} new
                 </span>
               )}
             </div>
 
-            {unreadCount > 0 && (
+            <div className="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
+              {unreadCount > 0 && (
+                <button
+                  type="button"
+                  onClick={handleMarkAllRead}
+                  className="text-[11px] text-[#8A6E78] dark:text-[#A69E96] hover:text-[#3A1823] dark:hover:text-white font-medium flex items-center space-x-1 px-1.5 py-1 rounded hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+                  title="Mark all as read"
+                >
+                  <CheckCheck className="w-3.5 h-3.5" />
+                  <span className="hidden xs:inline">Mark all read</span>
+                </button>
+              )}
               <button
-                onClick={handleMarkAllRead}
-                className="text-[11px] text-[#8A6E78] dark:text-[#A69E96] hover:text-[#3A1823] dark:hover:text-white font-medium flex items-center space-x-1"
-                title="Mark all as read"
+                type="button"
+                onClick={() => setIsOpen(false)}
+                className="p-1 rounded-lg text-[#8A6E78] dark:text-[#A69E96] hover:bg-black/10 dark:hover:bg-white/10 transition-colors sm:hidden"
+                aria-label="Close notifications"
               >
-                <CheckCheck className="w-3.5 h-3.5" />
-                <span>Mark all read</span>
+                <X className="w-4 h-4" />
               </button>
-            )}
+            </div>
           </div>
 
           {/* Mobile Push Notification Setup Banner */}
-          <div className="p-3 bg-[#FCFAF8] dark:bg-[#1E2320] border-b border-[#E8E0D5] dark:border-[#333A35]">
-            <div className="flex items-start justify-between gap-2">
-              <div className="space-y-0.5">
+          <div className="p-3 bg-[#FCFAF8] dark:bg-[#1E2320] border-b border-[#E8E0D5] dark:border-[#333A35] shrink-0">
+            <div className="flex flex-col xs:flex-row items-start xs:items-center justify-between gap-2">
+              <div className="space-y-0.5 min-w-0">
                 <div className="flex items-center space-x-1.5 text-xs font-bold text-[#3A1823] dark:text-white">
-                  <Smartphone className="w-3.5 h-3.5 text-[#B84A67] dark:text-[#D4AF37]" />
+                  <Smartphone className="w-3.5 h-3.5 text-[#B84A67] dark:text-[#D4AF37] shrink-0" />
                   <span>Mobile Notification Bar Alerts</span>
                 </div>
-                <p className="text-[10.5px] text-[#7A5E68] dark:text-[#A69E96] leading-tight">
+                <p className="text-[10px] sm:text-[10.5px] text-[#7A5E68] dark:text-[#A69E96] leading-tight">
                   Receive native mobile alerts even when browser is closed. Checks every 2 hours without draining server or battery.
                 </p>
               </div>
 
               {permission === "granted" ? (
-                <div className="flex flex-col items-end gap-1">
+                <div className="flex xs:flex-col items-center xs:items-end gap-1 shrink-0">
                   <span className="inline-flex items-center space-x-1 text-[10px] bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-300 font-semibold px-2 py-0.5 rounded-full">
                     <Check className="w-3 h-3" />
                     <span>Active</span>
                   </span>
                   <button
+                    type="button"
                     onClick={handleTestPush}
                     disabled={isTesting}
                     className="text-[9.5px] text-[#B84A67] dark:text-[#D4AF37] hover:underline font-semibold flex items-center space-x-1"
@@ -297,6 +320,7 @@ export function AdminNotificationCenter() {
                 </div>
               ) : (
                 <button
+                  type="button"
                   onClick={handleEnablePush}
                   disabled={isSubscribing}
                   className="px-2.5 py-1.5 bg-[#3A1823] hover:bg-[#4E2230] text-white text-[10.5px] font-bold rounded-lg transition-colors flex items-center space-x-1 shrink-0 shadow-xs"
@@ -319,7 +343,7 @@ export function AdminNotificationCenter() {
           </div>
 
           {/* Notification List */}
-          <div className="max-h-80 overflow-y-auto divide-y divide-[#F2EAE5] dark:divide-[#2D3630]">
+          <div className="max-h-[50vh] sm:max-h-80 overflow-y-auto divide-y divide-[#F2EAE5] dark:divide-[#2D3630]">
             {notifications.length === 0 ? (
               <div className="p-8 text-center text-[#8A6E78] dark:text-[#A69E96] space-y-1">
                 <Bell className="w-7 h-7 mx-auto opacity-30 text-[#3A1823] dark:text-white" />
@@ -332,9 +356,8 @@ export function AdminNotificationCenter() {
                   key={notif.id}
                   href={notif.link || "/admin"}
                   onClick={() => setIsOpen(false)}
-                  className={`block p-3 hover:bg-[#FAF5F7] dark:hover:bg-[#252C27] transition-colors ${
-                    !notif.isRead ? "bg-[#FFF9FB] dark:bg-[#1F2622]" : ""
-                  }`}
+                  className={`block p-3 hover:bg-[#FAF5F7] dark:hover:bg-[#252C27] transition-colors ${!notif.isRead ? "bg-[#FFF9FB] dark:bg-[#1F2622]" : ""
+                    }`}
                 >
                   <div className="flex items-start space-x-2.5">
                     <div className="p-1.5 rounded-lg bg-white dark:bg-[#2C332D] border border-[#E8E0D5] dark:border-[#3A453E] shadow-2xs shrink-0 mt-0.5">

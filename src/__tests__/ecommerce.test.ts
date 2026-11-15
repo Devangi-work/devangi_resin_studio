@@ -167,6 +167,70 @@ test("E-Commerce Test Suite", async (t) => {
     assert.equal(multiCouponInvalid.valid, false);
   });
 
+  // 4b. Coupon Per-Customer Usage Limit & Redemption Tracking
+  await t.test("Admin can set per-customer coupon limit and system enforces usage limits", async () => {
+    // 1. Create a coupon with perCustomerLimit = 1
+    const singleUseCoupon = await dbStore.createCoupon({
+      code: "SINGLEUSE50",
+      discountType: "fixed",
+      discountValue: "50.00",
+      minCartAmount: "200.00",
+      perCustomerLimit: 1,
+      maxRedemptions: 50,
+    });
+    assert.equal(Number(singleUseCoupon.perCustomerLimit), 1);
+
+    const testEmail1 = "testuser1@example.com";
+    const testEmail2 = "testuser2@example.com";
+
+    // 2. Validate for testEmail1 before any redemption
+    const val1 = await dbStore.validateCoupon("SINGLEUSE50", 500, testEmail1);
+    assert.equal(val1.valid, true);
+    assert.equal(val1.discountAmount, 50);
+
+    // 3. Record redemption for testEmail1
+    await dbStore.recordCouponRedemption({
+      couponId: singleUseCoupon.id,
+      couponCode: "SINGLEUSE50",
+      orderId: `ord_test_${Date.now()}_1`,
+      customerEmail: testEmail1,
+      discountApplied: 50,
+    });
+
+    // 4. Validate again for testEmail1 -> MUST be blocked
+    const val1After = await dbStore.validateCoupon("SINGLEUSE50", 500, testEmail1);
+    assert.equal(val1After.valid, false);
+    assert.equal(val1After.message, "you have already used this coupon");
+
+    // 5. Another customer testEmail2 -> MUST still be valid
+    const val2 = await dbStore.validateCoupon("SINGLEUSE50", 500, testEmail2);
+    assert.equal(val2.valid, true);
+
+    // 6. Test updating perCustomerLimit: Admin changes limit from 1 to 2
+    const updatedCoupon = await dbStore.updateCoupon(singleUseCoupon.id, {
+      perCustomerLimit: 2,
+    });
+    assert.equal(Number(updatedCoupon.perCustomerLimit), 2);
+
+    // Now testEmail1 should be allowed a 2nd redemption
+    const val1WithLimit2 = await dbStore.validateCoupon("SINGLEUSE50", 500, testEmail1);
+    assert.equal(val1WithLimit2.valid, true, "Should allow 2nd use after admin increases per-user limit to 2");
+
+    // Record 2nd redemption for testEmail1
+    await dbStore.recordCouponRedemption({
+      couponId: singleUseCoupon.id,
+      couponCode: "SINGLEUSE50",
+      orderId: `ord_test_${Date.now()}_2`,
+      customerEmail: testEmail1,
+      discountApplied: 50,
+    });
+
+    // 3rd attempt for testEmail1 -> MUST be blocked now
+    const val1Third = await dbStore.validateCoupon("SINGLEUSE50", 500, testEmail1);
+    assert.equal(val1Third.valid, false);
+    assert.ok(val1Third.message?.includes("maximum usage limit (2 times)"));
+  });
+
   // 5. Order Creation & Idempotent Stock Deduction
   await t.test("Order Lifecycle, Payment Status & Inventory Transaction", async () => {
     const initialProds = await dbStore.getProducts();

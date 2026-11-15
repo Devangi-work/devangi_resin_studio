@@ -1,4 +1,4 @@
-import { setVapidDetails, sendNotification } from "web-push";
+import * as webpush from "web-push";
 import { dbStore } from "@/lib/db";
 
 export const VAPID_PUBLIC_KEY =
@@ -20,8 +20,10 @@ let vapidConfigured = false;
 export function ensureWebPushConfigured(): void {
   if (!vapidConfigured) {
     try {
-      setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
-      vapidConfigured = true;
+      if (typeof webpush.setVapidDetails === "function") {
+        webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
+        vapidConfigured = true;
+      }
     } catch (err: unknown) {
       console.error("[WebPush Setup Error]:", err);
     }
@@ -77,7 +79,7 @@ export async function sendAdminWebPush(payload: AdminPushPayload): Promise<{
         },
       };
 
-      await sendNotification(pushSubscription, pushData, {
+      await webpush.sendNotification(pushSubscription, pushData, {
         TTL: 86400, // 24 hours delivery window
         urgency: "high",
       });

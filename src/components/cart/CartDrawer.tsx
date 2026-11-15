@@ -127,6 +127,7 @@ export function CartDrawer() {
         body: JSON.stringify({
           code: couponInput.trim(),
           cartAmount: subtotal,
+          customerEmail: customer?.email || undefined,
           items: items.map((it) => ({
             productId: it.productId,
             price: it.price,

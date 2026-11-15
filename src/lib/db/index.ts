@@ -45,6 +45,17 @@ if (sql) {
   sql`ALTER TABLE coupons ADD COLUMN IF NOT EXISTS applicable_category_id TEXT;`.catch(() => { });
   sql`ALTER TABLE coupons ADD COLUMN IF NOT EXISTS applicable_product_id TEXT;`.catch(() => { });
   sql`ALTER TABLE coupons ADD COLUMN IF NOT EXISTS applicable_product_ids JSONB DEFAULT '[]'::jsonb;`.catch(() => { });
+  sql`ALTER TABLE coupons ADD COLUMN IF NOT EXISTS per_customer_limit INTEGER DEFAULT 1;`.catch(() => { });
+  sql`CREATE TABLE IF NOT EXISTS coupon_redemptions (
+    id TEXT PRIMARY KEY,
+    coupon_id TEXT NOT NULL REFERENCES coupons(id) ON DELETE CASCADE,
+    order_id TEXT NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+    customer_email TEXT NOT NULL,
+    discount_applied NUMERIC(10, 2) NOT NULL,
+    redeemed_at TIMESTAMP DEFAULT NOW() NOT NULL
+  );`.catch(() => { });
+  sql`CREATE INDEX IF NOT EXISTS coupon_redemptions_coupon_idx ON coupon_redemptions(coupon_id);`.catch(() => { });
+  sql`CREATE INDEX IF NOT EXISTS coupon_redemptions_email_idx ON coupon_redemptions(customer_email);`.catch(() => { });
   sql`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS city_shipping_rates JSONB DEFAULT '[]'::jsonb;`.catch(() => { });
   sql`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS policy_pages_config JSONB DEFAULT '{}'::jsonb;`.catch(() => { });
   sql`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS popup_banner_active BOOLEAN DEFAULT FALSE;`.catch(() => { });
@@ -153,6 +164,7 @@ interface StoreState {
   products: any[];
   orders: any[];
   coupons: any[];
+  couponRedemptions: any[];
   inventoryMovements: any[];
   siteSettings: any;
   customRequests: any[];
@@ -175,6 +187,7 @@ function getInitialStoreState(): StoreState {
     products: JSON.parse(JSON.stringify(initialProducts)),
     orders: [],
     coupons: JSON.parse(JSON.stringify(initialCoupons)),
+    couponRedemptions: [],
     mediaItems: [],
     customers: [
       {
@@ -2233,6 +2246,7 @@ export const dbStore = {
             discountValue: Number(c.discountValue).toFixed(2),
             minCartAmount: Number(c.minCartAmount || 0).toFixed(2),
             maxDiscount: c.maxDiscount ? Number(c.maxDiscount).toFixed(2) : null,
+            perCustomerLimit: c.perCustomerLimit !== undefined && c.perCustomerLimit !== null ? Number(c.perCustomerLimit) : 1,
             applicableProductIds: Array.isArray(c.applicableProductIds)
               ? c.applicableProductIds
               : (c.applicableProductId ? [c.applicableProductId] : []),
@@ -2244,6 +2258,7 @@ export const dbStore = {
     }
     return store.coupons.map((c) => ({
       ...c,
+      perCustomerLimit: c.perCustomerLimit !== undefined && c.perCustomerLimit !== null ? Number(c.perCustomerLimit) : 1,
       applicableProductIds: Array.isArray(c.applicableProductIds)
         ? c.applicableProductIds
         : (c.applicableProductId ? [c.applicableProductId] : []),
@@ -2284,6 +2299,7 @@ export const dbStore = {
             discountValue: Number(c.discountValue).toFixed(2),
             minCartAmount: Number(c.minCartAmount || 0).toFixed(2),
             maxDiscount: c.maxDiscount ? Number(c.maxDiscount).toFixed(2) : null,
+            perCustomerLimit: c.perCustomerLimit !== undefined && c.perCustomerLimit !== null ? Number(c.perCustomerLimit) : 1,
             applicableProductIds: Array.isArray(c.applicableProductIds)
               ? c.applicableProductIds
               : (c.applicableProductId ? [c.applicableProductId] : []),
@@ -2297,6 +2313,7 @@ export const dbStore = {
     if (!c) return null;
     return {
       ...c,
+      perCustomerLimit: c.perCustomerLimit !== undefined && c.perCustomerLimit !== null ? Number(c.perCustomerLimit) : 1,
       applicableProductIds: Array.isArray(c.applicableProductIds)
         ? c.applicableProductIds
         : (c.applicableProductId ? [c.applicableProductId] : []),
@@ -2365,6 +2382,19 @@ export const dbStore = {
     }
     if (coupon.maxRedemptions && coupon.currentRedemptions >= coupon.maxRedemptions) {
       return { valid: false, message: "This coupon has reached its maximum redemptions." };
+    }
+
+    const perUserLimit = coupon.perCustomerLimit !== undefined && coupon.perCustomerLimit !== null ? Number(coupon.perCustomerLimit) : 1;
+    if (customerEmail && customerEmail.trim()) {
+      const userRedemptions = await this.getCouponRedemptionCountForCustomer(coupon.id, coupon.code, customerEmail);
+      if (userRedemptions >= perUserLimit) {
+        return {
+          valid: false,
+          message: perUserLimit === 1
+            ? "you have already used this coupon"
+            : `You have reached the maximum usage limit (${perUserLimit} times) for this coupon.`,
+        };
+      }
     }
 
     const minAmount = Number(coupon.minCartAmount || 0);
@@ -2546,6 +2576,7 @@ export const dbStore = {
             discountValue: Number(c.discountValue).toFixed(2),
             minCartAmount: Number(c.minCartAmount || 0).toFixed(2),
             maxDiscount: c.maxDiscount ? Number(c.maxDiscount).toFixed(2) : null,
+            perCustomerLimit: c.perCustomerLimit !== undefined && c.perCustomerLimit !== null ? Number(c.perCustomerLimit) : 1,
             applicableProductIds: Array.isArray(c.applicableProductIds)
               ? c.applicableProductIds
               : (c.applicableProductId ? [c.applicableProductId] : []),
@@ -2559,6 +2590,7 @@ export const dbStore = {
     if (!c) return null;
     return {
       ...c,
+      perCustomerLimit: c.perCustomerLimit !== undefined && c.perCustomerLimit !== null ? Number(c.perCustomerLimit) : 1,
       applicableProductIds: Array.isArray(c.applicableProductIds)
         ? c.applicableProductIds
         : (c.applicableProductId ? [c.applicableProductId] : []),
@@ -2583,6 +2615,7 @@ export const dbStore = {
             min_cart_amount = COALESCE(${data.minCartAmount !== undefined && data.minCartAmount !== null ? Number(data.minCartAmount).toFixed(2) : null}, min_cart_amount),
             max_discount = ${data.maxDiscount ? Number(data.maxDiscount).toFixed(2) : null},
             max_redemptions = COALESCE(${data.maxRedemptions !== undefined && data.maxRedemptions !== null ? Number(data.maxRedemptions) : null}, max_redemptions),
+            per_customer_limit = COALESCE(${data.perCustomerLimit !== undefined && data.perCustomerLimit !== null ? Number(data.perCustomerLimit) : null}, per_customer_limit),
             is_active = COALESCE(${data.isActive !== undefined ? Boolean(data.isActive) : null}, is_active),
             applicable_category_id = ${data.applicableCategoryId ? String(data.applicableCategoryId).trim() : null},
             applicable_product_id = ${productIds !== undefined ? (productIds.length === 1 ? productIds[0] : null) : (data.applicableProductId ? String(data.applicableProductId).trim() : null)},
@@ -2630,6 +2663,14 @@ export const dbStore = {
       store.coupons[idx] = {
         ...store.coupons[idx],
         ...data,
+        maxRedemptions:
+          data.maxRedemptions !== undefined
+            ? (data.maxRedemptions ? Number(data.maxRedemptions) : null)
+            : store.coupons[idx].maxRedemptions,
+        perCustomerLimit:
+          data.perCustomerLimit !== undefined && data.perCustomerLimit !== null
+            ? Number(data.perCustomerLimit)
+            : (store.coupons[idx].perCustomerLimit !== undefined ? Number(store.coupons[idx].perCustomerLimit) : 1),
         code: data.code ? data.code.toUpperCase().trim() : store.coupons[idx].code,
         minCartAmount: data.minCartAmount !== undefined ? Number(data.minCartAmount).toFixed(2) : store.coupons[idx].minCartAmount,
         applicableCategoryId:
@@ -2681,6 +2722,104 @@ export const dbStore = {
       }
     }
     return { deleted: true, count: ids.length };
+  },
+
+  async getCouponRedemptionCountForCustomer(couponId: string, couponCode: string, customerEmail: string): Promise<number> {
+    if (!customerEmail || !customerEmail.trim()) return 0;
+    const cleanEmail = customerEmail.trim().toLowerCase();
+    const cleanCode = (couponCode || "").trim().toUpperCase();
+    let dbCount = 0;
+
+    if (sql) {
+      try {
+        const rows = await sql`
+          SELECT COUNT(*)::int as count 
+          FROM coupon_redemptions 
+          WHERE (coupon_id = ${couponId} OR coupon_id IN (SELECT id FROM coupons WHERE UPPER(code) = ${cleanCode}))
+            AND LOWER(customer_email) = ${cleanEmail};
+        `;
+        if (rows && rows[0]?.count !== undefined) {
+          dbCount = Number(rows[0].count);
+        }
+      } catch (err) {
+        console.error("DB getCouponRedemptionCountForCustomer err:", err);
+      }
+    }
+
+    const memCount = (store.couponRedemptions || []).filter(
+      (r) =>
+        (r.couponId === couponId || (r.couponCode && r.couponCode.toUpperCase() === cleanCode)) &&
+        (r.customerEmail || "").trim().toLowerCase() === cleanEmail
+    ).length;
+
+    return Math.max(dbCount, memCount);
+  },
+
+  async recordCouponRedemption(data: {
+    couponId: string;
+    couponCode: string;
+    orderId: string;
+    customerEmail: string;
+    discountApplied: number;
+  }) {
+    if (!data.customerEmail || !data.customerEmail.trim()) return null;
+    const cleanEmail = data.customerEmail.trim().toLowerCase();
+    const cleanCode = (data.couponCode || "").trim().toUpperCase();
+    const redemptionId = `red_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+
+    const newRecord = {
+      id: redemptionId,
+      couponId: data.couponId,
+      couponCode: cleanCode,
+      orderId: data.orderId,
+      customerEmail: cleanEmail,
+      discountApplied: Number(data.discountApplied).toFixed(2),
+      redeemedAt: new Date(),
+    };
+
+    if (!store.couponRedemptions) {
+      store.couponRedemptions = [];
+    }
+    store.couponRedemptions.push(newRecord);
+
+    // Update coupon currentRedemptions in memory
+    const cIdx = store.coupons.findIndex((c) => c.id === data.couponId || (c.code && c.code.toUpperCase() === cleanCode));
+    if (cIdx !== -1) {
+      store.coupons[cIdx].currentRedemptions = (store.coupons[cIdx].currentRedemptions || 0) + 1;
+    }
+
+    if (sql) {
+      try {
+        const rows = await sql`
+          SELECT id FROM coupons WHERE id = ${data.couponId} OR UPPER(code) = ${cleanCode} LIMIT 1;
+        `;
+        const actualCouponId = rows && rows[0] ? rows[0].id : data.couponId;
+
+        // Check if order exists in DB to prevent foreign key errors if order was mock/in-memory
+        const ordRows = await sql`
+          SELECT id FROM orders WHERE id = ${data.orderId} LIMIT 1;
+        `;
+
+        if (ordRows && ordRows[0] && rows && rows[0]) {
+          await sql`
+            INSERT INTO coupon_redemptions (id, coupon_id, order_id, customer_email, discount_applied, redeemed_at)
+            VALUES (${redemptionId}, ${actualCouponId}, ${data.orderId}, ${cleanEmail}, ${Number(data.discountApplied).toFixed(2)}, NOW());
+          `;
+        }
+
+        if (rows && rows[0]) {
+          await sql`
+            UPDATE coupons
+            SET current_redemptions = current_redemptions + 1, updated_at = NOW()
+            WHERE id = ${actualCouponId};
+          `;
+        }
+      } catch (err) {
+        console.error("DB recordCouponRedemption err:", err);
+      }
+    }
+
+    return newRecord;
   },
 
   // ---------------- SITE SETTINGS ----------------

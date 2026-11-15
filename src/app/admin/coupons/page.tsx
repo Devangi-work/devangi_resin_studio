@@ -18,7 +18,8 @@ export default function AdminCouponsPage() {
     discountValue: "10.00",
     minCartAmount: "499.00",
     maxDiscount: "300.00",
-    maxRedemptions: 100,
+    maxRedemptions: 100 as number | string,
+    perCustomerLimit: 1,
     isActive: true,
     applicableCategoryId: "",
     applicableProductId: "",
@@ -68,6 +69,7 @@ export default function AdminCouponsPage() {
       minCartAmount: "499.00",
       maxDiscount: "300.00",
       maxRedemptions: 100,
+      perCustomerLimit: 1,
       isActive: true,
       applicableCategoryId: "",
       applicableProductId: "",
@@ -89,7 +91,8 @@ export default function AdminCouponsPage() {
       discountValue: c.discountValue,
       minCartAmount: c.minCartAmount !== undefined && c.minCartAmount !== null ? String(c.minCartAmount) : "0.00",
       maxDiscount: c.maxDiscount || "",
-      maxRedemptions: c.maxRedemptions || 100,
+      maxRedemptions: c.maxRedemptions !== undefined && c.maxRedemptions !== null ? c.maxRedemptions : 100,
+      perCustomerLimit: c.perCustomerLimit !== undefined && c.perCustomerLimit !== null ? Number(c.perCustomerLimit) : 1,
       isActive: c.isActive,
       applicableCategoryId: c.applicableCategoryId || "",
       applicableProductId: productIds[0] || "",
@@ -111,6 +114,8 @@ export default function AdminCouponsPage() {
         ...formData,
         minCartAmount: formData.minCartAmount ? Number(formData.minCartAmount) : 0,
         maxDiscount: formData.maxDiscount ? Number(formData.maxDiscount) : null,
+        maxRedemptions: formData.maxRedemptions ? Number(formData.maxRedemptions) : null,
+        perCustomerLimit: formData.perCustomerLimit ? Math.max(1, Number(formData.perCustomerLimit)) : 1,
         applicableProductId: formData.applicableProductIds.length === 1 ? formData.applicableProductIds[0] : null,
         applicableProductIds: formData.applicableProductIds,
       };
@@ -273,7 +278,8 @@ export default function AdminCouponsPage() {
                 <th className="py-3 px-4 font-semibold">Applies To</th>
                 <th className="py-3 px-4 font-semibold">Min. Cart</th>
                 <th className="py-3 px-4 font-semibold">Max. Discount</th>
-                <th className="py-3 px-4 font-semibold">Redemptions</th>
+                <th className="py-3 px-4 font-semibold">Total Uses</th>
+                <th className="py-3 px-4 font-semibold">Per-User Limit</th>
                 <th className="py-3 px-4 font-semibold">Status</th>
                 <th className="py-3 px-4 font-semibold text-right">Actions</th>
               </tr>
@@ -281,13 +287,13 @@ export default function AdminCouponsPage() {
             <tbody className="divide-y divide-[#F4EBE6] text-[#2C332D]">
               {loading ? (
                 <tr>
-                  <td colSpan={9} className="py-8 text-center text-[#736C66]">
+                  <td colSpan={10} className="py-8 text-center text-[#736C66]">
                     Loading coupons...
                   </td>
                 </tr>
               ) : coupons.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="py-8 text-center text-[#736C66]">
+                  <td colSpan={10} className="py-8 text-center text-[#736C66]">
                     No promotional coupons found.
                   </td>
                 </tr>
@@ -349,6 +355,11 @@ export default function AdminCouponsPage() {
                     </td>
                     <td className="py-3 px-4 text-[#736C66]">
                       {c.currentRedemptions} / {c.maxRedemptions || "∞"}
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#F4F3F0] text-[#2C332D] border border-[#E8E0D5]">
+                        {c.perCustomerLimit || 1}x per user
+                      </span>
                     </td>
                     <td className="py-3 px-4">
                       <span
@@ -480,6 +491,98 @@ export default function AdminCouponsPage() {
                     />
                     <p className="text-[10px] text-[#8C7A72] mt-0.5">
                       Leave empty for uncapped percentage discounts.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Redemption Limits (Per-User & Total) */}
+                <div className="grid grid-cols-2 gap-4 pt-1">
+                  <div>
+                    <label className="text-xs font-semibold text-[#2C332D] block mb-1">
+                      Per-User Usage Limit *
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      step="1"
+                      required
+                      value={formData.perCustomerLimit}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          perCustomerLimit: Math.max(1, parseInt(e.target.value) || 1),
+                        })
+                      }
+                      className="w-full px-3 py-2 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
+                    />
+                    <div className="flex items-center gap-1 mt-1.5 flex-wrap">
+                      {[1, 2, 3, 5].map((val) => (
+                        <button
+                          key={val}
+                          type="button"
+                          onClick={() => setFormData({ ...formData, perCustomerLimit: val })}
+                          className={`px-2 py-0.5 text-[10px] rounded-md font-medium border transition-colors ${
+                            formData.perCustomerLimit === val
+                              ? "bg-[#2C332D] text-white border-[#2C332D]"
+                              : "bg-[#FAF8F5] text-[#736C66] border-[#E8E0D5] hover:bg-[#F4EBE6]"
+                          }`}
+                        >
+                          {val === 1 ? "1x (Single-use)" : `${val}x`}
+                        </button>
+                      ))}
+                    </div>
+                    <p className="text-[10px] text-[#8C7A72] mt-1">
+                      How many times ONE customer/email can use this coupon.
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold text-[#2C332D] block mb-1">
+                      Total Redemptions Limit
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      step="1"
+                      placeholder="e.g. 100 (Empty for ∞)"
+                      value={formData.maxRedemptions ?? ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          maxRedemptions: e.target.value ? parseInt(e.target.value) : ("" as any),
+                        })
+                      }
+                      className="w-full px-3 py-2 text-xs bg-[#FAF8F5] border border-[#E8E0D5] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
+                    />
+                    <div className="flex items-center gap-1 mt-1.5 flex-wrap">
+                      {[50, 100, 500].map((val) => (
+                        <button
+                          key={val}
+                          type="button"
+                          onClick={() => setFormData({ ...formData, maxRedemptions: val })}
+                          className={`px-2 py-0.5 text-[10px] rounded-md font-medium border transition-colors ${
+                            formData.maxRedemptions === val
+                              ? "bg-[#2C332D] text-white border-[#2C332D]"
+                              : "bg-[#FAF8F5] text-[#736C66] border-[#E8E0D5] hover:bg-[#F4EBE6]"
+                          }`}
+                        >
+                          {val}
+                        </button>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, maxRedemptions: "" as any })}
+                        className={`px-2 py-0.5 text-[10px] rounded-md font-medium border transition-colors ${
+                          !formData.maxRedemptions
+                            ? "bg-[#2C332D] text-white border-[#2C332D]"
+                            : "bg-[#FAF8F5] text-[#736C66] border-[#E8E0D5] hover:bg-[#F4EBE6]"
+                        }`}
+                      >
+                        Unlimited
+                      </button>
+                    </div>
+                    <p className="text-[10px] text-[#8C7A72] mt-1">
+                      Max total redemptions across all customers combined.
                     </p>
                   </div>
                 </div>

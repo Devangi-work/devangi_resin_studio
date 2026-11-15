@@ -158,11 +158,26 @@ export async function POST(request: Request) {
 
     // 3. Coupon validation
     let discountAmount = 0;
+    let validatedCoupon: any = null;
     if (couponCode) {
-      const couponValidation = await dbStore.validateCoupon(couponCode, subtotal, customerEmail);
-      if (couponValidation.valid) {
-        discountAmount = couponValidation.discountAmount || 0;
+      const couponValidation = await dbStore.validateCoupon(
+        couponCode,
+        subtotal,
+        customerEmail,
+        validatedItems.map((it) => ({
+          productId: it.productId || undefined,
+          price: Number(it.price || it.unitPrice || 0),
+          quantity: Number(it.quantity || 1),
+        }))
+      );
+      if (!couponValidation.valid) {
+        return NextResponse.json(
+          { error: couponValidation.message || "Invalid coupon code." },
+          { status: 400 }
+        );
       }
+      discountAmount = couponValidation.discountAmount || 0;
+      validatedCoupon = couponValidation.coupon;
     }
 
     // 4. Final payable amount (strictly no round off)
@@ -188,6 +203,7 @@ export async function POST(request: Request) {
       orderNotes,
       subtotal,
       discountAmount,
+      discountReason: couponCode || null,
       shippingCharge,
       taxAmount: 0,
       totalAmount,
@@ -198,6 +214,21 @@ export async function POST(request: Request) {
       paymentScreenshotUrl,
       items: validatedItems,
     });
+
+    // 6b. Record coupon redemption if coupon was applied
+    if (validatedCoupon && discountAmount > 0 && customerEmail) {
+      try {
+        await dbStore.recordCouponRedemption({
+          couponId: validatedCoupon.id,
+          couponCode: validatedCoupon.code || couponCode,
+          orderId: order.id,
+          customerEmail,
+          discountApplied: discountAmount,
+        });
+      } catch (couponRedemptionErr) {
+        console.error("Failed to record coupon redemption:", couponRedemptionErr);
+      }
+    }
 
     // 7. Decrement Inventory
     for (const item of validatedItems) {

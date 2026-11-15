@@ -21,7 +21,6 @@ import {
   Clock,
   Layers,
   Star,
-  MessageCircle,
   MapPin,
   X,
 } from "lucide-react";
@@ -29,6 +28,7 @@ import { ProductReviewsSection } from "@/components/product/ProductReviewsSectio
 import { buildSingleProductWhatsAppMessage, getWhatsAppUrl } from "@/lib/whatsapp";
 import { resolveShippingCharge } from "@/lib/shipping";
 import DynamicUpiPaymentModal from "@/components/payment/DynamicUpiPaymentModal";
+import { ProductCard } from "@/components/product/ProductCard";
 
 export interface ProductDetailProps {
   product: any;
@@ -1060,15 +1060,14 @@ export function ProductDetailView({ product, relatedProducts, settings: initialS
               </button>
             </div>
 
-            {/* Buy in 1 Click via WhatsApp */}
+            {/* Buy Now Button */}
             {!isOutOfStock && (
               <button
                 onClick={handleBuyNow}
                 disabled={redirectingWhatsApp}
-                className="w-full py-3.5 bg-[#25D366] hover:bg-[#20ba59] text-white rounded-xl font-bold text-xs uppercase tracking-wider shadow-md transition-all flex items-center justify-center space-x-2 group cursor-pointer disabled:opacity-60"
+                className="w-full py-3.5 bg-[#2C332D] hover:bg-[#3D473E] text-white rounded-xl font-bold text-xs uppercase tracking-wider shadow-md transition-all flex items-center justify-center space-x-2 group cursor-pointer disabled:opacity-60"
               >
-                <MessageCircle className="w-4 h-4 fill-white" />
-                <span>{redirectingWhatsApp ? "Opening WhatsApp..." : "Buy in 1 Click via WhatsApp"}</span>
+                <span>{redirectingWhatsApp ? "Opening WhatsApp..." : "Buy Now"}</span>
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </button>
             )}
@@ -1205,43 +1204,7 @@ export function ProductDetailView({ product, relatedProducts, settings: initialS
           </h3>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6">
             {relatedProducts.map((rel: any) => (
-              <div
-                key={rel.id}
-                className="bg-white rounded-2xl overflow-hidden border border-[#E8E0D5] hover:border-[#D4AF37] transition-all"
-              >
-                <a href={`/shop/${rel.slug}`} className="block aspect-square overflow-hidden bg-[#FAF8F5]">
-                  <img
-                    src={rel.images?.[0]?.imageUrl || "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=800"}
-                    alt={rel.name}
-                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
-                  />
-                </a>
-                <div className="p-3">
-                  <a
-                    href={`/shop/${rel.slug}`}
-                    className="font-serif text-xs font-semibold text-[#2C332D] hover:text-[#B8972E] line-clamp-1"
-                  >
-                    {rel.name}
-                  </a>
-                  {(() => {
-                    const relCalc = computeFestivePrice(rel.regularPrice, rel);
-                    return relCalc.hasDiscount ? (
-                      <div className="flex items-baseline space-x-1.5 mt-1">
-                        <p className={`text-xs font-bold ${rel.isFestivalSpecial ? "text-[#6A162B]" : "text-[#2C332D]"}`}>
-                          ₹{relCalc.discountedPrice.toFixed(2)}
-                        </p>
-                        <p className="text-[10px] text-[#A69E96] line-through">
-                          ₹{Number(rel.regularPrice).toFixed(2)}
-                        </p>
-                      </div>
-                    ) : (
-                      <p className="text-xs font-bold text-[#2C332D] mt-1">
-                        ₹{Number(rel.regularPrice).toFixed(2)}
-                      </p>
-                    );
-                  })()}
-                </div>
-              </div>
+              <ProductCard key={rel.id} product={rel} />
             ))}
           </div>
         </div>
