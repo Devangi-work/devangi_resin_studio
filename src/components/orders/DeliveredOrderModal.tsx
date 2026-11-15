@@ -14,6 +14,7 @@ import {
   ShieldCheck,
   ArrowRight,
 } from "lucide-react";
+import { normalizeImageForUpload } from "@/lib/client-image";
 
 interface DeliveredItem {
   id: string;
@@ -114,12 +115,13 @@ export function DeliveredOrderModal() {
     try {
       const newUrls: string[] = [];
       for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        if (file.size > 15 * 1024 * 1024) {
-          setErrorMessage(`File ${file.name} exceeds 15MB limit.`);
+        const rawFile = files[i];
+        if (rawFile.size > 15 * 1024 * 1024) {
+          setErrorMessage(`File ${rawFile.name} exceeds 15MB limit.`);
           continue;
         }
 
+        const file = await normalizeImageForUpload(rawFile);
         const formData = new FormData();
         formData.append("file", file);
 
@@ -131,7 +133,7 @@ export function DeliveredOrderModal() {
         if (res.ok && json.url) {
           newUrls.push(json.url);
         } else {
-          setErrorMessage(json.error || `Failed to upload ${file.name}`);
+          setErrorMessage(json.error || `Failed to upload ${rawFile.name}`);
         }
       }
 

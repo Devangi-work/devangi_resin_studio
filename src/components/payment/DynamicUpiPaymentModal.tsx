@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { buildUpiPaymentUri, generateUpiQrCodeDataUrl, generatePaymentReference } from "@/lib/upi";
 import { formatCombinedAddress } from "@/lib/whatsapp";
+import { normalizeImageForUpload } from "@/lib/client-image";
 
 export interface ShippingCustomerDetails {
   name: string;
@@ -281,36 +282,38 @@ export default function DynamicUpiPaymentModal({
 
   // Handle Payment Screenshot Upload
   const handleScreenshotChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const rawFile = e.target.files?.[0];
+    if (!rawFile) return;
 
     setScreenshotError("");
     const isHeic =
-      file.type === "image/heic" ||
-      file.type === "image/heif" ||
-      file.type === "image/heic-sequence" ||
-      file.type === "image/heif-sequence" ||
-      file.name.toLowerCase().endsWith(".heic") ||
-      file.name.toLowerCase().endsWith(".heif");
+      rawFile.type === "image/heic" ||
+      rawFile.type === "image/heif" ||
+      rawFile.type === "image/heic-sequence" ||
+      rawFile.type === "image/heif-sequence" ||
+      rawFile.name.toLowerCase().endsWith(".heic") ||
+      rawFile.name.toLowerCase().endsWith(".heif");
 
-    if (!file.type.startsWith("image/") && !isHeic && file.type !== "application/octet-stream" && file.type !== "") {
+    if (!rawFile.type.startsWith("image/") && !isHeic && rawFile.type !== "application/octet-stream" && rawFile.type !== "") {
       setScreenshotError("Please select a valid image file (JPEG, PNG, WebP, HEIC).");
       return;
     }
 
-    if (file.size > 15 * 1024 * 1024) {
+    if (rawFile.size > 15 * 1024 * 1024) {
       setScreenshotError("File size exceeds 15MB limit. Please upload a smaller image.");
       return;
     }
 
-    setScreenshotFile(file);
-    if (!isHeic) {
-      const localPreview = URL.createObjectURL(file);
-      setScreenshotPreview(localPreview);
-    }
     setIsUploadingScreenshot(true);
 
     try {
+      const file = await normalizeImageForUpload(rawFile);
+      setScreenshotFile(file);
+      try {
+        const localPreview = URL.createObjectURL(file);
+        setScreenshotPreview(localPreview);
+      } catch {}
+
       const formData = new FormData();
       formData.append("file", file);
 

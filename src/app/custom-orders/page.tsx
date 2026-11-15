@@ -10,6 +10,7 @@ import {
   Clock,
   HeartHandshake,
 } from "lucide-react";
+import { normalizeImageForUpload } from "@/lib/client-image";
 
 export default function CustomOrdersPage() {
   const [formData, setFormData] = useState({
@@ -28,10 +29,10 @@ export default function CustomOrdersPage() {
   const [error, setError] = useState("");
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const rawFile = e.target.files?.[0];
+    if (!rawFile) return;
 
-    if (file.size > 15 * 1024 * 1024) {
+    if (rawFile.size > 15 * 1024 * 1024) {
       setError("File exceeds 15MB limit. Please select a smaller photo.");
       return;
     }
@@ -40,6 +41,7 @@ export default function CustomOrdersPage() {
     setError("");
 
     try {
+      const file = await normalizeImageForUpload(rawFile);
       const form = new FormData();
       form.append("file", file);
 

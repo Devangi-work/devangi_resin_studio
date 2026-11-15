@@ -48,81 +48,127 @@ export async function uploadImageToBlob(
     throw new Error(`File size ${(file.size / 1024 / 1024).toFixed(1)}MB exceeds the 15MB maximum limit.`);
   }
 
-  let uploadFile: File | Blob = file;
+  let uploadBuffer: Buffer | null = null;
+  let finalContentType = file.type || "image/jpeg";
   let finalFilename = filename;
 
   if (isHeic) {
     let converted = false;
     const arrayBuffer = await file.arrayBuffer();
     const inputBuffer = Buffer.from(arrayBuffer);
+    let outputBuffer: Buffer | null = null;
 
-    // Primary: Sharp native libheif conversion (fast, supports iPhone HDR/burst/Live and EXIF auto-rotation)
+    // Step 1: Direct libheif-js wasm decoding (broadest Apple iPhone format compatibility: heic, heix, mif1, msf1, MiPr, MiHE, heim, heis)
     try {
-      const sharpModule = await import("sharp");
-      const sharp = sharpModule.default || sharpModule;
-      const outputBuffer = await sharp(inputBuffer)
-        .rotate()
-        .jpeg({ quality: 90, mozjpeg: true })
-        .toBuffer();
+      const libheifModule = await import("libheif-js/wasm-bundle" as any);
+      const libheif = libheifModule.default || libheifModule;
+      if (libheif.ready) await libheif.ready;
 
-      finalFilename = filename.replace(/\.(heic|heif)$/i, ".jpg");
-      if (!finalFilename.toLowerCase().endsWith(".jpg") && !finalFilename.toLowerCase().endsWith(".jpeg")) {
-        finalFilename += ".jpg";
+      const decoder = new libheif.HeifDecoder();
+      const decodedImages = decoder.decode(inputBuffer);
+      if (decodedImages && decodedImages.length > 0) {
+        const primaryImage = decodedImages[0];
+        const width = primaryImage.get_width();
+        const height = primaryImage.get_height();
+
+        const displayData = await new Promise<{ data: Uint8ClampedArray }>((resolve, reject) => {
+          primaryImage.display({ data: new Uint8ClampedArray(width * height * 4), width, height }, (res: any) => {
+            if (!res) reject(new Error("libheif frame display returned null"));
+            else resolve(res);
+          });
+        });
+
+        // Free native wasm resources
+        for (const img of decodedImages) {
+          try { img.free(); } catch {}
+        }
+        try { decoder.decoder.delete(); } catch {}
+
+        // Encode decoded RGBA frame to high-quality JPEG
+        const rawRgbaBuffer = Buffer.from(displayData.data.buffer, displayData.data.byteOffset, displayData.data.byteLength);
+        try {
+          const sharpModule = await import("sharp");
+          const sharp = sharpModule.default || sharpModule;
+          outputBuffer = await sharp(rawRgbaBuffer, {
+            raw: { width, height, channels: 4 },
+          })
+            .rotate()
+            .jpeg({ quality: 90, mozjpeg: true })
+            .toBuffer();
+          converted = true;
+        } catch {
+          const jpegJsModule = await import("jpeg-js");
+          const jpegJs = jpegJsModule.default || jpegJsModule;
+          const encoded = jpegJs.encode({ data: rawRgbaBuffer, width, height }, 90);
+          outputBuffer = Buffer.from(encoded.data);
+          converted = true;
+        }
       }
-
-      uploadFile = new Blob([new Uint8Array(outputBuffer)], { type: "image/jpeg" });
-      converted = true;
-    } catch (sharpErr) {
-      console.warn("[uploadImageToBlob] Sharp HEIC conversion attempt failed, trying heic-convert fallback:", sharpErr);
+    } catch (libheifErr) {
+      console.warn("[uploadImageToBlob] libheif-js wasm decode failed, trying heic-convert fallback:", libheifErr);
     }
 
-    // Secondary fallback: heic-convert
+    // Step 2: heic-convert fallback
     if (!converted) {
       try {
         const heicConvertModule = await import("heic-convert");
         const heicConvert = heicConvertModule.default || heicConvertModule;
-        const outputBuffer = await heicConvert({
+        const resBuffer = await heicConvert({
           buffer: inputBuffer,
           format: "JPEG",
           quality: 0.90,
         });
 
-        finalFilename = filename.replace(/\.(heic|heif)$/i, ".jpg");
-        if (!finalFilename.toLowerCase().endsWith(".jpg") && !finalFilename.toLowerCase().endsWith(".jpeg")) {
-          finalFilename += ".jpg";
-        }
-
-        uploadFile = new Blob([new Uint8Array(outputBuffer as ArrayBuffer)], { type: "image/jpeg" });
+        outputBuffer = Buffer.isBuffer(resBuffer) ? resBuffer : Buffer.from(resBuffer as ArrayBuffer);
         converted = true;
       } catch (fallbackErr) {
         console.warn("[uploadImageToBlob] heic-convert fallback failed:", fallbackErr);
       }
     }
 
-    // Fallback 3: In case file was already a JPEG/PNG disguised with .heic extension
+    // Step 3: Sharp native fallback
     if (!converted) {
       try {
         const sharpModule = await import("sharp");
         const sharp = sharpModule.default || sharpModule;
-        const outputBuffer = await sharp(inputBuffer).rotate().jpeg({ quality: 90 }).toBuffer();
-        finalFilename = filename.replace(/\.(heic|heif)$/i, ".jpg");
-        uploadFile = new Blob([new Uint8Array(outputBuffer)], { type: "image/jpeg" });
+        outputBuffer = await sharp(inputBuffer)
+          .rotate()
+          .jpeg({ quality: 90, mozjpeg: true })
+          .toBuffer();
         converted = true;
-      } catch {
-        finalFilename = filename.replace(/\.(heic|heif)$/i, ".jpg");
+      } catch (sharpErr) {
+        console.warn("[uploadImageToBlob] Sharp native fallback failed:", sharpErr);
       }
     }
+
+    if (converted && outputBuffer) {
+      finalFilename = filename.replace(/\.(heic|heif)$/i, ".jpg");
+      if (!finalFilename.toLowerCase().endsWith(".jpg") && !finalFilename.toLowerCase().endsWith(".jpeg")) {
+        finalFilename += ".jpg";
+      }
+      uploadBuffer = outputBuffer;
+      finalContentType = "image/jpeg";
+    } else {
+      finalFilename = filename.replace(/\.(heic|heif)$/i, ".jpg");
+      if (!finalFilename.toLowerCase().endsWith(".jpg") && !finalFilename.toLowerCase().endsWith(".jpeg")) {
+        finalFilename += ".jpg";
+      }
+      uploadBuffer = inputBuffer;
+      finalContentType = "image/jpeg";
+    }
+  } else {
+    const arrayBuffer = await file.arrayBuffer();
+    uploadBuffer = Buffer.from(arrayBuffer);
+    finalContentType = file.type || "image/jpeg";
   }
 
   const sanitizedFilename = finalFilename.toLowerCase().replace(/[^a-z0-9._-]/g, "_");
   const pathname = `${prefix}/${Date.now()}-${sanitizedFilename}`;
 
   if (!isBlobConfigured()) {
-    // Development / fallback: convert to data URL or return development mock URL
-    const arrayBuffer = await uploadFile.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-    const base64 = buffer.toString("base64");
-    const mime = uploadFile.type && !uploadFile.type.includes("heic") && !uploadFile.type.includes("heif") ? uploadFile.type : "image/jpeg";
+    // Development / fallback: return data URL
+    const base64 = uploadBuffer.toString("base64");
+    const mime = finalContentType && !finalContentType.includes("heic") && !finalContentType.includes("heif") ? finalContentType : "image/jpeg";
     const dataUrl = `data:${mime};base64,${base64}`;
 
     return {
@@ -132,10 +178,10 @@ export async function uploadImageToBlob(
     };
   }
 
-  const blob = await put(pathname, uploadFile, {
+  const blob = await put(pathname, uploadBuffer, {
     access: "public",
     token: BLOB_READ_WRITE_TOKEN,
-    contentType: uploadFile.type || "image/jpeg",
+    contentType: finalContentType,
   });
 
   return {

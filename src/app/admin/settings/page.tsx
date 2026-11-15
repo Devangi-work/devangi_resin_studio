@@ -44,6 +44,7 @@ import {
 import { MediaPickerModal } from "@/components/admin/MediaPickerModal";
 import { getStoredAdminTheme, applyAdminTheme, AdminTheme } from "@/lib/admin-theme";
 import { defaultPolicyTemplates } from "@/lib/policies-default";
+import { normalizeImageForUpload } from "@/lib/client-image";
 import {
   findStateForLocation,
   INDIAN_STATES_DATA,
@@ -372,10 +373,11 @@ export default function AdminSettingsPage() {
   };
 
   const handleKeepsakeUpload = async (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const rawFile = e.target.files?.[0];
+    if (!rawFile) return;
     setUploadingKeepsakeSlot(index);
     try {
+      const file = await normalizeImageForUpload(rawFile);
       const formData = new FormData();
       formData.append("file", file);
       const res = await fetch("/api/admin/upload", {

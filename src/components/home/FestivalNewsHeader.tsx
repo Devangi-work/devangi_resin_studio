@@ -88,13 +88,16 @@ export function FestivalNewsHeader({ settings }: FestivalNewsHeaderProps) {
 
   // Festive content
   const festiveTagline =
-    settings?.festivalTagline ||
+    settings?.festivalTagline?.trim() ||
     "Special Festival Offers on Handcrafted Resin Art & Keepsakes! Enjoy Special Savings • Free Express Delivery across India over ₹999";
+  const rawDiscountPercentage = settings?.festivalDiscountPercentage?.trim();
   const discount =
-    settings?.festivalDiscountType === "fixed" && settings?.festivalDiscountAmount
+    settings?.festivalDiscountType === "fixed" && settings?.festivalDiscountAmount && Number(settings.festivalDiscountAmount) > 0
       ? `₹${Number(settings.festivalDiscountAmount)} OFF`
-      : settings?.festivalDiscountPercentage || "20% OFF";
-  const coupon = settings?.festivalCouponCode || "FESTIVE20";
+      : (rawDiscountPercentage && Number(rawDiscountPercentage.replace(/[^0-9.]/g, "")) > 0
+          ? (rawDiscountPercentage.includes("%") ? rawDiscountPercentage : `${rawDiscountPercentage}% OFF`)
+          : "");
+  const coupon = settings?.festivalCouponCode?.trim() || "";
   const festiveCtaText = settings?.festivalCtaText || "Explore Festival Deals";
   const festiveCtaUrl = settings?.festivalCtaUrl || "/shop";
   const bgTheme = settings?.festivalBannerBg || "royal_wine";

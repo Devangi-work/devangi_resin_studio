@@ -7,6 +7,7 @@ import { useCart } from "@/lib/store/cart";
 import { resolveShippingCharge } from "@/lib/shipping";
 import { clarityEvent, claritySet, clarityIdentify } from "@/lib/analytics/clarity";
 import { buildUpiPaymentUri, generateUpiQrCodeDataUrl } from "@/lib/upi";
+import { normalizeImageForUpload } from "@/lib/client-image";
 import {
   Lock,
   ArrowRight,
@@ -247,34 +248,36 @@ export default function CheckoutPage() {
 
   // Upload Payment Screenshot
   const handleScreenshotUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const rawFile = e.target.files?.[0];
+    if (!rawFile) return;
 
     const isHeic =
-      file.type === "image/heic" ||
-      file.type === "image/heif" ||
-      file.type === "image/heic-sequence" ||
-      file.type === "image/heif-sequence" ||
-      file.name.toLowerCase().endsWith(".heic") ||
-      file.name.toLowerCase().endsWith(".heif");
+      rawFile.type === "image/heic" ||
+      rawFile.type === "image/heif" ||
+      rawFile.type === "image/heic-sequence" ||
+      rawFile.type === "image/heif-sequence" ||
+      rawFile.name.toLowerCase().endsWith(".heic") ||
+      rawFile.name.toLowerCase().endsWith(".heif");
 
-    if (!file.type.startsWith("image/") && !isHeic && file.type !== "application/octet-stream" && file.type !== "") {
+    if (!rawFile.type.startsWith("image/") && !isHeic && rawFile.type !== "application/octet-stream" && rawFile.type !== "") {
       setErrorMessage("Please select a valid image file (JPEG, PNG, WebP, HEIC).");
       return;
     }
 
-    if (file.size > 15 * 1024 * 1024) {
+    if (rawFile.size > 15 * 1024 * 1024) {
       setErrorMessage("Screenshot image exceeds 15MB limit. Please upload a smaller image.");
       return;
     }
 
-    if (!isHeic) {
-      const previewUrl = URL.createObjectURL(file);
-      setScreenshotPreview(previewUrl);
-    }
     setIsUploadingScreenshot(true);
 
     try {
+      const file = await normalizeImageForUpload(rawFile);
+      try {
+        const previewUrl = URL.createObjectURL(file);
+        setScreenshotPreview(previewUrl);
+      } catch {}
+
       const data = new FormData();
       data.append("file", file);
 
