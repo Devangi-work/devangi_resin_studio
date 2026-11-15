@@ -6,13 +6,23 @@ import { notifyAdminOnCustomRequest } from "@/lib/notifications/admin-dispatcher
 export const dynamic = "force-dynamic";
 
 const customRequestSchema = z.object({
-  customerName: z.string().min(2, "Name is required."),
-  customerEmail: z.string().email("Valid email required."),
-  customerPhone: z.string().min(10, "Phone number is required."),
-  productType: z.string().min(2, "Product type is required."),
-  budget: z.string().optional(),
-  description: z.string().min(10, "Please describe your vision in a few sentences."),
-  referenceImageUrl: z.string().optional().nullable(),
+  customerName: z.string().trim().min(1, "Please provide your name."),
+  customerEmail: z.string().trim().email("Please provide a valid email address."),
+  customerPhone: z
+    .string()
+    .trim()
+    .refine((val) => val.replace(/[^0-9]/g, "").length >= 7, {
+      message: "Please enter a valid phone number (at least 7 digits).",
+    }),
+  productType: z.string().trim().min(1, "Product type is required."),
+  budget: z.string().trim().optional().nullable(),
+  description: z.string().trim().min(2, "Please describe your vision in a few words."),
+  referenceImageUrl: z
+    .string()
+    .trim()
+    .optional()
+    .nullable()
+    .transform((val) => (val === "" ? null : val)),
 });
 
 export async function GET(request: Request) {
@@ -34,8 +44,11 @@ export async function POST(request: Request) {
     const result = customRequestSchema.safeParse(body);
 
     if (!result.success) {
+      const fieldErrors = result.error.flatten().fieldErrors;
+      const errorList = Object.values(fieldErrors).flat();
+      const firstErrorMessage = errorList[0] || "Please fill all required fields correctly.";
       return NextResponse.json(
-        { error: "Validation failed", details: result.error.flatten().fieldErrors },
+        { error: firstErrorMessage, message: firstErrorMessage, details: fieldErrors },
         { status: 400 }
       );
     }

@@ -10,6 +10,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "No image file provided" }, { status: 400 });
     }
 
+    if (file.size > 15 * 1024 * 1024) {
+      return NextResponse.json({ error: "Reference image exceeds 15MB limit." }, { status: 400 });
+    }
+
     // Customers can only upload reference images into a dedicated prefix
     const upload = await uploadImageToBlob(file, file.name, "customer-references");
     return NextResponse.json({

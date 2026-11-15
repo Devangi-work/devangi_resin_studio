@@ -288,10 +288,26 @@ test("E-Commerce Test Suite", async (t) => {
     assert.ok(ALLOWED_IMAGE_TYPES.includes("image/heic"));
     assert.ok(ALLOWED_IMAGE_TYPES.includes("image/heif"));
     assert.equal(ALLOWED_IMAGE_TYPES.includes("application/pdf"), false);
-    assert.equal(MAX_FILE_SIZE_BYTES, 5 * 1024 * 1024);
+    assert.equal(MAX_FILE_SIZE_BYTES, 15 * 1024 * 1024);
 
     // HEIC upload converts to universal browser-compatible JPEG
     const { uploadImageToBlob } = await import("../lib/blob");
+    const sharp = (await import("sharp")).default;
+    const testImageBuffer = await sharp({
+      create: {
+        width: 40,
+        height: 40,
+        channels: 3,
+        background: { r: 200, g: 100, b: 50 },
+      },
+    }).jpeg().toBuffer();
+
+    const realImageBlob = new Blob([new Uint8Array(testImageBuffer)], { type: "image/heic" });
+    const uploadedReal = await uploadImageToBlob(realImageBlob, "iphone_photo.HEIC", "test-uploads");
+    assert.ok(uploadedReal.pathname.endsWith(".jpg"));
+    assert.ok(uploadedReal.url.startsWith("data:image/jpeg;base64,") || uploadedReal.url.endsWith(".jpg"));
+
+    // Dummy buffer fallback test
     const dummyHeic = new Blob(["fake-heic-data"], { type: "image/heic" });
     const uploaded = await uploadImageToBlob(dummyHeic, "resin_sample.heic", "test-uploads");
     assert.ok(uploaded.pathname.endsWith(".jpg"));
@@ -877,6 +893,26 @@ test("E-Commerce Test Suite", async (t) => {
     assert.equal(updated?.status, "quoted");
     assert.equal(updated?.adminNotes, "Quoted ₹3,500 with gold foil");
     assert.equal(Number(updated?.quoteAmount), 3500);
+  });
+
+  await t.test("Custom Studio form accepts formatted phone, trimmed email, and empty reference image", async () => {
+    // Test custom request submission with whitespace email, formatted phone (+91), and empty referenceImageUrl string
+    const sanitizedEmail = "  priya.sharma@example.com  ".trim();
+    const formattedPhone = "+91 98200 44556";
+    const customReq = await dbStore.createCustomRequest({
+      customerName: "Priya Sharma",
+      customerEmail: sanitizedEmail,
+      customerPhone: formattedPhone,
+      productType: "Floral Clock",
+      budget: "₹1,500 - ₹3,000",
+      description: "Custom blue ocean geode clock",
+      referenceImageUrl: null,
+    });
+
+    assert.ok(customReq.id);
+    assert.equal(customReq.customerEmail, "priya.sharma@example.com");
+    assert.equal(customReq.customerPhone, "+91 98200 44556");
+    assert.equal(customReq.referenceImageUrl, null);
   });
 
   // 13. Orders Listing includes Products Ordered with Images

@@ -253,16 +253,25 @@ export default function CheckoutPage() {
     const isHeic =
       file.type === "image/heic" ||
       file.type === "image/heif" ||
+      file.type === "image/heic-sequence" ||
+      file.type === "image/heif-sequence" ||
       file.name.toLowerCase().endsWith(".heic") ||
       file.name.toLowerCase().endsWith(".heif");
 
-    if (!file.type.startsWith("image/") && !isHeic) {
+    if (!file.type.startsWith("image/") && !isHeic && file.type !== "application/octet-stream" && file.type !== "") {
       setErrorMessage("Please select a valid image file (JPEG, PNG, WebP, HEIC).");
       return;
     }
 
-    const previewUrl = URL.createObjectURL(file);
-    setScreenshotPreview(previewUrl);
+    if (file.size > 15 * 1024 * 1024) {
+      setErrorMessage("Screenshot image exceeds 15MB limit. Please upload a smaller image.");
+      return;
+    }
+
+    if (!isHeic) {
+      const previewUrl = URL.createObjectURL(file);
+      setScreenshotPreview(previewUrl);
+    }
     setIsUploadingScreenshot(true);
 
     try {
@@ -282,6 +291,7 @@ export default function CheckoutPage() {
       }
 
       setPaymentScreenshotUrl(json.url);
+      setScreenshotPreview(json.url);
     } catch (err) {
       console.error("Screenshot upload err:", err);
       setErrorMessage("Failed to upload screenshot. Please try again.");
@@ -1465,15 +1475,19 @@ export default function CheckoutPage() {
                   </span>
                 </div>
 
-                {screenshotPreview ? (
+                {screenshotPreview || isUploadingScreenshot ? (
                   <div className="bg-white p-3.5 rounded-xl border border-[#E8E0D5] space-y-3">
                     <div className="flex items-center space-x-3">
-                      <div className="w-16 h-16 rounded-lg overflow-hidden bg-[#FAF8F5] border border-[#E8E0D5] shrink-0">
-                        <img
-                          src={screenshotPreview}
-                          alt="Payment Receipt Preview"
-                          className="w-full h-full object-cover"
-                        />
+                      <div className="w-16 h-16 rounded-lg overflow-hidden bg-[#FAF8F5] border border-[#E8E0D5] shrink-0 flex items-center justify-center">
+                        {screenshotPreview ? (
+                          <img
+                            src={screenshotPreview}
+                            alt="Payment Receipt Preview"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <Loader2 className="w-5 h-5 animate-spin text-[#B8972E]" />
+                        )}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-bold text-[#2C332D] truncate">
@@ -1509,7 +1523,7 @@ export default function CheckoutPage() {
                       Tap to Upload Payment Screenshot
                     </span>
                     <span className="text-[10.5px] text-[#8C7A72] mt-0.5">
-                      PhonePe, Google Pay, or Paytm receipt (JPEG, PNG, WebP, HEIC)
+                      PhonePe, Google Pay, or Paytm receipt (JPEG, PNG, WebP, HEIC - Max 15MB)
                     </span>
                     <input
                       type="file"

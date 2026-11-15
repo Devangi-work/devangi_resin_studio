@@ -16,16 +16,18 @@ export async function POST(request: Request) {
     const isHeic =
       file.type === "image/heic" ||
       file.type === "image/heif" ||
+      file.type === "image/heic-sequence" ||
+      file.type === "image/heif-sequence" ||
       file.name.toLowerCase().endsWith(".heic") ||
       file.name.toLowerCase().endsWith(".heif");
 
-    if (!file.type.startsWith("image/") && !isHeic) {
+    if (!file.type.startsWith("image/") && !isHeic && file.type !== "application/octet-stream" && file.type !== "") {
       return NextResponse.json({ error: "Only image files (JPEG, PNG, WebP, HEIC) are allowed." }, { status: 400 });
     }
 
-    // Size limit check: 10MB max
-    if (file.size > 10 * 1024 * 1024) {
-      return NextResponse.json({ error: "Receipt image exceeds 10MB limit." }, { status: 400 });
+    // Size limit check: 15MB max
+    if (file.size > 15 * 1024 * 1024) {
+      return NextResponse.json({ error: "Receipt image exceeds 15MB limit." }, { status: 400 });
     }
 
     // Upload to Blob storage

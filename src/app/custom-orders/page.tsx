@@ -31,6 +31,11 @@ export default function CustomOrdersPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    if (file.size > 15 * 1024 * 1024) {
+      setError("File exceeds 15MB limit. Please select a smaller photo.");
+      return;
+    }
+
     setUploadingImage(true);
     setError("");
 
@@ -50,7 +55,7 @@ export default function CustomOrdersPage() {
         setError(data.error || "Failed to upload image.");
       }
     } catch {
-      setError("Image upload failed.");
+      setError("Image upload failed. Please try again.");
     } finally {
       setUploadingImage(false);
     }
@@ -72,7 +77,11 @@ export default function CustomOrdersPage() {
       if (res.ok) {
         setSubmitted(true);
       } else {
-        setError(data.error || "Failed to submit request.");
+        const errorMsg =
+          data.details && typeof data.details === "object"
+            ? Object.values(data.details).flat().join(". ")
+            : data.error || data.message || "Failed to submit request.";
+        setError(errorMsg);
       }
     } catch {
       setError("An error occurred. Please try again.");
@@ -277,11 +286,18 @@ export default function CustomOrdersPage() {
                   <div className="border border-dashed border-[#E8E0D5] rounded-xl p-4 text-center bg-[#FAF8F5]">
                     {formData.referenceImageUrl ? (
                       <div className="flex items-center justify-between text-xs text-[#2E7D32]">
-                        <span>Reference Image Attached!</span>
+                        <div className="flex items-center space-x-2.5">
+                          <img
+                            src={formData.referenceImageUrl}
+                            alt="Reference preview"
+                            className="w-10 h-10 object-cover rounded-lg border border-[#E8E0D5]"
+                          />
+                          <span className="font-medium">Reference Image Attached!</span>
+                        </div>
                         <button
                           type="button"
                           onClick={() => setFormData({ ...formData, referenceImageUrl: "" })}
-                          className="text-[#DF4C4C] hover:underline"
+                          className="text-[#DF4C4C] hover:underline font-semibold"
                         >
                           Remove
                         </button>
@@ -290,7 +306,7 @@ export default function CustomOrdersPage() {
                       <label className="cursor-pointer block">
                         <Upload className="w-4 h-4 text-[#8C7A72] mx-auto mb-1" />
                         <span className="text-xs text-[#2C332D] font-medium block">
-                          {uploadingImage ? "Uploading..." : "Upload photo (Max 5MB)"}
+                          {uploadingImage ? "Uploading & converting photo..." : "Upload photo (JPEG, PNG, WebP, HEIC - Max 15MB)"}
                         </span>
                         <input
                           type="file"

@@ -288,22 +288,26 @@ export default function DynamicUpiPaymentModal({
     const isHeic =
       file.type === "image/heic" ||
       file.type === "image/heif" ||
+      file.type === "image/heic-sequence" ||
+      file.type === "image/heif-sequence" ||
       file.name.toLowerCase().endsWith(".heic") ||
       file.name.toLowerCase().endsWith(".heif");
 
-    if (!file.type.startsWith("image/") && !isHeic) {
+    if (!file.type.startsWith("image/") && !isHeic && file.type !== "application/octet-stream" && file.type !== "") {
       setScreenshotError("Please select a valid image file (JPEG, PNG, WebP, HEIC).");
       return;
     }
 
-    if (file.size > 10 * 1024 * 1024) {
-      setScreenshotError("File size exceeds 10MB limit. Please upload a smaller image.");
+    if (file.size > 15 * 1024 * 1024) {
+      setScreenshotError("File size exceeds 15MB limit. Please upload a smaller image.");
       return;
     }
 
     setScreenshotFile(file);
-    const localPreview = URL.createObjectURL(file);
-    setScreenshotPreview(localPreview);
+    if (!isHeic) {
+      const localPreview = URL.createObjectURL(file);
+      setScreenshotPreview(localPreview);
+    }
     setIsUploadingScreenshot(true);
 
     try {
@@ -323,6 +327,7 @@ export default function DynamicUpiPaymentModal({
       }
 
       setScreenshotUrl(data.url);
+      setScreenshotPreview(data.url);
     } catch (err: any) {
       console.error("Screenshot upload failed:", err);
       setScreenshotError("Failed to upload screenshot. Please try again.");
@@ -1336,20 +1341,24 @@ export default function DynamicUpiPaymentModal({
                   Please attach a screenshot of your payment success screen (from GPay, PhonePe, or Paytm) showing the 12-digit UTR/Ref ID for immediate verification.
                 </p>
 
-                {screenshotPreview ? (
+                {screenshotPreview || isUploadingScreenshot ? (
                   <div className="flex items-center space-x-3 bg-white p-2.5 rounded-xl border border-[#86EFAC]">
-                    <div className="w-14 h-14 rounded-lg overflow-hidden bg-[#FAF8F5] border border-[#E8E0D5] shrink-0">
-                      <img
-                        src={screenshotPreview}
-                        alt="Payment Screenshot Preview"
-                        className="w-full h-full object-cover"
-                      />
+                    <div className="w-14 h-14 rounded-lg overflow-hidden bg-[#FAF8F5] border border-[#E8E0D5] shrink-0 flex items-center justify-center">
+                      {screenshotPreview ? (
+                        <img
+                          src={screenshotPreview}
+                          alt="Payment Screenshot Preview"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-5 h-5 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+                      )}
                     </div>
                     <div className="flex-1 min-w-0 text-xs">
                       {isUploadingScreenshot ? (
                         <div className="flex items-center space-x-1.5 text-amber-700">
                           <div className="w-3.5 h-3.5 border-2 border-amber-600 border-t-transparent rounded-full animate-spin" />
-                          <span className="font-semibold text-[11px]">Uploading proof to server...</span>
+                          <span className="font-semibold text-[11px]">Processing &amp; uploading screenshot...</span>
                         </div>
                       ) : screenshotUrl ? (
                         <div className="flex items-center space-x-1 text-[#166534] font-semibold text-[11px]">
@@ -1391,7 +1400,7 @@ export default function DynamicUpiPaymentModal({
                         Tap to Select or Take Photo of Screenshot
                       </span>
                       <span className="text-[10px] text-[#736C66] mt-0.5">
-                        JPEG, PNG, WebP, or HEIC (Max 10MB)
+                        JPEG, PNG, WebP, or HEIC (Max 15MB)
                       </span>
                       <input
                         ref={fileInputRef}

@@ -115,8 +115,8 @@ export function DeliveredOrderModal() {
       const newUrls: string[] = [];
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        if (file.size > 5 * 1024 * 1024) {
-          setErrorMessage(`File ${file.name} exceeds 5MB limit.`);
+        if (file.size > 15 * 1024 * 1024) {
+          setErrorMessage(`File ${file.name} exceeds 15MB limit.`);
           continue;
         }
 
@@ -475,7 +475,7 @@ export function DeliveredOrderModal() {
                             ref={fileInputRef}
                             type="file"
                             multiple
-                            accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"
+                            accept="image/*,.heic,.heif,image/heic,image/heif"
                             className="hidden"
                             disabled={isUploading}
                             onChange={handleImageUpload}
